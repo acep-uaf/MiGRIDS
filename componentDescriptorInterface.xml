@@ -20,9 +20,9 @@
     <QOutMaxPa value="0" unit="kvar"/>
 
     <!-- Grid service capabilities -->
-    <gridForm></gridForm>
-    <loadFollow></loadFollow>
-    <curtailable></curtailable>
+    <gridForm value="FALSE"/>
+    <loadFollow value="FALSE"/>
+    <curtailable value="FALSE"/>
 
 </component>
 <!-- EOF -->
