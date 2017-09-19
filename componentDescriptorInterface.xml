@@ -20,9 +20,24 @@
     <QOutMaxPa value="0" unit="kvar"/>
 
     <!-- Grid service capabilities -->
+    <!-- 'gridForm' describes the capability of the component to 'lead' the grid in principal. Note that this may -->
+    <!-- not be true for all system configurations. -->
     <gridForm value="FALSE"/>
+    <!-- 'loadFollow' describes the capability of a unit to ramp up or down to mitigate demand or non-load following -->
+    <!-- production induced frequency or voltage issues -->
     <loadFollow value="FALSE"/>
+    <!-- 'curtailable' describes if the unit can reduce and clamp power output below available resource based on -->
+    <!-- a control signal -->
     <curtailable value="FALSE"/>
 
+    <!-- Physical connection -->
+    <!-- 'isThreePhase' is TRUE if the unit is a three or four-wire three-phase unit. Default value is TRUE. -->
+    <isThreePhase value="TRUE"/>
+    <!-- 'isDelta' defines if the unit is Delta of Wye connected. Default is TRUE. -->
+    <isDelta value="TRUE"/>
+    <!-- 'connectedPhases' value defines how the unit is connected to the grid, i.e., on which phases, if the neutral -->
+    <!-- is present, is the neutral grounded, etc. See the documentation for available values. Default value is 0. -->
+    <!-- this ALWAYS has to be changed. Units attribute ALWAYS is NONE, it is here for consistency only. -->
+    <connectedPhases value="0" unit="NONE"/>
 </component>
 <!-- EOF -->
