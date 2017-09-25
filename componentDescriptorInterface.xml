@@ -20,15 +20,16 @@
     <QOutMaxPa value="0" unit="kvar"/>
 
     <!-- Grid service capabilities -->
-    <!-- 'gridForm' describes the capability of the component to 'lead' the grid in principal. Note that this may -->
-    <!-- not be true for all system configurations. -->
-    <gridForm value="FALSE"/>
-    <!-- 'loadFollow' describes the capability of a unit to ramp up or down to mitigate demand or non-load following -->
+    <!-- 'isVoltageSource' describes the capability of the component to regulate vars. -->
+    <isVoltageSource value="FALSE"/>
+    <!-- 'isFrequencyReference' describes the units capability to be the frequency reference of the the grid. -->
+    <isFrequencyReference value="FALSE"/>
+    <!-- 'isLoadFollowing' describes the capability of a unit to ramp up or down to mitigate demand or non-load following -->
     <!-- production induced frequency or voltage issues -->
-    <loadFollow value="FALSE"/>
-    <!-- 'curtailable' describes if the unit can reduce and clamp power output below available resource based on -->
+    <isLoadFollowing value="FALSE"/>
+    <!-- 'isCurtailable' describes if the unit can reduce and clamp power output below available resource based on -->
     <!-- a control signal -->
-    <curtailable value="FALSE"/>
+    <isCurtailable value="FALSE"/>
 
     <!-- Physical connection -->
     <!-- 'isThreePhase' is TRUE if the unit is a three or four-wire three-phase unit. Default value is TRUE. -->
