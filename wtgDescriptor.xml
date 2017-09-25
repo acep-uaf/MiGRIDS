@@ -4,17 +4,15 @@
 <!-- Date: September 25, 2017 -->
 <!-- License: MIT License (see LICENSE file of this package for more information -->
 
-<!-- This file describes an interface for all components that may be part of the model. It does not itself implement a -->
-<!-- specific component and thus should not directly be used as description for a component. -->
+<!-- This file describes a general wind turbine generator. Specific WTG might require further children. -->
 
 <!-- Root tag is 'component' -->
 <component name = 'component name'>
-    <!-- Declaration of inheritance - the interface itself should be the master parent. Later more specific -->
-    <!-- component descriptions should state the immediate parent here. All have to be traceable to this interface. -->
-    <childOf>self</childOf>
+    <!-- Declaration of inheritance. Parent of this generic wind turbine descriptor should be the interface itself.  -->
+    <childOf>componentDescriptorInterface</childOf>
 
-    <!-- 'type' can be 'sink', 'source' or 'sink-source' and 'grid' -->
-    <type></type>
+    <!-- 'type' is 'source'. Note that this does not preclude wind turbines to consume some power. -->
+    <type>source</type>
 
     <!-- Nameplate values -->
     <!-- 'PInMaxPa' is the maximum real power the unit can receive from the grid, should be 0 if source. Units: kW -->
@@ -47,5 +45,16 @@
     <!-- is present, is the neutral grounded, etc. See the documentation for available values. Default value is 0. -->
     <!-- this ALWAYS has to be changed. Units attribute ALWAYS is NONE, it is here for consistency only. -->
     <connectionType value="0" unit="NONE"/>
+
+    <!-- WTG specific parameters -->
+    <!-- 'powerCurve' describes the power curve of the wind turbine as a set of tuples of 'ws' and 'p' tags. -->
+    <!-- Wind speed has units of m/s. power should be presented as P.U. of the nameplate real power capacity. -->
+    <!-- Default is to have a data point at 0 m/s and at nameplate power. DEFAULT VALUES REQUIRE CHANGING for this to -->
+    <!-- be sensible. -->
+    <powerCurve>
+        <ws>0</ws><p>0</p>
+        <ws>0</ws><p>1</p>
+    </powerCurve>
+    
 </component>
 <!-- EOF -->
