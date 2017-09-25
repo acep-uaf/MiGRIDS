@@ -36,9 +36,9 @@
     <isThreePhase value="TRUE"/>
     <!-- 'isDelta' defines if the unit is Delta of Wye connected. Default is TRUE. -->
     <isDelta value="TRUE"/>
-    <!-- 'connectedPhases' value defines how the unit is connected to the grid, i.e., on which phases, if the neutral -->
+    <!-- 'connectionType' value defines how the unit is connected to the grid, i.e., on which phases, if the neutral -->
     <!-- is present, is the neutral grounded, etc. See the documentation for available values. Default value is 0. -->
     <!-- this ALWAYS has to be changed. Units attribute ALWAYS is NONE, it is here for consistency only. -->
-    <connectedPhases value="0" unit="NONE"/>
+    <connectionType value="0" unit="NONE"/>
 </component>
 <!-- EOF -->
