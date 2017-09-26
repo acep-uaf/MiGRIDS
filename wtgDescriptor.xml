@@ -12,7 +12,7 @@
     <childOf>componentDescriptorInterface</childOf>
 
     <!-- 'type' is 'source'. Note that this does not preclude wind turbines to consume some power. -->
-    <type>source</type>
+    <type value="source"/>
 
     <!-- Nameplate values -->
     <!-- 'PInMaxPa' is the maximum real power the unit can receive from the grid, should be 0 if source. Units: kW -->
@@ -55,6 +55,6 @@
         <ws>0</ws><p>0</p>
         <ws>0</ws><p>1</p>
     </powerCurve>
-    
+
 </component>
 <!-- EOF -->

@@ -14,7 +14,7 @@
     <childOf>self</childOf>
 
     <!-- 'type' can be 'sink', 'source' or 'sink-source' and 'grid' -->
-    <type></type>
+    <type value="source"/>
 
     <!-- Nameplate values -->
     <!-- 'PInMaxPa' is the maximum real power the unit can receive from the grid, should be 0 if source. Units: kW -->
