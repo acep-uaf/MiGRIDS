@@ -72,21 +72,21 @@
     <MOL value="0.4" unit="PU"/>
 
     <!-- 'faultCurrent' Is the ammount of fault current that can be supplied by the diesel generator pre cycle.  -->
-    <!-- Fault current units are in P.U. of nameplate current (or power) and are described by the tuple 'fc'.  -->
+    <!-- Fault current units are in P.U. of nameplate current (or power) and are described by the tuple 'fac'.  -->
     <!-- Fautl current values are defined for the number of cycles they can be sustained, described by the tuple 'c' -->
     <!-- with units '60Hz cycles' (16.7 ms intervals). -->
     <!-- Default is 1 PU at 5 cycles, ie no fault current capability. -->
     <faultCurrent>
-        <c>5</c><fc>1</fc>
+        <c>5</c><fac>1</fac>
     </faultCurrent>
 
     <!-- 'overLoad' Is the ammount of over load that can be supplied by the diesel generator per hour.  -->
     <!-- Over load units are in P.U. of nameplate current (or power) and are specified by the number of hours they can   -->
     <!-- operate at. It is described by the tuples 't' (time with units HOURS) and 'ol' (overload in P.U.). -->
     <!-- Default is 1 PU for 1 hour, ie no over load capability. -->
-    <overCurrent>
+    <overLoad>
         <t>1</t><ol>1</ol>
-    </overCurrent>
+    </overLoad>
 
     <!-- 'loadFactor24Hr' Is the the maximum average loading the diesel generator is rated for in a 24 hour period. -->
     <!-- This is different for Prime, Standy and Continuous rated engines and between manufacturers. -->
@@ -98,7 +98,7 @@
     <!-- earlier to avoid critical situations. Units: Hours. Default is 1 Hr.  -->
     <minRunTime value="1" unit="hr"/>
 
-    <!-- 'startTime' is the ammount of time it takes a warm diesel generator to be brought online. This means cranking, -->
+    <!-- 'startTime' is the amount of time it takes a hot diesel generator to be brought online. This means cranking, -->
     <!-- synchronizing, connecting and ramping to full load capability. Units: seconds. Default is 30. -->
     <startTime value="30" unit="s"/>
 
