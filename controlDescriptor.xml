@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Project: GBS Tool -->
+<!-- Author: Jeremy VanderMeer, jbvandermeer@alaska.edu -->
+<!-- Date: September 27, 2017 -->
+<!-- License: MIT License (see LICENSE file of this package for more information -->
+
+<!-- This file describes one set of control parameters. -->
+
+<!-- Root tag is 'component' -->
+<control name = 'control name'>
+    <!-- Declaration of inheritance. Parent of this generic diesel generator descriptor should be the interface itself.  -->
+    <childOf>controlDescriptorInterface</childOf>
+
+
+    <!-- FIR filter parameters for smoothing the loading on diesel and wind units by the ESS -->
+    <!-- 'ntapsDiesel' is the number of taps used to smooth the loading on the diesel generator. A value of 0 indicates
+     no filtering. Default is 0. -->
+    <ntapsDiesel value="0" unit="NONE"/>
+
+    <!-- 'ntapsWind' is the number of taps used to smooth the loading on the wind turbines. A value of 0 indicates
+     no filtering. Default is 0. -->
+    <ntapsWind value="0" unit="NONE"/>
+
+    <!-- 'lowerCut' is the cut off frequency used in the FIR filter. Units: Hz. It has a default value of 1 Hz.  -->
+    <lowerCut value="1" unit="Hz"/>
+
+    <!-- ess controls -->
+    <!-- 'essSrcTime' is the minimum amount of time that the ess must be able to discharge for at the current level of
+      SRC that it is supplying. Units are in seconds. Default is 120 s.  -->
+    <essSrcTime value="2" unit="s"/>
+
+    <!-- 'essdispatchTime' is the minimum amount of time that the ESS must be able to supply the load for in order to
+    be considered as an active discharge option in the diesel schedule. Units are in hours. Default is 0.5.   -->
+    <essdispatchTime value="0.5" unit="hr"/>
+
+    <!-- 'maxDiesCapCharge' is the maximum capacity that charging the ESS can increase the diesel loading to. It
+     depends on the state of charge of the ESS. It is defined by the tuple 'mdcc' which is the maximum diesel loading
+     and the tuple 'soc' which is the corresponding state of charge of the ESS. Units for 'mdcc' are P.U. of nameplate
+     capacity of the diesel generator. Units for 'soc' are P.U. of ESS nameplate energy capacity. Default values for
+     'mdcc' are 0.65, 0.75, 0.85 and 0.9. The corresponding default values for 'soc' are 1, 0.3, 0.1 and 0. -->
+    <maxDiesCapCharge>
+        <mdcc>0.65</mdcc><soc>1</soc>
+        <mdcc>0.75</mdcc><soc>0.3</soc>
+        <mdcc>0.85</mdcc><soc>0.1</soc>
+        <mdcc>0.9</mdcc><soc>0</soc>
+    </maxDiesCapCharge>
+
+
+</control>
+<!-- EOF -->
