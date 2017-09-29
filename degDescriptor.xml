@@ -67,10 +67,6 @@
         <p>1</p><ho>0</ho>
     </heatRecovery>
 
-    <!-- 'MOL' describes the minimum optimal loading. Units are in P.U. of nameplate capacity. -->
-    <!-- Default value is 0.4. There are no units. -->
-    <MOL value="0.4" unit="PU"/>
-
     <!-- 'faultCurrent' Is the ammount of fault current that can be supplied by the diesel generator pre cycle.  -->
     <!-- Fault current units are in P.U. of nameplate current (or power) and are described by the tuple 'fac'.  -->
     <!-- Fautl current values are defined for the number of cycles they can be sustained, described by the tuple 'c' -->
@@ -93,14 +89,7 @@
     <!-- Units: P.U.. Default is 0.7, which is the ISO-8528-1 specification for a Prime generator.  -->
     <loadFactor24Hr value="0.7" unit="PU"/>
 
-    <!-- 'minRunTime' is the minimum amount of time that the diesel generator should run online for before being  -->
-    <!-- brought offline. This will be followed except in situations which require the unit to be brought offline -->
-    <!-- earlier to avoid critical situations. Units: Hours. Default is 1 Hr.  -->
-    <minRunTime value="1" unit="hr"/>
 
-    <!-- 'startTime' is the amount of time it takes a hot diesel generator to be brought online. This means cranking, -->
-    <!-- synchronizing, connecting and ramping to full load capability. Units: seconds. Default is 30. -->
-    <startTime value="30" unit="s"/>
 
     <!-- 'heatingFuelConsumption' is the fuel that is consumed to keep the engine hot. This is only used when it is -->
     <!-- offline and hot. It is described by two tuples: 'temp' is the ambient temperature in Celsius. 'hfc' is the -->
