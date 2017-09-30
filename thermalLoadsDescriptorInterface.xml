@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Project: GBS Tool -->
+<!-- Author: Dr. Marc Mueller-Stoffels, marc.mueller.stoffels@gmail.com -->
+<!-- Date: September 25, 2017 -->
+<!-- License: MIT License (see LICENSE file of this package for more information -->
+
+<!-- This file describes a general thermal load. Specific thernmal loads might require further children. -->
+
+<!-- Root tag is 'component' -->
+<component name = 'component name'>
+    <!-- Declaration of inheritance - the interface itself should be the master parent. Later more specific -->
+    <!-- component descriptions should state the immediate parent here. All have to be traceable to this interface. -->
+    <childOf>self</childOf>
+
+    <!-- 'type' can be 'sink', 'source' or 'sink-source' and 'grid' -->
+    <type value="source"/>
+
+    <!-- Nameplate values -->
+    <!-- 'PInMaxPa' is the maximum real power the unit can receive from the grid, should be 0 if source. Units: kW -->
+    <PInMaxPa value="0" unit="kW"/>
+    <!-- 'QInMax' is the maximum reactive power the unit can receive from the grid, should be 0 if source. Units. kvar -->
+    <QInMaxPa value="0" unit="kvar"/>
+    <!-- 'POutMaxPa' is the maximum real power the unit can deliver to the grid. Should be 0 if sink. Units: kW -->
+    <POutMaxPa value="0" unit="kW"/>
+    <!-- 'QOutMaxPa' is the maximum reactive power the unit can deliver to the grid. Should be 0 if sink. Units: kvar -->
+    <QOutMaxPa value="0" unit="kvar"/>
+
+    <!-- Grid service capabilities -->
+    <!-- 'isVoltageSource' describes the capability of the component to regulate vars. -->
+    <isVoltageSource value="FALSE"/>
+    <!-- 'isFrequencyReference' describes the units capability to be the frequency reference of the the grid. -->
+    <isFrequencyReference value="FALSE"/>
+    <!-- 'isLoadFollowing' describes the capability of a unit to ramp up or down to mitigate demand or non-load following -->
+    <!-- production induced frequency or voltage issues -->
+    <isLoadFollowing value="FALSE"/>
+    <!-- 'isCurtailable' describes if the unit can reduce and clamp power output below available resource based on -->
+    <!-- a control signal -->
+    <isCurtailable value="FALSE"/>
+
+    <!-- Physical connection -->
+    <!-- 'isThreePhase' is TRUE if the unit is a three or four-wire three-phase unit. Default value is TRUE. -->
+    <isThreePhase value="TRUE"/>
+    <!-- 'isDelta' defines if the unit is Delta of Wye connected. Default is TRUE. -->
+    <isDelta value="TRUE"/>
+    <!-- 'connectionType' value defines how the unit is connected to the grid, i.e., on which phases, if the neutral -->
+    <!-- is present, is the neutral grounded, etc. See the documentation for available values. Default value is 0. -->
+    <!-- this ALWAYS has to be changed. Units attribute ALWAYS is NONE, it is here for consistency only. -->
+    <connectionType value="0" unit="NONE"/>
+
+    <!-- Thermal load specific parameters -->
+    <!-- 'isDiscrete' describes if the available load levels of the DL are discrete load levels. If this is set to 'TRUE'
+    parameter 'discreteLoadLevels' must be set indicating the available load levels. If there is only one
+    available load level, set the value to 'TRUE' and set 'discreteLoadLevels' to the one level. Default if FALSE. -->
+    <isDiscrete value="FALSE" unit="bool"/>
+
+    <!-- 'discreteLoadLevels' describes the available load levels if 'isDiscrete' is set to TRUE. It is described by the
+     tuples 'p' and 'q' for real and reactive power. Units are kW and kvar. Default values are zero. -->
+    <discreteLoadLevels>
+        <p>0</p><q>0</q>
+    </discreteLoadLevels>
+
+    <!-- 'thermalCapacity' is the thermal capacity of the thermal storage. Units are J/K. Default is 0.  -->
+    <thermalCapacity value="0" unit="J/K"/>
+
+    <!-- 'thermalConductance' is the thermal conductance of the thermal storage. Thermal convection and radiation will
+     be assumed to be 10% of the calculated conductance loss and will be accounted for by adding 10% to the calculated
+     thermal losses (http://www.process-heating.com/articles/87988-calculating-heat-loss) Units are W/K. Default is 0.  -->
+    <thermalConductance value="0" unit="W/K"/>
+
+    <!-- 'conversionEfficiency' is the efficiency of converting electrical to thermal energy. There are no units. It is
+      expressed as a decimal between 0 and 1. Defualt is 1. -->
+    <conversionEfficiency value="1" unit="NONE"/>
+
+    <!-- 'amdbientTemperature' is the ambient temperature around the thermal storage. If 'useAmbientTemperatureProfile'
+       is a set to FALSE, then the temperature listed here will be used as the ambient temperature to calculate heat
+       loss. If it is set to TRUE, this value is not used. -->
+    <conversionEfficiency value="1" unit="NONE"/>
+
+    <!-- 'useAmbientTemperatureProfile' is a bool value that indicates whether or not to use a temperature profile for
+      ambient temeperatures. If set to TRUE, a temperature profile saved at ..... will be used. Default if FALSE. -->
+    <useAmbientTemperatureProfile value="FALSE" unit="NONE"/>
+
+
+
+</component>
+<!-- EOF -->
