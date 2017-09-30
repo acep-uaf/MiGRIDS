@@ -51,10 +51,19 @@
     <!-- Wind speed has units of m/s. power should be presented as P.U. of the nameplate real power capacity. -->
     <!-- Default is to have a data point at 0 m/s and at nameplate power. DEFAULT VALUES REQUIRE CHANGING for this to -->
     <!-- be sensible. -->
-    <powerCurve>
-        <ws>0</ws><p>0</p>
-        <ws>0</ws><p>1</p>
-    </powerCurve>
+    <powerCurveDataPoints>
+        <ws value="0"><p value="0"/>
+        <ws value="0"><p value="0"/>
+    </powerCurveDataPoints>
+    <!-- 'cutInWindSpeed' describes the minimum wind speed at which the turbine will begin producing power from a -->
+    <!-- previous complete stop. The default value is 0, which NEVER makes sense. Units are m/s. -->
+    <cutInWindSpeed value="0"/>
+    <!-- 'cutOutWindSpeedMax' describes the maximum wind speed at which a turbine still produces power. Default value -->
+    <!-- is 0, which NEVER makes sense. Units are m/s. -->
+    <cutOutWindSpeedMax value="0" />
+    <!-- 'cutOutWindSpeedMin' describes the minimum wind speed at which a turbine stops producing power due to lack of -->
+    <!-- wind power. Default value is 0, which NEVER makes sense. Units are m/s. -->
+    <cutOutWindSpeedMin value="0" />
 
 </component>
 <!-- EOF -->
