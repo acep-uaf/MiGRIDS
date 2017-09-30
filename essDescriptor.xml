@@ -49,10 +49,9 @@
     <!-- ESS specific parameters -->
     <!-- 'lossMap' describes the loss experienced by the energy storage system for each state of power and energy. -->
     <!--  they are described by the tuples 'p' for power, 'e' for the state of charge and 'loss' for the loss. -->
-    <!-- Units for power are P.U. of nameplate power capacity. Their sign depends on whether the energy storage is  -->
-    <!-- defined as a source or a sink. If it is source, a positive value of 'p' refers to discharging power and vice -->
-    <!-- versa. Units for 'e' are P.U. nameplate energy capacity. It should be between 0 and 1. This should include all
-    losses including secondary systems. Units for loss are kW. Default values are data points at -1, 0 and 1 pu power, -->
+    <!-- Units for power are P.U. of nameplate power capacity. Positive values of power are used for discharging and
+    negative values for charging. Units for 'e' are P.U. nameplate energy capacity. It should be between 0 and 1. This
+    should include all losses including secondary systems. Units for loss are kW. Default values are data points at -1, 0 and 1 pu power, -->
     <!-- 0 and 1 pu SoC and 0 loss. -->
     <lossMap>
         <p>-1</p><e>0</e><loss>0</loss>
