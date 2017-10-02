@@ -59,13 +59,13 @@
     </fuelCurve>
 
     <!-- 'heatRecovery' describes the usable heat that comes off of the diesel generators per power output.  -->
-    <!-- It is described by the tuples 'p' (power) and 'ho' (heat output).  -->
+    <!-- It is described by the tuples 'p' (power) and 'pt' (thermal power).  -->
     <!-- Units for power are P.U. of nameplate capacity and for heat output are thermal kW (not electric). -->
     <!-- Default is to have a data point at 0 and 1 P.U. power output. DEFAULT VALUES REQUIRE CHANGING for this to -->
     <!-- be sensible. -->
     <heatRecovery>
-        <p value="0" unit="pu"><ho value="0" unit="kW"/>
-        <p value="1" unit="pu"><ho value="0" unit="kW"/>
+        <p value="0" unit="pu"><pt value="0" unit="kW"/>
+        <p value="1" unit="pu"><pt value="0" unit="kW"/>
     </heatRecovery>
 
     <!-- 'faultPower' Is the ammount of fault power that can be supplied by the diesel generator per cycle.  -->
@@ -92,11 +92,11 @@
 
 
 
-    <!-- 'hotStandbyPowerRequirement' is the power required to keep the engine hot. This is only used when it is -->
-    <!-- offline and hot. It is described by two tuples: 'T' is the ambient temperature in Kelvin. 'p' is the -->
-    <!-- power consumption in kW. Default is one data point at 0 degree K of 0 kW.   -->
+    <!-- 'hotStandbyPowerRequirement' is the thermal power required to keep the engine hot. This is only used when it is -->
+    <!-- offline and hot. It is described by two tuples: 'T' is the ambient (outdoor) temperature in Kelvin. 'pt' is the -->
+    <!-- thermal power consumption in kW_t. Default is one data point at 0 degree K of 0 kW_t.   -->
     <hotStandbyPowerRequirement>
-        <T value="1" unit="K"><p value="1" unit="kW"/>
+        <T value="1" unit="K"><pt value="1" unit="kW_t"/>
     </hotStandbyPowerRequirement>
 
 </component>
