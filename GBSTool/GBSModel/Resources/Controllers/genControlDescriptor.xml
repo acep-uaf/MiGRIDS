@@ -35,8 +35,8 @@
 
     <!-- 'minRunTime' is the minimum amount of time that the diesel generator should run online for before being  -->
     <!-- brought offline. This will be followed except in situations which require the unit to be brought offline -->
-    <!-- earlier to avoid critical situations. Units: Hours. Default is 1 Hr.  -->
-    <minRunTime value="1" unit="hr"/>
+    <!-- earlier to avoid critical situations. Units: seconds. Default is 3600 sec (1 Hr).  -->
+    <minRunTime value="3600" unit="sec"/>
 
     <!-- 'startTime' is the ammount of time it takes a hot diesel generator to be brought online. This means cranking, -->
     <!-- synchronizing, connecting and ramping to full load capability. Units: seconds. Default is 30. -->
