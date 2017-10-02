@@ -25,15 +25,16 @@
     <QOutMaxPa value="0" unit="kvar"/>
 
     <!-- Grid service capabilities -->
-    <!-- 'isVoltageSource' describes the capability of the component to regulate vars. -->
+    <!-- 'isVoltageSource' describes the capability of the component to regulate vars. Default value is TRUE. -->
     <isVoltageSource value="TRUE"/>
-    <!-- 'isFrequencyReference' describes the units capability to be the frequency reference of the the grid. -->
+    <!-- 'isFrequencyReference' describes the units capability to be the frequency reference of the the grid. Default value -->
+    <!-- is TRUE. -->
     <isFrequencyReference value="TRUE"/>
     <!-- 'isLoadFollowing' describes the capability of a unit to ramp up or down to mitigate demand or non-load following -->
-    <!-- production induced frequency or voltage issues -->
+    <!-- production induced frequency or voltage issues. Default value is TRUE. -->
     <isLoadFollowing value="TRUE"/>
     <!-- 'isCurtailable' describes if the unit can reduce and clamp power output below available resource based on -->
-    <!-- a control signal -->
+    <!-- a control signal. Default value is TRUE. -->
     <isCurtailable value="TRUE"/>
 
     <!-- Physical connection -->
