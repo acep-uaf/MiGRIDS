@@ -4,7 +4,7 @@
 <!-- Date: September 26, 2017 -->
 <!-- License: MIT License (see LICENSE file of this package for more information -->
 
-<!-- This file describes a general diesel generator. Specific DEG might require further children. -->
+<!-- This file describes a general diesel generator. Specific GEN might require further children. -->
 
 <!-- Root tag is 'component' -->
 <component name = 'component name'>
@@ -47,7 +47,7 @@
     <!-- this ALWAYS has to be changed. Units attribute ALWAYS is NONE, it is here for consistency only. -->
     <connectionType value="0" unit="NONE"/>
 
-    <!-- DEG specific parameters -->
+    <!-- GEN specific parameters -->
     <!-- 'fuelCurve' describes the fuel consumption of the diesel generator as per its power output, described by tuples -->
     <!--  'p' and 'fc' tags. -->
     <!-- Power should be presented as P.U. of the nameplate real power capacity. Fuel consumption is L/hr -->
