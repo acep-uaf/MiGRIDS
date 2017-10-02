@@ -54,51 +54,50 @@
     <!-- Default is to have a data point at 0 and 1 P.U. power output. DEFAULT VALUES REQUIRE CHANGING for this to -->
     <!-- be sensible. -->
     <fuelCurve>
-        <p>0</p><fc>0</fc>
-        <p>1</p><fc>0</fc>
+        <p value="0" unit="pu"><fc value="0" unit="L/hr"/>
+        <p value="1" unit="pu"><fc value="0" unit="L/hr"/>
     </fuelCurve>
 
     <!-- 'heatRecovery' describes the usable heat that comes off of the diesel generators per power output.  -->
     <!-- It is described by the tuples 'p' (power) and 'ho' (heat output).  -->
-    <!-- Units for power are P.U. of nameplate capacity and for heat output are btu/hr. -->
+    <!-- Units for power are P.U. of nameplate capacity and for heat output are thermal kW (not electric). -->
     <!-- Default is to have a data point at 0 and 1 P.U. power output. DEFAULT VALUES REQUIRE CHANGING for this to -->
     <!-- be sensible. -->
     <heatRecovery>
-        <p>0</p><ho>0</ho>
-        <p>1</p><ho>0</ho>
+        <p value="0" unit="pu"><ho value="0" unit="kW"/>
+        <p value="1" unit="pu"><ho value="0" unit="kW"/>
     </heatRecovery>
 
-    <!-- 'faultCurrent' Is the ammount of fault current that can be supplied by the diesel generator pre cycle.  -->
+    <!-- 'faultCurrent' Is the ammount of fault current that can be supplied by the diesel generator per cycle.  -->
     <!-- Fault current units are in P.U. of nameplate current (or power) and are described by the tuple 'fac'.  -->
     <!-- Fautl current values are defined for the number of cycles they can be sustained, described by the tuple 'c' -->
     <!-- with units '60Hz cycles' (16.7 ms intervals). -->
     <!-- Default is 1 PU at 5 cycles, ie no fault current capability. -->
     <faultCurrent>
-        <c>5</c><fac>1</fac>
+        <c value="5" unit="cycles"><fac value="1" unit="pu"/>
     </faultCurrent>
 
-    <!-- 'overLoad' Is the ammount of over load that can be supplied by the diesel generator per hour.  -->
+    <!-- 'overLoad' Is the ammount of over load that can be supplied by the diesel generator per second.  -->
     <!-- Over load units are in P.U. of nameplate current (or power) and are specified by the number of hours they can   -->
-    <!-- operate at. It is described by the tuples 't' (time with units HOURS) and 'ol' (overload in P.U.). -->
-    <!-- Default is 1 PU for 1 hour, ie no over load capability. -->
+    <!-- operate at. It is described by the tuples 't' (time with units seconds) and 'ol' (overload in P.U.). -->
+    <!-- Default is 1 PU for 1 second, ie no over load capability. -->
     <overLoad>
-        <t>1</t><ol>1</ol>
+        <t value="1" unit="sec"><ol value="1" unit="pu"/>
     </overLoad>
 
     <!-- 'loadFactor24Hr' Is the the maximum average loading the diesel generator is rated for in a 24 hour period. -->
     <!-- This is different for Prime, Standy and Continuous rated engines and between manufacturers. -->
     <!-- Units: P.U.. Default is 0.7, which is the ISO-8528-1 specification for a Prime generator.  -->
-    <loadFactor24Hr value="0.7" unit="PU"/>
+    <loadFactor24Hr value="0.7" unit="pu"/>
 
 
 
-    <!-- 'heatingFuelConsumption' is the fuel that is consumed to keep the engine hot. This is only used when it is -->
-    <!-- offline and hot. It is described by two tuples: 'temp' is the ambient temperature in Celsius. 'hfc' is the -->
-    <!-- heating fuel consumption in L/hr. Default is one data point at 0 degree Celsius of 0 L/hr.   -->
-    <heatingFuelConsumption>
-        <temp>0</temp><hfc>0</hfc>
-    </heatingFuelConsumption>
-
+    <!-- 'hotStandbyPowerRequirement' is the power required to keep the engine hot. This is only used when it is -->
+    <!-- offline and hot. It is described by two tuples: 'temp' is the ambient temperature in Kelvin. 'p' is the -->
+    <!-- power consumption in kW. Default is one data point at 0 degree K of 0 kW.   -->
+    <hotStandbyPowerRequirement>
+        <temp value="1" unit="K"><p value="1" unit="kW"/>
+    </hotStandbyPowerRequirement>
 
 </component>
 <!-- EOF -->
