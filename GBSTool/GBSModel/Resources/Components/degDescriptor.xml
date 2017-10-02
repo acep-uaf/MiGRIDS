@@ -78,11 +78,11 @@
     </faultCurrent>
 
     <!-- 'overLoad' Is the ammount of over load that can be supplied by the diesel generator per second.  -->
-    <!-- Over load units are in P.U. of nameplate current (or power) and are specified by the number of hours they can   -->
-    <!-- operate at. It is described by the tuples 't' (time with units seconds) and 'ol' (overload in P.U.). -->
+    <!-- Over load units are in P.U. of nameplate power and are specified by the number of hours they can   -->
+    <!-- operate at. It is described by the tuples 't' (time with units seconds) and 'p' (P.U. of nameplate capacity). -->
     <!-- Default is 1 PU for 1 second, ie no over load capability. -->
     <overLoad>
-        <t value="1" unit="sec"><ol value="1" unit="pu"/>
+        <t value="1" unit="sec"><p value="1" unit="pu"/>
     </overLoad>
 
     <!-- 'loadFactor24Hr' Is the the maximum average loading the diesel generator is rated for in a 24 hour period. -->
@@ -93,10 +93,10 @@
 
 
     <!-- 'hotStandbyPowerRequirement' is the power required to keep the engine hot. This is only used when it is -->
-    <!-- offline and hot. It is described by two tuples: 'temp' is the ambient temperature in Kelvin. 'p' is the -->
+    <!-- offline and hot. It is described by two tuples: 'T' is the ambient temperature in Kelvin. 'p' is the -->
     <!-- power consumption in kW. Default is one data point at 0 degree K of 0 kW.   -->
     <hotStandbyPowerRequirement>
-        <temp value="1" unit="K"><p value="1" unit="kW"/>
+        <T value="1" unit="K"><p value="1" unit="kW"/>
     </hotStandbyPowerRequirement>
 
 </component>
