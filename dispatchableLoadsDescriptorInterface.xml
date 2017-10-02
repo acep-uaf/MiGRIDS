@@ -10,10 +10,11 @@
 <component name = 'component name'>
     <!-- Declaration of inheritance - the interface itself should be the master parent. Later more specific -->
     <!-- component descriptions should state the immediate parent here. All have to be traceable to this interface. -->
-    <childOf>self</childOf>
+    <childOf>componentDescriptorInterface</childOf>
 
-    <!-- 'type' can be 'sink', 'source' or 'sink-source' and 'grid' -->
-    <type value="source"/>
+    <!-- 'type' of a controlled load is `sink`, even if small amounts of power may be discharged because the load has -->
+    <!-- some capacitance or inductance -->
+    <type value="sink"/>
 
     <!-- Nameplate values -->
     <!-- 'PInMaxPa' is the maximum real power the unit can receive from the grid, should be 0 if source. Units: kW -->
