@@ -68,14 +68,14 @@
         <p value="1" unit="pu"><ho value="0" unit="kW"/>
     </heatRecovery>
 
-    <!-- 'faultCurrent' Is the ammount of fault current that can be supplied by the diesel generator per cycle.  -->
-    <!-- Fault current units are in P.U. of nameplate current (or power) and are described by the tuple 'fac'.  -->
-    <!-- Fautl current values are defined for the number of cycles they can be sustained, described by the tuple 'c' -->
+    <!-- 'faultPower' Is the ammount of fault power that can be supplied by the diesel generator per cycle.  -->
+    <!-- Fault current units are in P.U. of nameplate power and are described by the tuple 'p'.  -->
+    <!-- Fault current values are defined for the number of cycles they can be sustained, described by the tuple 'c' -->
     <!-- with units '60Hz cycles' (16.7 ms intervals). -->
-    <!-- Default is 1 PU at 5 cycles, ie no fault current capability. -->
-    <faultCurrent>
-        <c value="5" unit="cycles"><fac value="1" unit="pu"/>
-    </faultCurrent>
+    <!-- Default is 1 PU at 5 cycles, ie no fault power capability. -->
+    <faultPower>
+        <c value="5" unit="cycles"><p value="1" unit="pu"/>
+    </faultPower>
 
     <!-- 'overLoad' Is the ammount of over load that can be supplied by the diesel generator per second.  -->
     <!-- Over load units are in P.U. of nameplate power and are specified by the number of hours they can   -->
