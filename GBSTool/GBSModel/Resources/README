@@ -1,0 +1,2 @@
+The Resources folder in the GBSModel package contains all available configuration files, such as component and
+dispatch descriptors. On run-time, the pertinent files for a model run will have to be placed in 'bin'.
