@@ -54,8 +54,8 @@
     <!-- Default is to have a data point at 0 and 1 P.U. power output. DEFAULT VALUES REQUIRE CHANGING for this to -->
     <!-- be sensible. -->
     <fuelCurve>
-        <p value="0" unit="pu"><fc value="0" unit="L/hr"/>
-        <p value="1" unit="pu"><fc value="0" unit="L/hr"/>
+        <p value="0" unit="pu"/><fc value="0" unit="L/hr"/>
+        <p value="1" unit="pu"/><fc value="0" unit="L/hr"/>
     </fuelCurve>
 
     <!-- 'heatRecovery' describes the usable heat that comes off of the diesel generators per power output.  -->
@@ -64,8 +64,8 @@
     <!-- Default is to have a data point at 0 and 1 P.U. power output. DEFAULT VALUES REQUIRE CHANGING for this to -->
     <!-- be sensible. -->
     <heatRecovery>
-        <p value="0" unit="pu"><pt value="0" unit="kW"/>
-        <p value="1" unit="pu"><pt value="0" unit="kW"/>
+        <p value="0" unit="pu"/><pt value="0" unit="kW"/>
+        <p value="1" unit="pu"/><pt value="0" unit="kW"/>
     </heatRecovery>
 
     <!-- 'faultPower' Is the ammount of fault power that can be supplied by the diesel generator per cycle.  -->
@@ -74,7 +74,7 @@
     <!-- with units '60Hz cycles' (16.7 ms intervals). -->
     <!-- Default is 1 PU at 5 cycles, ie no fault power capability. -->
     <faultPower>
-        <c value="5" unit="cycles"><p value="1" unit="pu"/>
+        <c value="5" unit="cycles"/><p value="1" unit="pu"/>
     </faultPower>
 
     <!-- 'overLoad' Is the ammount of over load that can be supplied by the diesel generator per second.  -->
@@ -82,7 +82,7 @@
     <!-- operate at. It is described by the tuples 't' (time with units seconds) and 'p' (P.U. of nameplate capacity). -->
     <!-- Default is 1 PU for 1 second, ie no over load capability. -->
     <overLoad>
-        <t value="1" unit="sec"><p value="1" unit="pu"/>
+        <t value="1" unit="sec"/><p value="1" unit="pu"/>
     </overLoad>
 
     <!-- 'loadFactor24Hr' Is the the maximum average loading the diesel generator is rated for in a 24 hour period. -->
@@ -96,7 +96,7 @@
     <!-- offline and hot. It is described by two tuples: 'T' is the ambient (outdoor) temperature in Kelvin. 'pt' is the -->
     <!-- thermal power consumption in kW_t. Default is one data point at 0 degree K of 0 kW_t.   -->
     <hotStandbyPowerRequirement>
-        <T value="1" unit="K"><pt value="1" unit="kW_t"/>
+        <T value="1" unit="K"/><pt value="1" unit="kW_t"/>
     </hotStandbyPowerRequirement>
 
 </component>
