@@ -85,9 +85,9 @@
 
     <!-- 'heatingPowerRequirement' is the thermal power required to keep the ees warm, if required.
     It is described by two tuples: 'T' is the ambient (outdoor) temperature in Kelvin. 'pt' is the
-    thermal power consumption in kW_t. Default is one data point at 0 degree K of 0 kW_t.   -->
+    thermal power consumption in kW. Default is one data point at 298 degree K of 0 kW.   -->
     <heatingPowerRequirement>
-        <T value="1" unit="K"/><pt value="1" unit="kW_t"/>
+        <T value="298" unit="K"/><pt value="1" unit="kW"/>
     </heatingPowerRequirement>
 
     <!-- 'chargeRate' is the fraction of power that it would take to fully charge or discharge the ESS that is the

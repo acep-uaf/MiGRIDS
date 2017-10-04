@@ -12,8 +12,8 @@
     <!-- component descriptions should state the immediate parent here. All have to be traceable to this interface. -->
     <childOf>self</childOf>
 
-    <!-- 'type' can be 'sink', 'source' or 'sink-source' and 'grid' -->
-    <type value="source"/>
+    <!-- Thermal energy storage is a sink -->
+    <type value="sink"/>
 
     <!-- Nameplate values -->
     <!-- 'PInMaxPa' is the maximum real power the unit can receive from the grid, should be 0 if source. Units: kW -->
@@ -56,7 +56,7 @@
     <!-- 'discreteLoadLevels' describes the available load levels if 'isDiscrete' is set to TRUE. It is described by the
      tuples 'p' and 'q' for real and reactive power. Units are kW and kvar. Default values are zero. -->
     <discreteLoadLevels>
-        <p>0</p><q>0</q>
+        <p value="0" unit="kW"/><q value="0" unit="kvar"/>
     </discreteLoadLevels>
 
     <!-- 'thermalCapacity' is the thermal capacity of the thermal storage. Units are J/K. Default is 0.  -->
@@ -73,8 +73,8 @@
 
     <!-- 'amdbientTemperature' is the ambient temperature around the thermal storage. If 'useAmbientTemperatureProfile'
        is a set to FALSE, then the temperature listed here will be used as the ambient temperature to calculate heat
-       loss. If it is set to TRUE, this value is not used. -->
-    <conversionEfficiency value="1" unit="NONE"/>
+       loss. If it is set to TRUE, this value is not used. Default value is 298 K (25 C). Units are Kelvin.  -->
+    <amdbientTemperature value="298" unit="K"/>
 
     <!-- 'useAmbientTemperatureProfile' is a bool value that indicates whether or not to use a temperature profile for
       ambient temeperatures. If set to TRUE, a temperature profile saved at ..... will be used. Default if FALSE. -->
