@@ -14,37 +14,7 @@
     <!-- 'type' is 'source'. Note that this does not preclude wind turbines to consume some power. -->
     <type value="source"/>
 
-    <!-- Nameplate values -->
-    <!-- 'PInMaxPa' is the maximum real power the unit can receive from the grid, should be 0 if source. Units: kW -->
-    <PInMaxPa value="0" unit="kW"/>
-    <!-- 'QInMax' is the maximum reactive power the unit can receive from the grid, should be 0 if source. Units. kvar -->
-    <QInMaxPa value="0" unit="kvar"/>
-    <!-- 'POutMaxPa' is the maximum real power the unit can deliver to the grid. Should be 0 if sink. Units: kW -->
-    <POutMaxPa value="0" unit="kW"/>
-    <!-- 'QOutMaxPa' is the maximum reactive power the unit can deliver to the grid. Should be 0 if sink. Units: kvar -->
-    <QOutMaxPa value="0" unit="kvar"/>
-
-    <!-- Grid service capabilities -->
-    <!-- 'isVoltageSource' describes the capability of the component to regulate vars. -->
-    <isVoltageSource value="FALSE"/>
-    <!-- 'isFrequencyReference' describes the units capability to be the frequency reference of the the grid. -->
-    <isFrequencyReference value="FALSE"/>
-    <!-- 'isLoadFollowing' describes the capability of a unit to ramp up or down to mitigate demand or non-load following -->
-    <!-- production induced frequency or voltage issues -->
-    <isLoadFollowing value="FALSE"/>
-    <!-- 'isCurtailable' describes if the unit can reduce and clamp power output below available resource based on -->
-    <!-- a control signal -->
-    <isCurtailable value="FALSE"/>
-
-    <!-- Physical connection -->
-    <!-- 'isThreePhase' is TRUE if the unit is a three or four-wire three-phase unit. Default value is TRUE. -->
-    <isThreePhase value="TRUE"/>
-    <!-- 'isDelta' defines if the unit is Delta of Wye connected. Default is TRUE. -->
-    <isDelta value="TRUE"/>
-    <!-- 'connectionType' value defines how the unit is connected to the grid, i.e., on which phases, if the neutral -->
-    <!-- is present, is the neutral grounded, etc. See the documentation for available values. Default value is 0. -->
-    <!-- this ALWAYS has to be changed. Units attribute ALWAYS is NONE, it is here for consistency only. -->
-    <connectionType value="0" unit="NONE"/>
+    <!-- NOTICE: NON-MODIFIED PARENT TAGS ARE NOT SHOWN, THEY SHOULD BE INHERITED FROM THE PARENT -->
 
     <!-- WTG specific parameters -->
     <!-- 'powerCurve' describes the power curve of the wind turbine as a set of tuples of 'ws' and 'p' tags. -->
