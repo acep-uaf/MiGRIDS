@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Project: GBS Tool -->
+<!-- Author: Dr. Marc Mueller-Stoffels, marc@denamics.com -->
+<!-- Date: October 5, 2017 -->
+<!-- License: MIT License (see LICENSE file of this package for more information -->
+
+<!-- This file describes a generic load -->
+
+<!-- Root tag is 'component' -->
+<component name = 'component name'>
+    <!-- Declaration of inheritance -->
+    <childOf>loadDescriptor</childOf>
+
+    <!-- NOTICE: NON-MODIFIED PARENT TAGS ARE NOT SHOWN, THEY SHOULD BE INHERITED FROM THE PARENT -->
+
+    <!-- Controlled Load specific items -->
+    <!-- `isRemoteCtrlAvailable` describes if the unit is available for remote control -->
+    <isRemoteCtrlAvailable value="TRUE"/>
+    <!-- `remoteCtrlPowerBand` describes the real and reactive power band available for control.  Bands are given for-->
+    <!-- real and reactive power. -->
+    <!-- Note that the `discreteLoadLevels` tag of the parent has to be considered here if `isDiscrete` is TRUE.  -->
+    <!-- And the real and reactive bands have to be switched together if 'pqIdpnt' of `discreteLoadLevels` is FALSE -->
+    <remoteCtrlPowerBand>
+        <PMin value="0" unit="kW"/>
+        <PMax value="0" unit="kW"/>
+        <QMin value="0" unit="kvar"/>
+        <QMax value="0" unit="kvar"/>
+    </remoteCtrlPowerBand>
+    <!-- `canUFLS` describes if the unit can independently under-frequency load shed. If TRUE, unit is capable to UFLS -->
+    <canUFLS value="FALSE"/>
+    <!-- `tripUFLSFSetPnt` is the UFLS trip point in Hz. -->
+    <tripUFLSFSetPnt value="55" unit="Hz"/>
+    <!-- `reconnectTimePostUFLS` describes the minimum time before the unit will try to reconnect after a UFLS event. -->
+    <reconnectTimePostUFLS value="600" unit="s"/>
+    <!-- `canUVLS` describes if the unit can independently under-voltage load shed. If TRUE, unit is capable to UVLS -->
+    <canUVLS value="FALSE"/>
+    <!-- `tripUVLSVSetPnt` is the UVLS trip point (phase to neutral) in V. -->
+    <tripUVLSVSetPnt value="260" unit="V"/>
+    <!-- `reconnectTimePostUVLS` describes the minimum time before the unit will try to reconnect after a UVLS event. -->
+     <reconnectTimePostUVLS value="600" unit="s"/>
+
+</component>
+<!-- EOF -->
