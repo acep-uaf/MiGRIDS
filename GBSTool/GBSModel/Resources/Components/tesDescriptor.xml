@@ -10,7 +10,7 @@
 <component name = 'component name'>
     <!-- Declaration of inheritance - the interface itself should be the master parent. Later more specific -->
     <!-- component descriptions should state the immediate parent here. All have to be traceable to this interface. -->
-    <childOf>self</childOf>
+    <childOf>esDescriptor</childOf>
 
     <!-- Thermal energy storage is a sink -->
     <type value="sink"/>
@@ -74,7 +74,7 @@
     <!-- 'amdbientTemperature' is the ambient temperature around the thermal storage. If 'useAmbientTemperatureProfile'
        is a set to FALSE, then the temperature listed here will be used as the ambient temperature to calculate heat
        loss. If it is set to TRUE, this value is not used. Default value is 298 K (25 C). Units are Kelvin.  -->
-    <amdbientTemperature value="298" unit="K"/>
+    <ambientTemperature value="298" unit="K"/>
 
     <!-- 'useAmbientTemperatureProfile' is a bool value that indicates whether or not to use a temperature profile for
       ambient temeperatures. If set to TRUE, a temperature profile saved at ..... will be used. Default if FALSE. -->

@@ -9,7 +9,7 @@
 <!-- Root tag is 'component' -->
 <component name = 'component name'>
     <!-- Declaration of inheritance. Parent of this generic EES descriptor should be the interface itself.  -->
-    <childOf>componentDescriptorInterface</childOf>
+    <childOf>esDescriptor</childOf>
 
     <!-- 'type' is 'sink-source'. -->
     <type value="sink-source"/>
