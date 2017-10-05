@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Project: GBS Tool -->
+<!-- Author: Dr. Marc Mueller-Stoffels, marc@denamics.com -->
+<!-- Date: October 5, 2017 -->
+<!-- License: MIT License (see LICENSE file of this package for more information -->
+
+<!-- This file describes a generic load -->
+
+<!-- Root tag is 'component' -->
+<component name = 'component name'>
+    <!-- Declaration of inheritance -->
+    <childOf>componentDescriptorInterface</childOf>
+
+    <!-- 'type' always is 'sink' even if small discharge from inductances or capacitances is possible -->
+    <type value="sink"/>
+
+    <!-- Nameplate values -->
+    <!-- 'PInMaxPa' is the maximum real power the unit can receive from the grid, should be 0 if source. Units: kW -->
+    <PInMaxPa value="0" unit="kW"/>
+    <!-- 'QInMax' is the maximum reactive power the unit can receive from the grid, should be 0 if source. Units. kvar -->
+    <QInMaxPa value="0" unit="kvar"/>
+    <!-- 'POutMaxPa' is the maximum real power the unit can deliver to the grid. Should be 0 if sink. Units: kW -->
+    <POutMaxPa value="0" unit="kW"/>
+    <!-- 'QOutMaxPa' is the maximum reactive power the unit can deliver to the grid. Should be 0 if sink. Units: kvar -->
+    <QOutMaxPa value="0" unit="kvar"/>
+
+    <!-- Grid service capabilities -->
+    <!-- 'isVoltageSource' describes the capability of the component to regulate vars. -->
+    <isVoltageSource value="FALSE"/>
+    <!-- 'isFrequencyReference' describes the units capability to be the frequency reference of the the grid. -->
+    <isFrequencyReference value="FALSE"/>
+    <!-- 'isLoadFollowing' describes the capability of a unit to ramp up or down to mitigate demand or non-load following -->
+    <!-- production induced frequency or voltage issues -->
+    <isLoadFollowing value="FALSE"/>
+    <!-- 'isCurtailable' describes if the unit can reduce and clamp power output below available resource based on -->
+    <!-- a control signal -->
+    <isCurtailable value="FALSE"/>
+
+    <!-- Physical connection -->
+    <!-- 'isThreePhase' is TRUE if the unit is a three or four-wire three-phase unit. Default value is TRUE. -->
+    <isThreePhase value="TRUE"/>
+    <!-- 'isDelta' defines if the unit is Delta of Wye connected. Default is TRUE. -->
+    <isDelta value="TRUE"/>
+    <!-- 'connectionType' value defines how the unit is connected to the grid, i.e., on which phases, if the neutral -->
+    <!-- is present, is the neutral grounded, etc. See the documentation for available values. Default value is 0. -->
+    <!-- this ALWAYS has to be changed. Units attribute ALWAYS is NONE, it is here for consistency only. -->
+    <connectionType value="0" unit="NONE"/>
+
+    <!-- Load specific items -->
+    <!-- `isDiscrete' determines if the load levels are continuous or discrete. If TRUE, load levels are discrete. -->
+    <!-- Default value is TRUE -->
+    <isDiscrete value="TRUE" />
+    <!-- `discreteLoadLevels` gives the available load steps for real <p> and reactive <q>. If the attribute `pqIdpnt` -->
+    <!-- is TRUE, the real and reactive power steps are independent from each other. Otherwise tuples of p and q always -->
+    <!-- have to be switched together -->
+    <discreteLoadLevels pqIdpnt="TRUE">
+        <p value="0" unit="kW"/><q value="0" unit="kvar"/>
+        <p value="0" unit="kW"/><q value="0" unit="kvar"/>
+    </discreteLoadLevels>
+    <!-- `switchTime` describes the typical time from receiving a control signal at the load to a change in load level -->
+    <!-- in milliseconds. Default is 1000 ms.-->
+    <switchTime value="1000" unit="ms"/>
+    <!-- `switchTimeDev` describes the typical deviation from 'switchTime' in ms. Default is 500 ms. -->
+    <switchTimeDev value="500" unit="ms" />
+
+</component>
+<!-- EOF -->
