@@ -47,5 +47,39 @@
     <!-- is present, is the neutral grounded, etc. See the documentation for available values. Default value is 0. -->
     <!-- this ALWAYS has to be changed. Units attribute ALWAYS is NONE, it is here for consistency only. -->
     <connectionType value="0" unit="NONE"/>
+
+    <!-- 'faultCurrent' Is the ammount of fault current that can be supplied  per cycle.
+    Fault current units are in P.U. of nameplate current and are described by the tuple 'iPu'.
+    Fault current values are defined for the number of ms they can be sustained, described by the tuple 'ms'
+    (16.7 ms per 60 Hz cycle). -->
+    <!-- Default is 1 PU at 5 cycles, ie no fault current capability. -->
+    <faultCurrent>
+        <ms value="5" unit="cycles"/><iPu value="1" unit="pu"/>
+    </faultCurrent>
+
+    <!-- 'overLoad' Is the ammount of over load that can be supplied per second.
+    Over load units are in P.U. of nameplate power and are specified by the number of hours they can
+    operate at. It is described by the tuples 'hr' (time with units hours) and 'pPu' (P.U. of nameplate capacity). -->
+    <!-- Default is 1 PU for 1 second, ie no over load capability. -->
+    <overLoad>
+        <hr value="1" unit="hr"/><pPu value="1" unit="pu"/>
+    </overLoad>
+
+    <!-- 'MaxMeanLoad24HrPu' Is the the maximum average loading the component is rated for in a 24 hour period.
+    For example, for diesel generators, this rating is different for Prime, Standy and Continuous rated engines and
+    between manufacturers. The ISO-8528-1 specification for a Prime generator is 0.7.-->
+    <!-- Units: P.U.. Default is 1, i.e. it can operate at 100% capacity constantly.  -->
+    <MaxMeanLoad24HrPu value="1" unit="pu"/>
+
+    <!-- 'heatingPowerRequirement' is the thermal power required to keep the component warm, if required. For example
+    diesel generators in hot standby need to be heated. It is described by two tuples: 'tempAmb' is the ambient (outdoor)
+    temperature in Kelvin. 'tempHeatingMin' is the minimum temperature required for the heating fluid used to heat the
+    component. 'pt' is the thermal power consumption in kW. This will be supplied by whatever excess heat is
+    available -->
+    <!-- Default is one data point at 298 degree K of 0 kW.   -->
+    <heatingPowerRequirement>
+        <tempAmb value="298" unit="K"/><tempHeatingMin value="298" unit="K"/><pt value="0" unit="kW"/>
+    </heatingPowerRequirement>
+
 </component>
 <!-- EOF -->
