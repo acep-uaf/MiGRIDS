@@ -14,90 +14,18 @@
     <!-- 'type' is 'source'. -->
     <type value="source"/>
 
-    <!-- Nameplate values -->
-    <!-- 'PInMaxPa' is the maximum real power the unit can receive from the grid, should be 0 if source. Units: kW -->
-    <PInMaxPa value="0" unit="kW"/>
-    <!-- 'QInMax' is the maximum reactive power the unit can receive from the grid, should be 0 if source. Units. kvar -->
-    <QInMaxPa value="0" unit="kvar"/>
-    <!-- 'POutMaxPa' is the maximum real power the unit can deliver to the grid. Should be 0 if sink. Units: kW -->
-    <POutMaxPa value="0" unit="kW"/>
-    <!-- 'QOutMaxPa' is the maximum reactive power the unit can deliver to the grid. Should be 0 if sink. Units: kvar -->
-    <QOutMaxPa value="0" unit="kvar"/>
-
-    <!-- Grid service capabilities -->
-    <!-- 'isVoltageSource' describes the capability of the component to regulate vars. Default value is TRUE. -->
-    <isVoltageSource value="TRUE"/>
-    <!-- 'isFrequencyReference' describes the units capability to be the frequency reference of the the grid. Default value -->
-    <!-- is TRUE. -->
-    <isFrequencyReference value="TRUE"/>
-    <!-- 'isLoadFollowing' describes the capability of a unit to ramp up or down to mitigate demand or non-load following -->
-    <!-- production induced frequency or voltage issues. Default value is TRUE. -->
-    <isLoadFollowing value="TRUE"/>
-    <!-- 'isCurtailable' describes if the unit can reduce and clamp power output below available resource based on -->
-    <!-- a control signal. Default value is TRUE. -->
-    <isCurtailable value="TRUE"/>
-
-    <!-- Physical connection -->
-    <!-- 'isThreePhase' is TRUE if the unit is a three or four-wire three-phase unit. Default value is TRUE. -->
-    <isThreePhase value="TRUE"/>
-    <!-- 'isDelta' defines if the unit is Delta of Wye connected. Default is TRUE. -->
-    <isDelta value="TRUE"/>
-    <!-- 'connectionType' value defines how the unit is connected to the grid, i.e., on which phases, if the neutral -->
-    <!-- is present, is the neutral grounded, etc. See the documentation for available values. Default value is 0. -->
-    <!-- this ALWAYS has to be changed. Units attribute ALWAYS is NONE, it is here for consistency only. -->
-    <connectionType value="0" unit="NONE"/>
+    <!-- NOTICE: NON-MODIFIED PARENT TAGS ARE NOT SHOWN, THEY SHOULD BE INHERITED FROM THE PARENT -->
 
     <!-- GEN specific parameters -->
     <!-- 'fuelCurve' describes the fuel consumption of the diesel generator as per its power output, described by tuples -->
-    <!--  'p' and 'fc' tags. -->
-    <!-- Power should be presented as P.U. of the nameplate real power capacity. Fuel consumption is L/hr -->
+    <!--  'pPu' and 'massFlow' tags. -->
+    <!-- Power should be presented as P.U. of the nameplate real power capacity. Fuel consumption is kg/s -->
     <!-- Default is to have a data point at 0 and 1 P.U. power output. DEFAULT VALUES REQUIRE CHANGING for this to -->
     <!-- be sensible. -->
     <fuelCurve>
-        <p value="0" unit="pu"/><fc value="0" unit="L/hr"/>
-        <p value="1" unit="pu"/><fc value="0" unit="L/hr"/>
+        <pPu value="0" unit="pu"/><massFlow value="0" unit="kg/s"/>
+        <pPu value="1" unit="pu"/><massFlow value="0" unit="kg/s"/>
     </fuelCurve>
-
-    <!-- 'heatRecovery' describes the usable heat that comes off of the diesel generators per power output.  -->
-    <!-- It is described by the tuples 'p' (power) and 'pt' (thermal power).  -->
-    <!-- Units for power are P.U. of nameplate capacity and for heat output are thermal kW (not electric). -->
-    <!-- Default is to have a data point at 0 and 1 P.U. power output. DEFAULT VALUES REQUIRE CHANGING for this to -->
-    <!-- be sensible. -->
-    <heatRecovery>
-        <p value="0" unit="pu"/><pt value="0" unit="kW"/>
-        <p value="1" unit="pu"/><pt value="0" unit="kW"/>
-    </heatRecovery>
-
-    <!-- 'faultPower' Is the ammount of fault power that can be supplied by the diesel generator per cycle.  -->
-    <!-- Fault current units are in P.U. of nameplate power and are described by the tuple 'p'.  -->
-    <!-- Fault current values are defined for the number of cycles they can be sustained, described by the tuple 'c' -->
-    <!-- with units '60Hz cycles' (16.7 ms intervals). -->
-    <!-- Default is 1 PU at 5 cycles, ie no fault power capability. -->
-    <faultPower>
-        <c value="5" unit="cycles"/><p value="1" unit="pu"/>
-    </faultPower>
-
-    <!-- 'overLoad' Is the ammount of over load that can be supplied by the diesel generator per second.  -->
-    <!-- Over load units are in P.U. of nameplate power and are specified by the number of hours they can   -->
-    <!-- operate at. It is described by the tuples 't' (time with units seconds) and 'p' (P.U. of nameplate capacity). -->
-    <!-- Default is 1 PU for 1 second, ie no over load capability. -->
-    <overLoad>
-        <t value="1" unit="sec"/><p value="1" unit="pu"/>
-    </overLoad>
-
-    <!-- 'loadFactor24Hr' Is the the maximum average loading the diesel generator is rated for in a 24 hour period. -->
-    <!-- This is different for Prime, Standy and Continuous rated engines and between manufacturers. -->
-    <!-- Units: P.U.. Default is 0.7, which is the ISO-8528-1 specification for a Prime generator.  -->
-    <loadFactor24Hr value="0.7" unit="pu"/>
-
-
-
-    <!-- 'hotStandbyPowerRequirement' is the thermal power required to keep the engine hot. This is only used when it is -->
-    <!-- offline and hot. It is described by two tuples: 'T' is the ambient (outdoor) temperature in Kelvin. 'pt' is the -->
-    <!-- thermal power consumption in kW_t. Default is one data point at 0 degree K of 0 kW_t.   -->
-    <hotStandbyPowerRequirement>
-        <T value="1" unit="K"/><pt value="1" unit="kW_t"/>
-    </hotStandbyPowerRequirement>
 
 </component>
 <!-- EOF -->

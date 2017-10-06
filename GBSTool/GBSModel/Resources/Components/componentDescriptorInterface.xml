@@ -48,7 +48,7 @@
     <!-- this ALWAYS has to be changed. Units attribute ALWAYS is NONE, it is here for consistency only. -->
     <connectionType value="0" unit="NONE"/>
 
-    <!-- 'faultCurrent' Is the ammount of fault current that can be supplied  per cycle.
+    <!-- 'faultCurrent' Is the ammount of fault current that can be supplied  per ms.
     Fault current units are in P.U. of nameplate current and are described by the tuple 'iPu'.
     Fault current values are defined for the number of ms they can be sustained, described by the tuple 'ms'
     (16.7 ms per 60 Hz cycle). -->
@@ -57,7 +57,7 @@
         <ms value="5" unit="cycles"/><iPu value="1" unit="pu"/>
     </faultCurrent>
 
-    <!-- 'overLoad' Is the ammount of over load that can be supplied per second.
+    <!-- 'overLoad' Is the ammount of over load that can be supplied per hour.
     Over load units are in P.U. of nameplate power and are specified by the number of hours they can
     operate at. It is described by the tuples 'hr' (time with units hours) and 'pPu' (P.U. of nameplate capacity). -->
     <!-- Default is 1 PU for 1 second, ie no over load capability. -->
@@ -80,6 +80,16 @@
     <heatingPowerRequirement>
         <tempAmb value="298" unit="K"/><tempHeatingMin value="298" unit="K"/><pt value="0" unit="kW"/>
     </heatingPowerRequirement>
+
+    <!-- 'heatRecovery' describes the usable heat that comes off of the component per power output.  -->
+    <!-- It is described by the tuples 'pPu' (power) and 'pt' (thermal power).  -->
+    <!-- Units for power are P.U. of nameplate power capacity and for heat output are thermal kW (not electric). -->
+    <!-- Default is to have a data point at 0 and 1 P.U. power output. DEFAULT VALUES REQUIRE CHANGING for this to -->
+    <!-- be sensible. -->
+    <heatRecovery>
+        <pPu value="0" unit="pu"/><pt value="0" unit="kW"/>
+        <pPu value="1" unit="pu"/><pt value="0" unit="kW"/>
+    </heatRecovery>
 
 </component>
 <!-- EOF -->
