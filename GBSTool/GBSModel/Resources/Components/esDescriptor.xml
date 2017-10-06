@@ -15,82 +15,23 @@ children. -->
     <!-- 'type' is 'sink-source'. -->
     <type value="sink-source"/>
 
-    <!-- Nameplate values -->
-    <!-- 'PInMaxPa' is the maximum real power the unit can receive from the grid, should be 0 if source. Units: kW -->
-    <PInMaxPa value="0" unit="kW"/>
-    <!-- 'QInMax' is the maximum reactive power the unit can receive from the grid, should be 0 if source. Units. kvar -->
-    <QInMaxPa value="0" unit="kvar"/>
-    <!-- 'POutMaxPa' is the maximum real power the unit can deliver to the grid. Should be 0 if sink. Units: kW -->
-    <POutMaxPa value="0" unit="kW"/>
-    <!-- 'QOutMaxPa' is the maximum reactive power the unit can deliver to the grid. Should be 0 if sink. Units: kvar -->
-    <QOutMaxPa value="0" unit="kvar"/>
-
-    <!-- Grid service capabilities -->
-    <!-- 'isVoltageSource' describes the capability of the component to regulate vars. -->
-    <isVoltageSource value="TRUE"/>
-    <!-- 'isFrequencyReference' describes the units capability to be the frequency reference of the the grid. -->
-    <isFrequencyReference value="TRUE"/>
-    <!-- 'isLoadFollowing' describes the capability of a unit to ramp up or down to mitigate demand or non-load following -->
-    <!-- production induced frequency or voltage issues -->
-    <isLoadFollowing value="TRUE"/>
-    <!-- 'isCurtailable' describes if the unit can reduce and clamp power output below available resource based on -->
-    <!-- a control signal -->
-    <isCurtailable value="TRUE"/>
-
-    <!-- Physical connection -->
-    <!-- 'isThreePhase' is TRUE if the unit is a three or four-wire three-phase unit. Default value is TRUE. -->
-    <isThreePhase value="TRUE"/>
-    <!-- 'isDelta' defines if the unit is Delta of Wye connected. Default is TRUE. -->
-    <isDelta value="TRUE"/>
-    <!-- 'connectionType' value defines how the unit is connected to the grid, i.e., on which phases, if the neutral -->
-    <!-- is present, is the neutral grounded, etc. See the documentation for available values. Default value is 0. -->
-    <!-- this ALWAYS has to be changed. Units attribute ALWAYS is NONE, it is here for consistency only. -->
-    <connectionType value="0" unit="NONE"/>
+    <!-- NOTICE: NON-MODIFIED PARENT TAGS ARE NOT SHOWN, THEY SHOULD BE INHERITED FROM THE PARENT -->
 
     <!-- ESS specific parameters -->
     <!-- 'lossMap' describes the loss experienced by the energy storage system for each state of power and energy. -->
-    <!--  they are described by the tuples 'p' for power, 'e' for the state of charge and 'loss' for the loss. -->
+    <!--  they are described by the tuples 'pPu' for power, 'ePu' for the state of charge and 'loss' for the loss. -->
     <!-- Units for power are P.U. of nameplate power capacity. Positive values of power are used for discharging and
-    negative values for charging. Units for 'e' are P.U. nameplate energy capacity. It should be between 0 and 1. This
-    should include all losses including secondary systems. Units for loss are kW. Default values are data points at -1, 0 and 1 pu power, -->
+    negative values for charging. Units for 'ePu' are P.U. nameplate energy capacity. It should be between 0 and 1. 'loss'
+    should include all losses including secondary systems. Units for 'loss' are kW. Default values are data points at -1, 0 and 1 pu power, -->
     <!-- 0 and 1 pu SoC and 0 loss. -->
     <lossMap>
-        <p>-1</p><e>0</e><loss>0</loss>
-        <p>-1</p><e>1</e><loss>0</loss>
-        <p>0</p><e>0</e><loss>0</loss>
-        <p>0</p><e>1</e><loss>0</loss>
-        <p>1</p><e>0</e><loss>0</loss>
-        <p>1</p><e>1</e><loss>0</loss>
+        <pPu value="-1" unit="pu"/><ePu value="0" unit="pu"/><loss value="0" unit="kW"/>
+        <pPu value="-1" unit="pu"/><ePu value="1" unit="pu"/><loss value="0" unit="kW"/>
+        <pPu value="0" unit="pu"/><ePu value="0" unit="pu"/><loss value="0" unit="kW"/>
+        <pPu value="0" unit="pu"/><ePu value="1" unit="pu"/><loss value="0" unit="kW"/>
+        <pPu value="1" unit="pu"/><ePu value="0" unit="pu"/><loss value="0" unit="kW"/>
+        <pPu value="1" unit="pu"/><ePu value="1" unit="pu"/><loss value="0" unit="kW"/>
     </lossMap>
-
-
-    <!-- 'faultCurrent' Is the ammount of fault current that can be supplied by the ess per cycle.  -->
-    <!-- Fault current units are in P.U. of nameplate current (or power) and are described by the tuple 'fac'.  -->
-    <!-- Fault current values are defined for the number of cycles they can be sustained, described by the tuple 'c' -->
-    <!-- with units '60Hz cycles' (16.7 ms intervals). -->
-    <!-- Default is 1 PU at 5 cycles, ie no fault current capability. -->
-    <faultCurrent>
-        <c>5</c><fac>1</fac>
-    </faultCurrent>
-
-    <!-- 'overLoad' Is the ammount of over load that can be supplied by the ess per hour.  -->
-    <!-- Over load units are in P.U. of nameplate current (or power) and are specified by the number of hours they can   -->
-    <!-- operate at. It is described by the tuples 't' (time with units HOURS) and 'ol' (overload in P.U.). -->
-    <!-- Default is 1 PU for 1 hour, ie no over load capability. -->
-    <overLoad>
-        <t>1</t><ol>1</ol>
-    </overLoad>
-
-    <!-- 'loadFactor24Hr' Is the the maximum average loading the ess is rated for in a 24 hour period. -->
-    <!-- Units: P.U. of nameplate power capacity. Default is 1.  -->
-    <loadFactor24Hr value="1" unit="PU"/>
-
-    <!-- 'heatingFuelConsumption' is the fuel that is consumed to keep the ess warm.  -->
-    <!-- It is described by two tuples: 'temp' is the ambient temperature in Celsius. 'hfc' is the -->
-    <!-- heating fuel consumption in L/hr. Default is one data point at 0 degree Celsius of 0 L/hr.   -->
-    <heatingFuelConsumption>
-        <temp>0</temp><hfc>0</hfc>
-    </heatingFuelConsumption>
 
     <!-- 'chargeRate' is the fraction of power that it would take to fully charge or discharge the ESS that is the
      maximum charge or discharge power. This creates charging and discharging curves that exponentially approach full
