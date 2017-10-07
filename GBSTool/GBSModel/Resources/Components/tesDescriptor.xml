@@ -15,57 +15,35 @@
     <!-- Thermal energy storage is a sink -->
     <type value="sink"/>
 
-    <!-- Nameplate values -->
-    <!-- 'PInMaxPa' is the maximum real power the unit can receive from the grid, should be 0 if source. Units: kW -->
-    <PInMaxPa value="0" unit="kW"/>
-    <!-- 'QInMax' is the maximum reactive power the unit can receive from the grid, should be 0 if source. Units. kvar -->
-    <QInMaxPa value="0" unit="kvar"/>
-    <!-- 'POutMaxPa' is the maximum real power the unit can deliver to the grid. Should be 0 if sink. Units: kW -->
-    <POutMaxPa value="0" unit="kW"/>
-    <!-- 'QOutMaxPa' is the maximum reactive power the unit can deliver to the grid. Should be 0 if sink. Units: kvar -->
-    <QOutMaxPa value="0" unit="kvar"/>
-
-    <!-- Grid service capabilities -->
-    <!-- 'isVoltageSource' describes the capability of the component to regulate vars. -->
-    <isVoltageSource value="FALSE"/>
-    <!-- 'isFrequencyReference' describes the units capability to be the frequency reference of the the grid. -->
-    <isFrequencyReference value="FALSE"/>
-    <!-- 'isLoadFollowing' describes the capability of a unit to ramp up or down to mitigate demand or non-load following -->
-    <!-- production induced frequency or voltage issues -->
-    <isLoadFollowing value="FALSE"/>
-    <!-- 'isCurtailable' describes if the unit can reduce and clamp power output below available resource based on -->
-    <!-- a control signal -->
-    <isCurtailable value="FALSE"/>
-
-    <!-- Physical connection -->
-    <!-- 'isThreePhase' is TRUE if the unit is a three or four-wire three-phase unit. Default value is TRUE. -->
-    <isThreePhase value="TRUE"/>
-    <!-- 'isDelta' defines if the unit is Delta of Wye connected. Default is TRUE. -->
-    <isDelta value="TRUE"/>
-    <!-- 'connectionType' value defines how the unit is connected to the grid, i.e., on which phases, if the neutral -->
-    <!-- is present, is the neutral grounded, etc. See the documentation for available values. Default value is 0. -->
-    <!-- this ALWAYS has to be changed. Units attribute ALWAYS is NONE, it is here for consistency only. -->
-    <connectionType value="0" unit="NONE"/>
+   <!-- NOTICE: NON-MODIFIED PARENT TAGS ARE NOT SHOWN, THEY SHOULD BE INHERITED FROM THE PARENT -->
 
     <!-- Thermal load specific parameters -->
-    <!-- 'isDiscrete' describes if the available load levels of the DL are discrete load levels. If this is set to 'TRUE'
-    parameter 'discreteLoadLevels' must be set indicating the available load levels. If there is only one
-    available load level, set the value to 'TRUE' and set 'discreteLoadLevels' to the one level. Default if FALSE. -->
-    <isDiscrete value="FALSE" unit="bool"/>
-
-    <!-- 'discreteLoadLevels' describes the available load levels if 'isDiscrete' is set to TRUE. It is described by the
-     tuples 'p' and 'q' for real and reactive power. Units are kW and kvar. Default values are zero. -->
-    <discreteLoadLevels>
+    <!-- `isDiscrete' determines if the load levels are continuous or discrete. If TRUE, load levels are discrete. -->
+    <!-- Default value is TRUE -->
+    <isDiscrete value="TRUE" />
+    <!-- `discreteLoadLevels` gives the available load steps for real <p> and reactive <q>. If the attribute `fixedPf` -->
+    <!-- is FALSE, the real and reactive power steps are independent from each other. Otherwise tuples of p and q always -->
+    <!-- have to be switched together -->
+    <discreteLoadLevels pqIdpnt="TRUE">
+        <p value="0" unit="kW"/><q value="0" unit="kvar"/>
         <p value="0" unit="kW"/><q value="0" unit="kvar"/>
     </discreteLoadLevels>
 
     <!-- 'thermalCapacity' is the thermal capacity of the thermal storage. Units are J/K. Default is 0.  -->
     <thermalCapacity value="0" unit="J/K"/>
 
-    <!-- 'thermalConductance' is the thermal conductance of the thermal storage. Thermal convection and radiation will
-     be assumed to be 10% of the calculated conductance loss and will be accounted for by adding 10% to the calculated
-     thermal losses (http://www.process-heating.com/articles/87988-calculating-heat-loss) Units are W/K. Default is 0.  -->
-    <thermalConductance value="0" unit="W/K"/>
+    <!-- 'thermalConductanceInsulation' is the thermal conductance of the thermal storage insulation. Thermal convection
+    and radiation will be assumed to be 10% of the calculated conductance loss and will be accounted for by adding 10%
+    to the calculated thermal losses (http://www.process-heating.com/articles/87988-calculating-heat-loss)
+    Units are W/K. Default is 0.  -->
+    <thermalConductanceInsulation value="0" unit="W/K"/>
+
+    <!-- 'thermalConductanceExchanger' is thermal conductance of the heat exchanger used to transfer heat from the
+      heat transfer medium and the thermal storage medium. This is only used when the thermal storage is heated with
+      heat recovered from another process. 'conversionEfficiency' is used when directly heated with electricity or an
+       oil burner.
+       Units are W/K, the Default is 0-->
+    <thermalConductanceExchanger value="0" unit="W/K"/>
 
     <!-- 'conversionEfficiency' is the efficiency of converting electrical to thermal energy. There are no units. It is
       expressed as a decimal between 0 and 1. Defualt is 1. -->
