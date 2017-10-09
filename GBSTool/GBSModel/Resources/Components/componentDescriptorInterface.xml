@@ -69,7 +69,7 @@
     For example, for diesel generators, this rating is different for Prime, Standy and Continuous rated engines and
     between manufacturers. The ISO-8528-1 specification for a Prime generator is 0.7.-->
     <!-- Units: P.U.. Default is 1, i.e. it can operate at 100% capacity constantly.  -->
-    <MaxMeanLoad24HrPu value="1" unit="pu"/>
+    <maxMeanLoad24HrPu value="1" unit="pu"/>
 
     <!-- 'heatingPowerRequirement' is the thermal power required to keep the component warm, if required. For example
     diesel generators in hot standby need to be heated. It is described by two tuples: 'tempAmb' is the ambient (outdoor)
