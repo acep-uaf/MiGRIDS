@@ -7,7 +7,7 @@
 <!-- This file describes one set of control parameters. -->
 
 <!-- Root tag is 'component' -->
-<dispatchControl name = 'control name'>
+<componentDispatchControl name = 'control name'>
     <!-- Declaration of inheritance. Parent of this generic diesel generator descriptor should be the interface itself.  -->
     <childOf>disptachControlDescriptorInterface</childOf>
 
@@ -59,5 +59,5 @@
 
     <!-- 'switchCost' is an amount that   -->
 
-</dispatchControl>
+</componentDispatchControl>
 <!-- EOF -->
