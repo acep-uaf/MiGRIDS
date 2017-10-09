@@ -15,7 +15,10 @@ specific component dispatch control and thus should not directly be used. -->
     <childOf>self</childOf>
 
 
-    <!-- Fill in generic dispatch control parameters here for the various components. -->
+    <!-- FIR filter parameters for smoothing the loading on the component by the ESS -->
+    <!-- 'ntaps' is the number of taps used to smooth the loading on the diesel generator. A value of 0 indicates
+     no filtering. Default is 0. -->
+    <ntaps value="0" unit="NONE"/>
 
 
 
