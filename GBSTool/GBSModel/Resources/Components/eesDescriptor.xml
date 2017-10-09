@@ -15,6 +15,37 @@
     <type value="sink-source"/>
 
    <!-- NOTICE: NON-MODIFIED PARENT TAGS ARE NOT SHOWN, THEY SHOULD BE INHERITED FROM THE PARENT -->
+    <!-- `isDCBus' describes if the particular storage system is packaged with a DC bus. Generally, this will be TRUE, -->
+    <!-- but some kinetic energy storage systems may also have a fixed or variable AC bus. -->
+    <isDCBus value="TRUE"/>
+
+    <!-- 'buildingBlockVNom' describes the nominal voltage of a smallest practical building block of the unit. This is -->
+    <!-- used instead of cell voltage as single cells will rarely make sense. Default value is 500 V. If this is AC or -->
+    <!-- DC has to be ascertained from 'isDCBus' -->
+    <buildingBlockVNom value="500" unit="V"/>
+    <!-- 'buildingBlockVMax' describes the maximum voltage that the unit can be operated at. Default is 500. Units are V. -->
+    <buildingBlockVMax value="500" unit="V"/>
+    <!-- `buildingBlockVMinOp' is the minimum voltage at which the unit is considered operational, i.e. able to deliver -->
+    <!-- any power at all. Default is 500. Units are V. -->
+    <buildingBlockVMinOp value="500" unit="V"/>
+    <!-- `buildingBlockVMin' is the lowest voltage to which the unit can be discharged without destruction. This is -->
+    <!-- relevant in the specification of potentially necessary precharge circuits in the inverter package. -->
+    <buildingBlockVMin value="500" unit="V"/>
+    <!-- 'buildingBlockIMax' describes the maximum current available from the unit at nominal voltage. Default is 0. Units are A. -->
+    <buildingBlockIMax value="0" unit="A"/>
+    <!-- 'isSerializeable' describes if the building blocks can be configured in series. Default is TRUE-->
+    <isSerializable value="TRUE"/>
+    <!-- `seriesUnitsMax' describes how many units could be put in series at the most. Default is 5. -->
+    <seriesUnitsMax value="5" />
+    <!-- `seriesUnitsAct' is the actual number of units in series for this particular configuration. Default is 1, i.e., -->
+    <!-- no series configuration. -->
+    <seriesUnitsAct value="1"/>
+    <!-- `isParallelizable' desribes is building block may be configured in parallel. -->
+    <isParallelizable value="TRUE"/>
+    <!-- 'parallelUnitsMax' describes the maximum number of units that may be parallelized. Default is 5. -->
+    <parallelUnitsMax value="5"/>
+    <!-- `parallelUnitsAct' describes the actual number of units in parallel. Defaults is 1. -->
+    <parallelUnitsAct value="1"/>
 
 </component>
 <!-- EOF -->
