@@ -7,9 +7,9 @@
 <!-- This file describes one set of ESS control parameters. -->
 
 <!-- Root tag is 'essControl' -->
-<essControl name = 'control name'>
+<componentDispatchControl name = 'control name'>
     <!-- Declaration of inheritance. Parent of this generic diesel generator descriptor should be the interface itself.  -->
-    <childOf>essControlDescriptorInterface</childOf>
+    <childOf>esDispatchControlDescriptor</childOf>
 
     <!-- 'essSrcTime' is the minimum amount of time that the ess must be able to discharge for at the current level of
       SRC that it is supplying. Units are in seconds. Default is 120 s.  -->
@@ -37,5 +37,5 @@
     <essCost value="0" unit="L/kWh"/>
 
 
-</essControl>
+</componentDispatchControl>
 <!-- EOF -->
