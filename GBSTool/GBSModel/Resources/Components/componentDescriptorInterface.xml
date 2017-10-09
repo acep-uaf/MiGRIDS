@@ -82,13 +82,13 @@
     </heatingPowerRequirement>
 
     <!-- 'heatRecovery' describes the usable heat that comes off of the component per power output.  -->
-    <!-- It is described by the tuples 'pPu' (power) and 'pt' (thermal power).  -->
-    <!-- Units for power are P.U. of nameplate power capacity and for heat output are thermal kW (not electric). -->
-    <!-- Default is to have a data point at 0 and 1 P.U. power output. DEFAULT VALUES REQUIRE CHANGING for this to -->
-    <!-- be sensible. -->
+    <!-- It is described by the tuples 'pPu' (power), 'pt' (thermal power) and 'temp' (the temperature of the heat exchange
+    fluid) Units for power are P.U. of nameplate power capacity, for heat output are thermal kW (not electric) and for
+    temperature are Kelvin. Default is to have a data point at 0 and 1 P.U. power output of no heat recovery and at room
+    temperature. -->
     <heatRecovery>
-        <pPu value="0" unit="pu"/><pt value="0" unit="kW"/>
-        <pPu value="1" unit="pu"/><pt value="0" unit="kW"/>
+        <pPu value="0" unit="pu"/><pt value="0" unit="kW"/><temp value="298" unit="K"/>
+        <pPu value="1" unit="pu"/><pt value="0" unit="kW"/><temp value="298" unit="K"/>
     </heatRecovery>
 
 </component>
