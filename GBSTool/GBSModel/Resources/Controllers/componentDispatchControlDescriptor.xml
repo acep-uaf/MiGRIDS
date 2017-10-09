@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Project: GBS Tool -->
+<!-- Author: Jeremy VanderMeer, jbvandermeer@alaska.edu -->
+<!-- Date: October 9, 2017 -->
+<!-- License: MIT License (see LICENSE file of this package for more information -->
+
+<!-- This file describes an interface for all component dispatch control parameters. It does not itself implement a
+specific component dispatch control and thus should not directly be used. -->
+
+<!-- Root tag is 'dispatchControl' -->
+<componentDispatchControl name = 'component name'>
+    <!-- Declaration of inheritance - the interface itself should be the master parent. Later more specific
+    component dispatch control descriptions should state the immediate parent here. All have to be traceable to this
+    interface. -->
+    <childOf>self</childOf>
+
+
+    <!-- Fill in generic dispatch control parameters here for the various components. -->
+
+
+
+</componentDispatchControl>
+<!-- EOF -->
