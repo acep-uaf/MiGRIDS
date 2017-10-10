@@ -11,32 +11,26 @@
     <!-- Declaration of inheritance. Parent of this generic diesel generator descriptor should be the interface itself.  -->
     <childOf>disptachControlDescriptorInterface</childOf>
 
-
-    <!-- FIR filter parameters for smoothing the loading on diesel and wind units by the ESS -->
-    <!-- 'ntaps' is the number of taps used to smooth the loading on the diesel generator. A value of 0 indicates
-     no filtering. Default is 0. -->
-    <ntaps value="0" unit="NONE"/>
-
     <!-- 'maxDiesCapCharge' is the maximum capacity that charging the ESS can increase the diesel loading to. It
      depends on the state of charge of the ESS. It is defined by the tuple 'mdcc' which is the maximum diesel loading
-     and the tuple 'soc' which is the corresponding state of charge of the ESS. Units for 'mdcc' are P.U. of nameplate
-     capacity of the diesel generator. Units for 'soc' are P.U. of ESS nameplate energy capacity. Default values for
+     and the tuple 'e' which is the corresponding state of charge of the ESS. Units for 'mdcc' are P.U. of nameplate
+     capacity of the diesel generator. Units for 'e' are P.U. of ESS nameplate energy capacity. Default values for
      'mdcc' are 0.65, 0.75, 0.85 and 0.9. The corresponding default values for 'soc' are 1, 0.3, 0.1 and 0. -->
     <maxDiesCapCharge>
-        <mdcc>0.65</mdcc><soc>1</soc>
-        <mdcc>0.75</mdcc><soc>0.3</soc>
-        <mdcc>0.85</mdcc><soc>0.1</soc>
-        <mdcc>0.9</mdcc><soc>0</soc>
+        <mdcc value="0.65" unit="pu"/><e value="1" unit="pu"/>
+        <mdcc value="0.75" unit="pu"/><e value="0.3" unit="pu"/>
+        <mdcc value="0.85" unit="pu"/><e value="0.1" unit="pu"/>
+        <mdcc value="0.9" unit="pu"/><e value="0" unit="pu"/>
     </maxDiesCapCharge>
 
-    <!-- 'MOL' describes the minimum optimal loading. Units are in P.U. of nameplate capacity. -->
+    <!-- 'mol' describes the minimum optimal loading. Units are in P.U. of nameplate capacity. -->
     <!-- Default value is 0.4. There are no units. -->
-    <MOL value="0.4" unit="PU"/>
+    <mol value="0.4" unit="PU"/>
 
     <!-- 'minRunTime' is the minimum amount of time that the diesel generator should run online for before being  -->
     <!-- brought offline. This will be followed except in situations which require the unit to be brought offline -->
-    <!-- earlier to avoid critical situations. Units: seconds. Default is 3600 sec (1 Hr).  -->
-    <minRunTime value="3600" unit="sec"/>
+    <!-- earlier to avoid critical situations. Units: hours. Default is 1 hr.  -->
+    <minRunTime value="1" unit="hr"/>
 
     <!-- 'startTime' is the ammount of time it takes a hot diesel generator to be brought online. This means cranking, -->
     <!-- synchronizing, connecting and ramping to full load capability. Units: seconds. Default is 30. -->
