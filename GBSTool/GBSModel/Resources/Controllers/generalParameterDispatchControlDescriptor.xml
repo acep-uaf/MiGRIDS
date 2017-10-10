@@ -7,9 +7,9 @@
 <!-- This file describes one set of dispatch control parameters. -->
 
 <!-- Root tag is 'dispatchControl' -->
-<dispatchControl name = 'control name'>
+<componentDispatchControl name = 'control name'>
     <!-- Declaration of inheritance. Parent of this generic diesel generator descriptor should be the interface itself.  -->
-    <childOf>disptachControlDescriptorInterface</childOf>
+    <childOf>componentDisptachControlDescriptorInterface</childOf>
 
 
     <!-- In order to decide between the which generating state should be chosen for the next step, the estimated fuel
@@ -26,5 +26,5 @@
 
 
 
-</dispatchControl>
+</componentDispatchControl>
 <!-- EOF -->
