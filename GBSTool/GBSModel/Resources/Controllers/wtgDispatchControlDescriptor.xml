@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Project: GBS Tool -->
+<!-- Author: Jeremy VanderMeer, jbvandermeer@alaska.edu -->
+<!-- Date: September 27, 2017 -->
+<!-- License: MIT License (see LICENSE file of this package for more information -->
+
+<!-- This file describes one set of control parameters. -->
+
+<!-- Root tag is 'component' -->
+<componentDispatchControl name = 'control name'>
+    <!-- Declaration of inheritance. Parent of this generic diesel generator descriptor should be the interface itself.  -->
+    <childOf>componentDisptachControlDescriptorInterface</childOf>
+
+
+    <!-- There are no wtg specific tags for dispatch control yet. -->
+
+</componentDispatchControl>
+<!-- EOF -->
