@@ -9,7 +9,7 @@
 <!-- Root tag is 'smoothControl' -->
 <smoothControl name = 'control name'>
     <!-- Declaration of inheritance. Parent of this generic diesel generator descriptor should be the interface itself.  -->
-    <childOf>smoothControlDescriptorInterface</childOf>
+    <childOf>componentDisptachControlDescriptorInterface</childOf>
 
     <!-- 'lowerCut' is the cut off frequency used in the FIR filter. Units: Hz. A value of zero indicates no smoothing
      This is used in conjunction with the number of taps specified in the control descriptions for each component.

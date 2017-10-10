@@ -20,7 +20,7 @@
     <prevLoadTime value="5" unit="min"/>
 
     <!-- 'prevLoadAss' is the method used to assess the previous load in order to predict what the future load will be.
-     'value' is a string. Options include 'average', 'weightedAverage' and 'trend' . Default is 'aveage'. This is just
+     'value' is a string. Options include 'average', 'weightedAverage' and 'trend' . Default is 'average'. This is just
      the average of the previous period described by 'prevLoadTime'.-->
     <prevLoadAss value="average" unit="NONE"/>
 
