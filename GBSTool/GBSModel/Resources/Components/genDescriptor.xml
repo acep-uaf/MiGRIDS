@@ -55,6 +55,10 @@
     minimize diesel switching. This will be divied by the 'minRunTime' to get an L/hr value that will be added to the
      predicted fuel consumption of the diesel generators. -->
     <startCost value="0" unit="L"/>
+    <!-- FIR filter parameters for smoothing the loading on the component by the ESS -->
+    <!-- 'ntaps' is the number of taps used to smooth the loading on the diesel generator. A value of 0 indicates
+     no filtering. Default is 0. -->
+    <ntaps value="0" unit="NONE"/>
 
 </component>
 <!-- EOF -->
