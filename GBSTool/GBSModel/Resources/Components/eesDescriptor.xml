@@ -11,9 +11,6 @@
     <!-- Declaration of inheritance. Parent of this generic EES descriptor should be the interface itself.  -->
     <childOf>esDescriptor</childOf>
 
-    <!-- 'type' is 'sink-source'. -->
-    <type value="sink-source"/>
-
    <!-- NOTICE: NON-MODIFIED PARENT TAGS ARE NOT SHOWN, THEY SHOULD BE INHERITED FROM THE PARENT -->
     <!-- `isDCBus' describes if the particular storage system is packaged with a DC bus. Generally, this will be TRUE, -->
     <!-- but some kinetic energy storage systems may also have a fixed or variable AC bus. -->
