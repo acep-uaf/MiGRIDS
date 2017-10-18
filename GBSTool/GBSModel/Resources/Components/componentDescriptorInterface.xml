@@ -47,6 +47,8 @@
     <!-- is present, is the neutral grounded, etc. See the documentation for available values. Default value is 0. -->
     <!-- this ALWAYS has to be changed. Units attribute ALWAYS is NONE, it is here for consistency only. -->
     <connectionType value="0" unit="NONE"/>
+    <!-- `VAcNom` describes the nominal connection voltage to the grid. Default is 480 VAC. Units are V. -->
+    <VAcNom value="480" unit="V"/>
 
     <!-- 'faultCurrent' Is the ammount of fault current that can be supplied  per ms.
     Fault current units are in P.U. of nameplate current and are described by the tuple 'iPu'.
