@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Project: GBS Tool -->
+<!-- Author: Dr. Marc Mueller-Stoffels, marc.mueller.stoffels@gmail.com -->
+<!-- Date: October 18, 2017 -->
+<!-- License: MIT License (see LICENSE file of this package for more information) -->
+
+<!-- This file describes a generic inverter system that may be used as an interface for PV or energy storage. -->
+
+<component name="component name">
+    <!-- Declaration of inheritance. This descriptor is a direct descendant of the general interface. -->
+    <childOf>componentDescriptorInterface</childOf>
+
+    <!-- General AC and DC bus items -->
+    <!-- `VDcMin` describes the minimum operational DC bus voltage of the inverter. Default is 0 VDC. Units are V.-->
+    <VDcMin value="0" unit="V"/>
+    <!-- `VDcMax` describes the maximum operational DC bus voltage of the inverter. Default is 1000 VDC. Units are V. -->
+    <VDcMax value="0" unit="V"/>
+    <!-- `IDcMax` describes the maximum DC bus current the inverter can tolerate. Default is 0 A. Units are A. -->
+    <IDcMax value="0" unit="A"/>
+    <!-- `IAcMax` describes the maximum AC current the inverter can tolerate. Default is 0 A. Units are A.  -->
+    <IAcMax value="0" unit="A"/>
+    <!-- `SMax` describes the maximum apparent power of the AC interface. Default is 0 kVA. Units are kVA. -->
+    <SMax value="0" unit="kVA"/>
+
+    <!-- `isBidirectional` describes if the inverter can operate bidirectionally, i.e., if it can import and export -->
+    <!-- power relative to the AC interface. Default is FALSE. -->
+    <isBidirectional value="FALSE"/>
+
+    <!-- TODO: isFourQuadrant hasVirtualInertia needsXFMR canFDroop canVDroop technology -->
+
+
+</component>
+<!-- EOF -->
