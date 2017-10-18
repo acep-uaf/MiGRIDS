@@ -43,10 +43,13 @@
     <isThreePhase value="TRUE"/>
     <!-- 'isDelta' defines if the unit is Delta of Wye connected. Default is TRUE. -->
     <isDelta value="TRUE"/>
-    <!-- 'connectionType' value defines how the unit is connected to the grid, i.e., on which phases, if the neutral -->
+    <!-- 'acConnectionType' value defines how the unit is connected to the grid, i.e., on which phases, if the neutral -->
     <!-- is present, is the neutral grounded, etc. See the documentation for available values. Default value is 0. -->
-    <!-- this ALWAYS has to be changed. Units attribute ALWAYS is NONE, it is here for consistency only. -->
-    <connectionType value="0" unit="NONE"/>
+    <!-- Units attribute ALWAYS is NONE, it is here for consistency only. -->
+    <acConnectionType value="0" unit="NONE"/>
+    <!-- `dcConnectionType` describes the type of DC connection used, if any. Default is 0, which means no DC connection. -->
+    <!-- Units are NONE, as this is just a key (see Wiki for more info). -->
+    <dcConnectionType value="0" unit="NONE"/>
     <!-- `VAcNom` describes the nominal connection voltage to the grid. Default is 480 VAC. Units are V. -->
     <VAcNom value="480" unit="V"/>
 
@@ -59,7 +62,7 @@
         <ms value="5" unit="cycles"/><iPu value="1" unit="pu"/>
     </faultCurrent>
 
-    <!-- 'overLoad' Is the ammount of over load that can be supplied per hour.
+    <!-- 'overLoad' Is the amount of over load that can be supplied per hour.
     Over load units are in P.U. of nameplate power and are specified by the number of hours they can
     operate at. It is described by the tuples 'hr' (time with units hours) and 'pPu' (P.U. of nameplate capacity). -->
     <!-- Default is 1 PU for 1 second, ie no over load capability. -->

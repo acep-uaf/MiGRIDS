@@ -15,18 +15,49 @@
     <VDcMin value="0" unit="V"/>
     <!-- `VDcMax` describes the maximum operational DC bus voltage of the inverter. Default is 1000 VDC. Units are V. -->
     <VDcMax value="0" unit="V"/>
-    <!-- `IDcMax` describes the maximum DC bus current the inverter can tolerate. Default is 0 A. Units are A. -->
-    <IDcMax value="0" unit="A"/>
-    <!-- `IAcMax` describes the maximum AC current the inverter can tolerate. Default is 0 A. Units are A.  -->
-    <IAcMax value="0" unit="A"/>
-    <!-- `SMax` describes the maximum apparent power of the AC interface. Default is 0 kVA. Units are kVA. -->
-    <SMax value="0" unit="kVA"/>
+    <!-- `isModular` describes if the inverter is built from discrete modules. Default is FALSE. -->
+    <isModular value="FALSE"/>
+    <!-- `moduleCount` gives the number of modules in the specific lineup. Default is 1. Units are NONE. -->
+    <moduleCount value="1" unit="NONE"/>
+    <!-- `moduleIDcMax` describes the maximum DC bus current an inverter module can tolerate. Default is 0 A. -->
+    <!-- Units are A. If `isModular` is FALSE this value should be the same as busIDcMax.-->
+    <moduleIDcMax value="0" unit="A"/>
+    <!-- `moduleIAcMax` describes the maximum AC current an inverter module can tolerate. Default is 0 A. Units are A.  -->
+    <!-- If `isModular` is FALSE this value should be the same as busIAcMax.-->
+    <moduleIAcMax value="0" unit="A"/>
+    <!-- `moduleSMax` describes the maximum apparent power of a single module. Default is 0 kVA. Units are kVA. -->
+    <!-- If `isModular` is FALSE this value should be the same as busSMax.-->
+    <moduleSMax value="0" unit="kVA"/>
 
-    <!-- `isBidirectional` describes if the inverter can operate bidirectionally, i.e., if it can import and export -->
-    <!-- power relative to the AC interface. Default is FALSE. -->
-    <isBidirectional value="FALSE"/>
+    <!-- `busIDcMax` describes the maximum DC current the complete inverter can tolerate. Default is 0 A. Units are A.  -->
+    <busIDcMax value="0" unit="A"/>
+    <!-- `busIAcMax` describes the maximum AC current the complete inverter can tolerate. Default is 0 A. Units are A.  -->
+    <busIAcMax value="0" unit="A"/>
+    <!-- `busSMax` describes the maximum apparent power of the AC interface. Default is 0 kVA. Units are kVA. -->
+    <busSMax value="0" unit="kVA"/>
 
-    <!-- TODO: isFourQuadrant hasVirtualInertia needsXFMR canFDroop canVDroop technology -->
+
+    <!-- `isFourQuadrant` describes if the inverter is capable of importing and exporting power to/from the DC bus. -->
+    <!-- Default value is FALSE. -->
+    <isFourQuadrant value="FALSE"/>
+
+    <!-- 'hasVirtualInertia` describes if the inverter has some emulated inertia capabilities that make it behave more -->
+    <!-- like a diesel. Default value is FALSE -->
+    <hasVirtualInertia value="FALSE"/>
+
+    <!-- `needsXFMR` describes if the particular inverter requires a transformer at the grid connection. This could be a -->
+    <!-- transformer to step up output voltage, isolate the inverter, or to form a neutral. This variable would be -->
+    <!-- closely linked to `acConnectionType`. Default is FALSE. -->
+    <needsXFMR value="FALSE"/>
+
+    <!-- `canFDroop` describes if the unit can be used in frequency droop. Default is FALSE. -->
+    <canFDroop value="FALSE"/>
+    <!-- `canVDroop` describes if the unit can be used in voltage droop. Default is FALSE. -->
+    <canVDroop value="FALSE"/>
+
+    <!-- `technology` refers to the gate technology. Default is 0, which means IGBTs. See Wiki for full key -->
+    <technology value="0" unit="NONE"/>
+
 
 
 </component>
