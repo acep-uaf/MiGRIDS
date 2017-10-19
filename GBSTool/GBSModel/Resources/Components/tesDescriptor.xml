@@ -18,17 +18,6 @@
    <!-- NOTICE: NON-MODIFIED PARENT TAGS ARE NOT SHOWN, THEY SHOULD BE INHERITED FROM THE PARENT -->
 
     <!-- Thermal load specific parameters -->
-    <!-- `isDiscrete' determines if the load levels are continuous or discrete. If TRUE, load levels are discrete. -->
-    <!-- Default value is TRUE -->
-    <isDiscrete value="TRUE" />
-    <!-- `discreteLoadLevels` gives the available load steps for real <p> and reactive <q>. If the attribute `fixedPf` -->
-    <!-- is FALSE, the real and reactive power steps are independent from each other. Otherwise tuples of p and q always -->
-    <!-- have to be switched together -->
-    <discreteLoadLevels pqIdpnt="TRUE">
-        <p value="0" unit="kW"/><q value="0" unit="kvar"/>
-        <p value="0" unit="kW"/><q value="0" unit="kvar"/>
-    </discreteLoadLevels>
-
     <!-- 'thermalCapacity' is the thermal capacity of the thermal storage. Units are J/K. Default is 0.  -->
     <thermalCapacity value="0" unit="J/K"/>
 
