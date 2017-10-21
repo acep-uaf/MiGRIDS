@@ -55,11 +55,21 @@ def readAvecCsv(fileName,fileLocation=''):
     x_df.columns = x_df.columns.str.replace('\s+','_') # replace spaces in between with underscores
 
     # convert the date to datetime
-    dt = datetime.fromordinal(datetime(1900, 1, 1).toordinal() + x_df.DATE.astype(int) - 2)
-    tt = dt.timetuple()
+    from datetime import datetime
+    dt = [datetime(1,1,1)]*x_df.shape[0]
+    for i in  range(x_df.shape[0]):
+        # convert the Date from csv to datetime
+        dt[i] = datetime.fromordinal(datetime(1900, 1, 1).toordinal() + int(x_df.DATE[i]) - 2)
+        # calculate the time and add to datetime
+        hour = (x_df.TIME[i]*24)//1
+        minute = (x_df.TIME[i]*24*60-hour*60)//1
+        second = abs(x_df.TIME[i]*24*3600-hour*3600-minute*60)//1
+        dt[i] = dt[i].replace(hour=int(hour),minute=int(minute),second=int(second))
+
+
     return x_df
 
 
 x_df = readAvecCsv('ChevakDispatch201612.csv','Chevak')
 import matplotlib.pyplot as plt
-plt.plot(x_df.Date,x_df.Village_Load)
+plt.plot(x_df.DATE,x_df.Village_Load)
