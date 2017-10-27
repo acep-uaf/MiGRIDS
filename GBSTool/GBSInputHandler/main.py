@@ -7,7 +7,12 @@
 # netcdf format
 
 # first the data is read according to certain paramters or a specifically written script.
-# TODO: create general setup file with this input information
+# TODO: create general setup file or GUI with this input information
+# temporary fix
+inputSpecification = 'AVEC'
+fileLocation = ''
+fileType = '.CSV'
+columnNames = None
 from readDataFile import readDataFile
 df = readDataFile(inputSpecification,fileLocation,fileType,columnNames)
 

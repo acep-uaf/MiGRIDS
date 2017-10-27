@@ -12,8 +12,17 @@ def getComponentDescriptor(varNames):
     from netCDF4 import Dataset
     ncfile = Dataset('test.nc', 'w', format='NETCDF4')
 
+    print('Choose directory where component descriptor files are located.')
+    import tkinter as tk
+    from tkinter import filedialog
+
+    root = tk.Tk()
+    root.withdraw()
+
+    fileLocation = filedialog.askdirectory()
+
     import os
-    os.chdir('C:\\Users\jbvandermeer\Documents\ACEP\GBS\GBSTools1\InputData\Chevak')
+    os.chdir(fileLocation)
     from bs4 import BeautifulSoup
     infile_child = open("gen1Descriptor.xml", "r")
     contents_child = infile_child.read()

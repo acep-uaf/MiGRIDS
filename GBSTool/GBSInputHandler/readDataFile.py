@@ -11,17 +11,19 @@ def readDataFile(inputSpecification,fileLocation='',fileType='csv',columnNames=N
     # columnNames, if specified, is a list of column names from the data file that will be returned in the dataframe.
     # otherwise all columns will be returned. Note indexing starts from 0.
 
-    import pandas as pd
+    if fileLocation=='':
+        print('Choose directory where input data files are located.')
+        import tkinter as tk
+        from tkinter import filedialog
+
+        root = tk.Tk()
+        root.withdraw()
+
+        fileLocation = filedialog.askdirectory()
+
     import os
-    try:
-        # try to see if the input file location is an absolute address
-        os.chdir(fileLocation)
-    except:
-        # if it is not absolute, try to find it in the project folder
-        dir = os.path.dirname(__file__)
-        newdir = os.path.join(dir, '..\..\InputData', fileLocation)
-        os.chdir(newdir)
-        # get a list of all files.
+    os.chdir(fileLocation)
+
     here = os.getcwd()
     fileNames = [f for f in os.listdir(here) if
                  os.path.isfile(f) & f.endswith(fileType)]  # get just the filenames ending with fileType

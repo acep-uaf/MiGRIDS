@@ -10,15 +10,20 @@
 def readAvecCsv(fileName,fileLocation='',columnNames=None,useNames=None):
     # -------------- cd to file location ------------------------
     # TODO: Set this up such that it can easily setup with an interactive interface later (either command line or GUI)
+    # if no fileLocation is specified, request the user to input one.
+    if fileLocation=='':
+        print('Choose directory where input data files are located.')
+        import tkinter as tk
+        from tkinter import filedialog
+
+        root = tk.Tk()
+        root.withdraw()
+
+        fileLocation = filedialog.askdirectory()
+
     import os
-    try:
-        # try to see if the input file location is an absolute address
-        os.chdir(fileLocation)
-    except:
-        # if it is not absolute, try to find it in the project folder
-        dir = os.path.dirname(__file__)
-        newdir = os.path.join(dir, '..\..\InputData', fileLocation)
-        os.chdir(newdir)
+    os.chdir(fileLocation)
+
 
     #------------------- load the file -----------------------------
     # TODO: yupp, pandas should do all the tricks we need it to do...
@@ -73,7 +78,3 @@ def readAvecCsv(fileName,fileLocation='',columnNames=None,useNames=None):
 
     return x_df
 
-
-x_df = readAvecCsv('ChevakDispatch201612.csv','Chevak')
-import matplotlib.pyplot as plt
-plt.plot(x_df.DATE,x_df.Village_Load)
