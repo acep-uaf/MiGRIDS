@@ -8,7 +8,7 @@
 <!-- specific component and thus should not directly be used as description for a component. -->
 
 <!-- Root tag is 'project' -->
-<project name = 'project name'>
+<project name = 'chevak'>
     <!-- Declaration of inheritance - the interface itself should be the master parent. Later more specific -->
     <!-- project descriptions should state the immediate parent here. All have to be traceable to this interface. -->
     <childOf>self</childOf>
@@ -17,18 +17,26 @@
     <inputFileDir value=""/>
 
     <!-- 'inputFileType' is the file type of the input data files. Eg '.CSV'  -->
-    <inputFileType value=""/>
+    <inputFileType value=".CSV"/>
 
     <!-- 'inputFileFormat' is format that the input files are in. This includes formatting specific to certain data sources
       where a script has been specifically generated to deal with the data. For example 'AVEC'. If this is not specified
       Then it will assume that the data files are organized in a data table with a header at the top. -->
-    <inputFileFormat value=""/>
+    <inputFileFormat value="AVEC"/>
 
     <!-- 'componentChannels' describes the input data channels corresponding to grid components to read into the simulation.
-    The tuple 'headerName' is the names or indices of the columns in the input data files. The component names are the
-    in the componentDescriptor files. -->
+    The tuple 'headerName' is the names or indices of the columns in the input data files. The component names are the names
+    in the componentDescriptor files. 'componentAttribute' describes what was measured and what the units were. For example,
+    real power and kW. Possible values for componentAttribute include 'P' (real power), 'Q' (reactive power), 'S' (apparent
+    power), 'pf' (power factor), 'V' (voltage), 'I' (current), 'f' (frequency), 'Tamb' (ambient temperature), 'Tstorage'
+    (internal temperature for thermal storatge), 'WS' (windspeed), 'IR' (solar irradiation), 'WF' (water flow), 'Pavail'
+    (available real power), 'Qavail' (available reactive power), 'Savail' (available apparent power). Available units
+     for power include 'W', 'kW', 'MW', 'var', 'kvar', 'Mvar', 'VA', 'kVA', 'MVA'. Available units for voltage includes
+     'V' and 'kV'. Available units for current are 'A' and 'kA'. Available units for frequency is 'Hz'. Available units
+     for temperature are 'C', 'F' and 'K'. Available units for speed are 'm/s', 'ft/s', 'km/hr' and 'mi/hr'. Available
+     units for irradiation is 'W/m2'. Available units for flow include 'm3/s', 'L/s', 'cfm' and 'gal/min'  -->
     <componentChannels>
-        <headerName value=""/><componentName value=""/>
+        <headerName value=""/><componentName value=""/><componentAttribute value="" unit=""/>
     </componentChannels>
 
     <!-- 'dateChannel' the name or index of the data channel with the timestamps. 'value' is the name or index. 'format'
@@ -59,6 +67,7 @@
     <!-- 'timeStep' is the desired timestep to be used in the simulation. The data will be resampled to this value.
      Default is 1 second. -->
     <timeStep value="1" unit="s"/>
+
 
 
 </project>
