@@ -8,7 +8,7 @@
 # Currently this is only a place holder since the script was mentioned in documentation.
 
 '''
-TODO: Define and implement power curve assembler.
+Description
 
 OBJECTIVE: The fuctionality of this class is to:
     a) determine if the data provide in wtgDescriptor.xml already is sufficiently dense to define the power curve without
@@ -38,6 +38,7 @@ METHOD:
     described above:
         P(cutOutWindSpeedMin) = 0 kW
         P(cutOutWindSpeedMax) = 0 kW
+        P(2*cutOutWindSpeedMax) = 0 kW
         P(cutOutWindSpeedMax-epsilon) = POutMaxPa
 
     For an algorithm description of cubic splines see here:
@@ -52,6 +53,8 @@ OUTPUTS:
 '''
 
 # General Imports
+import numpy as np
+from scipy.interpolate import CubicSpline
 
 '''
 The WindPowerCurve class contains methods to determine a wind power curve from data provided in the wtgDescriptor.xml 
@@ -72,6 +75,9 @@ OUTPUTS:
     Wind speeds are reported in increments of 0.1 m/s, power values are rounded to the next kW. 
 '''
 class WindPowerCurve:
+    # TODO: Testing with sparse data required. Additional checks to be implemented. Documentation
+
+
     # ------Variable definitions-------
     # ******Input variables************
     # tuples of wind speed and power, list of tuples of floats, (m/s, kW)
@@ -85,9 +91,15 @@ class WindPowerCurve:
     # Nameplate power, float, kW
     POutMaxPa = 0
 
+    # ******Internal variables*********
+    # Set of coordinates (known points and constraints).
+    coords = []
+
     # ******Output variables***********
     # the power curve, list of tuples of floats, (m/s, kW)
     powerCurve = []
+    # the power curve with all entries of type `int`. For this, the wind speeds are multiplied by a factor of 10.
+    powerCurveInt = []
 
     '''
     checkInputs makes sure the input data is self-consistent and setup such that curve estimation methods can be run. 
@@ -107,12 +119,10 @@ class WindPowerCurve:
         # Setting up the extended data set including constraining tuples
         inptDataPoints = self.powerCurveDataPoints
         inptDataPoints.append((self.cutOutWindSpeedMin, 0))
-        inptDataPoints.append((self.cutOutWindSpeedMax, 0))
-        inptDataPoints.append((self.cutOutWindSpeedMax - 0.01, self.POutMaxPa))
+        inptDataPoints.append((self.cutOutWindSpeedMax, self.POutMaxPa))
         inptDataPoints.append((0, 0))
         # Sort the new list of tuples based on wind speeds.
         inptDataPoints.sort()
-        print(inptDataPoints)
 
         # Check for duplicates and clean up if possible.
         prevVal = (-999, -999)
@@ -127,7 +137,7 @@ class WindPowerCurve:
             # Copy current to previous value and proceed.
             prevVal = inptDataPoint
 
-        print(inptDataPoints)
+        self.coords = inptDataPoints
 
 
     '''
@@ -136,6 +146,36 @@ class WindPowerCurve:
     '''
     def cubicSplineCurveEstimator(self):
         self.checkInputs()
+        # Setup x and y coordinates as numpy arrays
+        x, y = zip(*self.coords)
+        xCoords = np.array(x)
+        yCoords = np.array(y)
+
+        # Calculate the cubic spline using the scipy function for this. Boundary conditions are that the derivative at
+        # end points has to be zero ('clamped'). We do not allow interpolation beyond existing data points. Wind speeds
+        # beyond the wind speeds with power data are set to NaN (and subsequently to zero further down).
+        cs = CubicSpline(xCoords, yCoords, bc_type='clamped', extrapolate=False)
+
+        # To pull an array of values from the cubic spline, we need to setup a wind speed array. This sensibly starts at
+        # 0 m/s and in this case we carry it out to twice the maximum cut-out wind speed, with a step size of 0.1 m/s.
+        windSpeeds = np.arange(0, self.cutOutWindSpeedMax*2, 0.1)
+        # With wind speed vector setup, we can extract values from the cubic spline of each wind speed point. We
+        # immediately backfill the NaNs created by requesting data outside of the initial data range with zeros.
+        # NOTE that this assumes that we know that this is true because we have defined values all the way to the
+        # cut-out wind speed.
+        power = np.nan_to_num(cs(windSpeeds))
+
+        # The results are packaged into the power curve list, which is the key output of this class.
+        self.powerCurve = list(zip(windSpeeds, power))
+        # For computational and memory efficiency we also provide a rounded and integer only power curve. For this the
+        # wind speeds are multiplied by 10 and then type cast to integers. The power values are rounded to the nearest
+        # kW and type cast to int.
+        # NOTE that this variable is significantly more efficient in memory usage.
+        self.powerCurveInt = zip(np.rint(10*windSpeeds).astype(int), np.rint(power).astype(int))
+
+
+
+
 
 
 
