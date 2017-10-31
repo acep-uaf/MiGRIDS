@@ -3,20 +3,18 @@
 # Date: September 30, 2017 -->
 # License: MIT License (see LICENSE file of this package for more information
 
-# This function will eventually return a functional estimate for the power curve of a wind turbine based on data provided
-# in 'wtgDescriptor.xml'.
-# Currently this is only a place holder since the script was mentioned in documentation.
-
 '''
 Description
 
-OBJECTIVE: The fuctionality of this class is to:
+OBJECTIVE: The functionality of this class is to:
     a) determine if the data provide in wtgDescriptor.xml already is sufficiently dense to define the power curve without
     estimation of additional points.
     b) if necessary estimate additional points of the power curve such that a dense curve available.
 
 A dense curve will have power levels associated with all wind speeds in increments of 0.1 m/s and approximates power in
-1 kW steps.
+1 kW steps. Several methods are useful in estimating power curves for wind turbines. For now, this module only implements
+calculation of via cubic splines. For a source discussing splines and other methods of estimation see Sohoni, Gupta and Nema, 2016:
+    https://www.hindawi.com/journals/jen/2016/8519785/
 
 ASSUMPTIONS:
     INPUTS: data used as input is already from a cleaned up power curve. This tool is not intended to produce a power
@@ -32,20 +30,6 @@ ASSUMPTIONS:
 
     CUTINWINDSPEED is the minimum wind speed at which a stopped turbine starts up. At this point power production is
     immediately greater zero, i.e. CUTOUTWINDSPEEDMIN < CUTINWINDSPEED.
-
-METHOD:
-    We will use cubic splines to determine a smooth power curve using the data points given, and with the constraints
-    described above:
-        P(cutOutWindSpeedMin) = 0 kW
-        P(cutOutWindSpeedMax) = 0 kW
-        P(2*cutOutWindSpeedMax) = 0 kW
-        P(cutOutWindSpeedMax-epsilon) = POutMaxPa
-
-    For an algorithm description of cubic splines see here:
-    https://en.wikipedia.org/wiki/Spline_(mathematics)#Algorithm_for_computing_natural_cubic_splines
-
-    For a source discussing splines and other methods of estimation see Sohoni, Gupta and Nema, 2016:
-    https://www.hindawi.com/journals/jen/2016/8519785/
 
 OUTPUTS:
     The output is a WindPowerCurve object, which contains the new estimated power curve, as well as additional methods
@@ -71,8 +55,20 @@ INPUTS:
 OUTPUTS:
     powerCurve: list of tuples of floats, with a defined range ws = 0 m/s to ws = cutOutWindSpeedMax and some fixed 
     points 
-    powerCurve = [(0,0), (cutOutWindSpeedMin, 0), ..., (cutOutWindSpeedMax - 0.1, POutMaxPa), (cutOutWindSpeedMax, 0)]
-    Wind speeds are reported in increments of 0.1 m/s, power values are rounded to the next kW. 
+    powerCurve = [(0,0), (cutOutWindSpeedMin, 0), ..., (cutOutWindSpeedMax, PCutOutWindSpeedMax), (>cutOutWindSpeedMax, 0)]
+    Wind speeds are reported in increments of 0.1 m/s, power values are in kW.
+    powerCurveInt: list of tuples of integers derived from the float values in `powerCurve` by rounding to the nearest 
+    integer and typecasting from float to int. Wind speed data, to preserve resolution, is multiplied by 10, e.g., 
+    3.6 m/s is now reported as 36, and power data is rounded to the next kW. 
+     
+
+METHODS:
+    checkInputs: Internal method. Checks input data for basic consistency and ensures that there are no duplicate data points which could 
+    interfere with some of the curve approximations that assume there is a unique power value for each wind speed. 
+    cubicSplineCurveEstimator: calculates a cubic spline for the give input data set with the constraints given by the 
+    power curve, cut-in and cut-out wind speeds, a condition that the boundary conditions be `clamped`, i.e., that the 
+    first derivative at the end points be zero, and with the condition that the spline not extrapolate to points outside 
+    the input interval. 
 '''
 class WindPowerCurve:
     # TODO: Testing with sparse data required. Additional checks to be implemented. Documentation

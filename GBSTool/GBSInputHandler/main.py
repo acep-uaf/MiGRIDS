@@ -40,4 +40,4 @@ Village = 'Chevak'
 from dataframe2netcdf import dataframe2netcdf
 ncfile = dataframe2netcdf(df_fixed_interval,Village,ncParameters)
 
-# save ncfile in same location as input files
+# save ncfile in folder `ModelInputData' in the path ../GBSProjects/[VillageName]/InputData/TimeSeriesData/
