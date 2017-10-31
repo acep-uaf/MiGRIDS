@@ -22,8 +22,8 @@ ASSUMPTIONS:
     wind speed value one and only one power value exists. That is, temperature compensations, if desired will have to be
     handled separately.
 
-    CUTOUTWINDSPEEDMAX describes the point where the turbine is shut off for protection. Right below this point, it
-    produces power at nameplate capacity levels. At this point the turbine is stopped and P = 0 kW.
+    CUTOUTWINDSPEEDMAX describes the point beyond which the turbine is shut off for protection. Right at this point, it
+    produces power at nameplate capacity levels. Beyond this point the turbine is stopped and P = 0 kW.
 
     CUTOUTWINDSPEEDMIN describes the point where the turbine does not produce power any longer, e.g. P = 0 kW at this
     wind speed.
@@ -49,7 +49,7 @@ INPUTS:
     cutInWindSpeed: float, wind speed at which a stopped turbine begins to produce power again, m/s
     cutOutWindSpeedMin: float, the wind speed at which the turbine does not produce power anymore due to lack of wind
     power, units are m/s
-    cutOutWindSpeedMax: float, the wind speed at which the turbine is stopped for protection, units are m/s.
+    cutOutWindSpeedMax: float, the wind speed beyond which the turbine is stopped for protection, units are m/s.
     POutMaxPa: float, nameplate power of the turbine, units are kW.
 
 OUTPUTS:
