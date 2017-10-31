@@ -17,20 +17,35 @@ INPUTS:
 OUTPUTS:
     
 '''
+
+# change dir to where setup file descriptor is located
+import os
+here = os.path.dirname(os.path.realpath(__file__))
+filename = os.path.join(here, '../GBSModel/Resources/Setup')
+
 class inputDataInformation:
 
     # ------Variable definitions-------
     # ******Input variables************
     # project name
-    projectName = []
+    project.name = []
     # directory of input files
-    inputFileDir = ''
+    inputFileDir.value = ''
     #
-    inputFileType = ''
+    inputFileType.value = ''
     #
-    inputFileFormat = ''
+    inputFileFormat.value = ''
     #
-    componentChannels = pd.DataFrame(data={'headerName':(),'componentName':(),'componentAttribute':()})
+    class componentChannels:
+        class headerName:
+            value = ()
+        class componentName:
+            value = ()
+    componentChannels.headerName.value = ()
+    #
+    componentChannels.
+
+    = pd.DataFrame(data={'headerName':(),'componentName':(),'componentAttribute':()})
     componentChannels
     # ******Internal variables*********
 

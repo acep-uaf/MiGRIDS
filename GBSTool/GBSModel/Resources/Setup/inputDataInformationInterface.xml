@@ -24,6 +24,12 @@
       Then it will assume that the data files are organized in a data table with a header at the top. -->
     <inputFileFormat value=""/>
 
+    <!-- 'componentNames' is a tuple of the names of components in the grid. Acceptable names must start with corresponding
+     names to the component descriptor files, including: 'Gen', 'Wtg', 'Inv', 'Tes', 'Ees' and 'Cl'. -->
+    <componentNames>
+        <name value=""/>
+    </componentNames>
+
     <!-- 'componentChannels' describes the input data channels corresponding to grid components to read into the simulation.
     The tuple 'headerName' is the names or indices of the columns in the input data files. The component names are the names
     in the componentDescriptor files. 'componentAttribute' describes what was measured and what the units were. For example,
