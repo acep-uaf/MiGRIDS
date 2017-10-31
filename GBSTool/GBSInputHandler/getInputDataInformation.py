@@ -8,18 +8,29 @@ def getInputDataInformation():
 
     # temporary fix
 
-    print('Choose directory where component descriptor files are located.')
+    #### get user to select the input file ####
+    # this could be hard coded if they will always be located at the same point in the file tree.
+    print('Choose directory where the input data files are located.')
     import tkinter as tk
     from tkinter import filedialog
 
     root = tk.Tk()
     root.withdraw()
 
-    fileLocation = filedialog.askdirectory()
+    #fileLocation = filedialog.askdirectory()
+    fileName = filedialog.askopenfilename()
 
-    import os
-    os.chdir(fileLocation)
+    from bs4 import BeautifulSoup
+    infile_child = open(fileName, "r")
+    contents_child = infile_child.read()
+    infile_interface = open(fileName, 'r')
+    contents_interface = infile_interface.read()
+
+    soup = BeautifulSoup(contents_child, 'xml')
+    titles = soup.find_all('title')
+    for title in titles:
+        print(title.get_text())
 
 
-    return ncfile
 
+getInputDataInformation()
