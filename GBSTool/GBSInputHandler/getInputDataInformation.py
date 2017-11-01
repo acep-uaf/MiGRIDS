@@ -31,6 +31,19 @@ def getInputDataInformation():
     for title in titles:
         print(title.get_text())
 
+    # get project name
+    projectName = soup.project.attrs['name']
+    # find parent. if 'self' then no parent
+    parent = soup.childOf.string.lower()
+    # get children
+    children = soup.findChildren() # get all children
+    for i in range(len(children)):
+        name = children[i].name
+        attributes = children[i].attrs
+        grandkids = children[i].findChildren
+
+
+
 
 
 getInputDataInformation()
