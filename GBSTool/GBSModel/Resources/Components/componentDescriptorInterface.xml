@@ -17,81 +17,105 @@
     <type value="source"/>
 
     <!-- Nameplate values -->
+    <PInMaxPa value="0" unit="kW">
     <!-- 'PInMaxPa' is the maximum real power the unit can receive from the grid, should be 0 if source. Units: kW -->
-    <PInMaxPa value="0" unit="kW"/>
+    </PInMaxPa>
+
+    <QInMaxPa value="0" unit="kvar">
     <!-- 'QInMax' is the maximum reactive power the unit can receive from the grid, should be 0 if source. Units. kvar -->
-    <QInMaxPa value="0" unit="kvar"/>
+    </QInMaxPa>
+
+    <POutMaxPa value="0" unit="kW">
     <!-- 'POutMaxPa' is the maximum real power the unit can deliver to the grid. Should be 0 if sink. Units: kW -->
-    <POutMaxPa value="0" unit="kW"/>
+    </POutMaxPa>
+
+    <QOutMaxPa value="0" unit="kvar">
     <!-- 'QOutMaxPa' is the maximum reactive power the unit can deliver to the grid. Should be 0 if sink. Units: kvar -->
-    <QOutMaxPa value="0" unit="kvar"/>
+    </QOutMaxPa>
 
     <!-- Grid service capabilities -->
+    <isVoltageSource value="FALSE">
     <!-- 'isVoltageSource' describes the capability of the component to regulate vars. -->
-    <isVoltageSource value="FALSE"/>
+    </isVoltageSource>
+
+    <isFrequencyReference value="FALSE">
     <!-- 'isFrequencyReference' describes the units capability to be the frequency reference of the the grid. -->
-    <isFrequencyReference value="FALSE"/>
+    </isFrequencyReference>
+
+    <isLoadFollowing value="FALSE">
     <!-- 'isLoadFollowing' describes the capability of a unit to ramp up or down to mitigate demand or non-load following -->
     <!-- production induced frequency or voltage issues -->
-    <isLoadFollowing value="FALSE"/>
+    </isLoadFollowing>
+
+    <isCurtailable value="FALSE">
     <!-- 'isCurtailable' describes if the unit can reduce and clamp power output below available resource based on -->
     <!-- a control signal -->
-    <isCurtailable value="FALSE"/>
+    </isCurtailable>
 
     <!-- Physical connection -->
+    <isThreePhase value="TRUE">
     <!-- 'isThreePhase' is TRUE if the unit is a three or four-wire three-phase unit. Default value is TRUE. -->
-    <isThreePhase value="TRUE"/>
+    </isThreePhase>
+
+    <isDelta value="TRUE">
     <!-- 'isDelta' defines if the unit is Delta of Wye connected. Default is TRUE. -->
-    <isDelta value="TRUE"/>
+    </isDelta>
+
+    <acConnectionType value="0" unit="NONE">
     <!-- 'acConnectionType' value defines how the unit is connected to the grid, i.e., on which phases, if the neutral -->
     <!-- is present, is the neutral grounded, etc. See the documentation for available values. Default value is 0. -->
     <!-- Units attribute ALWAYS is NONE, it is here for consistency only. -->
-    <acConnectionType value="0" unit="NONE"/>
+    </acConnectionType>
+
+    <dcConnectionType value="0" unit="NONE">
     <!-- `dcConnectionType` describes the type of DC connection used, if any. Default is 0, which means no DC connection. -->
     <!-- Units are NONE, as this is just a key (see Wiki for more info). -->
-    <dcConnectionType value="0" unit="NONE"/>
-    <!-- `VAcNom` describes the nominal connection voltage to the grid. Default is 480 VAC. Units are V. -->
-    <VAcNom value="480" unit="V"/>
+    </dcConnectionType>
 
+    <VAcNom value="480" unit="V">
+    <!-- `VAcNom` describes the nominal connection voltage to the grid. Default is 480 VAC. Units are V. -->
+    </VAcNom>
+
+    <faultCurrent>
     <!-- 'faultCurrent' Is the ammount of fault current that can be supplied  per ms.
     Fault current units are in P.U. of nameplate current and are described by the tuple 'iPu'.
     Fault current values are defined for the number of ms they can be sustained, described by the tuple 'ms'
     (16.7 ms per 60 Hz cycle). -->
     <!-- Default is 1 PU at 5 cycles, ie no fault current capability. -->
-    <faultCurrent>
         <ms value="5" unit="ms"/><iPu value="1" unit="pu"/>
     </faultCurrent>
 
+    <overLoad>
     <!-- 'overLoad' Is the amount of over load that can be supplied per hour.
     Over load units are in P.U. of nameplate power and are specified by the number of hours they can
     operate at. It is described by the tuples 'hr' (time with units hours) and 'pPu' (P.U. of nameplate capacity). -->
     <!-- Default is 1 PU for 1 second, ie no over load capability. -->
-    <overLoad>
         <hr value="1" unit="hr"/><pPu value="1" unit="pu"/>
     </overLoad>
 
+    <maxMeanLoad24HrPu value="1" unit="pu">
     <!-- 'maxMeanLoad24HrPu' Is the the maximum average loading the component is rated for in a 24 hour period.
     For example, for diesel generators, this rating is different for Prime, Standby and Continuous rated engines and
     between manufacturers. The ISO-8528-1 specification for a Prime generator is 0.7.-->
     <!-- Units: P.U.. Default is 1, i.e. it can operate at 100% capacity constantly.  -->
-    <maxMeanLoad24HrPu value="1" unit="pu"/>
+    </maxMeanLoad24HrPu>
 
+    <heatingPowerRequirement>
     <!-- 'heatingPowerRequirement' is the thermal power required to keep the component warm, if required. For example
     diesel generators in hot standby need to be heated. It is described by three tuples: 'tempAmb' is the ambient (outdoor)
     temperature in Kelvin. 'tempHeatingMin' is the minimum temperature required for the heating fluid used to heat the
     component. 'pt' is the thermal power consumption in kW. This will be supplied by whatever excess heat is
     available -->
     <!-- Default is one data point at 298 degree K of 0 kW.   -->
-    <heatingPowerRequirement>
         <tempAmb value="298" unit="K"/><tempHeatingMin value="298" unit="K"/><pt value="0" unit="kW"/>
     </heatingPowerRequirement>
 
+    <heatRecovery>
     <!-- 'heatRecovery' describes the usable heat that comes off of the component per power output.  -->
     <!-- It is described by the tuples 'pPu' (power), 'pt' (thermal power) and 'temp' (the temperature of the heat exchange
     fluid) Units for power are P.U. of nameplate power capacity, for heat output are thermal kW (not electric) and for
     temperature are Kelvin. Default is to have a data point at 0 and 1 P.U. power output of no heat recovery and at room
     temperature. -->
-    <heatRecovery>
         <pPu value="0" unit="pu"/><pt value="0" unit="kW"/><temp value="298" unit="K"/>
         <pPu value="1" unit="pu"/><pt value="0" unit="kW"/><temp value="298" unit="K"/>
     </heatRecovery>

@@ -13,13 +13,15 @@ def buildComponentDescriptor(componentNames,saveDir):
     from bs4 import BeautifulSoup
     import os
 
-    # TODO: acceptable varnames can be populated from the names of component descriptor files instead of hard coded here
-    varnames = ['gen','wtg','cl','controlledload','ees','tes','inv'] # acceptable names
-
     # cd to where component descriptors are located
     here = os.path.dirname(os.path.realpath(__file__))
     componentPath = os.path.join(here, '../GBSModel/Resources/Components')
     os.chdir(componentPath)
+    # get list of component prefixes that correspond to componentDescriptors
+    varnames = []
+    for file in os.listdir():
+        if file.endswith("Descriptor.xml"):
+            varnames.append(file[0:len(file)-14])
 
     for i in range(len(componentNames)):
         try:
