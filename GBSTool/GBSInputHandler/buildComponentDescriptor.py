@@ -24,16 +24,14 @@ def buildComponentDescriptor(componentNames,saveDir):
             varnames.append(file[0:len(file)-14])
 
     for i in range(len(componentNames)):
-        try:
-            #ind = varnames.index(componentNames[i].lower())
-            #ind = [varnames.index(i) for i in varnames if componentNames[i].lower() in i ]
-            ind = [j for j, s in enumerate(varnames) if s in componentNames[i].lower()]            # get the index of varnmaes that matches the input componentName
+        #ind = varnames.index(componentNames[i].lower())
+        #ind = [varnames.index(i) for i in varnames if componentNames[i].lower() in i ]
+        ind = [j for j, s in enumerate(varnames) if s in componentNames[i].lower()]            # get the index of varnmaes that matches the input componentName
 
-        except:
+        if len(ind)==0:
             print('Component name '+componentNames[i]+' is not valid.')
             print('Please use one of the following (case insensitive) as a prefix: ')
             print('%s' % ', '.join(map(str, varnames)))
-            break
         else:
             # read the xml file
             os.chdir(componentPath)
@@ -43,7 +41,8 @@ def buildComponentDescriptor(componentNames,saveDir):
             infile_child.close()
             soup = BeautifulSoup(contents_child, 'xml') # turn into soup
             parent = soup.childOf.string.lower() # find the anme of parent. if 'self', no parent file
-
+            # update the component name
+            soup.component.attrs['name'] = componentNames[i]
             while parent != 'self': # continue to iterate if there are parents
                 fileName = parent + '.xml'
                 infile_child = open(fileName, "r")

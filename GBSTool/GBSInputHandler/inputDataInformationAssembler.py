@@ -9,7 +9,7 @@ import pandas as pd
 
 
 '''
-The inputDataInformation class holds the information gathered from the inputDataInformationInterface.xml 
+The inputDataInformation class holds the information gathered from the projectSetup.xml 
 file. 
 INPUTS: 
     

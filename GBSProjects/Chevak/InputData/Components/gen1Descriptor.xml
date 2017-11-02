@@ -5,7 +5,7 @@
 <!-- License: MIT License (see LICENSE file of this package for more information -->
 <!-- This file describes a general diesel generator. Specific GEN might require further children. -->
 <!-- Root tag is 'component' -->
-<component name="component name">
+<component name="gen1">
  <!-- Declaration of inheritance. Parent of this generic diesel generator descriptor should be the interface itself.  -->
  <childOf>
   componentDescriptorInterface
