@@ -34,6 +34,7 @@ def buildComponentDescriptor(componentNames,saveDir):
             break
         else:
             # read the xml file
+            os.chdir(componentPath)
             fileName = varnames[ind[0]]+'Descriptor.xml' # get filename
             infile_child = open(fileName, "r") # open
             contents_child = infile_child.read()
@@ -47,17 +48,19 @@ def buildComponentDescriptor(componentNames,saveDir):
                 contents_child = infile_child.read()
                 infile_child.close()
                 soup2 = BeautifulSoup(contents_child, 'xml')
-                # add new elements from soup2 into soup
-                for element in soup2.body:
-                    soup.body.append(element)
                 # find parent. if 'self' then no parent
                 parent = soup2.childOf.string
 
+                for child in soup2.component.findChildren(): # for each tag under component
+                    # check to see if this is already a tag. If it is, it is a more specific implementation, so don't add
+                    # from parent file
+                    if soup.component.find(child.name) is None:
+                        soup.component.append(child)
+
+
             # write combined xml file
+            os.chdir(saveDir)
             saveName = componentNames[i]+'Descriptor.xml'
             f = open(saveName, "w")
             f.write(soup.prettify())
             f.close()
-
-
-buildComponentDescriptor(['gen1','gen2','wtg1'],'C:\\Users\jbvandermeer\Documents\ACEP\GBS\GBSTools1\GBSProjects\Chevak\InputData\Components')
