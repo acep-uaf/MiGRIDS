@@ -116,8 +116,7 @@
     fluid) Units for power are P.U. of nameplate power capacity, for heat output are thermal kW (not electric) and for
     temperature are Kelvin. Default is to have a data point at 0 and 1 P.U. power output of no heat recovery and at room
     temperature. -->
-        <pPu value="0" unit="pu"/><pt value="0" unit="kW"/><temp value="298" unit="K"/>
-        <pPu value="1" unit="pu"/><pt value="0" unit="kW"/><temp value="298" unit="K"/>
+        <pPu value="0 1" unit="pu"/><pt value="0 0" unit="kW"/><temp value="298 298" unit="K"/>
     </heatRecovery>
 
 </component>

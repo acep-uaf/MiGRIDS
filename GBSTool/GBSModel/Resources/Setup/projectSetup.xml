@@ -25,7 +25,7 @@
     <inputFileFormat value=""/>
 
     <!-- 'componentNames' is a tuple of the names of components in the grid. Acceptable names must start with corresponding
-     names to the component descriptor files, including: 'Gen', 'Wtg', 'Inv', 'Tes', 'Ees' and 'Cl'. For example 'Gen1',
+     names to the component descriptor files, including: 'Gen', 'Wtg', 'Inv', 'Tes', 'Ees' and 'ControlledLoad'. For example 'Gen1',
       'Gen2', 'Wtg1',... -->
     <componentNames>
         <name value=""/>

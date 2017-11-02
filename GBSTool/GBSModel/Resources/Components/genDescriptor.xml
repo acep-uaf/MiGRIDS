@@ -24,8 +24,8 @@
     <!-- Power should be presented as P.U. of the nameplate real power capacity. Fuel consumption is kg/s -->
     <!-- Default is to have a data point at 0 and 1 P.U. power output. DEFAULT VALUES REQUIRE CHANGING for this to -->
     <!-- be sensible. -->
-        <pPu value="0" unit="pu"/><massFlow value="0" unit="kg/s"/>
-        <pPu value="1" unit="pu"/><massFlow value="0" unit="kg/s"/>
+        <pPu unit="pu" value="0 1"/>
+  <massFlow unit="kg/s" value="0 0"/>
     </fuelCurve>
 
     <maxDiesCapCharge>
@@ -34,10 +34,8 @@
      and the tuple 'e' which is the corresponding state of charge of the ESS. Units for 'mdcc' are P.U. of nameplate
      capacity of the diesel generator. Units for 'e' are P.U. of ESS nameplate energy capacity. Default values for
      'mdcc' are 0.65, 0.75, 0.85 and 0.9. The corresponding default values for 'soc' are 1, 0.3, 0.1 and 0. -->
-        <mdcc value="0.65" unit="pu"/><e value="1" unit="pu"/>
-        <mdcc value="0.75" unit="pu"/><e value="0.3" unit="pu"/>
-        <mdcc value="0.85" unit="pu"/><e value="0.1" unit="pu"/>
-        <mdcc value="0.9" unit="pu"/><e value="0" unit="pu"/>
+        <mdcc unit="pu" value="0.65 0.75 0.85 0.9"/>
+        <e unit="pu" value="1 0.3 0.1 0"/>
     </maxDiesCapCharge>
 
     <mol value="0.4" unit="PU">
