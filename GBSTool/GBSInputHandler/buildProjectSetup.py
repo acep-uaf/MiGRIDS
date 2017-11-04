@@ -5,7 +5,7 @@
 
 # this accepts a list of component names with acceptable format and generates empty component descriptor files for them
 # and saves them in the input directory specified. These files will then be updated each time the user updates the information
-def buildProjectSetup(projectName,saveDir):
+def buildProjectSetup(projectName,saveDir,componentNames):
     # componentNames is a list of all components to be included in the simulation
     # saveDir is where the generated component descriptor files will be saved
 
@@ -24,6 +24,7 @@ def buildProjectSetup(projectName,saveDir):
     soup = BeautifulSoup(contents_child, 'xml')  # turn into soup
     # update the proejct name
     soup.project.attrs['name'] = projectName
+    soup.project.componentNames.findChildren('name')[0]['value'] = componentNames
     # save
     os.chdir(saveDir)
     saveName = projectName + 'Setup.xml'

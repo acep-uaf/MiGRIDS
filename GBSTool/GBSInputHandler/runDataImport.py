@@ -3,8 +3,10 @@
 # Date: October 24, 2017
 # License: MIT License (see LICENSE file of this package for more information)
 
-# The goal of the inputHandler is to take data from the user, check it for bad or missing data, and save it in a standard
+# The goal of runDataImport is to take data from the user, check it for bad or missing data, and save it in a standard
 # netcdf format
+
+# this is run after the project files have been initiated (initiateProject.py)
 
 # first the data is read according to certain paramters or a specifically written script.
 # TODO: create general setup file or GUI with this input information

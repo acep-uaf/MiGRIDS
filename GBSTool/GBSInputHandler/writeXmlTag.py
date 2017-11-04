@@ -4,7 +4,7 @@
 # License: MIT License (see LICENSE file of this package for more information)
 
 # write a value to an xml tag
-def writeXmlTag(fileName,tagPath,value,fileDir):
+def writeXmlTag(fileName,tag,attr,value,fileDir):
     # general imports
     import os
     from bs4 import BeautifulSoup
@@ -18,4 +18,22 @@ def writeXmlTag(fileName,tagPath,value,fileDir):
     infile_child.close()
     soup = BeautifulSoup(contents_child, 'xml')  # turn into soup
 
-    for i in range(len(tagPath)-1): # each step in the path should be a tag until the last one, which should be an attribute
+    # assign value
+    a = soup.find(tag[0])
+    for i in range(1,len(tag)): # for each other level of tags, if there are any
+        a = a.find(tag[i])
+    # convert value to strings if not already
+    if isinstance(value, (list, tuple)): # if a list or tuple, iterate
+        value = [str(e) for e in value]
+    else:
+        value = str(value)
+    a[attr] = value
+
+
+    # save again
+    os.chdir(fileDir)
+    f = open(fileName, "w")
+    f.write(soup.prettify())
+    f.close()
+
+

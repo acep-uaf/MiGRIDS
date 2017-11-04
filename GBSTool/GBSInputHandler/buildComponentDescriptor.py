@@ -22,7 +22,8 @@ def buildComponentDescriptor(componentNames,saveDir):
     for file in os.listdir():
         if file.endswith("Descriptor.xml"):
             varnames.append(file[0:len(file)-14])
-
+    # initiate var to store the good component names
+    componentNamesGood = []
     for i in range(len(componentNames)):
         #ind = varnames.index(componentNames[i].lower())
         #ind = [varnames.index(i) for i in varnames if componentNames[i].lower() in i ]
@@ -43,6 +44,7 @@ def buildComponentDescriptor(componentNames,saveDir):
             parent = soup.childOf.string.lower() # find the anme of parent. if 'self', no parent file
             # update the component name
             soup.component.attrs['name'] = componentNames[i]
+            componentNamesGood.append(componentNames[i])
             while parent != 'self': # continue to iterate if there are parents
                 fileName = parent + '.xml'
                 infile_child = open(fileName, "r")
@@ -65,3 +67,5 @@ def buildComponentDescriptor(componentNames,saveDir):
             f = open(saveName, "w")
             f.write(soup.prettify())
             f.close()
+
+    return componentNamesGood
