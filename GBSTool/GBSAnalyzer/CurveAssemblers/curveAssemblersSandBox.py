@@ -2,6 +2,7 @@
 from wtgPowerCurveAssembler import WindPowerCurve
 import matplotlib.pyplot as plt
 from sys import getsizeof
+import numpy as np
 
 pwrCrv = WindPowerCurve()
 pwrCrv.powerCurveDataPoints = [(1, 0), (2, 0), (3, 0), (4, 3.7), (5, 10.5),
@@ -22,7 +23,7 @@ plt.figure(figsize=(6.5, 4))
 x, y = zip(*pwrCrv.powerCurveDataPoints)
 plt.plot(x,y,'o')
 xCs, yCs = zip(*pwrCrv.powerCurve)
-plt.plot(xCs, yCs)
+plt.plot(xCs, yCs, '.')
 plt.show()
 
-
+print(np.max(np.diff(yCs, 1), 0))

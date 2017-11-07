@@ -27,4 +27,4 @@ class GenFuelCurve:
 
     # ******* OUTPUT VARIABLES *******
 
-    
+
