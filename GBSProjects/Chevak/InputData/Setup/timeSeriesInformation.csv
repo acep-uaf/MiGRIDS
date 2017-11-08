@@ -1,0 +1,17 @@
+headerName,componentName,componentAttribute_value,componentAttribute_unit,format
+WTG1_Out,wtg1,P,kW,
+WTG2_Out,wtg2,P,kW,
+WTG3_Out,wtg3,P,kW,
+WTG4_Out,wtg4,P,kW,
+WTG1_Wind,wtg1,WS,m/s,
+WTG2_Wind,wtg2,WS,m/s,
+WTG3_Wind,wtg3,WS,m/s,
+WTG4_Wind,wtg4,WS,m/s,
+Diesel1_kW,gen1,P,kW,
+Diesel2_kW,gen2,P,kW,
+Diesel3_kW,gen3,P,kW,
+SLC_Load,tes1,P,kW,
+SLC_Temp,tes2,Tstorage,F,
+DATE,date,,,ordinal
+TIME,time,,,excel
+Village_Load,load,P,kW,
