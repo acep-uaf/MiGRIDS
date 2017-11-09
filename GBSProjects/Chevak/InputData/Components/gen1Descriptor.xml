@@ -64,13 +64,13 @@
  <QInMaxPa unit="kvar" value="0">
   <!-- 'QInMax' is the maximum reactive power the unit can receive from the grid, should be 0 if source. Units. kvar -->
  </QInMaxPa>
- <POutMaxPa unit="kW" value="0">
+ <POutMaxPa unit="kW" value="300">
   <!-- 'POutMaxPa' is the maximum real power the unit can deliver to the grid. Should be 0 if sink. Units: kW -->
  </POutMaxPa>
- <QOutMaxPa unit="kvar" value="0">
+ <QOutMaxPa unit="kvar" value="nan">
   <!-- 'QOutMaxPa' is the maximum reactive power the unit can deliver to the grid. Should be 0 if sink. Units: kvar -->
  </QOutMaxPa>
- <isVoltageSource value="FALSE">
+ <isVoltageSource value="1">
   <!-- 'isVoltageSource' describes the capability of the component to regulate vars. -->
  </isVoltageSource>
  <isFrequencyReference value="FALSE">

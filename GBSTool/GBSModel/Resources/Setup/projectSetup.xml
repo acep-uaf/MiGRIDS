@@ -58,18 +58,18 @@
     <!-- 'realLoadChannel' is the name or index of the total grid real load. If this is not set, then the load will be
      calculated as the difference between all input generating unit data channels and input controllable loads data
      channels. -->
-    <realLoadChannel value=""/>
+    <realLoadChannel value="" unit=""/>
 
     <!-- 'minRealLoad' is the minimum real load expected.  -->
-    <minRealLoad value=""/>
+    <minRealLoad value="" unit=""/>
 
     <!-- 'maxRealLoad' is the maximum real load expected.  -->
-    <maxRealLoad value=""/>
+    <maxRealLoad value="" unit=""/>
 
     <!-- 'imaginaryLoadChannel' is the name or index of the total grid imaginary load. If this is not set, then the load will be
      calculated as the difference between all input generating unit data channels and input controllable loads data
      channels. -->
-    <imaginaryLoadChannel value=""/>
+    <imaginaryLoadChannel value="" unit=""/>
 
     <!-- 'timeStep' is the desired timestep to be used in the simulation. The data will be resampled to this value.
      Default is 1 second. -->
