@@ -25,7 +25,7 @@
     <!-- Default is to have a data point at 0 and 1 P.U. power output. DEFAULT VALUES REQUIRE CHANGING for this to -->
     <!-- be sensible. -->
         <pPu unit="pu" value="0 1"/>
-  <massFlow unit="kg/s" value="0 0"/>
+        <massFlow unit="kg/s" value="0 0"/>
     </fuelCurve>
 
     <maxDiesCapCharge>

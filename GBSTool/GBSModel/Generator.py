@@ -9,9 +9,27 @@ class Generator:
     genID = None
     genP = 0
     genQ = 0
-    genPMaxPa = 0
-    genQMaxPa = 0
+    genPMax = 0
+    genQMax = 0
     genPAvail = 0
     genQAvail = 0
 
     # TODO: Implement constructor, etc.
+
+    # __init__ Constructor used for intialization of generator fleet in Powerhouse class
+    # Inputs:
+    # genID - integer for identification of object within Powerhouse list of generators
+    # genP - initial real power level
+    # genQ - initial reactive power level
+    # genDescriptor - relative path and file name of genDescriptor.xml-file that is used to populate static information
+    def __init__(self, genID, genP, genQ, genDescriptor):
+        # Write initial values to internal variables.
+        self.genID = genID
+        self.genP = genP
+        self.genQ = genQ
+        genDescriptor(self, genDescriptor)
+
+
+    # Generator descriptor parser
+    def genDescriptorParser(self, genDescriptor):
+        # TODO: Implement parser that populates the necessary variables based on the selected generator descriptor
