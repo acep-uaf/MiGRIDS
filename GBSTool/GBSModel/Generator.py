@@ -3,6 +3,8 @@
 # Date: November 27, 2017
 # License: MIT License (see LICENSE file of this package for more information)
 
+# General imports
+from bs4 import BeautifulSoup as Soup
 
 class Generator:
     # Generator resources
@@ -33,3 +35,11 @@ class Generator:
     # Generator descriptor parser
     def genDescriptorParser(self, genDescriptor):
         # TODO: Implement parser that populates the necessary variables based on the selected generator descriptor
+
+        # read xml file
+        genDescriptorFile = open(genDescriptor, "r")
+        genDescriptorXml = genDescriptorFile.read()
+        genDescriptorFile.close()
+        genDescriptorSoup = Soup(genDescriptorXml, "xml")
+
+        
