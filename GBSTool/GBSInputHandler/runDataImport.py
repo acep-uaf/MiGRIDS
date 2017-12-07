@@ -6,22 +6,24 @@
 # The goal of runDataImport is to take data from the user, check it for bad or missing data, and save it in a standard
 # netcdf format
 
-# this is run after the project files have been initiated (initiateProject.py)
+# this is run after the project files have been initiated (initiateProject.py) and filled (fillProjectData.py)
 
-# first the data is read according to certain paramters or a specifically written script.
-# TODO: create general setup file or GUI with this input information
-# temporary fix
+# input data
+Village = 'Chevak'
+setupDir = 'C:\\Users\jbvandermeer\Documents\ACEP\GBS\GBSTools1\GBSProjects\Chevak\InputData\Setup'
 inputSpecification = 'AVEC'
 fileLocation = ''
 fileType = '.CSV'
 columnNames = None
-from readDataFile import readDataFile
-df = readDataFile(inputSpecification,fileLocation,fileType,columnNames)
+interval = 1 # the desired number of seconds between data points. This needs to be pulled from a file, not set here
 
-# this returns a netcdf file with meta data corresponding to the df column headers
-# TODO: possibly prompt the user to create a component descriptor(s) for data channels that dont have one
-from getComponentDescriptor import getComponentDescriptor
-ncParameters = getComponentDescriptor(df.columns)
+# get data units and header names
+from getUnits import getUnits
+headerNames, componentUnits, componentAttributes, componentNames, newHeaderNames = getUnits(Village,setupDir)
+
+# read time series data
+from readDataFile import readDataFile
+df = readDataFile(inputSpecification,fileLocation,fileType,headerNames,newHeaderNames,componentUnits) # dataframe with time series information. replace header names with column names
 
 # now fix the bad data
 from fixBadData import fixBadData
@@ -32,14 +34,16 @@ from fixBadData import fixBadData
 
 # fix the intervals
 # TODO: Figure out where we get the desired interval from. There should be a general setup file somewhere.
-interval = 1 # the desired number of seconds between data points. This needs to be pulled from a file, not set here
 from fixDataInterval import fixDataInterval
 df_fixed_interval = fixDataInterval(df_fixed,interval)
 
 # now convert to a netcdf
 # TODO: create general setup file wtih Village name
-Village = 'Chevak'
-from dataframe2netcdf import dataframe2netcdf
-ncfile = dataframe2netcdf(df_fixed_interval,Village,ncParameters)
 
+# now convert to a netcdf
+# TODO: create general setup file wtih Village name
+from dataframe2netcdf import dataframe2netcdf
+ncfile = dataframe2netcdf(df_fixed_interval,projectName+'Data.nc','',componentUnits)
+print(ncfile.variables)
+ncfile.close()
 # save ncfile in folder `ModelInputData' in the path ../GBSProjects/[VillageName]/InputData/TimeSeriesData/
