@@ -4,9 +4,10 @@
 # License: MIT License (see LICENSE file of this package for more information)
 
 # reads data files from user and outputs a dataframe.
-def fixBadData(df,ncfile):
+def fixBadData(df,setupDir,projectName):
 
-    # check the data with respect to the meta data
+    # cd to setup directory, load the projectSetup.xml file and check the time series for bad data.
+
 
     # temporary fix
 
