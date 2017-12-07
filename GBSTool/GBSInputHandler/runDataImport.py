@@ -27,7 +27,7 @@ df = readDataFile(inputSpecification,fileLocation,fileType,headerNames,newHeader
 
 # now fix the bad data
 from fixBadData import fixBadData
-(df_fixed,badInd) = fixBadData(df,ncParameters)
+(df_fixed,badInd) = fixBadData(df,setupDir,projectName)
 
 # check the fixed data with the old data
 # plot data, display statistical differences (min, max, mean std difference etc)

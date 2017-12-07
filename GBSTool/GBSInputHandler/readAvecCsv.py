@@ -44,7 +44,7 @@ def readAvecCsv(fileName,fileLocation='',columnNames=None,useNames=None,componen
             if isinstance(x[i,j],str): #if is string
                 try: # try to convert to a float
                     x[i,j] = float(x[i, j])
-                except: # if can't, replace with 1000000
+                except: # if can't, replace with nan
                     if j==0: # for the first (Date) column. other columns have some string data
                         if gotHeader==False:
                             header = list(x[i,:])
