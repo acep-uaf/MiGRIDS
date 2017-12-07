@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Project: GBS Tool -->
+<!-- Author: Jeremy VanderMeer, jbvandermeer@alaska.edu-->
+<!-- Date: October 27, 2017 -->
+<!-- License: MIT License (see LICENSE file of this package for more information -->
+<!-- This file describes an interface for all components that may be part of the model. It does not itself implement a -->
+<!-- specific component and thus should not directly be used as description for a component. -->
+<!-- Root tag is 'project' -->
+<project name="Chevak">
+ <!-- Declaration of inheritance - the interface itself should be the master parent. Later more specific -->
+ <!-- project descriptions should state the immediate parent here. All have to be traceable to this interface. -->
+ <childOf>
+  self
+ </childOf>
+ <!-- 'inputFileDir' is the directory where the input data files are stored.  -->
+ <inputFileDir value=""/>
+ <!-- 'inputFileType' is the file type of the input data files. Eg '.CSV'  -->
+ <inputFileType value=""/>
+ <!-- 'inputFileFormat' is format that the input files are in. This includes formatting specific to certain data sources
+      where a script has been specifically generated to deal with the data. For example 'AVEC'. If this is not specified
+      Then it will assume that the data files are organized in a data table with a header at the top. -->
+ <inputFileFormat value=""/>
+ <!-- 'componentNames' is a tuple of the names of components in the grid. Acceptable names must start with corresponding
+     names to the component descriptor files, including: 'Gen', 'Wtg', 'Inv', 'Tes', 'Ees' and 'ControlledLoad'. For example 'Gen1',
+      'Gen2', 'Wtg1',... -->
+ <componentNames>
+  <names value="gen1 gen2 gen3 wtg1 wtg2 wtg3 wtg4 tes1"/>
+ </componentNames>
+ <!-- 'componentChannels' describes the input data channels corresponding to grid components to read into the simulation.
+    The tuple 'headerName' is the names or indices of the columns in the input data files. The component names are the names
+    in the componentDescriptor files. 'componentAttribute' describes what was measured and what the units were. For example,
+    real power and kW. Possible values for componentAttribute include 'P' (real power), 'Q' (reactive power), 'S' (apparent
+    power), 'pf' (power factor), 'V' (voltage), 'I' (current), 'f' (frequency), 'Tamb' (ambient temperature), 'Tstorage'
+    (internal temperature for thermal storatge), 'WS' (windspeed), 'IR' (solar irradiation), 'WF' (water flow), 'Pavail'
+    (available real power), 'Qavail' (available reactive power), 'Savail' (available apparent power). Available units
+     for power include 'W', 'kW', 'MW', 'var', 'kvar', 'Mvar', 'VA', 'kVA', 'MVA'. Available units for voltage includes
+     'V' and 'kV'. Available units for current are 'A' and 'kA'. Available units for frequency is 'Hz'. Available units
+     for temperature are 'C', 'F' and 'K'. Available units for speed are 'm/s', 'ft/s', 'km/hr' and 'mi/hr'. Available
+     units for irradiation is 'W/m2'. Available units for flow include 'm3/s', 'L/s', 'cfm' and 'gal/min'  -->
+ <componentChannels>
+  <headerName value="WTG1_Output WTG2_Output WTG3_Output WTG4_Output WTG1_WindSpd WTG2_WindSpd WTG3_WindSpd WTG4_WindSpd Diesel1_kW Diesel2_kW Diesel3_kW SLC_Load SLC_Temp"/>
+  <componentName value="wtg1 wtg2 wtg3 wtg4 wtg1 wtg2 wtg3 wtg4 gen1 gen2 gen3 tes1 tes1"/>
+  <componentAttribute unit="kW kW kW kW m/s m/s m/s m/s kW kW kW kW F" value="P P P P WS WS WS WS P P P P Tstorage"/>
+ </componentChannels>
+ <!-- 'dateChannel' the name or index of the data channel with the timestamps. 'value' is the name or index. 'format'
+      is the format of the date, for example 'ordinal'. -->
+ <dateChannel format="ordinal" value="DATE"/>
+ <!-- 'timeChannel' the name or index of the data channel with the times of day. 'value' is the name or index. 'format'
+      is the format of the time, for example 'HH:MM:SS:MS'. Also accepted is time as a fraction of 24 hours ('excel').
+      If this is not set, then the timestamps will be assumed to be incorporated into the dataChannel. -->
+ <timeChannel format="excel" value="TIME"/>
+ <!-- 'realLoadChannel' is the name or index of the total grid real load. If this is not set, then the load will be
+     calculated as the difference between all input generating unit data channels and input controllable loads data
+     channels. -->
+ <realLoadChannel unit="kW" value="Village_Load"/>
+ <!-- 'minRealLoad' is the minimum real load expected.  -->
+ <minRealLoad unit="" value=""/>
+ <!-- 'maxRealLoad' is the maximum real load expected.  -->
+ <maxRealLoad unit="" value=""/>
+ <!-- 'reactiveLoadChannel' is the name or index of the total grid imaginary load. If this is not set, then the load will be
+     calculated as the difference between all input generating unit data channels and input controllable loads data
+     channels. -->
+ <reactiveLoadChannel unit="" value=""/>
+ <!-- 'timeStep' is the desired timestep to be used in the simulation. The data will be resampled to this value.
+     Default is 1 second. -->
+ <timeStep unit="s" value="1"/>
+</project>
+<!-- EOF -->
