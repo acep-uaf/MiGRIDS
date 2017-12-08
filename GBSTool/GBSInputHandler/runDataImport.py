@@ -27,7 +27,7 @@ df = readDataFile(inputSpecification,fileLocation,fileType,headerNames,newHeader
 
 # now fix the bad data
 from fixBadData import fixBadData
-(df_fixed,badInd) = fixBadData(df,setupDir,projectName)
+(df_fixed,badInd) = fixBadData(df,setupDir,Village)
 
 # check the fixed data with the old data
 # plot data, display statistical differences (min, max, mean std difference etc)
@@ -43,7 +43,7 @@ df_fixed_interval = fixDataInterval(df_fixed,interval)
 # now convert to a netcdf
 # TODO: create general setup file wtih Village name
 from dataframe2netcdf import dataframe2netcdf
-ncfile = dataframe2netcdf(df_fixed_interval,projectName+'Data.nc','',componentUnits)
+ncfile = dataframe2netcdf(df_fixed_interval,Village+'Data.nc','',componentUnits)
 print(ncfile.variables)
 ncfile.close()
 # save ncfile in folder `ModelInputData' in the path ../GBSProjects/[VillageName]/InputData/TimeSeriesData/

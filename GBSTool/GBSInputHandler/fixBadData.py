@@ -30,6 +30,6 @@ def fixBadData(df,setupDir,projectName):
     fixedMin = None
 
 
-    return df_fixed, badInd, stdDiff, oldMean, fixedMean, oldMax, fixedMax, oldMin, fixedMin
+    return df_fixed, badInd
 
 

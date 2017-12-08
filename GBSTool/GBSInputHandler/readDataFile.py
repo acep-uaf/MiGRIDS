@@ -42,7 +42,8 @@ def readDataFile(inputSpecification,fileLocation='',fileType='csv',columnNames=N
                 df2Col = df2.columns
                 dfCol = df.columns
                 #TODO: this does not maintain the order. It needs to be modified to maintain order of columns
-                dfNewCol = list(set(df2Col).intersection(dfCol))
+                #dfNewCol = list(set(df2Col).intersection(dfCol))
+                dfNewCol = [val for val in dfCol if val in df2Col]
                 # resize dataframes to only contain collumns contained in both dataframes
                 df = df[dfNewCol]
                 df2 = df2[dfNewCol]
