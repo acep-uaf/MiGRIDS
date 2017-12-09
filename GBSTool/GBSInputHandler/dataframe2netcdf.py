@@ -37,7 +37,11 @@ def dataframe2netcdf(df,saveName,saveLocation,units,varnames=None):
         else:
             rootgrp.createVariable(column, df.dtypes[i],'dim')  # create a var using the header from the df for var name
             rootgrp.variables[column][:] = np.array(df[column]) # fill with values
-        rootgrp.variables[column].units = units[i] # set unit attribute
+            # TODO: a way to pass date type . Maybe all units saved in dataframe instead of passed seperately.
+        if i == 0: # first column is Date
+            rootgrp.variables[column].units = 'seconds'  # set unit attribute
+        else:
+            rootgrp.variables[column].units = units[i] # set unit attribute
 
 
 
