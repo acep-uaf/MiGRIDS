@@ -4,7 +4,7 @@
 # License: MIT License (see LICENSE file of this package for more information)
 
 # reads data files from user and outputs a dataframe.
-def readDataFile(inputSpecification,fileLocation='',fileType='csv',columnNames=None,useNames=None,componentUnits=None):
+def readDataFile(inputSpecification,fileLocation='',fileType='csv',columnNames=None,useNames=None,componentUnits=None,componentAttributes=None):
     # inputSpecification points to a script to accept data from a certain input data format
     # fileLocation is the dir where the data files are stored. It is either absolute or relative to the GBS project InputData dir
     # fileType is the file type. default is csv. All files of this type will be read from the dir
@@ -17,6 +17,7 @@ def readDataFile(inputSpecification,fileLocation='',fileType='csv',columnNames=N
     import os
     from readAvecCsv import readAvecCsv
     import numpy as np
+    from readXmlTag import readXmlTag
 
     ###### go to directory with time series data is located #######
     if fileLocation=='':
@@ -55,13 +56,20 @@ def readDataFile(inputSpecification,fileLocation='',fileType='csv',columnNames=N
 
     # convert units
     if np.all(componentUnits!=None):
-        # import unit conversion definitions
-        #TODO: finish adding code to get unit conersion file and update and convert units to default internal units and values to intergers.
-        # cd to location of unit converter file
-        here = os.getcwd()
-        dir_path = os.path.dirname(os.path.realpath(__file__))
-        dir_path = dir_path + '..\GBSAnalyzer\UnitConverters'
-        os.chdir(dir_path)
+        for i in range(len(componentUnits))# for each channel
+            #TODO: finish adding code to get unit conersion file and update and convert units to default internal units and values to intergers.
+            # cd to unit conventions file
+            here = os.getcwd()
+            dir_path = os.path.dirname(os.path.realpath(__file__))
+            fileDir = dir_path +'..\Resources\Conventions'
+            # get the default unit for the data type
+            units = readXmlTag('internalUnitDefault.xml', ['unitDefaults',componentAttributes[i]], 'units', fileDir)
+            # if the units don't match, convert
+            if units!=componentUnits[i]:
+
+
+            dir_path = dir_path + '..\GBSAnalyzer\UnitConverters'
+            os.chdir(dir_path)
 
     # ind = df.dtypes == 'object' # get instances of where did not convert to numeric
     # df_temp = df.iloc[:,ind.values]

@@ -23,7 +23,7 @@ headerNames, componentUnits, componentAttributes, componentNames, newHeaderNames
 
 # read time series data
 from readDataFile import readDataFile
-df = readDataFile(inputSpecification,fileLocation,fileType,headerNames,newHeaderNames,componentUnits) # dataframe with time series information. replace header names with column names
+df = readDataFile(inputSpecification,fileLocation,fileType,headerNames,newHeaderNames,componentUnits,componentAttributes) # dataframe with time series information. replace header names with column names
 
 # now fix the bad data
 from fixBadData import fixBadData
