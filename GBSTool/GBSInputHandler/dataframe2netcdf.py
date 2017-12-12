@@ -25,24 +25,30 @@ def dataframe2netcdf(df,saveName,saveLocation,units,varnames=None):
         saveLocation = filedialog.askdirectory()
     os.chdir(saveLocation)
 
-    rootgrp = Dataset(saveName,'w',format='NETCDF4')
-    rootgrp.createDimension('dim', None) # create dimension for all variables
+
     import pandas as pd
     for i in range(df.shape[1]):
         # header name from data frame
         column = df.columns.values[i]
         if varnames != None:
-            rootgrp.createVariable(varnames[i], df.dtypes[i],'dim')  # create a var using the varnames
-            rootgrp.variables[varnames[i]][:] = np.array(df[column]) # fill with values
+            ncName = varnames[i] + '.nc'
+            #rootgrp.createVariable(varnames[i], df.dtypes[i],'dim')  # create a var using the varnames
+            #rootgrp.variables[varnames[i]][:] = np.array(df[column]) # fill with values
         else:
-            rootgrp.createVariable(column, df.dtypes[i],'dim')  # create a var using the header from the df for var name
-            rootgrp.variables[column][:] = np.array(df[column]) # fill with values
+            ncName = column + '.nc'
+            #rootgrp.createVariable(column, df.dtypes[i],'dim')  # create a var using the header from the df for var name
+            #rootgrp.variables[column][:] = np.array(df[column]) # fill with values
+        rootgrp = Dataset(ncName, 'w', format='NETCDF4')
+        rootgrp.createDimension('time', None)  # create dimension for all called time
+        rootgrp.createVariable('value', df.dtypes[i], 'time')  # create a var using the varnames
+        rootgrp.variables['value'][:] = np.array(df[column])  # fill with values
             # TODO: a way to pass date type . Maybe all units saved in dataframe instead of passed seperately.
         if i == 0: # first column is Date
-            rootgrp.variables[column].units = 'seconds'  # set unit attribute
+            rootgrp.variables['value'].units = 'seconds'  # set unit attribute
         else:
-            rootgrp.variables[column].units = units[i] # set unit attribute
-
+            rootgrp.variables['value'].units = units[i] # set unit attribute
+        # close file
+        rootgrp.close()
 
 
 

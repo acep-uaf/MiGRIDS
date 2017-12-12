@@ -72,10 +72,15 @@ def readAvecCsv(fileName,fileLocation='',columnNames=None,useNames=None,componen
 
     if np.all(componentUnits!=None):
         # import unit conversion definitions
-        dir_path = os.path.dirname(os.path.realpath(__file__))
         #TODO: finish adding code to get unit conersion file and update and convert units to default internal units and values to intergers.
-        dir_path = dir_path + '..\ '
+        # cd to location of unit converter file
         here = os.getcwd()
+        dir_path = os.path.dirname(os.path.realpath(__file__))
+        dir_path = dir_path + '..\GBSAnalyzer\UnitConverters'
+        os.chdir(dir_path)
+
+
+
 
     # convert the date to datetime
     dfNew.DATE = pd.to_datetime(dfNew.DATE[0:10]+' '+dfNew.TIME[0:10],infer_datetime_format=True)

@@ -16,6 +16,7 @@ def readDataFile(inputSpecification,fileLocation='',fileType='csv',columnNames=N
     from tkinter import filedialog
     import os
     from readAvecCsv import readAvecCsv
+    import numpy as np
 
     ###### go to directory with time series data is located #######
     if fileLocation=='':
@@ -51,6 +52,17 @@ def readDataFile(inputSpecification,fileLocation='',fileType='csv',columnNames=N
 
     # try to convert to numeric
     df = df.apply(pd.to_numeric,errors='ignore')
+
+    # convert units
+    if np.all(componentUnits!=None):
+        # import unit conversion definitions
+        #TODO: finish adding code to get unit conersion file and update and convert units to default internal units and values to intergers.
+        # cd to location of unit converter file
+        here = os.getcwd()
+        dir_path = os.path.dirname(os.path.realpath(__file__))
+        dir_path = dir_path + '..\GBSAnalyzer\UnitConverters'
+        os.chdir(dir_path)
+
     # ind = df.dtypes == 'object' # get instances of where did not convert to numeric
     # df_temp = df.iloc[:,ind.values]
     # df.iloc[:,ind.values] = df.iloc[:,ind.values].apply(str,errors='ignore')

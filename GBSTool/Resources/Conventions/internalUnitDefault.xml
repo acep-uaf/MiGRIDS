@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Project: GBS Tool -->
+<!-- Author: Jeremy VanderMeer, jbvandermeer@alaska.edu -->
+<!-- Date: December 12, 2017 -->
+<!-- License: MIT License (see LICENSE file of this package for more information -->
+
+<!-- This file describes the units, scale and offset used for each data type used in the model. Datatypes are  -->
+
+
+<unitDefaults>
+    <!-- Real power -->
+    <P units = 'kW' scale="1" offset="0" datatype = 'uint32' />
+
+    <!-- Reactive power -->
+    <Q units = 'kvar' scale="1" offset="0" datatype = 'uint32' />
+
+    <!-- wind speed-->
+    <WS units="m/s" scale="1" offset="0" datatype="uint32"/>
+
+    <!-- Storage temperature-->
+    <Tstorage units="K" scale="1" offset="0" datatype="uint32"/>
+
+    <!-- Ambient temperature-->
+    <Tambient units="K" scale="1" offset="0" datatype="uint32"/>
+</unitDefaults>
