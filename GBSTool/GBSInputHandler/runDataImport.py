@@ -23,7 +23,7 @@ headerNames, componentUnits, componentAttributes, componentNames, newHeaderNames
 
 # read time series data
 from readDataFile import readDataFile
-df = readDataFile(inputSpecification,fileLocation,fileType,headerNames,newHeaderNames,componentUnits,componentAttributes) # dataframe with time series information. replace header names with column names
+df, units, scale, offset = readDataFile(inputSpecification,fileLocation,fileType,headerNames,newHeaderNames,componentUnits,componentAttributes) # dataframe with time series information. replace header names with column names
 
 # now fix the bad data
 from fixBadData import fixBadData
@@ -43,7 +43,6 @@ df_fixed_interval = fixDataInterval(df_fixed,interval)
 # now convert to a netcdf
 # TODO: create general setup file wtih Village name
 from dataframe2netcdf import dataframe2netcdf
-ncfile = dataframe2netcdf(df_fixed_interval,Village+'Data.nc','',componentUnits)
+dataframe2netcdf(df_fixed_interval,units,scale,offset)
 print(ncfile.variables)
-ncfile.close()
 # save ncfile in folder `ModelInputData' in the path ../GBSProjects/[VillageName]/InputData/TimeSeriesData/

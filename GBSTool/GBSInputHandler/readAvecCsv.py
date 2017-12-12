@@ -70,14 +70,9 @@ def readAvecCsv(fileName,fileLocation='',columnNames=None,useNames=None,componen
 
         dfNew.columns = [['DATE','TIME']+useNames] # add date and time to the column names
 
-    if np.all(componentUnits!=None):
+    #if np.all(componentUnits!=None):
         # import unit conversion definitions
         #TODO: finish adding code to get unit conersion file and update and convert units to default internal units and values to intergers.
-        # cd to location of unit converter file
-        here = os.getcwd()
-        dir_path = os.path.dirname(os.path.realpath(__file__))
-        dir_path = dir_path + '..\GBSAnalyzer\UnitConverters'
-        os.chdir(dir_path)
 
 
 

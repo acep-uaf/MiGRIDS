@@ -4,7 +4,7 @@
 # License: MIT License (see LICENSE file of this package for more information)
 
 # this function is passed a pandas dataframe and converts it to net cdf format
-def dataframe2netcdf(df,saveName,saveLocation,units,varnames=None):
+def dataframe2netcdf(df,units,scale,offset,varnames=None,saveLocation=''):
     # df is the dataframe. The headers will be used as the variable names unless they are specified by the 'headers' input
     # argument
     # units are the units corresponding to the collumns in the dataframe
@@ -27,11 +27,11 @@ def dataframe2netcdf(df,saveName,saveLocation,units,varnames=None):
 
 
     import pandas as pd
-    for i in range(df.shape[1]):
+    for i in range(1,df.shape[1]): # skip the first column, Date
         # header name from data frame
         column = df.columns.values[i]
         if varnames != None:
-            ncName = varnames[i] + '.nc'
+            ncName = varnames[i-1] + '.nc'
             #rootgrp.createVariable(varnames[i], df.dtypes[i],'dim')  # create a var using the varnames
             #rootgrp.variables[varnames[i]][:] = np.array(df[column]) # fill with values
         else:
@@ -40,13 +40,17 @@ def dataframe2netcdf(df,saveName,saveLocation,units,varnames=None):
             #rootgrp.variables[column][:] = np.array(df[column]) # fill with values
         rootgrp = Dataset(ncName, 'w', format='NETCDF4')
         rootgrp.createDimension('time', None)  # create dimension for all called time
+        # create the time variable
+        rootgrp.createVariable('time', df.dtypes[i], 'time')  # create a var using the varnames
+        rootgrp.variables['time'][:] = np.array(df[df.columns.values[0]])  # fill with values
+        # create the value variable
         rootgrp.createVariable('value', df.dtypes[i], 'time')  # create a var using the varnames
         rootgrp.variables['value'][:] = np.array(df[column])  # fill with values
-            # TODO: a way to pass date type . Maybe all units saved in dataframe instead of passed seperately.
-        if i == 0: # first column is Date
-            rootgrp.variables['value'].units = 'seconds'  # set unit attribute
-        else:
-            rootgrp.variables['value'].units = units[i] # set unit attribute
+        # assign attributes
+        rootgrp.variables['time'].units = 'seconds'  # set unit attribute
+        rootgrp.variables['value'].units = units[i-1] # set unit attribute
+        rootgrp.variables['value'].Scale = scale[i - 1]  # set unit attribute
+        rootgrp.variables['value'].offset = offset[i - 1]  # set unit attribute
         # close file
         rootgrp.close()
 

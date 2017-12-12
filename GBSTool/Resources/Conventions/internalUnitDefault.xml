@@ -9,17 +9,17 @@
 
 <unitDefaults>
     <!-- Real power -->
-    <P units = 'kW' scale="1" offset="0" datatype = 'uint32' />
+    <P units = 'kW' scale="1" offset="0" datatype = 'int32' />
 
     <!-- Reactive power -->
-    <Q units = 'kvar' scale="1" offset="0" datatype = 'uint32' />
+    <Q units = 'kvar' scale="1" offset="0" datatype = 'int32' />
 
     <!-- wind speed-->
-    <WS units="m/s" scale="1" offset="0" datatype="uint32"/>
+    <WS units="m/s" scale="1" offset="0" datatype="int32"/>
 
     <!-- Storage temperature-->
-    <Tstorage units="K" scale="1" offset="0" datatype="uint32"/>
+    <Tstorage units="K" scale="1" offset="0" datatype="int32"/>
 
     <!-- Ambient temperature-->
-    <Tambient units="K" scale="1" offset="0" datatype="uint32"/>
+    <Tambient units="K" scale="1" offset="0" datatype="int32"/>
 </unitDefaults>
