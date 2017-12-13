@@ -6,8 +6,9 @@
 # General imports
 from bs4 import BeautifulSoup as Soup
 
-class Generator:
 
+class Generator:
+    
 
     # Generator resources
     genID = None
