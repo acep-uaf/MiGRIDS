@@ -11,20 +11,19 @@ from scipy import stats
 
 # reads dataframe of data input compares values to descriptor xmls and returns DataClass object
 #assumes df column headings match header values in setup.xml
-def fixBadData(df,setupDir,projectName):
+#assumes data is ordered by time ascending and index increases with time 
 
+def fixBadData(df,setupDir,projectName):
+    #TODO check dataframe sorting order.
     #create DataClass object to store raw, fixed, and summery output
-    MyData = DataClass(df)
-    
-    #check the min and max values for variables in the component list
+    MyData = DataClass(df)   
+    #run through data checks for each component
     for component in getComponents(setupDir,''.join([projectName, "Setup.xml"])):
-        baddata = {}
-        try:
-           baddata['1.exceeds min/max']= checkMinMaxPower (component, df)
-        except:
-            print ('descriptor xml for %s not found' %component)
-        MyData.baddata['_'.join([component, 'output'])] = baddata   
+        checkMinMaxPower(component, dataclass, setupDir)       
+        #checkDataDuplicate()
+        
     #TODO add confirmation before replacing data values
+    #replaace values and summerize the differences from the original data
     replaceBadValues(MyData)  
     summerize(MyData)
     return MyData
@@ -44,18 +43,16 @@ def summerize(data):
     return data
 
 #DataClass -> DataClass
-#fills bad values in the dataframe with the mean of the surrounding 2 values, 
-#if its the last value then takes mean of previous 2 values
-#if its the first value takes mean of next 2 values
-#how we replace values is dependent on the number of bad values
+#replaces individual bad values with linear estimate from surrounding values
+#how we replace values is dependent on the number of bad values in a row
 
 def replaceBadValues(data):
     #TODO add check for more than one sequential bad value - do something other than linear estimate
     for component in data.baddata.keys():
         component_data = data.baddata[component]
         for k in component_data.keys():
-            index_list = component_data[k]
-            for i in index_list:
+            print ("%n records have a %s error" %len(component_data[k]) %k ) 
+            for i in component_data[k]:
                 if i == 0:
                    data.fixed.set_value(i, component,
                                          linearEstimate(data.fixed['datetime'][i+1:i+2],
@@ -77,25 +74,30 @@ def replaceBadValues(data):
 def linearEstimate(x,y,t):
     k = scipy.stats.linregress(x,y)
     return  k.slope *t + k.intercept  
- 
-#String->Dictionary
+    
+#String, dataclass, string -> dictionary
 #returns a dictionary of bad values for a given variable
-def checkMinMaxPower(component, df):
+def checkMinMaxPower(component, dataclass, setupDir):
+    
     bad_index = []
     #look up possible min max
     descriptorxmlpath = os.path.join(setupDir,'Components',''.join([component,"Descriptor.xml"]))
-    descriptorxml = ET.parse(descriptorxmlpath)
+    try:
+        descriptorxml = ET.parse(descriptorxmlpath)
+    except:
+        print ('descriptor xml for %s not found' %component)
+        
     #TODO change hardcoding for POutMaxPa to something dynamic
     max_power = getValue(descriptorxml,"POutMaxPa")
     min_power = 0
     try:
-        over = df['_'.join([component, 'output'])] > max_power
-        under = df['_'.join([component, 'output'])] < min_power
-        bad_data = df[over | under]['_'.join([component, 'output'])]
-        bad_index = list(bad_data.to_dict().keys())
+        over = dataclass.fixed['_'.join([component, 'output'])] > max_power
+        under = dataclass.fixed['_'.join([component, 'output'])] < min_power
+        bad_index = list(dataclass[over | under]['_'.join([component, 'output'])].to_dict().keys())
     except:
         print ('_'.join([component, 'output']) + " was not found in the dataframe")
-    return bad_index
+    dataclass.baddata['_'.join([component, 'output'])]['1.exceeds min/max'] = bad_index
+    return 
 
 #XML, String -> float
 #returns the value at a specific node within a parsed xml file.
