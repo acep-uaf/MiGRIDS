@@ -44,5 +44,4 @@ df_fixed_interval = fixDataInterval(df_fixed,interval)
 # TODO: create general setup file wtih Village name
 from dataframe2netcdf import dataframe2netcdf
 dataframe2netcdf(df_fixed_interval,units,scale,offset)
-print(ncfile.variables)
 # save ncfile in folder `ModelInputData' in the path ../GBSProjects/[VillageName]/InputData/TimeSeriesData/
