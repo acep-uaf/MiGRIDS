@@ -9,6 +9,11 @@ import xml.etree.ElementTree as ET
 import os
 from scipy import stats
 
+#constants
+DATETIME = 'datetime'
+SETUPXML = 'Setup.xml'
+DESCXML = 'Descriptor.xml'
+
 # reads dataframe of data input compares values to descriptor xmls and returns DataClass object
 #assumes df column headings match header values in setup.xml
 #assumes data is ordered by time ascending and index increases with time 
@@ -18,9 +23,12 @@ def fixBadData(df,setupDir,projectName):
     #create DataClass object to store raw, fixed, and summery output
     MyData = DataClass(df)   
     #run through data checks for each component
-    for component in getComponents(setupDir,''.join([projectName, "Setup.xml"])):
-        checkMinMaxPower(component, dataclass, setupDir)       
+    for component in getComponents(setupDir,''.join([projectName, SETUPXML])):
+        #find repeated values first
         #checkDataDuplicate()
+        #TODO remove duplicate values from minmax check
+        checkMinMaxPower(component, MyData, setupDir)       
+        
         
     #TODO add confirmation before replacing data values
     #replaace values and summerize the differences from the original data
@@ -51,28 +59,41 @@ def replaceBadValues(data):
     for component in data.baddata.keys():
         component_data = data.baddata[component]
         for k in component_data.keys():
-            print ("%n records have a %s error" %len(component_data[k]) %k ) 
-            for i in component_data[k]:
+            print ("%d records have a %s error" % (len(component_data[k]), k) )
+            #TODO map data error codes
+            if k == '1.exceeds min/max':
+                linearFix(component_data[k],data.fixed,component)
+            elif k == '2.duplicate values':
+                dataMatchReplace(data.fixed)
+                #for extended subsets of duplicate values we want to replace data with data drawn from another time period.
+                #what defines an extended time period?            
+    return
+
+def dataMatchReplace(df):
+    return df
+           
+def linearFix(index_list, df,component):
+     for i in index_list:
+                
                 if i == 0:
-                   data.fixed.set_value(i, component,
-                                         linearEstimate(data.fixed['datetime'][i+1:i+2],
-                                                  data.fixed[component][i+1:i+2],data.fixed['datetime'][i]))
+                   df.set_value(i, component,
+                                         linearEstimate(df[DATETIME][i+1:i+3],
+                                                  df[component][i+1:i+3],df[DATETIME][i]))
                                          
-                elif  i == len(data.raw) - 1:
-                    data.fixed.set_value(i, component,
-                                         linearEstimate(data.fixed['datetime'][i-2:i-1],
-                                                 data.fixed[component][i-2:i-1],data.fixed['datetime'][i]))
+                elif  i == len(df) - 1:
+                    df.set_value(i, component,
+                                         linearEstimate(df[DATETIME][i-2:i],
+                                                 df[component][i-2:i],df[DATETIME][i]))
                     
                 else:
-                    data.fixed.set_value(i, component, 
-                        linearEstimate(data.fixed['datetime'][i-1:i+1],
-                        data.fixed[component][i-1:i+1],data.fixed['datetime'][i]))
-    print(data.fixed)  
-
+                    df.set_value(i, component, 
+                        linearEstimate(df[DATETIME][i-1:i+1],
+                        df[component][i-1:i+1],df[DATETIME][i]))
+                    
 #numeric array, numeric array, Integer -> float  
 # X is array of x values (time), y is array of y values (power), t is x value to predict for. 
 def linearEstimate(x,y,t):
-    k = scipy.stats.linregress(x,y)
+    k = stats.linregress(x,y)
     return  k.slope *t + k.intercept  
     
 #String, dataclass, string -> dictionary
@@ -81,22 +102,22 @@ def checkMinMaxPower(component, dataclass, setupDir):
     
     bad_index = []
     #look up possible min max
-    descriptorxmlpath = os.path.join(setupDir,'Components',''.join([component,"Descriptor.xml"]))
+    descriptorxmlpath = os.path.join(setupDir,'Components',''.join([component,DESCXML]))
     try:
         descriptorxml = ET.parse(descriptorxmlpath)
+            
+        #TODO change hardcoding for POutMaxPa to something dynamic
+        max_power = getValue(descriptorxml,"POutMaxPa")
+        min_power = 0
+        try:
+            over = dataclass.fixed['_'.join([component, 'output'])] > max_power
+            under = dataclass.fixed['_'.join([component, 'output'])] < min_power
+            bad_index = list(dataclass.fixed[over | under]['_'.join([component, 'output'])].to_dict().keys())
+        except:
+            print ('_'.join([component, 'output']) + " was not found in the dataframe")
+        dataclass.baddata['_'.join([component, 'output'])]={'1.exceeds min/max': bad_index}
     except:
         print ('descriptor xml for %s not found' %component)
-        
-    #TODO change hardcoding for POutMaxPa to something dynamic
-    max_power = getValue(descriptorxml,"POutMaxPa")
-    min_power = 0
-    try:
-        over = dataclass.fixed['_'.join([component, 'output'])] > max_power
-        under = dataclass.fixed['_'.join([component, 'output'])] < min_power
-        bad_index = list(dataclass[over | under]['_'.join([component, 'output'])].to_dict().keys())
-    except:
-        print ('_'.join([component, 'output']) + " was not found in the dataframe")
-    dataclass.baddata['_'.join([component, 'output'])]['1.exceeds min/max'] = bad_index
     return 
 
 #XML, String -> float
@@ -114,14 +135,18 @@ class DataClass:
    def __init__(self, raw_df):
         self.raw = raw_df
         self.fixed = pd.DataFrame(raw_df.copy(),raw_df.index,raw_df.columns.str.lower())
+        self.fixed['flagged'] = 0
         self.baddata = {}
         self.summary = pd.DataFrame()
+        
+        
 #String String-> List
 #returns the list of components found in the setup xml       
 def getComponents(setupDir, filename):
     #read the setup xml
    tree= ET.parse(os.path.join(setupDir,"Setup",filename))
    #read in component list
+   #assumes standardized xml with componentNames, names and value attribute
    componentList = tree.getroot().find('componentNames').find('names').attrib.get('value').split(" ")
    
    return componentList
