@@ -33,22 +33,9 @@ def fixBadData(df,setupDir,projectName):
     #TODO add confirmation before replacing data values
     #replaace values and summerize the differences from the original data
     replaceBadValues(MyData)  
-    summerize(MyData)
+    MyData.summerize()
     return MyData
 
-#DataClass -> dataframe
-#returns a dataframe with mean, standard deviation, min and max for raw and fixed data
-def summerize(data):
-    #append raw and fixed into same dataframe
-    raw = data.raw
-    raw['df_type']='raw'
-    fixed = data.fixed
-    fixed['df_type']= 'fixed'
-     
-    #group by df type (raw/fixed) column
-    data.summary = pd.concat([raw,fixed]).groupby('df_type').describe()
-    print (data.summary)
-    return data
 
 #DataClass -> DataClass
 #replaces individual bad values with linear estimate from surrounding values
@@ -137,8 +124,11 @@ class DataClass:
         self.fixed = pd.DataFrame(raw_df.copy(),raw_df.index,raw_df.columns.str.lower())
         self.fixed['flagged'] = 0
         self.baddata = {}
-        self.summary = pd.DataFrame()
-        
+        self.raw_summary = raw_df.describe()
+        self.fixed_summary = pd.DataFrame()
+   
+   def summerize(self):
+        self.fixed_summary = self.fixed.describe()
         
 #String String-> List
 #returns the list of components found in the setup xml       
