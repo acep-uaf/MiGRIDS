@@ -25,7 +25,7 @@ def fixBadData(df,setupDir,projectName):
     #run through data checks for each component
     for component in getComponents(setupDir,''.join([projectName, SETUPXML])):
         #find repeated values first
-        #checkDataDuplicate()
+        identifyInline(component,MyData.fixed)
         #TODO remove duplicate values from minmax check
         checkMinMaxPower(component, MyData, setupDir)       
         
@@ -36,7 +36,18 @@ def fixBadData(df,setupDir,projectName):
     MyData.summerize()
     return MyData
 
-
+#String, DataFrame -> DataFrame
+#identify sequential rows with identical values for a specified component
+def identifyInline(component, df):
+    try:
+        
+        
+        df['_'.join(['diff',component])] = pd.DataFrame({
+                'a':df['_'.join([component,'output'])].diff(1),
+                'b':df['_'.join([component,'output'])].diff(-1)
+                }).min(1)
+    except:
+        print('no column named %s' %'_'.join([component,'output']))
 #DataClass -> DataClass
 #replaces individual bad values with linear estimate from surrounding values
 #how we replace values is dependent on the number of bad values in a row
@@ -97,9 +108,10 @@ def checkMinMaxPower(component, dataclass, setupDir):
         max_power = getValue(descriptorxml,"POutMaxPa")
         min_power = 0
         try:
-            over = dataclass.fixed['_'.join([component, 'output'])] > max_power
+            over = dataclass.fixed['_'.join([component, 'output'])] > max_power 
             under = dataclass.fixed['_'.join([component, 'output'])] < min_power
-            bad_index = list(dataclass.fixed[over | under]['_'.join([component, 'output'])].to_dict().keys())
+            not_in_line = dataclass.fixed['_'.join(['diff',component])] != 0
+            bad_index = list(dataclass.fixed[(over | under) & not_in_line]['_'.join([component, 'output'])].to_dict().keys())
         except:
             print ('_'.join([component, 'output']) + " was not found in the dataframe")
         dataclass.baddata['_'.join([component, 'output'])]={'1.exceeds min/max': bad_index}
