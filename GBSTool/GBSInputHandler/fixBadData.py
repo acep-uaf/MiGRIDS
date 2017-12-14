@@ -26,7 +26,7 @@ def fixBadData(df,setupDir,projectName):
     #run through data checks for each component
     for component in getComponents(setupDir,''.join([projectName, SETUPXML])):
         #find repeated values first
-        identifyInline(component,MyData.fixed)
+        identifyInline(component,MyData)
         
         checkMinMaxPower(component, MyData, setupDir)       
         dataMatchReplace(MyData.fixed, component)
@@ -40,18 +40,21 @@ def fixBadData(df,setupDir,projectName):
 
 #String, DataFrame -> DataFrame
 #identify sequential rows with identical values for a specified component
-def identifyInline(component, df):
+def identifyInline(component, data):
+    bad_index = []
     try: 
-        df['_'.join(['diff',component])] = pd.DataFrame({
-                'a':df['_'.join([component,COMPSUFFIX])].diff(1),
-                'b':df['_'.join([component,COMPSUFFIX])].diff(-1)
+        data.fixed['_'.join(['diff',component])] = pd.DataFrame({
+                'a':data.fixed['_'.join([component,COMPSUFFIX])].diff(1),
+                'b':data.fixed['_'.join([component,COMPSUFFIX])].diff(-1)
                 }).min(1)
+        bad_index = data.fixed[data.fixed['_'.join(['diff',component])]==0].index.tolist()
+
     except KeyError:
         print('no column named %s' %'_'.join([component,COMPSUFFIX]))
+    data.baddata[component]={'2.Inline values':bad_index}
+
 #DataClass -> DataClass
 #replaces individual bad values with linear estimate from surrounding values
-#how we replace values is dependent on the number of bad values in a row
-
 def replaceBadValues(data):
     #TODO add check for more than one sequential bad value - do something other than linear estimate
     for component in data.baddata.keys():
@@ -61,10 +64,7 @@ def replaceBadValues(data):
             #TODO map data error codes
             if k == '1.exceeds min/max':
                 linearFix(component_data[k],data.fixed,component)
-            elif k == '2.duplicate values':
-                dataMatchReplace(data.fixed, component)
-                #for extended subsets of duplicate values we want to replace data with data drawn from another time period.
-                #what defines an extended time period?            
+                   
     return
 
 def dataMatchReplace(df,component):
@@ -117,7 +117,7 @@ def checkMinMaxPower(component, dataclass, setupDir):
             over = dataclass.fixed['_'.join([component, COMPSUFFIX])] > max_power 
             under = dataclass.fixed['_'.join([component, COMPSUFFIX])] < min_power
             not_in_line = dataclass.fixed['_'.join(['diff',component])] != 0
-            bad_index = list(dataclass.fixed[(over | under) & not_in_line]['_'.join([component, COMPSUFFIX])].to_dict().keys())
+            bad_index = dataclass.fixed[(over | under) & not_in_line].index.tolist()
         except KeyError:
             print ('_'.join([component, COMPSUFFIX]) + " was not found in the dataframe")
         dataclass.baddata['_'.join([component, COMPSUFFIX])]={'1.exceeds min/max': bad_index}
