@@ -25,7 +25,9 @@ class Generator:
     :var genPMin: Minimum optimal loading, real power, units: kW. *type float*
     :var genRunTimeMin: Minimum run time, units: s. *type float*
     :var genStartTime: Time to start generator, units: s. *type int*
-
+    :var genFuelCurve: Fuel curve, tuples of [kW, kg/s]. *type list(float,float)
+    :var genRunTimeAct: Generator run time since last start [s]. *type int*
+    :var genRunTimeTot: Generator cummulative run time since model start [s]. *type int*
     :
     '''
 
@@ -44,8 +46,8 @@ class Generator:
     genStartTime = 0  # Time to start generator [s]
     genFuelCurve = []  # Fuel curve, tuples of [kW, kg/s]
 
-    genRunTimeAct = 0
-    genRunTimeCum = 0
+    genRunTimeAct = 0  # Run time since last start [s]
+    genRunTimeTot = 0  # Cummulative run time since model start [s]
 
     # Constructor
     def __init__(self, genID, genP, genQ, genDescriptor):

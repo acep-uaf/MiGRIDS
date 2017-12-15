@@ -6,7 +6,7 @@
 
 class Windfarm:
     # Windfarm resources
-    wtg = None
+    windturbines = []
 
 
 
