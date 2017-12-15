@@ -38,7 +38,7 @@ class Generator:
     genPAvail = 0   # De-rating or nameplate capacity [kW]
     genQAvail = 0  # De-rating or nameplate capacity [kvar]
     genPMin = 0  # Minimum optimal loading [kW]
-    genRunTimeMin = 0  # Minimum run time [h] TODO: add 'Time' to naming covention
+    genRunTimeMin = 0  # Minimum run time [h] TODO: add 'Time' to naming convention
     genStartTime = 0  # Time to start generator [min]
     genFuelCurve = []  # Fuel curve, tuples of [kW, kg/s]
 
@@ -72,7 +72,6 @@ class Generator:
 
         :return:
         """
-        # TODO: Implement parser that populates the necessary variables based on the selected generator descriptor
 
         # read xml file
         genDescriptorFile = open(genDescriptor, "r")
@@ -90,13 +89,16 @@ class Generator:
         # Handle the fuel curve interpolation
         fuelCurvePPuInpt = genSoup.fuelCurve.pPu.get('value').split()
         fuelCurveMFInpt = genSoup.fuelCurve.massFlow.get('value').split()
+        if len(fuelCurvePPuInpt) != len(fuelCurveMFInpt):  # check that both input lists are of the same length
+            raise ValueError('Fuel curve calculation error: Power and mass flow lists are not of same length.')
+
         fuelCurveData = []
         for idx, item in enumerate(fuelCurvePPuInpt):
             fuelCurveData.append((self.genPMax * float(fuelCurvePPuInpt[idx]), float(fuelCurveMFInpt[idx])))
         genFC = GenFuelCurve()
         genFC.fuelCurveDataPoints = fuelCurveData
-        genFC.genOverloadPMax = self.genPMax # TODO: consider making this something else.
+        genFC.genOverloadPMax = self.genPMax  # TODO: consider making this something else.
         genFC.cubicSplineCurveEstimator()
-        self.genFuelCurve = genFC.fuelCurve # TODO: consider making this the integer version.
+        self.genFuelCurve = genFC.fuelCurve  # TODO: consider making this the integer version.
 
 
