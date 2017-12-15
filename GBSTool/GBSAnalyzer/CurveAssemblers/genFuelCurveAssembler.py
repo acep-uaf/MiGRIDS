@@ -107,4 +107,4 @@ class GenFuelCurve:
         # fuel consumption data points are multiplied by 10,000 and then type cast to integers. The power values are rounded to the nearest
         # kW and type cast to int.
         # NOTE that this variable is significantly more efficient in memory usage.
-        self.fuelCurveInt = zip(np.rint(powerLevels).astype(int), np.rint(10000*fuelConsumption).astype(int))
+        self.fuelCurveInt = zip(np.rint(powerLevels).astype(int), np.rint(100000*fuelConsumption).astype(int))
