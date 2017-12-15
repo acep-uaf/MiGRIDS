@@ -97,11 +97,13 @@ class WindPowerCurve:
     # the power curve with all entries of type `int`. For this, the wind speeds are multiplied by a factor of 10.
     powerCurveInt = []
 
-    '''
-    checkInputs makes sure the input data is self-consistent and setup such that curve estimation methods can be run. 
-    This function should be called by all curve estimators. 
-    '''
+
     def checkInputs(self):
+        '''
+            checkInputs makes sure the input data is self-consistent and setup such that curve estimation methods can be run.
+            This function should be called by all curve estimators.
+        '''
+
         # Check input data is self-consistent
         if not self.powerCurveDataPoints:
             raise ValueError('PowerCurveDataPoints is empty list')
@@ -136,11 +138,14 @@ class WindPowerCurve:
         self.coords = inptDataPoints
 
 
-    '''
-    cubicSplineCurveEstimator calculates a cubic spline for the given data points in powerCurveDataPoints using 
-    constraints defined by cut-in an cut-out wind speeds. 
-    '''
+
     def cubicSplineCurveEstimator(self):
+        '''
+        cubicSplineCurveEstimator calculates a cubic spline for the given data points in powerCurveDataPoints using
+            constraints defined by cut-in an cut-out wind speeds.
+        :return:
+        '''
+
         self.checkInputs()
         # Setup x and y coordinates as numpy arrays
         x, y = zip(*self.coords)
