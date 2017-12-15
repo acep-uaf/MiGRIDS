@@ -18,12 +18,13 @@ class Generator:
     :var genName: name given in genDescriptor, added here for object traceability. *type string*
     :var genP: the current real power level, units: kW. *type float*
     :var genQ: the current reactive power level, units: kvar. *type float*
+    :var genState: the current operating state, 0 - off, 1 - running, 2 - online.
     :var genPMax: Generator real power nameplate capacity, units: kW. *type float*
     :var genQMax: Generator reactive power nameplate capacity, units: kvar. *type float*
     :var genPAvail: De-rating or nameplate real power capacity, current level, units: kW. *type float*
     :var genPMin: Minimum optimal loading, real power, units: kW. *type float*
-    :var genRunTimeMin: Minimum run time, units: h. *type float*
-    :var genStartTime: Time to start generator, units: min. *type int*
+    :var genRunTimeMin: Minimum run time, units: s. *type float*
+    :var genStartTime: Time to start generator, units: s. *type int*
 
     :
     '''
@@ -33,14 +34,18 @@ class Generator:
     genName = None # This should come from the genDescriptor file and is merely used to trace back to that
     genP = 0  # Current real power level [kW]
     genQ = 0  # Current reactive power level [kvar]
+    genState = 0  # Generator operating state [dimensionless, index]. See docs for key.
     genPMax = 0  # Nameplate capacity [kW]
     genQMax = 0  # Nameplate capacity [kvar]
     genPAvail = 0   # De-rating or nameplate capacity [kW]
     genQAvail = 0  # De-rating or nameplate capacity [kvar]
     genPMin = 0  # Minimum optimal loading [kW]
-    genRunTimeMin = 0  # Minimum run time [h] TODO: add 'Time' to naming convention
-    genStartTime = 0  # Time to start generator [min]
+    genRunTimeMin = 0  # Minimum run time [s] TODO: add 'Time' to naming convention
+    genStartTime = 0  # Time to start generator [s]
     genFuelCurve = []  # Fuel curve, tuples of [kW, kg/s]
+
+    genRunTimeAct = 0
+    genRunTimeCum = 0
 
     # Constructor
     def __init__(self, genID, genP, genQ, genDescriptor):
@@ -100,5 +105,22 @@ class Generator:
         genFC.genOverloadPMax = self.genPMax  # TODO: consider making this something else.
         genFC.cubicSplineCurveEstimator()
         self.genFuelCurve = genFC.fuelCurve  # TODO: consider making this the integer version.
+
+    def checkOperatingConditions(self):
+        """
+        Checks if the generator is operating within defined bounds. Otherwise, triggers the respective (cummulative
+            energy) timers.
+
+        :return:
+        """
+        # TODO: implement this, might include adding additional class-wide variables.
+
+        # Check overload condition
+
+        # Check MOL condition
+
+        # Check minimum runtime condition
+
+
 
 

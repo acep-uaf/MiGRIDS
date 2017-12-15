@@ -45,3 +45,5 @@ plt.plot(x,y,'o')
 xCs, yCs = zip(*fuelCrv.fuelCurve)
 plt.plot(xCs, yCs, '.')
 plt.show()
+
+print(len(fuelCrv.fuelCurveDataPoints))
