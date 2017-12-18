@@ -27,9 +27,9 @@ def fixBadData(df,setupDir,projectName):
     for component in getComponents(setupDir,''.join([projectName, SETUPXML])):
         #find repeated values first
         identifyInline(component,MyData)
-        
-        checkMinMaxPower(component, MyData, setupDir)       
         dataMatchReplace(MyData.fixed, component)
+        checkMinMaxPower(component, MyData, setupDir)       
+        
         
     #TODO add confirmation before replacing data values
     #replace values and summerize the differences from the original data
@@ -41,18 +41,28 @@ def fixBadData(df,setupDir,projectName):
 #String, DataFrame -> DataFrame
 #identify sequential rows with identical values for a specified component
 def identifyInline(component, data):
-    bad_index = []
     try: 
-        data.fixed['_'.join(['diff',component])] = pd.DataFrame({
-                'a':data.fixed['_'.join([component,COMPSUFFIX])].diff(1),
-                'b':data.fixed['_'.join([component,COMPSUFFIX])].diff(-1)
-                }).min(1)
-        bad_index = data.fixed[data.fixed['_'.join(['diff',component])]==0].index.tolist()
+        b = pd.DataFrame({
+                'a':data.fixed['_'.join([component,COMPSUFFIX])].diff(1).abs(),
+                'b':data.fixed['_'.join([component,COMPSUFFIX])].diff(-1).abs()
+                }).min(1)==0
+        
+        #inline values are set to NaN so they can be replaced
+        data.fixed['_'.join([component,COMPSUFFIX])] = data.fixed['_'.join([component,COMPSUFFIX])].mask(b)
+        bad_dict_add('_'.join([component,COMPSUFFIX]),
+                     data.baddata,'2.Inline values',
+        data.fixed['_'.join([component,COMPSUFFIX])][pd.isnull(data.fixed['_'.join([component,COMPSUFFIX])])].index.tolist() )
 
     except KeyError:
         print('no column named %s' %'_'.join([component,COMPSUFFIX]))
-    data.baddata[component]={'2.Inline values':bad_index}
-
+    
+def bad_dict_add(component, current_dict, error_msg, index_list):
+    #if the component exists add the new error message, otherwise start the compnent
+    try:
+        current_dict[component][error_msg]=index_list
+    except KeyError:
+        current_dict[component]= {error_msg:index_list}
+        
 #DataClass -> DataClass
 #replaces individual bad values with linear estimate from surrounding values
 def replaceBadValues(data):
@@ -71,14 +81,13 @@ def dataMatchReplace(df,component):
     #TODO write function
     #place holder replaces inline values with 300
     try:
-        df.loc[df['_'.join(['diff',component])] == 0,'_'.join([component,COMPSUFFIX])]=300
+        df['_'.join([component,COMPSUFFIX])][pd.isnull(df['_'.join([component,COMPSUFFIX])])]=300
     except KeyError:
         print('Column for %s does not exist' %component)
     return df
            
 def linearFix(index_list, df,component):
-     for i in index_list:
-                
+     for i in index_list:                
                 if i == 0:
                    df.set_value(i, component,
                                          linearEstimate(df[DATETIME][i+1:i+3],
@@ -99,12 +108,24 @@ def linearFix(index_list, df,component):
 def linearEstimate(x,y,t):
     k = stats.linregress(x,y)
     return  k.slope *t + k.intercept  
-    
+
+#dictionary of values that are out of bounds, dataframe, integer, component -> integer list
+#returns the closest 2 index values to i, i can range from 0 to len(df)
+#excludes values marked as out of range
+def getIndex(outofbounds, df, i, component):
+    if i == 0:
+        index_array = [getNext(i), getNext(getNext(i))]
+    elif i == maxi:    
+         index_array = [getPrevious(i), getPrevious(getPrevious(i))]
+    else:
+        index_array = [getPrevious(i), getNext(i)]
+#dictionary, dataframe, integer
+#returns the index of the previous valid value
+def getNext(df,i,component):
+    new_i = df[df['_'.join([component,COMPSUFFIX])] ]
 #String, dataclass, string -> dictionary
 #returns a dictionary of bad values for a given variable
-def checkMinMaxPower(component, dataclass, setupDir):
-    
-    bad_index = []
+def checkMinMaxPower(component, data, setupDir):
     #look up possible min max
     descriptorxmlpath = os.path.join(setupDir,'Components',''.join([component,DESCXML]))
     try:
@@ -114,13 +135,15 @@ def checkMinMaxPower(component, dataclass, setupDir):
         max_power = getValue(descriptorxml,"POutMaxPa")
         min_power = 0
         try:
-            over = dataclass.fixed['_'.join([component, COMPSUFFIX])] > max_power 
-            under = dataclass.fixed['_'.join([component, COMPSUFFIX])] < min_power
-            not_in_line = dataclass.fixed['_'.join(['diff',component])] != 0
-            bad_index = dataclass.fixed[(over | under) & not_in_line].index.tolist()
+            over = data.fixed['_'.join([component, COMPSUFFIX])] > max_power 
+            under = data.fixed['_'.join([component, COMPSUFFIX])] < min_power
+            data.fixed['_'.join([component, COMPSUFFIX])] = data.fixed['_'.join([component, COMPSUFFIX])].mask((over | under))
+            bad_dict_add('_'.join([component,COMPSUFFIX]),
+                     data.baddata,'1.Exceeds Min/Max',
+                     data.fixed['_'.join([component,COMPSUFFIX])][pd.isnull(data.fixed['_'.join([component,COMPSUFFIX])])].index.tolist() )
+  
         except KeyError:
             print ('_'.join([component, COMPSUFFIX]) + " was not found in the dataframe")
-        dataclass.baddata['_'.join([component, COMPSUFFIX])]={'1.exceeds min/max': bad_index}
     except FileNotFoundError:
         print ('Descriptor xml for %s not found' %component)
     return 
@@ -134,13 +157,13 @@ def getValue(xml, node):
        value = 0
     return value    
     
-#DataClass is object with raw_data, fixed_data
+#DataClass is object with raw_data, fixed_data,baddata dictionary, and raw data summary.
 class DataClass:
    """A class with access to both raw and fixed dataframes."""
+   #TODO drop raw data
    def __init__(self, raw_df):
         self.raw = raw_df
         self.fixed = pd.DataFrame(raw_df.copy(),raw_df.index,raw_df.columns.str.lower())
-        self.fixed['flagged'] = 0
         self.baddata = {}
         self.raw_summary = raw_df.describe()
         self.fixed_summary = pd.DataFrame()
