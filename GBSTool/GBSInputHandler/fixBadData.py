@@ -25,37 +25,35 @@ def fixBadData(df,setupDir,projectName):
     MyData = DataClass(df)   
     #run through data checks for each component
     for component in getComponents(setupDir,''.join([projectName, SETUPXML])):
-        #find repeated values first
-        identifyInline(component,MyData)
-        dataMatchReplace(MyData.fixed, component)
-        checkMinMaxPower(component, MyData, setupDir)       
-        
-        
-    #TODO add confirmation before replacing data values
-    #replace values and summerize the differences from the original data
-    
-    replaceBadValues(MyData)  
+        try:
+            #find repeated values first
+            identifyInline(component,MyData)
+            dataMatchReplace(MyData.fixed, component)
+            checkMinMaxPower(component, MyData, setupDir) 
+            linearFix(MyData.fixed[ MyData.fixed['_'.join([component,COMPSUFFIX])].isnull()].index.tolist(),
+                                             MyData.fixed,'_'.join([component,COMPSUFFIX])) 
+        except KeyError:
+            print('no column named %s' %'_'.join([component,COMPSUFFIX]))
+        #TODO add confirmation before replacing data values
+       
     MyData.summerize()
     return MyData
 
 #String, DataFrame -> DataFrame
 #identify sequential rows with identical values for a specified component
 def identifyInline(component, data):
-    try: 
-        b = pd.DataFrame({
-                'a':data.fixed['_'.join([component,COMPSUFFIX])].diff(1).abs(),
-                'b':data.fixed['_'.join([component,COMPSUFFIX])].diff(-1).abs()
-                }).min(1)==0
-        
-        #inline values are set to NaN so they can be replaced
-        data.fixed['_'.join([component,COMPSUFFIX])] = data.fixed['_'.join([component,COMPSUFFIX])].mask(b)
-        bad_dict_add('_'.join([component,COMPSUFFIX]),
-                     data.baddata,'2.Inline values',
-        data.fixed['_'.join([component,COMPSUFFIX])][pd.isnull(data.fixed['_'.join([component,COMPSUFFIX])])].index.tolist() )
 
-    except KeyError:
-        print('no column named %s' %'_'.join([component,COMPSUFFIX]))
+    b = pd.DataFrame({
+            'a':data.fixed['_'.join([component,COMPSUFFIX])].diff(1).abs(),
+            'b':data.fixed['_'.join([component,COMPSUFFIX])].diff(-1).abs()
+            }).min(1)==0
     
+    #inline values are set to NaN so they can be replaced
+    data.fixed['_'.join([component,COMPSUFFIX])] = data.fixed['_'.join([component,COMPSUFFIX])].mask(b)
+    bad_dict_add('_'.join([component,COMPSUFFIX]),
+                 data.baddata,'2.Inline values',
+    data.fixed['_'.join([component,COMPSUFFIX])][pd.isnull(data.fixed['_'.join([component,COMPSUFFIX])])].index.tolist() )
+ 
 def bad_dict_add(component, current_dict, error_msg, index_list):
     #if the component exists add the new error message, otherwise start the compnent
     try:
@@ -65,64 +63,52 @@ def bad_dict_add(component, current_dict, error_msg, index_list):
         
 #DataClass -> DataClass
 #replaces individual bad values with linear estimate from surrounding values
-def replaceBadValues(data):
-    #TODO add check for more than one sequential bad value - do something other than linear estimate
-    for component in data.baddata.keys():
-        component_data = data.baddata[component]
-        for k in component_data.keys():
-            print ("%d records have a %s error" % (len(component_data[k]), k) )
-            #TODO map data error codes
-            if k == '1.exceeds min/max':
-                linearFix(component_data[k],data.fixed,component)
-                   
-    return
 
 def dataMatchReplace(df,component):
     #TODO write function
     #place holder replaces inline values with 300
-    try:
-        df['_'.join([component,COMPSUFFIX])][pd.isnull(df['_'.join([component,COMPSUFFIX])])]=300
-    except KeyError:
-        print('Column for %s does not exist' %component)
+    df['_'.join([component,COMPSUFFIX])][pd.isnull(df['_'.join([component,COMPSUFFIX])])]=300
     return df
            
 def linearFix(index_list, df,component):
-     for i in index_list:                
-                if i == 0:
-                   df.set_value(i, component,
-                                         linearEstimate(df[DATETIME][i+1:i+3],
-                                                  df[component][i+1:i+3],df[DATETIME][i]))
-                                         
-                elif  i == len(df) - 1:
-                    df.set_value(i, component,
-                                         linearEstimate(df[DATETIME][i-2:i],
-                                                 df[component][i-2:i],df[DATETIME][i]))
-                    
-                else:
-                    df.set_value(i, component, 
-                        linearEstimate(df[DATETIME][i-1:i+1],
-                        df[component][i-1:i+1],df[DATETIME][i]))
+     
+     for i in index_list: 
+         print (i)
+         df.set_value(i, component,linearEstimate(df[DATETIME][getIndex(df,i,component)],
+                                                  df[component][getIndex(df,i,component)],
+                                                  df[DATETIME][i]))
+         print(df)
+         return df
                     
 #numeric array, numeric array, Integer -> float  
 # X is array of x values (time), y is array of y values (power), t is x value to predict for. 
 def linearEstimate(x,y,t):
+    print(x)
+    print(y)
     k = stats.linregress(x,y)
     return  k.slope *t + k.intercept  
 
 #dictionary of values that are out of bounds, dataframe, integer, component -> integer list
 #returns the closest 2 index values to i, i can range from 0 to len(df)
 #excludes values marked as out of range
-def getIndex(outofbounds, df, i, component):
+def getIndex(df, i, component):
+    component_array = df[component]
     if i == 0:
-        index_array = [getNext(i), getNext(getNext(i))]
-    elif i == maxi:    
-         index_array = [getPrevious(i), getPrevious(getPrevious(i))]
+        index_array = [getNext(i,component_array), getNext(getNext(i,component_array),component_array)]
+    elif i == len(df)-1:    
+         index_array = [getPrevious(i,component_array), getPrevious(getPrevious(i,component_array),component_array)]
     else:
-        index_array = [getPrevious(i), getNext(i)]
-#dictionary, dataframe, integer
+        index_array = [getPrevious(i,component_array), getNext(i,component_array)]
+    return index_array
+#integer, array
 #returns the index of the previous valid value
-def getNext(df,i,component):
-    new_i = df[df['_'.join([component,COMPSUFFIX])] ]
+def getNext(i,component):
+    new_i = min(component[((component.notnull()) & (component.index > i))].index)
+    return new_i
+
+def getPrevious(i,component):
+    new_i = max(component[((component.notnull()) & (component.index < i))].index)
+    return new_i
 #String, dataclass, string -> dictionary
 #returns a dictionary of bad values for a given variable
 def checkMinMaxPower(component, data, setupDir):
