@@ -27,7 +27,7 @@ df, units, scale, offset = readDataFile(inputSpecification,fileLocation,fileType
 
 # now fix the bad data
 from fixBadData import fixBadData
-(df_fixed,badInd) = fixBadData(df,setupDir,Village)
+fixed_data = fixBadData(df,setupDir,componentNames)
 
 # check the fixed data with the old data
 # plot data, display statistical differences (min, max, mean std difference etc)
@@ -35,7 +35,7 @@ from fixBadData import fixBadData
 # fix the intervals
 # TODO: Figure out where we get the desired interval from. There should be a general setup file somewhere.
 from fixDataInterval import fixDataInterval
-df_fixed_interval = fixDataInterval(df_fixed,interval)
+df_fixed_interval = fixDataInterval(fixed_data,interval)
 
 # now convert to a netcdf
 # TODO: create general setup file wtih Village name

@@ -54,7 +54,8 @@ def readDataFile(inputSpecification,fileLocation='',fileType='csv',columnNames=N
 
     # try to convert to numeric
     df = df.apply(pd.to_numeric,errors='ignore')
-
+    #order by datetime
+    df = df.sort_values(['DATE']).reset_index(drop=True)
     # convert units
 
     if np.all(componentUnits!=None):
