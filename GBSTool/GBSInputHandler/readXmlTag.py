@@ -4,13 +4,14 @@
 # License: MIT License (see LICENSE file of this package for more information)
 
 # read a value from an xml tag
-def readXmlTag(fileName,tag,attr,fileDir):
+def readXmlTag(fileName,tag,attr,fileDir=''):
     # general imports
     import os
     from bs4 import BeautifulSoup
 
     # cd to file location
-    os.chdir(fileDir)
+    if fileDir != '':
+        os.chdir(fileDir)
 
     # open file and read into soup
     infile_child = open(fileName, "r")  # open

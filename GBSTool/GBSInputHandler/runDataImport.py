@@ -8,6 +8,28 @@
 
 # this is run after the project files have been initiated (initiateProject.py) and filled (fillProjectData.py)
 
+# get input data to run the functions to import data into the project
+from tkinter import filedialog
+import tkinter as tk
+print('Select the xml project setup file.')
+root = tk.Tk()
+root.withdraw()
+fileName = filedialog.askopenfilename()
+# get the setup Directory
+import os
+setupDir = os.path.dirname(fileName)
+# Village name
+from readXmlTag import readXmlTag
+Village = readXmlTag(fileName,'project','name')
+# input specification
+inputSpecification = readXmlTag(fileName,'inputFileFormat','value')
+# input time series data files location
+fileLocation = readXmlTag(fileName,'inputFileDir','value')
+# file type
+fileType = readXmlTag(fileName,'inputFileType','value')
+interval = readXmlTag(fileName,'timeStep','value') + readXmlTag(fileName,'timeStep','unit')
+
+'''
 # input data
 Village = 'Chevak'
 setupDir = 'C:\\Users\jbvandermeer\Documents\ACEP\GBS\GBSTools1\GBSProjects\Chevak\InputData\Setup'
@@ -16,6 +38,7 @@ fileLocation = ''
 fileType = '.CSV'
 columnNames = None
 interval = '30s' # the desired number of seconds between data points. This needs to be pulled from a file, not set here
+'''
 
 # get data units and header names
 from getUnits import getUnits
