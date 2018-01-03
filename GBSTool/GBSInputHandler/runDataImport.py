@@ -15,7 +15,7 @@ inputSpecification = 'AVEC'
 fileLocation = ''
 fileType = '.CSV'
 columnNames = None
-interval = 1 # the desired number of seconds between data points. This needs to be pulled from a file, not set here
+interval = '30s' # the desired number of seconds between data points. This needs to be pulled from a file, not set here
 
 # get data units and header names
 from getUnits import getUnits
