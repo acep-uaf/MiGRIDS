@@ -78,8 +78,13 @@ def readAvecCsv(fileName,fileLocation='',columnNames=None,useNames=None,componen
 
 
     # convert the date to datetime
-    dfNew.DATE = pd.to_datetime(dfNew.DATE[0:10]+' '+dfNew.TIME[0:10],infer_datetime_format=True)
+    dfNew.DATE = pd.to_datetime(dfNew.DATE+' '+dfNew.TIME,infer_datetime_format=True)
     del dfNew['TIME']
+    # convert to Unix time
+    # TODO: we will need to convert to UTC time and deal with daylight savings
+    # convert to int64
+    index = pd.DatetimeIndex(dfNew.DATE)
+    dfNew.DATE = index.astype(np.int64)//10**9 # convert from microseconds to seconds since base time
 
     '''
     from datetime import datetime

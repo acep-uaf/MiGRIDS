@@ -58,7 +58,7 @@ def dataframe2netcdf(df,units,scale,offset,varnames=None,saveLocation=''):
 
 
     # end of file
-    return rootgrp
+
 
 
 

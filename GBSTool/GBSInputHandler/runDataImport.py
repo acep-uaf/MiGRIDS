@@ -15,7 +15,7 @@ inputSpecification = 'AVEC'
 fileLocation = ''
 fileType = '.CSV'
 columnNames = None
-interval = '30s' # the desired number of seconds between data points. This needs to be pulled from a file, not set here
+interval = 1 # the desired number of seconds between data points. This needs to be pulled from a file, not set here
 
 # get data units and header names
 from getUnits import getUnits
@@ -27,7 +27,7 @@ df, units, scale, offset = readDataFile(inputSpecification,fileLocation,fileType
 
 # now fix the bad data
 from fixBadData import fixBadData
-fixed_data = fixBadData(df,setupDir,componentNames)
+(df_fixed,badInd) = fixBadData(df,setupDir,Village)
 
 # check the fixed data with the old data
 # plot data, display statistical differences (min, max, mean std difference etc)
@@ -35,7 +35,7 @@ fixed_data = fixBadData(df,setupDir,componentNames)
 # fix the intervals
 # TODO: Figure out where we get the desired interval from. There should be a general setup file somewhere.
 from fixDataInterval import fixDataInterval
-df_fixed_interval = fixDataInterval(fixed_data,interval)
+df_fixed_interval = fixDataInterval(df_fixed,interval)
 
 # now convert to a netcdf
 # TODO: create general setup file wtih Village name
@@ -44,5 +44,4 @@ df_fixed_interval = fixDataInterval(fixed_data,interval)
 # TODO: create general setup file wtih Village name
 from dataframe2netcdf import dataframe2netcdf
 dataframe2netcdf(df_fixed_interval,units,scale,offset)
-print(ncfile.variables)
 # save ncfile in folder `ModelInputData' in the path ../GBSProjects/[VillageName]/InputData/TimeSeriesData/
