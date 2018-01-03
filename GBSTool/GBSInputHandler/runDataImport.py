@@ -15,7 +15,7 @@ inputSpecification = 'AVEC'
 fileLocation = ''
 fileType = '.CSV'
 columnNames = None
-interval = 1 # the desired number of seconds between data points. This needs to be pulled from a file, not set here
+interval = '30s' # the desired number of seconds between data points. This needs to be pulled from a file, not set here
 
 # get data units and header names
 from getUnits import getUnits
@@ -27,7 +27,7 @@ df, units, scale, offset = readDataFile(inputSpecification,fileLocation,fileType
 
 # now fix the bad data
 from fixBadData import fixBadData
-(df_fixed,badInd) = fixBadData(df,setupDir,Village)
+df_fixed = fixBadData(df,setupDir,componentNames)
 
 # check the fixed data with the old data
 # plot data, display statistical differences (min, max, mean std difference etc)
