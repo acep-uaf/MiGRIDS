@@ -21,6 +21,7 @@ def readDataFile(inputSpecification,fileLocation='',fileType='csv',columnNames=N
     import importlib.util
 
     ###### go to directory with time series data is located #######
+    here = os.getcwd()
     if fileLocation=='':
         print('Choose directory where input data files are located.')
         import tkinter as tk
@@ -28,9 +29,8 @@ def readDataFile(inputSpecification,fileLocation='',fileType='csv',columnNames=N
         root.withdraw()
         fileLocation = filedialog.askdirectory()
     os.chdir(fileLocation)
-    here = os.getcwd()
     # get just the filenames ending with fileType
-    fileNames = [f for f in os.listdir(here) if os.path.isfile(f) & f.endswith(fileType)]
+    fileNames = [f for f in os.listdir(fileLocation) if os.path.isfile(f) & f.endswith(fileType)]
 
     ####### Parse the time series data files ############
     # depending on input specification, different procedure
@@ -64,7 +64,6 @@ def readDataFile(inputSpecification,fileLocation='',fileType='csv',columnNames=N
     for i in range(len(componentUnits)): # for each channel
         #TODO: finish adding code to get unit conersion file and update and convert units to default internal units and values to intergers.
         # cd to unit conventions file
-        here = os.getcwd()
         dir_path = os.path.dirname(os.path.realpath(__file__))
         unitConventionDir = dir_path +'..\\..\\GBSAnalyzer\\UnitConverters'
         # get the default unit for the data type
@@ -91,7 +90,8 @@ def readDataFile(inputSpecification,fileLocation='',fileType='csv',columnNames=N
                             unitConventionDir)
         df[useNames[i]] = df[useNames[i]].astype(datatype[0])
 
-
+    # return to original directory
+    os.chdir(here)
     # ind = df.dtypes == 'object' # get instances of where did not convert to numeric
     # df_temp = df.iloc[:,ind.values]
     # df.iloc[:,ind.values] = df.iloc[:,ind.values].apply(str,errors='ignore')
