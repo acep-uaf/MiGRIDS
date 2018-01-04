@@ -20,14 +20,14 @@ import os
 setupDir = os.path.dirname(fileName)
 # Village name
 from readXmlTag import readXmlTag
-Village = readXmlTag(fileName,'project','name')
+Village = readXmlTag(fileName,'project','name')[0]
 # input specification
-inputSpecification = readXmlTag(fileName,'inputFileFormat','value')
+inputSpecification = readXmlTag(fileName,'inputFileFormat','value')[0]
 # input time series data files location
-fileLocation = readXmlTag(fileName,'inputFileDir','value')
+fileLocation = readXmlTag(fileName,'inputFileDir','value')[0]
 # file type
-fileType = readXmlTag(fileName,'inputFileType','value')
-interval = readXmlTag(fileName,'timeStep','value') + readXmlTag(fileName,'timeStep','unit')
+fileType = readXmlTag(fileName,'inputFileType','value')[0]
+interval = readXmlTag(fileName,'timeStep','value')[0] + readXmlTag(fileName,'timeStep','unit')[0]
 
 '''
 # input data
