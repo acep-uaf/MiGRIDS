@@ -56,15 +56,10 @@ df_fixed = fixBadData(df,setupDir,componentNames)
 # plot data, display statistical differences (min, max, mean std difference etc)
 
 # fix the intervals
-# TODO: Figure out where we get the desired interval from. There should be a general setup file somewhere.
 from fixDataInterval import fixDataInterval
 df_fixed_interval = fixDataInterval(df_fixed,interval)
 
 # now convert to a netcdf
-# TODO: create general setup file wtih Village name
-
-# now convert to a netcdf
-# TODO: create general setup file wtih Village name
 from dataframe2netcdf import dataframe2netcdf
 dataframe2netcdf(df_fixed_interval,units,scale,offset)
 # save ncfile in folder `ModelInputData' in the path ../GBSProjects/[VillageName]/InputData/TimeSeriesData/

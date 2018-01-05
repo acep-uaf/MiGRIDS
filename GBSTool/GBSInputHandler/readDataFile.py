@@ -5,11 +5,11 @@
 
 # reads data files from user and outputs a dataframe.
 def readDataFile(inputSpecification,fileLocation='',fileType='csv',columnNames=None,useNames=None,componentUnits=None,componentAttributes=None):
-    # inputSpecification points to a script to accept data from a certain input data format
-    # fileLocation is the dir where the data files are stored. It is either absolute or relative to the GBS project InputData dir
-    # fileType is the file type. default is csv. All files of this type will be read from the dir
+    # inputSpecification points to a script to accept data from a certain input data format *type string*
+    # fileLocation is the dir where the data files are stored. It is either absolute or relative to the GBS project InputData dir *type string*
+    # fileType is the file type. default is csv. All files of this type will be read from the dir *type string*
     # columnNames, if specified, is a list of column names from the data file that will be returned in the dataframe.
-    # otherwise all columns will be returned. Note indexing starts from 0.
+    # otherwise all columns will be returned. Note indexing starts from 0.*type list(string)*
 
     ####### general imports #######
     import pandas as pd
@@ -62,7 +62,6 @@ def readDataFile(inputSpecification,fileLocation='',fileType='csv',columnNames=N
     scale = [None] * len(componentUnits)
     offset = [None] * len(componentUnits)
     for i in range(len(componentUnits)): # for each channel
-        #TODO: finish adding code to get unit conersion file and update and convert units to default internal units and values to intergers.
         # cd to unit conventions file
         dir_path = os.path.dirname(os.path.realpath(__file__))
         unitConventionDir = dir_path +'..\\..\\GBSAnalyzer\\UnitConverters'
@@ -92,9 +91,5 @@ def readDataFile(inputSpecification,fileLocation='',fileType='csv',columnNames=N
 
     # return to original directory
     os.chdir(here)
-    # ind = df.dtypes == 'object' # get instances of where did not convert to numeric
-    # df_temp = df.iloc[:,ind.values]
-    # df.iloc[:,ind.values] = df.iloc[:,ind.values].apply(str,errors='ignore')
-    # df.loc[:, lambda df: df.dtypes == 'object'] = df.loc[:,lambda df: df.dtypes=='object'].astype(str)
     return df, units, scale, offset
 

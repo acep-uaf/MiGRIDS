@@ -7,9 +7,11 @@
 def dataframe2netcdf(df,units,scale,offset,varnames=None,saveLocation=''):
     # df is the dataframe. The headers will be used as the variable names unless they are specified by the 'headers' input
     # argument
-    # units are the units corresponding to the collumns in the dataframe
-    # varNames are the names of the variables specified by the columns of the dataframe
-    # TODO: the data type of df needs to be numerical (or not object)
+    # units are the units corresponding to the collumns in the dataframe, *type string*
+    # scale and offset correspond to the data collumns *type float*
+    # varNames are the names of the variables specified by the columns of the dataframe *type string*
+    # saveLocation is where the net CDF files are saved *type string*
+
     # general imports
     from netCDF4 import Dataset
     import numpy as np
@@ -25,20 +27,15 @@ def dataframe2netcdf(df,units,scale,offset,varnames=None,saveLocation=''):
         saveLocation = filedialog.askdirectory()
     os.chdir(saveLocation)
 
-
-    import pandas as pd
+    # create a netCDF file for each data column of the data frame containing the timestamps and the data
     for i in range(1,df.shape[1]): # skip the first column, Date
-        # header name from data frame
+        # get header name from data frame
         column = df.columns.values[i]
         if varnames != None:
             ncName = varnames[i-1] + '.nc'
-            #rootgrp.createVariable(varnames[i], df.dtypes[i],'dim')  # create a var using the varnames
-            #rootgrp.variables[varnames[i]][:] = np.array(df[column]) # fill with values
         else:
             ncName = column + '.nc'
-            #rootgrp.createVariable(column, df.dtypes[i],'dim')  # create a var using the header from the df for var name
-            #rootgrp.variables[column][:] = np.array(df[column]) # fill with values
-        rootgrp = Dataset(ncName, 'w', format='NETCDF4')
+        rootgrp = Dataset(ncName, 'w', format='NETCDF4') # create netCDF object
         rootgrp.createDimension('time', None)  # create dimension for all called time
         # create the time variable
         rootgrp.createVariable('time', df.dtypes[i], 'time')  # create a var using the varnames
@@ -60,12 +57,3 @@ def dataframe2netcdf(df,units,scale,offset,varnames=None,saveLocation=''):
     # end of file
 
 
-
-
-
-# test implementation
-# create a dataframe
-# from pandas import DataFrame
-# df = DataFrame([(1,2,3),(2,2,2),(3,3,3)],columns=['a','b','c'])
-# ncData = dataframe2netcdf(df,'test.nc',['kW','kvar','kPA'])
-# print(ncData.variables))
