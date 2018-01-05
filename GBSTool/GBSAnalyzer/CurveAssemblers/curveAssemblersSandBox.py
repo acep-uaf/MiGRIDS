@@ -35,7 +35,14 @@ fuelCrv.fuelCurveDataPoints = [(0, 0.002916), (32.8, 0.004375), (65.5, 0.006149)
                                (196.8, 0.013076), (229.6, 0.01483), (262.4, 0.016625),
                                (295.2, 0.018739), (328, 0.0209)]
 
+fuelCrv2 = GenFuelCurve()
+fuelCrv2.fuelCurveDataPoints = [(0, 0.002916), (32.8, 0.004375), (65.5, 0.006149),
+                               (98.4, 0.007875), (131.2, 0.0096), (164, 0.011326),
+                               (196.8, 0.013076), (229.6, 0.01483), (262.4, 0.016625),
+                               (295.2, 0.018739), (328, 0.5)]
+
 fuelCrv.genOverloadPMax = 350
+print(fuelCrv.fuelCurveDataPoints)
 fuelCrv.cubicSplineCurveEstimator()
 fc = fuelCrv.fuelCurve
 print(getsizeof(fc))

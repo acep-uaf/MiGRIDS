@@ -65,7 +65,7 @@ class Generator:
         self.genID = genID
         self.genP = genP
         self.genQ = genQ
-        genDescriptor(self, genDescriptor)
+        genDescriptorParser(self, genDescriptor)
 
 
     # Generator descriptor parser
