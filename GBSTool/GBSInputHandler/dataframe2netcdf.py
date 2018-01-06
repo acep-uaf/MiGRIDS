@@ -24,6 +24,7 @@ def dataframe2netcdf(df,units,scale,offset,varnames=None,saveLocation=''):
         import tkinter as tk
         root = tk.Tk()
         root.withdraw()
+        root.attributes('-topmost', 1)
         saveLocation = filedialog.askdirectory()
     os.chdir(saveLocation)
 

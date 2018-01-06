@@ -27,6 +27,7 @@ def readDataFile(inputSpecification,fileLocation='',fileType='csv',columnNames=N
         import tkinter as tk
         root = tk.Tk()
         root.withdraw()
+        root.attributes('-topmost',1)
         fileLocation = filedialog.askdirectory()
     os.chdir(fileLocation)
     # get just the filenames ending with fileType

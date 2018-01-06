@@ -14,6 +14,7 @@ import tkinter as tk
 print('Select the xml project setup file.')
 root = tk.Tk()
 root.withdraw()
+root.attributes('-topmost',1)
 fileName = filedialog.askopenfilename()
 # get the setup Directory
 import os
