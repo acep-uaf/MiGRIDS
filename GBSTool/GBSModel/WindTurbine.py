@@ -45,7 +45,8 @@ class WindTurbine:
     wtgPAvail = 0 # the available power from the wind [kW]
     wtgQAvail = 0 # the available power form the wind [kar]
     wtgStartTime = 0 # Time to start the wind turbine [s]
-    wtgPowerCurve = [] # Power curve of the wind turbine, tuples of [kW, m/s]
+    # TODO: the power curve is not needed here, since will convert to P avail. remove.
+    #wtgPowerCurve = [] # Power curve of the wind turbine, tuples of [kW, m/s]
 
     wtgRunTimeAct = 0 # Run time since last start [s]
     wtgRunTimeTot = 0 # Cummulative run time since model start [s]
