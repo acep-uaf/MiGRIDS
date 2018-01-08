@@ -16,7 +16,7 @@ class Generator:
     '''
 
     # Constructor
-    def __init__(self, genID, genP, genQ, genDescriptor):
+    def __init__(self, genID, genP, genQ, genState, genDescriptor):
         '''
         Constructor used for intialization of generator fleet in Powerhouse class.
 
@@ -43,8 +43,7 @@ class Generator:
         #self.genName = None  # This should come from the genDescriptor file and is merely used to trace back to that
         #self.genP = 0  # Current real power level [kW]
         #self.genQ = 0  # Current reactive power level [kvar]
-        # TODO: should genState be an input to __init__ ?
-        self.genState = 0  # Generator operating state [dimensionless, index]. See docs for key.
+        #self.genState = 0  # Generator operating state [dimensionless, index]. See docs for key.
         #self.genPMax = 0  # Nameplate capacity [kW]
         self.genQMax = 0  # Nameplate capacity [kvar]
         # TODO: default to PMax?
@@ -69,6 +68,7 @@ class Generator:
         self.genID = genID
         self.genP = genP
         self.genQ = genQ
+        self.genState = genState
         genDescriptorParser(self, genDescriptor)
 
 
