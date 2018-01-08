@@ -73,30 +73,30 @@ METHODS:
 class WindPowerCurve:
     # TODO: Testing with sparse data required. Additional checks to be implemented. Documentation
 
+    # Constructor
+    def __init__(self):
+        # ------Variable definitions-------
+        # ******Input variables************
+        # tuples of wind speed and power, list of tuples of floats, (m/s, kW)
+        powerCurveDataPoints = []
+        # Cut-in wind speed, float, m/s
+        cutInWindSpeed = 0
+        # Cut-out wind speed min, float, m/s
+        cutOutWindSpeedMin = 0
+        # Cut-out wind speed max, float, m/s
+        cutOutWindSpeedMax = 0
+        # Nameplate power, float, kW
+        POutMaxPa = 0
 
-    # ------Variable definitions-------
-    # ******Input variables************
-    # tuples of wind speed and power, list of tuples of floats, (m/s, kW)
-    powerCurveDataPoints = []
-    # Cut-in wind speed, float, m/s
-    cutInWindSpeed = 0
-    # Cut-out wind speed min, float, m/s
-    cutOutWindSpeedMin = 0
-    # Cut-out wind speed max, float, m/s
-    cutOutWindSpeedMax = 0
-    # Nameplate power, float, kW
-    POutMaxPa = 0
+        # ******Internal variables*********
+        # Set of coordinates (known points and constraints).
+        coords = []
 
-    # ******Internal variables*********
-    # Set of coordinates (known points and constraints).
-    coords = []
-
-    # ******Output variables***********
-    # the power curve, list of tuples of floats, (m/s, kW)
-    powerCurve = []
-    # the power curve with all entries of type `int`. For this, the wind speeds are multiplied by a factor of 10.
-    powerCurveInt = []
-
+        # ******Output variables***********
+        # the power curve, list of tuples of floats, (m/s, kW)
+        powerCurve = []
+        # the power curve with all entries of type `int`. For this, the wind speeds are multiplied by a factor of 10.
+        powerCurveInt = []
 
     def checkInputs(self):
         '''
