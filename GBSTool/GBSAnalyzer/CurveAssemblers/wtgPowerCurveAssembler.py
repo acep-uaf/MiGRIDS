@@ -78,25 +78,25 @@ class WindPowerCurve:
         # ------Variable definitions-------
         # ******Input variables************
         # tuples of wind speed and power, list of tuples of floats, (m/s, kW)
-        powerCurveDataPoints = []
+        self.powerCurveDataPoints = []
         # Cut-in wind speed, float, m/s
-        cutInWindSpeed = 0
+        self.cutInWindSpeed = 0
         # Cut-out wind speed min, float, m/s
-        cutOutWindSpeedMin = 0
+        self.cutOutWindSpeedMin = 0
         # Cut-out wind speed max, float, m/s
-        cutOutWindSpeedMax = 0
+        self.cutOutWindSpeedMax = 0
         # Nameplate power, float, kW
-        POutMaxPa = 0
+        self.POutMaxPa = 0
 
         # ******Internal variables*********
         # Set of coordinates (known points and constraints).
-        coords = []
+        self.coords = []
 
         # ******Output variables***********
         # the power curve, list of tuples of floats, (m/s, kW)
-        powerCurve = []
+        self.powerCurve = []
         # the power curve with all entries of type `int`. For this, the wind speeds are multiplied by a factor of 10.
-        powerCurveInt = []
+        self.powerCurveInt = []
 
     def checkInputs(self):
         '''
