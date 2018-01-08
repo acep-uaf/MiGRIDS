@@ -33,31 +33,51 @@ def fixBadData(df,setupDir,componentList,componentUnits=None,componentAttributes
         inline.columns = inline.columns.droplevel(0)
         inline = inline.rename(columns={'first':'value','min':'start','max':'end'})
         inline['count'] = inline['end'] - inline['start']
-        inline = inline[(inline['count'] > MAXINLINE) & (inline['value'] != 0)]
+        inline = inline[inline['count'] > MAXINLINE ]
+       
         return inline
     
+#0's are only considered inline if data collection is down
+#datacollection is down if the mean and standard deviation on all components for the period of interest are equal        
+    def removeInlineZeros(df, column, columnList, start, stop):
+         if column == len(columnList):
+             return False
+             
+         elif  np.var(df[columnList[column]][start:stop]) != 0:
+             return True
+             
+         else:
+             return removeInlineZeros(df, column + 1, columnList,start, stop)
+         
+           
     #String, DataFrame, Dictionary -> DataFrame, Dictionary
     #identify sequential rows with identical values for a specified component
     #inline values are replaced and index is recorded in datadictionary
     def inlineFix(component, df, baddata):  
         logging.debug("component is: %s",component)
         #identify inline values
-        inline = isInline(df[component]) 
+        inline = isInline(df[component])
+        #don't count zeros unless they are part of a complete lapse in data collection - in which case we will need to replace them.
+        for i in inline[inline.value == 0].index.tolist():
+            print(i)
+            if removeInlineZeros(df,2,df.columns,inline.start[i],inline.end[i]):
+                inline = inline.drop(i,0)
+                
         print(inline)
         #inline values are replaced
         print('Attempting to replace %d subsets for %s.' %(len(inline), component) )
-        for l in range(len(inline)):
-            start_index = inline.iloc[l,]['start']
-            end_index = inline.iloc[l,]['end']
+        for l in inline.index.tolist():
+            start_index = inline.start[l]
+            end_index = inline.end[l]
             #inline values get changed to null first so they can't be used in linear interopolation
             df.loc[start_index:end_index,component] = None
             badDictAdd(component,
                      baddata,'2.Inline values',
                      df[component][pd.isnull(df[component])].index.tolist() )
-        for l in range(len(inline)):
+        for l in inline.index.tolist():
             logging.info("inline index is %d", l)
-            start_index = inline.iloc[l,]['start']
-            end_index = inline.iloc[l,]['end']
+            start_index = inline.start[l]
+            end_index = inline.end[l]
             #attempt to replace using direct value transfer from similar data subset or linear interpolation
             getReplacement(df,component,start_index,end_index)  
         return df, baddata
@@ -179,8 +199,8 @@ def fixBadData(df,setupDir,componentList,componentUnits=None,componentAttributes
     #string, dataframe, dictionary -> dataframe, dictionary
     #changes netagive values to 0 for the specified component. Row indexes are stored in the baddata dictionary
     def negativeToZero(component,df,baddata):
-           df[df[component] < 0] = 0
            badDictAdd(component, baddata, '3.Negative value', df[df[component] < 0].index.tolist())
+           df[component][df[component] < 0] = 0
            return df
        
     #DataClass is object with raw_data, fixed_data,baddata dictionary, and data summaries.
