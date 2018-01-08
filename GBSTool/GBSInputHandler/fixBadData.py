@@ -7,13 +7,17 @@
 #assumes df column headings match header values in setup.xml
 #assumes data is ordered by time ascending and index increases with time 
 
-def fixBadData(df,setupDir,componentList):
+def fixBadData(df,setupDir,componentList,componentUnits=None,componentAttributes=None):
     import pandas as pd
     import numpy as np
     import xml.etree.ElementTree as ET
     import os
     from scipy import stats
+    import logging
+    import matplotlib.pyplot as plt
     
+    filename = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'BadData.log')
+    logging.basicConfig(filename = filename, level = logging.DEBUG, format='%(asctime)s %(message)s')
     #constants
     DATETIME = 'date' #the name of the column containing sampling datetime as a numeric
     DESCXML = 'Descriptor.xml' #the suffix of the xml for each component that contains max/min values
@@ -34,7 +38,9 @@ def fixBadData(df,setupDir,componentList):
     
     #String, DataFrame, Dictionary -> DataFrame, Dictionary
     #identify sequential rows with identical values for a specified component
+    #inline values are replaced and index is recorded in datadictionary
     def inlineFix(component, df, baddata):  
+        logging.debug("component is: %s",component)
         #identify inline values
         inline = isInline(df[component]) 
         print(inline)
@@ -49,6 +55,7 @@ def fixBadData(df,setupDir,componentList):
                      baddata,'2.Inline values',
                      df[component][pd.isnull(df[component])].index.tolist() )
         for l in range(len(inline)):
+            logging.info("inline index is %d", l)
             start_index = inline.iloc[l,]['start']
             end_index = inline.iloc[l,]['end']
             #attempt to replace using direct value transfer from similar data subset or linear interpolation
@@ -73,8 +80,10 @@ def fixBadData(df,setupDir,componentList):
         first_valid = (ps[ps > 0.05]).first_valid_index()
         #if we found a suitable block of values we insert them into the missing values otherwise we interpolate the missing values
         if first_valid != None:
+            logging.info("replaced")
             dataReplace(df, component, first_valid,start, stop)
         else:
+            logging.info("interpolated")
             print ("No similar data subsets found. Using linear interpolation to replace inline values.")
             index_list = df[int(start):int(stop)].index.tolist()
             linearFix(index_list,df,component)
@@ -182,13 +191,62 @@ def fixBadData(df,setupDir,componentList):
             self.fixed = pd.DataFrame(raw_df.copy(),raw_df.index,raw_df.columns)
             self.fixed.columns = self.fixed.columns.str.lower()
             self.baddata = {}
-            self.raw_summary = raw_df.describe()
-            self.fixed_summary = pd.DataFrame()
-       
-       def summerize(self):
-            self.fixed_summary = self.fixed.describe()
+        #summarizes raw and fixed data 
+       def summarize(self):
+            print('raw input summary: ')
+            print(self.raw.describe())
+            print('fixed output summary: ')
+            print(self.fixed.describe())
             
-       
+       def visualize(self,components):
+           #plot raw and fixed data
+           f, axarr = plt.subplots(len(components), sharex=True)
+           for i in range(len(components)):
+               axarr[i].plot(self.raw[DATETIME],self.raw[components[i]])
+               axarr[i].plot(self.fixed[DATETIME],self.fixed[components[i]]);
+               axarr[i].set_title(component)
+          
+           f.subplots_adjust(hspace=0.3)
+           plt.show()
+  
+     #dataframe, -> dataframe  
+     #scales raw values to standardized units for model input
+    def scaleData(df,componentUnits=None,componentAttributes=None ):
+    # convert units
+    # initiate lists
+        units = [None] * len(componentUnits)
+        scale = [None] * len(componentUnits)
+        offset = [None] * len(componentUnits)
+        for i in range(len(componentUnits)): # for each channel
+            #TODO: finish adding code to get unit conersion file and update and convert units to default internal units and values to intergers.
+            # cd to unit conventions file
+            dir_path = os.path.dirname(os.path.realpath(__file__))
+            unitConventionDir = dir_path +'..\\..\\GBSAnalyzer\\UnitConverters'
+            # get the default unit for the data type
+            units[i] = readXmlTag('internalUnitDefault.xml', ['unitDefaults',componentAttributes[i]], 'units', unitConventionDir)[0]
+            # if the units don't match, convert
+            if units[i].lower() != componentUnits[i].lower():
+                unitConvertDir = dir_path + '..\\..\\GBSAnalyzer\\UnitConverters\\unitConverters.py'
+                funcName = componentUnits[i].lower() + '2' + units[i].lower()
+                # load the conversion
+                spec = importlib.util.spec_from_file_location(funcName, unitConvertDir)
+                uc = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(uc)
+                x = getattr(uc, funcName)
+                # update data
+                df[useNames[i]] = x(df[useNames[i]])
+            # get the scale and offset
+            scale[i] = readXmlTag('internalUnitDefault.xml', ['unitDefaults', componentAttributes[i]], 'scale',
+                               unitConventionDir)[0]
+            offset[i] = readXmlTag('internalUnitDefault.xml', ['unitDefaults', componentAttributes[i]], 'offset',
+                           unitConventionDir)[0]
+            df[useNames[i]] = df[useNames[i]]*int(scale[i]) + int(offset[i])
+            # get the desired data type and convert
+            datatype = readXmlTag('internalUnitDefault.xml', ['unitDefaults', componentAttributes[i]], 'datatype',
+                                unitConventionDir)
+            df[useNames[i]] = df[useNames[i]].astype(datatype[0])
+    
+           
     #create DataClass object to store raw, fixed, and summery output
     data = DataClass(df) 
     
@@ -210,13 +268,15 @@ def fixBadData(df,setupDir,componentList):
                 checkMinMaxPower(component, data.fixed, descriptorxml,data.baddata)                 
                 linearFix(data.fixed[data.fixed[component].isnull()].index.tolist(),
                                                  data.fixed,component) 
+                scaleData(data.fixed,componentUnits, componentAttributes)
             except KeyError:
                 print('no column named %s' %component)
         except FileNotFoundError:
             print ('Descriptor xml for %s not found' %component)
            
     data.summerize()
+    data.visualize(componentList)
     
-    return data.fixed
+    return data.fixed, data.baddata
 
 
