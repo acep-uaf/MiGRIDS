@@ -4,6 +4,7 @@
 # License: MIT License (see LICENSE file of this package for more information)
 
 #Reads a dataframe and ouputs a new dataframe with the specified sampling time interval.
+#interval is a string with time units. (i.e. '30s' for 30 seconds, '1T' for 1 minute)
 #If interval is less than the interval within the dataframe mean values are used to create a down-sampled dataframe
 #If interval is greater than the interval within a dataframe linear interpolation is used to up-sample the dataframe
 #Dataframe, String -> dataframe

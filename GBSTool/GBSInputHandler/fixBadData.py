@@ -23,7 +23,7 @@ def fixBadData(df,setupDir,componentList,componentUnits=None,componentAttributes
     DESCXML = 'Descriptor.xml' #the suffix of the xml for each component that contains max/min values
     COMPSUFFIX = 'p' #the suffix of that is tacked onto each component in the column name
     COMPSEPERATOR = '' #the seperator between the component and suffix for each column name
-    SEARCHSTART = 1.2 * 365 * 24 * 60 * 60 * 1000 * 1000 * 1000 #1.2 years is 3.784e+16 nanoseconds. This is how far back we want to start searching for matching data.
+    SEARCHSTART = 1.2 * 365 * 24 * 60 * 60  #1.2 years is 3.784e+16 nanoseconds. This is how far back we want to start searching for matching data.
     MAXINLINE = 5 #up to 5 records can have the same value recorded before we call these values bad.
  
     #pandas.Series -> Dataframe
