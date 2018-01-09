@@ -9,25 +9,6 @@ import Generator
 # import GeneratorDispatch
 
 class Powerhouse:
-    '''
-
-    '''
-    # ************Powerhouse variables**********************
-    # List of generators and their respective IDs
-    generators = []
-    genIDS = []
-
-    # Generator dispatch object
-    genDispatch = None  # TODO: implement GeneratorDispatch()
-
-    # Cumulative operational data
-    # Actual loadings
-    genP = 0
-    genQ = 0
-    # Total available gen power without new dispatch
-    genPAvail = 0
-    genQAvail = 0
-
     # __init()__ Class constructor. Initiates the setup of the individual generators as per the initial input.
     # Inputs:
     # self - self reference, always required in constructor
@@ -37,6 +18,21 @@ class Powerhouse:
     # genDescriptor - list of generator descriptor XML files for the respective generators listed in genIDS, this should
     #   be a string with a relative path and file name, e.g., /InputData/Components/gen1Descriptor.xml
     def __init__(self, genIDS, genP, genQ, genDescriptor):
+        # ************Powerhouse variables**********************
+        # List of generators and their respective IDs
+        self.generators = []
+        self.genIDS = []
+
+        # Generator dispatch object
+        self.genDispatch = None  # TODO: implement GeneratorDispatch()
+
+        # Cumulative operational data
+        # Actual loadings
+        self.genP = 0
+        self.genQ = 0
+        # Total available gen power without new dispatch
+        self.genPAvail = 0
+        self.genQAvail = 0
         """
 
         :param genIDS:

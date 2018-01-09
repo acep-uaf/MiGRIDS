@@ -13,52 +13,56 @@ class Generator:
     Generator class: contains all necessary information for a single generator. Multiple generators are aggregated in a
     Powerhouse object (see Powerhouse.py), which further is aggregated in the SystemOperations object (see
     SystemOperations.py).
-
-    :param genID: internal id used in Powerhouse for tracking generator objects. *type int*
-    :var genName: name given in genDescriptor, added here for object traceability. *type string*
-    :var genP: the current real power level, units: kW. *type float*
-    :var genQ: the current reactive power level, units: kvar. *type float*
-    :var genState: the current operating state, 0 - off, 1 - running, 2 - online.
-    :var genPMax: Generator real power nameplate capacity, units: kW. *type float*
-    :var genQMax: Generator reactive power nameplate capacity, units: kvar. *type float*
-    :var genPAvail: De-rating or nameplate real power capacity, current level, units: kW. *type float*
-    :var genPMin: Minimum optimal loading, real power, units: kW. *type float*
-    :var genRunTimeMin: Minimum run time, units: s. *type float*
-    :var genStartTime: Time to start generator, units: s. *type int*
-    :var genFuelCurve: Fuel curve, tuples of [kW, kg/s]. *type list(float,float)
-    :var genRunTimeAct: Generator run time since last start [s]. *type int*
-    :var genRunTimeTot: Generator cummulative run time since model start [s]. *type int*
-    :
     '''
-
-    # Generator resources
-    genID = None
-    genName = None # This should come from the genDescriptor file and is merely used to trace back to that
-    genP = 0  # Current real power level [kW]
-    genQ = 0  # Current reactive power level [kvar]
-    genState = 0  # Generator operating state [dimensionless, index]. See docs for key.
-    genPMax = 0  # Nameplate capacity [kW]
-    genQMax = 0  # Nameplate capacity [kvar]
-    genPAvail = 0   # De-rating or nameplate capacity [kW]
-    genQAvail = 0  # De-rating or nameplate capacity [kvar]
-    genPMin = 0  # Minimum optimal loading [kW]
-    genRunTimeMin = 0  # Minimum run time [s] TODO: add 'Time' to naming convention
-    genStartTime = 0  # Time to start generator [s]
-    genFuelCurve = []  # Fuel curve, tuples of [kW, kg/s]
-
-    genRunTimeAct = 0  # Run time since last start [s]
-    genRunTimeTot = 0  # Cummulative run time since model start [s]
 
     # Constructor
     def __init__(self, genID, genP, genQ, genDescriptor):
-        """
+        '''
         Constructor used for intialization of generator fleet in Powerhouse class.
 
+        :param genID: internal id used in Powerhouse for tracking generator objects. *type int*
+        :var genName: name given in genDescriptor, added here for object traceability. *type string*
+        :var genP: the current real power level, units: kW. *type float*
+        :var genQ: the current reactive power level, units: kvar. *type float*
+        :var genState: the current operating state, 0 - off, 1 - running, 2 - online.
+        :var genPMax: Generator real power nameplate capacity, units: kW. *type float*
+        :var genQMax: Generator reactive power nameplate capacity, units: kvar. *type float*
+        :var genPAvail: De-rating or nameplate real power capacity, current level, units: kW. *type float*
+        :var genPMin: Minimum optimal loading, real power, units: kW. *type float*
+        :var genRunTimeMin: Minimum run time, units: s. *type float*
+        :var genStartTime: Time to start generator, units: s. *type int*
+        :var genFuelCurve: Fuel curve, tuples of [kW, kg/s]. *type list(float,float)
+        :var genRunTimeAct: Generator run time since last start [s]. *type int*
+        :var genRunTimeTot: Generator cummulative run time since model start [s]. *type int*
+        :
+        '''
+
+        # Generator resources
+        # TODO: delete commented out variables that are set elsewhere in __init__
+        #self.genID = None
+        #self.genName = None  # This should come from the genDescriptor file and is merely used to trace back to that
+        #self.genP = 0  # Current real power level [kW]
+        #self.genQ = 0  # Current reactive power level [kvar]
+        # TODO: should genState be an input to __init__ ?
+        self.genState = 0  # Generator operating state [dimensionless, index]. See docs for key.
+        #self.genPMax = 0  # Nameplate capacity [kW]
+        self.genQMax = 0  # Nameplate capacity [kvar]
+        # TODO: default to PMax?
+        self.genPAvail = 0  # De-rating or nameplate capacity [kW]
+        self.genQAvail = 0  # De-rating or nameplate capacity [kvar]
+        #self.genPMin = 0  # Minimum optimal loading [kW]
+        #self.genRunTimeMin = 0  # Minimum run time [s] TODO: add 'Time' to naming convention
+        #self.genStartTime = 0  # Time to start generator [s]
+        #self.genFuelCurve = []  # Fuel curve, tuples of [kW, kg/s]
+
+        self.genRunTimeAct = 0  # Run time since last start [s]
+        self.genRunTimeTot = 0  # Cummulative run time since model start [s]
+
+        """
         :param genID: integer for identification of object within Powerhouse list of generators.
         :param genP: initial real power level.
         :param genQ: initial reactive power level.
         :param genDescriptor: relative path and file name of genDescriptor-file used to populate static information.
-
         """
 
         # Write initial values to internal variables.

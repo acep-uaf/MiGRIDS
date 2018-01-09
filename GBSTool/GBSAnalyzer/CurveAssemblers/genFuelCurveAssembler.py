@@ -20,21 +20,24 @@ class GenFuelCurve:
         already been performed.
 
     '''
-    # ******* INPUT VARIABLES *******
-    # Data points give in genDescriptor.xml, list of tuples, [kW, kg/s]
-    fuelCurveDataPoints = []
-    # Maximum overload capacity [kW]. This is used to provide a maximum x-coordinate for the fuel curve
-    genOverloadPMax = 0
 
-    # ******* INTERNAL VARIABLES *******
-    # Coordinates for interpolation
-    coords = []
+    # Constructor
+    def __init__(self):
+        # ******* INPUT VARIABLES *******
+        # Data points give in genDescriptor.xml, list of tuples, [kW, kg/s]
+        fuelCurveDataPoints = []
+        # Maximum overload capacity [kW]. This is used to provide a maximum x-coordinate for the fuel curve
+        genOverloadPMax = 0
 
-    # ******* OUTPUT VARIABLES *******
-    # The dense fuel curve with units [kW, kg/s]
-    fuelCurve = []
-    # The dense fuel curve, but with integer values only. Fuel consumption values to be multiplied by 10,000.
-    fuelCurveInt = []
+        # ******* INTERNAL VARIABLES *******
+        # Coordinates for interpolation
+        coords = []
+
+        # ******* OUTPUT VARIABLES *******
+        # The dense fuel curve with units [kW, kg/s]
+        fuelCurve = []
+        # The dense fuel curve, but with integer values only. Fuel consumption values to be multiplied by 10,000.
+        fuelCurveInt = []
 
     def checkInputs(self):
         '''
