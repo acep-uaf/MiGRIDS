@@ -69,6 +69,15 @@ class Generator:
         self.genP = genP
         self.genQ = genQ
         self.genState = genState
+        # initiate operating condition flags and timers
+        self.overLimitFlag = False # indicates when the generator is operating above the upperLimit (see genDescriptor.xml)
+        self.underLimitFlag = False # indicates when the generator is operating below the lowerLimit (see genDescriptor.xml)
+        # an energy counter that keeps track of how much the generator is operating above the upperNormalLoadingLimit
+        # (see genDescriptor.xml)
+        self.overNormalLoadingCounter = 0
+        self.overNormalLoadingFlag = False # indicates when the generator is operating above upperNormalLoadingLimit
+        self.underMolTimer = 0 # an energy timer that keeps track of how much the generator operates below (units kWs)
+        self.underMolFlag = False # indicates
         genDescriptorParser(self, genDescriptor)
 
 
@@ -96,6 +105,16 @@ class Generator:
         self.genPMin = float(genSoup.mol.get('value')) * self.genPMax
         self.genRunTimeMin = float(genSoup.minRunTime.get('value'))
         self.genStartTime = float(genSoup.startTime.get('value'))
+        self.genStartCost =  float(genSoup.startCost.get('value'))
+        self.genMol = float(genSoup.mol.get('value'))
+        self.genMolLimit = float(genSoup.molLimit.get('value'))
+        self.genMolTime = float(genSoup.molTime.get('value'))
+        self.genUpperNormalLoading = float(genSoup.upperNormalLoading.get('value'))
+        self.genUpperNormalLoadingTime = float(genSoup.upperNormalLoadingTime.get('value'))
+        self.genLowerLimit = float(genSoup.lowerLimit.get('value'))
+        self.genUpperLimit = float(genSoup.upperLimit.get('value'))
+
+        # TODO: add upperNormalLimit, upperNormalLimitTime, molTime,
 
         # Handle the fuel curve interpolation
         fuelCurvePPuInpt = genSoup.fuelCurve.pPu.get('value').split()
@@ -122,10 +141,16 @@ class Generator:
         # TODO: implement this, might include adding additional class-wide variables.
 
         # Check overload condition
+        # is it over the normal operating threshold? (eg 90% full capacity), then initiate energy counter
+        # is it over capacity? then immediatly trigger a flag
 
         # Check MOL condition
+        # is it under MOL? then initiate energy counter
 
         # Check minimum runtime condition
+        # decrement min runtime counter after initially bringing online]
+
+        # is timer
 
 
 
