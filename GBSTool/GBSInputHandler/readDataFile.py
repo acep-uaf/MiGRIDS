@@ -62,6 +62,7 @@ def readDataFile(inputSpecification,fileLocation='',fileType='csv',columnNames=N
     units = [None] * len(componentUnits)
     scale = [None] * len(componentUnits)
     offset = [None] * len(componentUnits)
+    #TODO this is moving to fixBadData. Delete from here once working in fixBadData
 #    for i in range(len(componentUnits)): # for each channel
 #        # cd to unit conventions file
 #        dir_path = os.path.dirname(os.path.realpath(__file__))
