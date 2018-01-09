@@ -51,14 +51,9 @@
     <!-- Default value is 1. Units are PU*s. -->
     </molLimit>
 
-    <molTime value="300" unit="s">
-    <!-- 'molTime' describes the amount of time that molLimit is measured over.  -->
-    <!-- Default value is 300 s (5 min). Units are s. -->
-    </molTime>
-
     <upperNormalLoading value="0.9" unit="PU">
     <!-- 'upperNormalLoading' describes the the normal upper operating range of the diesel generator. If it operates
-     more than the upperNormalLoadingLimit above the upperNormalLoading in the time defined in upperNormalLoadingTime,
+     more than the upperNormalLoadingLimit above the upperNormalLoading in the time defined in checkLoadingTime,
      then a flag is set. -->
     <!-- Default value is 0.9. Units are PU. -->
     </upperNormalLoading>
@@ -66,14 +61,14 @@
     <upperNormalLoadingLimit value="1" unit="PU*s">
     <!-- 'upperNormalLoadingLimit' describes the maximum energy measured over upperNormalLoading allowed before raising
     a flag. Units are in P.U. of nameplate capacity times seconds. It is measured over the past period of time indicated by
-     upperNormalLoadingTime. -->
+     checkLoadingTime. -->
     <!-- Default value is 1. Units are PU*s. -->
     </upperNormalLoadingLimit>
 
-    <upperNormalLoadingTime value="300" unit="s">
-    <!-- 'upperNormalLoadingTime' is the amount of time that upperNormalLoadingLimit is measured over. -->
-    <!-- Default value is 0.9. Units are PU. -->
-    </upperNormalLoadingTime>
+    <checkLoadingTime value="300" unit="s">
+    <!-- 'checkLoadingTime' is the amount of time that upperNormalLoadingLimit and molLimit are measured over. -->
+    <!-- Default value is 300. Units are s. -->
+    </checkLoadingTime>
 
     <lowerLimit value="0.1" unit="PU">
     <!-- 'lowerLimit' is the lower loading limit below which a flag is immediately raised. -->

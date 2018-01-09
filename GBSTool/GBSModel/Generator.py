@@ -142,8 +142,19 @@ class Generator:
 
         # Check overload condition
         # is it over the normal operating threshold? (eg 90% full capacity), then initiate energy counter
-        # is it over capacity? then immediatly trigger a flag
+        # previous index
 
+        self.prevLoading.append(self.genP)
+        if len(self.prevLoading
+
+
+        overUpperNormalLoading = max(self.genP-self.genUpperNormalLoading,0) # how much over, if over
+        if overUpperNormalLoading > 0: # if over, increment counter
+            self.overNormalLoadingCounter += overUpperNormalLoading
+
+
+
+        # is it over capacity? then immediatly trigger a flag
         # Check MOL condition
         # is it under MOL? then initiate energy counter
 
