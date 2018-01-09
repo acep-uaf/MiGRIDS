@@ -34,9 +34,8 @@ def fixBadData(df,setupDir,componentList,componentUnits=None,componentAttributes
         inline = inline.rename(columns={'first':'value','min':'start','max':'end'})
         inline['count'] = inline['end'] - inline['start']
         inline = inline[inline['count'] > MAXINLINE ]
-       
         return inline
-    
+       
 #0's are only considered inline if data collection is down
 #datacollection is down if the mean and standard deviation on all components for the period of interest are equal        
     def removeInlineZeros(df, column, columnList, start, stop):
@@ -48,8 +47,26 @@ def fixBadData(df,setupDir,componentList,componentUnits=None,componentAttributes
              
          else:
              return removeInlineZeros(df, column + 1, columnList,start, stop)
-         
-           
+
+    #datetime, datetime -> datetime
+    #bumps the date foreward by 1 day until day of week matches between day1 and day2        
+    def dayBump(day1, day2):
+        if day1.dayofweek == day2.dayofweek:
+            return day2
+        else:
+            return dayBump(day1,(day2 + pd.DateOffset(days = 1)))
+    
+    
+    #
+    #dataframe, datetime,datetime -> datetime
+    #returns the datetimestamp that is 
+    def findSearchStart(df,start,end):
+        if (start- end) >= pd.Timedelta('1 days'):
+            startdate = dayBump(start,(start - pd.DateOffset(years=1)))
+        else:
+            startdate = start - pd.DateOffset(weeks = 2)
+        return startdate
+      
     #String, DataFrame, Dictionary -> DataFrame, Dictionary
     #identify sequential rows with identical values for a specified component
     #inline values are replaced and index is recorded in datadictionary
@@ -86,18 +103,27 @@ def fixBadData(df,setupDir,componentList,componentUnits=None,componentAttributes
     #search for a subset of data to replace block of missing values that occurrs between start and stop indices.
     #if a suitable block of values is not identified linear interpolation is used.
     def getReplacement(df, component,start,stop):
-        #search start is 1.2 year from start of missing data block.
-        search_start = df.loc[start,DATETIME] - SEARCHSTART
+        #find the point we should start searching for matching data
+        search_start = findSearchStart(df,pd.to_datetime(df.iloc[start]['DATE'], unit = 's'),pd.to_datetime(df.iloc[start]['DATE'], unit = 's'))
+        #window is the size of our moving window
         window = int(stop-start)
-        if (search_start < 0) | (len(df[df[DATETIME] > search_start]) < stop-start):
-           start_search_here = window
-        else:
-            start_search_here = df[df[DATETIME] > search_start].index.tolist()[0]
+        start_search_here = df[df[DATETIME] > search_start].index.tolist()[0]
         original_block =  df.loc[(start - 0.5 * window):(stop + 0.5 * window), component]
         #now we look for a block of time with similar distribution
         ps= df.loc[start_search_here: , component].rolling(window).apply(lambda x: doMatch(x,original_block))
         #first_valid is the index of the last value in the subset of data that has a matching distribution to our missing data
-        first_valid = (ps[ps > 0.05]).first_valid_index()
+        
+        possibles = df.loc[ps[ps > 0.05].index]
+        if (pd.to_datetime(df.iloc[start]['DATE'], unit = 's')- pd.to_datetime(df.iloc[end]['DATE'], unit = 's')) < pd.Timedelta('1 days'):
+            #for blocks less than a day we want to match up time of day and day of the week
+            first_valid = possibles[((pd.to_datetime(possibles['DATE'], unit = 's')).dt.dayofweek == search_start.dayofweek) & 
+                                    ((pd.to_datetime(possibles['DATE'], unit = 's')).dt.hour <= search_start.hour + 2) &
+                                    ((pd.to_datetime(possibles['DATE'], unit = 's')).dt.hour >= search_start.hour - 2)].first_valid_index()
+    
+        #for multi day block of missing data we want to match up the days we are replacining (Sunday for Sunday, Monday for Monday)
+            first_valid = possibles[(pd.to_datetime(possibles['DATE'], unit = 's')).dt.dayofweek == search_start.dayofweek].first_valid_index()
+        
+        
         #if we found a suitable block of values we insert them into the missing values otherwise we interpolate the missing values
         if first_valid != None:
             logging.info("replaced")
@@ -117,7 +143,7 @@ def fixBadData(df,setupDir,componentList,componentUnits=None,componentAttributes
     #string, dictionary, string, list of integers -> dictionary
     #adds a list of indices to a dictionary of bad values existing within a dataset.   
     def badDictAdd(component, current_dict, error_msg, index_list):
-        #if the component exists add the new error message, otherwise start the compnent
+        #if the component exists add the new error message, otherwise start the component
         try:
             current_dict[component][error_msg]=index_list
         except KeyError:
