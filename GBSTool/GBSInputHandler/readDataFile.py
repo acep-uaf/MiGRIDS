@@ -62,33 +62,34 @@ def readDataFile(inputSpecification,fileLocation='',fileType='csv',columnNames=N
     units = [None] * len(componentUnits)
     scale = [None] * len(componentUnits)
     offset = [None] * len(componentUnits)
-    for i in range(len(componentUnits)): # for each channel
-        # cd to unit conventions file
-        dir_path = os.path.dirname(os.path.realpath(__file__))
-        unitConventionDir = dir_path +'..\\..\\GBSAnalyzer\\UnitConverters'
-        # get the default unit for the data type
-        units[i] = readXmlTag('internalUnitDefault.xml', ['unitDefaults',componentAttributes[i]], 'units', unitConventionDir)[0]
-        # if the units don't match, convert
-        if units[i].lower() != componentUnits[i].lower():
-            unitConvertDir = dir_path + '..\\..\\GBSAnalyzer\\UnitConverters\\unitConverters.py'
-            funcName = componentUnits[i].lower() + '2' + units[i].lower()
-            # load the conversion
-            spec = importlib.util.spec_from_file_location(funcName, unitConvertDir)
-            uc = importlib.util.module_from_spec(spec)
-            spec.loader.exec_module(uc)
-            x = getattr(uc, funcName)
-            # update data
-            df[useNames[i]] = x(df[useNames[i]])
-        # get the scale and offset
-        scale[i] = readXmlTag('internalUnitDefault.xml', ['unitDefaults', componentAttributes[i]], 'scale',
-                           unitConventionDir)[0]
-        offset[i] = readXmlTag('internalUnitDefault.xml', ['unitDefaults', componentAttributes[i]], 'offset',
-                       unitConventionDir)[0]
-        df[useNames[i]] = df[useNames[i]]*int(scale[i]) + int(offset[i])
-        # get the desired data type and convert
-        datatype = readXmlTag('internalUnitDefault.xml', ['unitDefaults', componentAttributes[i]], 'datatype',
-                            unitConventionDir)
-        df[useNames[i]] = df[useNames[i]].astype(datatype[0])
+    #TODO this is moving to fixBadData. Delete from here once working in fixBadData
+#    for i in range(len(componentUnits)): # for each channel
+#        # cd to unit conventions file
+#        dir_path = os.path.dirname(os.path.realpath(__file__))
+#        unitConventionDir = dir_path +'..\\..\\GBSAnalyzer\\UnitConverters'
+#        # get the default unit for the data type
+#        units[i] = readXmlTag('internalUnitDefault.xml', ['unitDefaults',componentAttributes[i]], 'units', unitConventionDir)[0]
+#        # if the units don't match, convert
+#        if units[i].lower() != componentUnits[i].lower():
+#            unitConvertDir = dir_path + '..\\..\\GBSAnalyzer\\UnitConverters\\unitConverters.py'
+#            funcName = componentUnits[i].lower() + '2' + units[i].lower()
+#            # load the conversion
+#            spec = importlib.util.spec_from_file_location(funcName, unitConvertDir)
+#            uc = importlib.util.module_from_spec(spec)
+#            spec.loader.exec_module(uc)
+#            x = getattr(uc, funcName)
+#            # update data
+#            df[useNames[i]] = x(df[useNames[i]])
+#        # get the scale and offset
+#        scale[i] = readXmlTag('internalUnitDefault.xml', ['unitDefaults', componentAttributes[i]], 'scale',
+#                           unitConventionDir)[0]
+#        offset[i] = readXmlTag('internalUnitDefault.xml', ['unitDefaults', componentAttributes[i]], 'offset',
+#                       unitConventionDir)[0]
+#        df[useNames[i]] = df[useNames[i]]*int(scale[i]) + int(offset[i])
+#        # get the desired data type and convert
+#        datatype = readXmlTag('internalUnitDefault.xml', ['unitDefaults', componentAttributes[i]], 'datatype',
+#                            unitConventionDir)
+#        df[useNames[i]] = df[useNames[i]].astype(datatype[0])
 
     # return to original directory
     os.chdir(here)
