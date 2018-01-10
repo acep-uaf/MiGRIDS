@@ -16,7 +16,7 @@ class Generator:
     '''
 
     # Constructor
-    def __init__(self, genID, genP, genQ, genState, genDescriptor):
+    def __init__(self, genID, genP, genQ, genState, timeStep, genDescriptor):
         '''
         Constructor used for intialization of generator fleet in Powerhouse class.
 
@@ -46,7 +46,7 @@ class Generator:
         #self.genState = 0  # Generator operating state [dimensionless, index]. See docs for key.
         #self.genPMax = 0  # Nameplate capacity [kW]
         self.genQMax = 0  # Nameplate capacity [kvar]
-        # TODO: default to PMax?
+        # TODO: default to PMax? This should probably be set in the genDescrioptor
         self.genPAvail = 0  # De-rating or nameplate capacity [kW]
         self.genQAvail = 0  # De-rating or nameplate capacity [kvar]
         #self.genPMin = 0  # Minimum optimal loading [kW]
@@ -56,6 +56,7 @@ class Generator:
 
         self.genRunTimeAct = 0  # Run time since last start [s]
         self.genRunTimeTot = 0  # Cummulative run time since model start [s]
+        self.genStartTimeAct = 0 # the amount of time spent warming up
 
         """
         :param genID: integer for identification of object within Powerhouse list of generators.
@@ -69,14 +70,13 @@ class Generator:
         self.genP = genP
         self.genQ = genQ
         self.genState = genState
+        self.timeStep = timeStep # the time step used in the simulation in seconds
         # initiate operating condition flags and timers
         self.overLimitFlag = False # indicates when the generator is operating above the upperLimit (see genDescriptor.xml)
         self.underLimitFlag = False # indicates when the generator is operating below the lowerLimit (see genDescriptor.xml)
         # an energy counter that keeps track of how much the generator is operating above the upperNormalLoadingLimit
         # (see genDescriptor.xml)
-        self.overNormalLoadingCounter = 0
         self.overNormalLoadingFlag = False # indicates when the generator is operating above upperNormalLoadingLimit
-        self.underMolTimer = 0 # an energy timer that keeps track of how much the generator operates below (units kWs)
         self.underMolFlag = False # indicates
         genDescriptorParser(self, genDescriptor)
 
@@ -101,20 +101,22 @@ class Generator:
 
         # Dig through the tree for the required data
         self.genName = genSoup.component.get('name')
-        self.genPMax = float(genSoup.POutMaxPa.get('value'))
-        self.genPMin = float(genSoup.mol.get('value')) * self.genPMax
-        self.genRunTimeMin = float(genSoup.minRunTime.get('value'))
-        self.genStartTime = float(genSoup.startTime.get('value'))
-        self.genStartCost =  float(genSoup.startCost.get('value'))
-        self.genMol = float(genSoup.mol.get('value'))
-        self.genMolLimit = float(genSoup.molLimit.get('value'))
-        self.genMolTime = float(genSoup.molTime.get('value'))
+        self.genPMax = float(genSoup.POutMaxPa.get('value')) # nameplate capacity
+        self.genMol = float(genSoup.mol.get('value')) * self.genPMax # the MOL, normal operation stay above this
+        self.underMolLimit = float(genSoup.molLimit.get('value')) # the maximum energy allowed below MOL in checkLoadingTime period
+        # the loading above which normal operation stays below.
         self.genUpperNormalLoading = float(genSoup.upperNormalLoading.get('value'))
-        self.genUpperNormalLoadingTime = float(genSoup.upperNormalLoadingTime.get('value'))
+        # the maximum amount of energy allowed above the normal upper limit in a checkLoadingTime period
+        self.genUpperNormalLoadingLimit = float(genSoup.genUpperNormalLoadingLimit.get('value'))
+        # the lowest loading below which will immediatly flag the scheduler
         self.genLowerLimit = float(genSoup.lowerLimit.get('value'))
+        # The highest loading above which will immediatly flag the scheduler
         self.genUpperLimit = float(genSoup.upperLimit.get('value'))
-
-        # TODO: add upperNormalLimit, upperNormalLimitTime, molTime,
+        # the amount of time in seconds that the loading on the diesel generators is monitored for
+        self.checkLoadingTime = float(genSoup.upperNormalLoadingTime.get('value'))
+        self.genRunTimeMin = float(genSoup.minRunTime.get('value')) # minimum diesel run time
+        self.genStartTime = float(genSoup.startTime.get('value')) # amount of time required to start from warm
+        self.genStartCost =  float(genSoup.startCost.get('value')) # equivalent cost in kg of diesel to start engine
 
         # Handle the fuel curve interpolation
         fuelCurvePPuInpt = genSoup.fuelCurve.pPu.get('value').split()
@@ -140,28 +142,62 @@ class Generator:
         """
         # TODO: implement this, might include adding additional class-wide variables.
 
-        # Check overload condition
-        # is it over the normal operating threshold? (eg 90% full capacity), then initiate energy counter
-        # previous index
-
+        ######### Check for out of bound operation ################
+        # update the list of previous loadings and remove the oldest one
         self.prevLoading.append(self.genP)
-        if len(self.prevLoading
+        # limit the list to required length
+        # first reverse order, then take checkLoadingTime of points and reverse back again
+        # number of data points is (seconds required)/(# seconds per data point)
+        self.prevLoading = self.prevLoading[::-1][:round(self.checkLoadingTime/self.timeStep)][::-1]
+
+        ### Check the MOL constraint ###
+        # subtract prevLoading from MOL to get under MOL generation
+        molDifference = self.genMol - self.prevLoading
+        # the amount of energy that has been operated below MOL in checkLoadingTime
+        underMol = sum([num for num in molDifference if num > 0]) * self.timeStep
+
+        ### Check the upper normal loading limit ###
+        # subtract genUpperNormalLoading from prevLoading to get over genUpperNormalLoading generation
+        normalUpperDifference = self.prevLoading - self.genUpperNormalLoading
+        # the amount of energy that has been operated above genUpperNormalLoading in checkLoadingTime
+        overGenUpperNormalLoading = sum([num for num in normalUpperDifference if num > 0]) * self.timeStep
 
 
-        overUpperNormalLoading = max(self.genP-self.genUpperNormalLoading,0) # how much over, if over
-        if overUpperNormalLoading > 0: # if over, increment counter
-            self.overNormalLoadingCounter += overUpperNormalLoading
+        ### Check if out of bounds operation, then flag outOfBounds ###
+        # under MOL by specified amount
+        if underMol > self.underMolLimit:
+            self.outOfBounds = True
+        # over normal max loading by specified amount
+        elif overGenUpperNormalLoading > self.genUpperNormalLoadingLimit:
+            self.outOfBounds = True
+        # over the max loading
+        elif self.genP > self.genUpperLimit:
+            self.outOfBounds = True
+        # under the min loading
+        elif self.genP < self.genLowerLimit:
+            self.outOfBounds = True
+        # not out of bounds
+        else:
+            self.outOfBounds = False
 
 
+        ######## Update runtime timers ##########
+        # update run times
+        if self.genState == 2: # if running online
+            # the genStartTimeAct is not reset to zero here, because if the generator goes from running online to
+            # running offline, it does not need to run for the full startTime. It is already warm and can be brought
+            # directly back online
+            self.genRunTimeAct += self.timeStep # increment run time since last started
+            self.genRunTimeTot += self.timeStep # increment run time since beginning of sim
 
-        # is it over capacity? then immediatly trigger a flag
-        # Check MOL condition
-        # is it under MOL? then initiate energy counter
+        elif self.genState == 1: # if running but offline (ie starting up)
+            self.genRunTimeAct = 0  # if not running online, reset to zero
+            self.genStartTimeAct += self.timeStep # the time it has been starting up for
 
-        # Check minimum runtime condition
-        # decrement min runtime counter after initially bringing online]
+        else: # if not running and offline
+            self.genRunTimeAct = 0 # if not running online, reset to zero
+            self.genStartTimeAct = 0 # if not starting reset to zero
 
-        # is timer
 
 
 
