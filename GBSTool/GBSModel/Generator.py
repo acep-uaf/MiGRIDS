@@ -37,23 +37,7 @@ class Generator:
         :
         '''
 
-        # Generator resources
-        # TODO: delete commented out variables that are set elsewhere in __init__
-        #self.genID = None
-        #self.genName = None  # This should come from the genDescriptor file and is merely used to trace back to that
-        #self.genP = 0  # Current real power level [kW]
-        #self.genQ = 0  # Current reactive power level [kvar]
-        #self.genState = 0  # Generator operating state [dimensionless, index]. See docs for key.
-        #self.genPMax = 0  # Nameplate capacity [kW]
-        self.genQMax = 0  # Nameplate capacity [kvar]
-        # TODO: default to PMax? This should probably be set in the genDescrioptor
-        self.genPAvail = 0  # De-rating or nameplate capacity [kW]
-        self.genQAvail = 0  # De-rating or nameplate capacity [kvar]
-        #self.genPMin = 0  # Minimum optimal loading [kW]
-        #self.genRunTimeMin = 0  # Minimum run time [s] TODO: add 'Time' to naming convention
-        #self.genStartTime = 0  # Time to start generator [s]
-        #self.genFuelCurve = []  # Fuel curve, tuples of [kW, kg/s]
-
+        # Initiate current generator operation variables
         self.genRunTimeAct = 0  # Run time since last start [s]
         self.genRunTimeTot = 0  # Cummulative run time since model start [s]
         self.genStartTimeAct = 0 # the amount of time spent warming up
@@ -66,10 +50,10 @@ class Generator:
         """
 
         # Write initial values to internal variables.
-        self.genID = genID
-        self.genP = genP
-        self.genQ = genQ
-        self.genState = genState
+        self.genID = genID # internal id used in Powerhouse for tracking generator objects. *type int*
+        self.genP = genP # Current real power level [kW]
+        self.genQ = genQ # Current reactive power level [kvar]
+        self.genState = genState # Generator operating state [dimensionless, index]. See docs for key.
         self.timeStep = timeStep # the time step used in the simulation in seconds
         # initiate operating condition flags and timers
         self.overLimitFlag = False # indicates when the generator is operating above the upperLimit (see genDescriptor.xml)
@@ -102,6 +86,10 @@ class Generator:
         # Dig through the tree for the required data
         self.genName = genSoup.component.get('name')
         self.genPMax = float(genSoup.POutMaxPa.get('value')) # nameplate capacity
+        self.genQMax = float(genSoup.QOutMaxPa.get('value'))  # nameplate capacity kvar
+        # TODO: what are these going to be used for? these should be used instead of PMax and QMax.
+        self.genPAvail = self.genPmax  # De-rating or nameplate capacity [kW]
+        self.genQAvail = self.genQMax  # De-rating or nameplate capacity [kvar]
         self.genMol = float(genSoup.mol.get('value')) * self.genPMax # the MOL, normal operation stay above this
         self.underMolLimit = float(genSoup.molLimit.get('value')) # the maximum energy allowed below MOL in checkLoadingTime period
         # the loading above which normal operation stays below.
@@ -161,7 +149,6 @@ class Generator:
         normalUpperDifference = self.prevLoading - self.genUpperNormalLoading
         # the amount of energy that has been operated above genUpperNormalLoading in checkLoadingTime
         overGenUpperNormalLoading = sum([num for num in normalUpperDifference if num > 0]) * self.timeStep
-
 
         ### Check if out of bounds operation, then flag outOfBounds ###
         # under MOL by specified amount
