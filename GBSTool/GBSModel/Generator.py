@@ -5,7 +5,14 @@
 
 # General imports
 from bs4 import BeautifulSoup as Soup
-from GBSAnalyzer.CurveAssemblers.genFuelCurveAssembler import GenFuelCurve
+import os
+#here = os.getcwd()
+#os.chdir('../GBSAnalyzer/CurveAssemblers')
+#from genFuelCurveAssembler import GenFuelCurve
+#os.chdir(here)
+import sys
+sys.path.append('../')
+from GBSAnalyzer.CurveAssemblers.genFuelCurveAssembler import GenFuelCurve # This is not working
 
 
 class Generator:
@@ -14,56 +21,6 @@ class Generator:
     Powerhouse object (see Powerhouse.py), which further is aggregated in the SystemOperations object (see
     SystemOperations.py).
     '''
-
-    # Constructor
-    def __init__(self, genID, genP, genQ, genState, timeStep, genDescriptor):
-        '''
-        Constructor used for intialization of generator fleet in Powerhouse class.
-
-        :param genID: internal id used in Powerhouse for tracking generator objects. *type int*
-        :var genName: name given in genDescriptor, added here for object traceability. *type string*
-        :var genP: the current real power level, units: kW. *type float*
-        :var genQ: the current reactive power level, units: kvar. *type float*
-        :var genState: the current operating state, 0 - off, 1 - running, 2 - online.
-        :var genPMax: Generator real power nameplate capacity, units: kW. *type float*
-        :var genQMax: Generator reactive power nameplate capacity, units: kvar. *type float*
-        :var genPAvail: De-rating or nameplate real power capacity, current level, units: kW. *type float*
-        :var genPMin: Minimum optimal loading, real power, units: kW. *type float*
-        :var genRunTimeMin: Minimum run time, units: s. *type float*
-        :var genStartTime: Time to start generator, units: s. *type int*
-        :var genFuelCurve: Fuel curve, tuples of [kW, kg/s]. *type list(float,float)
-        :var genRunTimeAct: Generator run time since last start [s]. *type int*
-        :var genRunTimeTot: Generator cummulative run time since model start [s]. *type int*
-        :
-        '''
-
-        # Initiate current generator operation variables
-        self.genRunTimeAct = 0  # Run time since last start [s]
-        self.genRunTimeTot = 0  # Cummulative run time since model start [s]
-        self.genStartTimeAct = 0 # the amount of time spent warming up
-
-        """
-        :param genID: integer for identification of object within Powerhouse list of generators.
-        :param genP: initial real power level.
-        :param genQ: initial reactive power level.
-        :param genDescriptor: relative path and file name of genDescriptor-file used to populate static information.
-        """
-
-        # Write initial values to internal variables.
-        self.genID = genID # internal id used in Powerhouse for tracking generator objects. *type int*
-        self.genP = genP # Current real power level [kW]
-        self.genQ = genQ # Current reactive power level [kvar]
-        self.genState = genState # Generator operating state [dimensionless, index]. See docs for key.
-        self.timeStep = timeStep # the time step used in the simulation in seconds
-        # initiate operating condition flags and timers
-        self.overLimitFlag = False # indicates when the generator is operating above the upperLimit (see genDescriptor.xml)
-        self.underLimitFlag = False # indicates when the generator is operating below the lowerLimit (see genDescriptor.xml)
-        # an energy counter that keeps track of how much the generator is operating above the upperNormalLoadingLimit
-        # (see genDescriptor.xml)
-        self.overNormalLoadingFlag = False # indicates when the generator is operating above upperNormalLoadingLimit
-        self.underMolFlag = False # indicates
-        genDescriptorParser(self, genDescriptor)
-
 
     # Generator descriptor parser
     def genDescriptorParser(self, genDescriptor):
@@ -88,20 +45,20 @@ class Generator:
         self.genPMax = float(genSoup.POutMaxPa.get('value')) # nameplate capacity
         self.genQMax = float(genSoup.QOutMaxPa.get('value'))  # nameplate capacity kvar
         # TODO: what are these going to be used for? these should be used instead of PMax and QMax.
-        self.genPAvail = self.genPmax  # De-rating or nameplate capacity [kW]
+        self.genPAvail = self.genPMax  # De-rating or nameplate capacity [kW]
         self.genQAvail = self.genQMax  # De-rating or nameplate capacity [kvar]
         self.genMol = float(genSoup.mol.get('value')) * self.genPMax # the MOL, normal operation stay above this
-        self.underMolLimit = float(genSoup.molLimit.get('value')) # the maximum energy allowed below MOL in checkLoadingTime period
+        self.underMolLimit = float(genSoup.molLimit.get('value'))*self.genPMax # the maximum energy allowed below MOL in checkLoadingTime period
         # the loading above which normal operation stays below.
-        self.genUpperNormalLoading = float(genSoup.upperNormalLoading.get('value'))
+        self.genUpperNormalLoading = float(genSoup.upperNormalLoading.get('value'))*self.genPMax
         # the maximum amount of energy allowed above the normal upper limit in a checkLoadingTime period
-        self.genUpperNormalLoadingLimit = float(genSoup.genUpperNormalLoadingLimit.get('value'))
+        self.genUpperNormalLoadingLimit = float(genSoup.upperNormalLoadingLimit.get('value'))*self.genPMax
         # the lowest loading below which will immediatly flag the scheduler
-        self.genLowerLimit = float(genSoup.lowerLimit.get('value'))
+        self.genLowerLimit = float(genSoup.lowerLimit.get('value'))*self.genPMax
         # The highest loading above which will immediatly flag the scheduler
-        self.genUpperLimit = float(genSoup.upperLimit.get('value'))
+        self.genUpperLimit = float(genSoup.upperLimit.get('value'))*self.genPMax
         # the amount of time in seconds that the loading on the diesel generators is monitored for
-        self.checkLoadingTime = float(genSoup.upperNormalLoadingTime.get('value'))
+        self.checkLoadingTime = float(genSoup.checkLoadingTime.get('value'))
         self.genRunTimeMin = float(genSoup.minRunTime.get('value')) # minimum diesel run time
         self.genStartTime = float(genSoup.startTime.get('value')) # amount of time required to start from warm
         self.genStartCost =  float(genSoup.startCost.get('value')) # equivalent cost in kg of diesel to start engine
@@ -120,6 +77,41 @@ class Generator:
         genFC.genOverloadPMax = self.genPMax  # TODO: consider making this something else.
         genFC.cubicSplineCurveEstimator()
         self.genFuelCurve = genFC.fuelCurve  # TODO: consider making this the integer version.
+
+    # Constructor
+    def __init__(self, genID, genP, genQ, genState, timeStep, genDescriptor):
+        """
+        Constructor used for intialization of generator fleet in Powerhouse class.
+        :param genID: integer for identification of object within Powerhouse list of generators.
+        :param genP: initial real power level.
+        :param genQ: initial reactive power level.
+        :param genState: the current operating state, 0 - off, 1 - running, 2 - online.
+        :param timeStep: the time step used in the simulation, in seconds.
+        :param genDescriptor: relative path and file name of genDescriptor-file used to populate static information.
+        """
+
+        # Initiate current generator operation variables
+        self.genRunTimeAct = 0  # Run time since last start [s]
+        self.genRunTimeTot = 0  # Cummulative run time since model start [s]
+        self.genStartTimeAct = 0  # the amount of time spent warming up
+        self.prevLoading = [] # a list of the last x seconds of loading on the diesel generator, updated with checkOperatingConditions()
+
+        # Write initial values to internal variables.
+        self.genID = genID  # internal id used in Powerhouse for tracking generator objects. *type int*
+        self.genP = genP  # Current real power level [kW]
+        self.genQ = genQ  # Current reactive power level [kvar]
+        self.genState = genState  # Generator operating state [dimensionless, index]. See docs for key.
+        self.timeStep = timeStep  # the time step used in the simulation in seconds
+        # initiate operating condition flags and timers
+        self.overLimitFlag = False  # indicates when the generator is operating above the upperLimit (see genDescriptor.xml)
+        self.underLimitFlag = False  # indicates when the generator is operating below the lowerLimit (see genDescriptor.xml)
+        # an energy counter that keeps track of how much the generator is operating above the upperNormalLoadingLimit
+        # (see genDescriptor.xml)
+        self.overNormalLoadingFlag = False  # indicates when the generator is operating above upperNormalLoadingLimit
+        self.underMolFlag = False  # indicates
+        self.underMol = 0 # the amount by which the generator has operated under MOL in the past self.checkLoadingTime
+        self.overGenUpperNormalLoading = 0 # the amount by which the generator has operated above genUpperNormalLoading in the past self.checkLoadingTime
+        self.genDescriptorParser(genDescriptor)
 
     def checkOperatingConditions(self):
         """
@@ -140,22 +132,22 @@ class Generator:
 
         ### Check the MOL constraint ###
         # subtract prevLoading from MOL to get under MOL generation
-        molDifference = self.genMol - self.prevLoading
+        molDifference = [self.genMol - x for x in self.prevLoading]
         # the amount of energy that has been operated below MOL in checkLoadingTime
-        underMol = sum([num for num in molDifference if num > 0]) * self.timeStep
+        self.underMol = sum([num for num in molDifference if num > 0]) * self.timeStep
 
         ### Check the upper normal loading limit ###
         # subtract genUpperNormalLoading from prevLoading to get over genUpperNormalLoading generation
-        normalUpperDifference = self.prevLoading - self.genUpperNormalLoading
+        normalUpperDifference = [x - self.genUpperNormalLoading for x in self.prevLoading]
         # the amount of energy that has been operated above genUpperNormalLoading in checkLoadingTime
-        overGenUpperNormalLoading = sum([num for num in normalUpperDifference if num > 0]) * self.timeStep
+        self.overGenUpperNormalLoading = sum([num for num in normalUpperDifference if num > 0]) * self.timeStep
 
         ### Check if out of bounds operation, then flag outOfBounds ###
-        # under MOL by specified amount
-        if underMol > self.underMolLimit:
+        # under MOL by specified amount and currently under
+        if (self.underMol > self.underMolLimit) & (molDifference[-1] > 0):
             self.outOfBounds = True
-        # over normal max loading by specified amount
-        elif overGenUpperNormalLoading > self.genUpperNormalLoadingLimit:
+        # over normal max loading by specified amount and currently over
+        elif (self.overGenUpperNormalLoading > self.genUpperNormalLoadingLimit) & (normalUpperDifference[-1] > 0):
             self.outOfBounds = True
         # over the max loading
         elif self.genP > self.genUpperLimit:

@@ -82,8 +82,8 @@
     Fault current units are in P.U. of nameplate current and are described by the tuple 'iPu'.
     Fault current values are defined for the number of ms they can be sustained, described by the tuple 'ms'
     (16.7 ms per 60 Hz cycle). -->
-  <!-- Default is 1 PU at 5 cycles, ie no fault current capability. -->
-  <ms unit="ms" value="5"/>
+  <!-- Default is 1 PU at 5 cycles (84 ms), ie no fault current capability. -->
+  <ms unit="ms" value="84"/>
   <iPu unit="pu" value="1"/>
  </faultCurrent>
  <overLoad>

@@ -38,6 +38,36 @@
   <!-- 'mol' describes the minimum optimal loading. Units are in P.U. of nameplate capacity. -->
   <!-- Default value is 0.4. There are no units. -->
  </mol>
+ <molLimit unit="PU*s" value="1">
+  <!-- 'molLimit' describes the maximum energy measured under minimum optimal loading allowed before raising a flag.
+    Units are in P.U. of nameplate capacity times seconds. It is measured over the past period of time indicated by
+     molTime. -->
+  <!-- Default value is 1. Units are PU*s. -->
+ </molLimit>
+ <upperNormalLoading unit="PU" value="0.9">
+  <!-- 'upperNormalLoading' describes the the normal upper operating range of the diesel generator. If it operates
+     more than the upperNormalLoadingLimit above the upperNormalLoading in the time defined in checkLoadingTime,
+     then a flag is set. -->
+  <!-- Default value is 0.9. Units are PU. -->
+ </upperNormalLoading>
+ <upperNormalLoadingLimit unit="PU*s" value="1">
+  <!-- 'upperNormalLoadingLimit' describes the maximum energy measured over upperNormalLoading allowed before raising
+    a flag. Units are in P.U. of nameplate capacity times seconds. It is measured over the past period of time indicated by
+     checkLoadingTime. -->
+  <!-- Default value is 1. Units are PU*s. -->
+ </upperNormalLoadingLimit>
+ <checkLoadingTime unit="s" value="300">
+  <!-- 'checkLoadingTime' is the amount of time that upperNormalLoadingLimit and molLimit are measured over. -->
+  <!-- Default value is 300. Units are s. -->
+ </checkLoadingTime>
+ <lowerLimit unit="PU" value="0.1">
+  <!-- 'lowerLimit' is the lower loading limit below which a flag is immediately raised. -->
+  <!-- Default value is 0.1. Units are PU. -->
+ </lowerLimit>
+ <upperLimit unit="PU" value="1">
+  <!-- 'upperLimit' is the upper loading limit above which a flag is immediately raised. -->
+  <!-- Default value is 1. Units are PU. -->
+ </upperLimit>
  <minRunTime unit="s" value="3600">
   <!-- 'minRunTime' is the minimum amount of time that the diesel generator should run online for before being  -->
   <!-- brought offline. This will be followed except in situations which require the unit to be brought offline -->
@@ -107,8 +137,8 @@
     Fault current units are in P.U. of nameplate current and are described by the tuple 'iPu'.
     Fault current values are defined for the number of ms they can be sustained, described by the tuple 'ms'
     (16.7 ms per 60 Hz cycle). -->
-  <!-- Default is 1 PU at 5 cycles, ie no fault current capability. -->
-  <ms unit="ms" value="5"/>
+  <!-- Default is 1 PU at 5 cycles (84 ms), ie no fault current capability. -->
+  <ms unit="ms" value="84"/>
   <iPu unit="pu" value="1"/>
  </faultCurrent>
  <overLoad>
