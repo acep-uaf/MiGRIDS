@@ -4,7 +4,7 @@
 # License: MIT License (see LICENSE file of this package for more information)
 
 import Generator
-
+import itertools
 
 # import GeneratorDispatch
 
@@ -17,14 +17,23 @@ class Powerhouse:
     # genQ - list of generator reactive power levels for respective generators listed in genIDS
     # genDescriptor - list of generator descriptor XML files for the respective generators listed in genIDS, this should
     #   be a string with a relative path and file name, e.g., /InputData/Components/gen1Descriptor.xml
-    def __init__(self, genIDS, genP, genQ, genDescriptor):
+    def __init__(self, genIDS, genP, genQ, genStates, timeStep, genDescriptor):
         # ************Powerhouse variables**********************
         # List of generators and their respective IDs
         self.generators = []
-        self.genIDS = []
+        self.genIDS = genIDS
+
+        # total capacities
+        self.genPMax = 0
+        self.genQMax = 0
 
         # Generator dispatch object
-        self.genDispatch = None  # TODO: implement GeneratorDispatch()
+        self.genDispatchType = 1  # generator dispatch to use, 1 for proportional
+        self.outOfBounds = []
+        self.genMol = []
+        self.genUpperNormalLoading = []
+        self.genUpperLimit = []
+        self.genLowerLimit = []
 
         # Cumulative operational data
         # Actual loadings
@@ -40,14 +49,87 @@ class Powerhouse:
         :param genQ:
         :param genDescriptor:
         """
-        self.genIDS = genIDS
+
         # Populate the list of generators with generator objects
         for idx, genID in enumerate(genIDS):
             # Initialize generators
-            self.generators.append(self, Generator(genID, genP[idx], genQ[idx], genDescriptor[idx]))
+            self.generators.append(self, Generator(genID, genP[idx], genQ[idx], genStates[idx], timeStep, genDescriptor[idx]))
 
             # Initial value for genP, genQ, genPAvail and genQAvail can be handled while were in this loop
+            self.genPMax = self.genPMax + self.generators[idx].genPMax
+            self.genQMax = self.genQMax + self.generators[idx].genQMax
             self.genP = self.genP + self.generators[idx].genP
             self.genQ = self.genQ + self.generators[idx].genQ
             self.genPAvail = self.genPAvail + self.generators[idx].genPAvail
             self.genQAvail = self.genQAvail + self.generators[idx].genQAvail
+            self.outOfBounds.append(self.generators[idx].outOfBounds)
+            self.genMol.append(self.generators[idx].genMol) # the MOLs of each generator
+            self.genUpperNormalLoading.append(self.generators[idx].genUpperNormalLoading)  # the genUpperNormalLoading of each generator
+            self.genUpperLimit.append(self.generators[idx].genUpperLimit) # the upper limit of each generator
+            self.genLowerLimit.append(self.generators[idx].genLowerLimit) # the lower limit of each generator
+
+        # Create a list of all possible generator combination ID, MOL, upper normal loading, upper limit and lower limit
+        # these will be used to schedule the diesel generators
+        self.genCombinationsID = []
+        self.genCombinationsMOL = []
+        self.genCombinationsUpperNormalLoading = []
+        self.genCombinationsUpperLimit = []
+        self.genCombinationsLowerLimit = []
+        for nGen in range(self.genIDS): # for all possible numbers of generators
+            for subset in itertools.combinations(self.genIDS, nGen): # get all possible combinations with that number
+                self.genCombinationsID.append(subset)
+                # get the minimum normal loading (if all operating at their MOL)
+                subsetMOL = 0
+                subsetGenUpperNormalLoading = 0 # the normal upper loading
+                subsetGenUpperLimit = 0
+                subsetGenLowerLimit = 0
+                for gen in subset: # for each generator in the combination
+                    subsetMOL += self.genMol[self.genIDS.index(gen)] # add the corresponding MOL for the generator
+                    subsetGenUpperNormalLoading += self.genUpperNormalLoading[self.genIDS.index(gen)]
+                    subsetGenUpperLimit += self.genUpperLimit[self.genIDS.index(gen)]
+                    subsetGenLowerLimit += self.genLowerLimit[self.genIDS.index(gen)]
+                self.genCombinationsMOL.append(subsetMOL)
+                self.genCombinationsUpperNormalLoading.append(subsetGenUpperNormalLoading)
+                self.genCombinationsUpperLimit.append(subsetGenUpperLimit)
+                self.genCombinationsLowerLimit.append(subsetGenLowerLimit)
+
+
+    # genDispatch class method. Assigns a loading to each online generator and checks if they are inside operating bounds.
+    # Inputs:
+    # self - self reference
+    # newGenP - new total generator real load
+    # newGenQ - new total generator reactive load
+    def genDispatch(self, newGenP, newGenQ):
+        # dispatch
+        if self.genDispatchType == 1: # if proportional loading
+            # make sure to update genPAvail and genQAvail before
+            loadingP = newGenP/self.genPAvail # this is the PU loading of each generator
+            loadingQ = newGenQ / self.genQAvail  # this is the PU loading of each generator
+            # cycle through each gen and update with new P and Q
+            for idx in self.genIDS:
+                self.generators.genP = loadingP * self.generators[idx].genPAvail
+                self.generators.genQ = loadingQ * self.generators[idx].genQAvail
+        else:
+            print('The generator dispatch is not supported. ')
+
+        # check operating bounds for each generator
+        for idx in self.genIDS:
+            self.generators[idx].checkOperatingCondtitions()
+            # check if out of bounds
+            # TODO: add ability to adjust loading on other generators if able to avoid out of bounds operation on one
+            self.outOfBounds[idx] = self.generators[idx].outOfBounds
+
+
+    # genSchedule class method. Brings another generator combination online
+    # Inputs:
+    # self - self reference
+    # scheduledLoad - the load that the generators will be expected to supply, this is predicted based on previous loading
+    # scheduledSRC -  the minimum spinning reserve that the generators will be expected to supply
+    #def genSchedule(self, scheduledLoad, scheduledSRC):
+        # first find all generator combinations that can supply the load within their operating bounds
+        # then order the generator combinations based on their predicted fuel efficiency
+        # then check how long it will take to switch to any of the combinations online
+        # bring the best option that can be switched immediatley, if any
+        # if the most efficient option can't be switched, start warming up generators
+
+
