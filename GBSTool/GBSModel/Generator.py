@@ -12,7 +12,7 @@ import os
 #os.chdir(here)
 import sys
 sys.path.append('../')
-from GBSAnalyzer.CurveAssemblers.genFuelCurveAssembler import GenFuelCurve # This is not working
+from GBSAnalyzer.CurveAssemblers.genFuelCurveAssembler import GenFuelCurve
 
 
 class Generator:
@@ -160,7 +160,7 @@ class Generator:
             self.outOfBounds = False
 
 
-        ######## Update runtime timers ##########
+        ######## Update runtime timers and available power ##########
         # update run times
         if self.genState == 2: # if running online
             # the genStartTimeAct is not reset to zero here, because if the generator goes from running online to
@@ -168,15 +168,23 @@ class Generator:
             # directly back online
             self.genRunTimeAct += self.timeStep # increment run time since last started
             self.genRunTimeTot += self.timeStep # increment run time since beginning of sim
+            # update available power
+            self.genPAvail = self.genPMax
+            self.genQAvail = self.genQMax
 
         elif self.genState == 1: # if running but offline (ie starting up)
             self.genRunTimeAct = 0  # if not running online, reset to zero
             self.genStartTimeAct += self.timeStep # the time it has been starting up for
+            # update available power
+            self.genPAvail = 0
+            self.genQAvail = 0
 
         else: # if not running and offline
             self.genRunTimeAct = 0 # if not running online, reset to zero
             self.genStartTimeAct = 0 # if not starting reset to zero
-
+            # update available power
+            self.genPAvail = 0
+            self.genQAvail = 0
 
 
 
