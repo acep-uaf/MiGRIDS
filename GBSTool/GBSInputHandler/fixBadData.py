@@ -15,72 +15,77 @@ def fixBadData(df,setupDir,componentList,componentUnits=None,componentAttributes
     from scipy import stats
     import logging
     import matplotlib.pyplot as plt
+    from readXmlTag import readXmlTag
+    import importlib.util
+
     
-    filename = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'BadData.log')
+    filename = os.path.join(os.path.dirname(os.path.realpath(__file__)),'BadData.log')
     logging.basicConfig(filename = filename, level = logging.DEBUG, format='%(asctime)s %(message)s')
     #constants
     DATETIME = 'date' #the name of the column containing sampling datetime as a numeric
     DESCXML = 'Descriptor.xml' #the suffix of the xml for each component that contains max/min values
-    COMPSUFFIX = 'p' #the suffix of that is tacked onto each component in the column name
     COMPSEPERATOR = '' #the seperator between the component and suffix for each column name
-    SEARCHSTART = 1.2 * 365 * 24 * 60 * 60  #1.2 years is 3.784e+16 nanoseconds. This is how far back we want to start searching for matching data.
-    MAXINLINE = 5 #up to 5 records can have the same value recorded before we call these values bad.
+    MAXINLINE = 4 #up to 5 records can have the same value recorded before we call these values bad.
  
     #pandas.Series -> Dataframe
     #returns a dataframe of start and stop indices for values that are repeated (inline).
-    def isInline(x):
-        inline = x.reset_index(name='val').groupby(x.diff().ne(0).cumsum()).agg({'val':'first', 'index':['min','max']})
-        inline.columns = inline.columns.droplevel(0)
-        inline = inline.rename(columns={'first':'value','min':'start','max':'end'})
-        inline['count'] = inline['end'] - inline['start']
-        inline = inline[inline['count'] > MAXINLINE ]
-        return inline
-       
-#0's are only considered inline if data collection is down
-#datacollection is down if the mean and standard deviation on all components for the period of interest are equal        
-    def removeInlineZeros(df, column, columnList, start, stop):
-         if column == len(columnList):
-             return False
-             
-         elif  np.var(df[columnList[column]][start:stop]) != 0:
-             return True
-             
-         else:
-             return removeInlineZeros(df, column + 1, columnList,start, stop)
-
-    #datetime, datetime -> datetime
-    #bumps the date foreward by 1 day until day of week matches between day1 and day2        
-    def dayBump(day1, day2):
-        if day1.dayofweek == day2.dayofweek:
-            return day2
-        else:
-            return dayBump(day1,(day2 + pd.DateOffset(days = 1)))
+    def isInline(x,maxinline):
+        try:
+            #x has a datetime index so we reset it to numerical, then use the datetime index as a column called 'index' so that we can pull the min max indices
+            newx = x.reset_index().reset_index()
+            newx.columns=['intind','index','val']
+            
+            inline = newx.groupby(newx.val.diff().ne(0).cumsum()).agg({'val':'first', 'index':['min','max']})
+            inline.columns = inline.columns.droplevel(0)
+            inline = inline.rename(columns={'first':'value','min':'start','max':'end'})
+            #create a column that counts the number of rows that are inline
+            inline['count'] = recordCount(data.fixed,inline)
+            #we get rid of inline rows that are within the acceptable number of duplicates
+            inline = inline[inline['count'] > maxinline]
+            return inline
+        except:
+            return pd.DataFrame()
+     #dataframe, dataframe -> list 
+     #returns a list of the number of records in df between each indice provided in inline
+    def recordCount(df, inline):
+        counts = []
+        for i in range(len(inline)):
+            l = len(df.loc[inline.start.iloc[i]:inline.end.iloc[i]])
+            counts.append(l)
+        return counts
+ 
     
-    
-    #
-    #dataframe, datetime,datetime -> datetime
-    #returns the datetimestamp that is 
-    def findSearchStart(df,start,end):
-        if (start- end) >= pd.Timedelta('1 days'):
-            startdate = dayBump(start,(start - pd.DateOffset(years=1)))
+      #dataframe - datetime, pandas.Offset, string
+      #returns the firs date to start searching, the range in duration to compare the distribtion to based on the characteristics of the missing block of data
+    def getMoveAndSearch(missingBlock):
+        #for large missing blocks of data we use a larger possible search range
+        if (missingBlock.index.max(0) - missingBlock.index.min(0)) >= pd.Timedelta('1 days'):
+            initial_years = 1
+            initial_months = 2
+            initial_days = 14
+            search_range = pd.DateOffset(months =4)
+        elif (missingBlock.index.max(0) - missingBlock.index.min(0)) <= pd.Timedelta('1 days'):
+            initial_years = 1
+            initial_months = 1
+            initial_days = 14
+            search_range = pd.DateOffset(weeks =8)
+           
+        search_start = missingBlock.index[0] - pd.DateOffset(years = initial_years, months = initial_months, days = initial_days)
+        return search_start, search_range
+  
+     #datetime -> boolean
+    #returns true if the datetime provided is a weekday
+    def isWeekday(dt):       
+        if dt.dayofweek <=5:
+            return True
         else:
-            startdate = start - pd.DateOffset(weeks = 2)
-        return startdate
-      
-    #String, DataFrame, Dictionary -> DataFrame, Dictionary
-    #identify sequential rows with identical values for a specified component
+            return False  
+    #String, DataFrame, Dictionary, DataFrame -> DataFrame, Dictionary
     #inline values are replaced and index is recorded in datadictionary
-    def inlineFix(component, df, baddata):  
+    def inlineFix(component, df, baddata,inline):  
         logging.debug("component is: %s",component)
-        #identify inline values
-        inline = isInline(df[component])
-        #don't count zeros unless they are part of a complete lapse in data collection - in which case we will need to replace them.
-        for i in inline[inline.value == 0].index.tolist():
-            print(i)
-            if removeInlineZeros(df,2,df.columns,inline.start[i],inline.end[i]):
-                inline = inline.drop(i,0)
-                
-        print(inline)
+        logging.debug(inline)
+       
         #inline values are replaced
         print('Attempting to replace %d subsets for %s.' %(len(inline), component) )
         for l in inline.index.tolist():
@@ -90,7 +95,9 @@ def fixBadData(df,setupDir,componentList,componentUnits=None,componentAttributes
             df.loc[start_index:end_index,component] = None
             badDictAdd(component,
                      baddata,'2.Inline values',
-                     df[component][pd.isnull(df[component])].index.tolist() )
+                     df[pd.isnull(df[component])].index.tolist())
+            
+        #here is where we actually replace values.
         for l in inline.index.tolist():
             logging.info("inline index is %d", l)
             start_index = inline.start[l]
@@ -98,46 +105,97 @@ def fixBadData(df,setupDir,componentList,componentUnits=None,componentAttributes
             #attempt to replace using direct value transfer from similar data subset or linear interpolation
             getReplacement(df,component,start_index,end_index)  
         return df, baddata
-    
+   
+        
     #dataframe, string, integer, integer -> dataframe
     #search for a subset of data to replace block of missing values that occurrs between start and stop indices.
     #if a suitable block of values is not identified linear interpolation is used.
     def getReplacement(df, component,start,stop):
+         #this is a dataframe subset of our missing data
+         missingBlock = df.loc[start:stop]
+        
         #find the point we should start searching for matching data
-        search_start = findSearchStart(df,pd.to_datetime(df.iloc[start]['DATE'], unit = 's'),pd.to_datetime(df.iloc[start]['DATE'], unit = 's'))
-        #window is the size of our moving window
-        window = int(stop-start)
-        start_search_here = df[df[DATETIME] > search_start].index.tolist()[0]
-        original_block =  df.loc[(start - 0.5 * window):(stop + 0.5 * window), component]
-        #now we look for a block of time with similar distribution
-        ps= df.loc[start_search_here: , component].rolling(window).apply(lambda x: doMatch(x,original_block))
-        #first_valid is the index of the last value in the subset of data that has a matching distribution to our missing data
-        
-        possibles = df.loc[ps[ps > 0.05].index]
-        if (pd.to_datetime(df.iloc[start]['DATE'], unit = 's')- pd.to_datetime(df.iloc[end]['DATE'], unit = 's')) < pd.Timedelta('1 days'):
-            #for blocks less than a day we want to match up time of day and day of the week
-            first_valid = possibles[((pd.to_datetime(possibles['DATE'], unit = 's')).dt.dayofweek == search_start.dayofweek) & 
-                                    ((pd.to_datetime(possibles['DATE'], unit = 's')).dt.hour <= search_start.hour + 2) &
-                                    ((pd.to_datetime(possibles['DATE'], unit = 's')).dt.hour >= search_start.hour - 2)].first_valid_index()
-    
-        #for multi day block of missing data we want to match up the days we are replacining (Sunday for Sunday, Monday for Monday)
-            first_valid = possibles[(pd.to_datetime(possibles['DATE'], unit = 's')).dt.dayofweek == search_start.dayofweek].first_valid_index()
-        
-        
-        #if we found a suitable block of values we insert them into the missing values otherwise we interpolate the missing values
-        if first_valid != None:
-            logging.info("replaced")
-            dataReplace(df, component, first_valid,start, stop)
-        else:
-            logging.info("interpolated")
-            print ("No similar data subsets found. Using linear interpolation to replace inline values.")
-            index_list = df[int(start):int(stop)].index.tolist()
-            linearFix(index_list,df,component)
+        #this is the ideal spot and if we get a match we can stop searching        
+         searchStart,searchRange = getMoveAndSearch(missingBlock) 
+         currentYear = missingBlock.index[0].year
+         evaluationYear = df.loc[searchStart:].index.year[0]
+         first_valid = None
+         #if there is a first valid the we can stop looking, ptherwise we increment our search window by a year
+         while (first_valid == None) & (searchStart.year <= currentYear):
+            #search start and stop are the indices of the block of data that may contain potential replacement data
+            searchStop = searchStart + searchRange
+            searchBlock = df.loc[searchStart:searchStop][component]
+            #window is the number of missing records to fill
+            window = len(df.loc[start:stop])
+            duration = max(missingBlock.index) - min(missingBlock.index)
+            comparison_block = df.loc[start - duration:stop + duration][component][df[component] != 0]
+            #if there is any data in the search block we start comparing it to the distribution surrounding our missing data
+            if len(searchBlock) > 0:
+                #we get an array of whether or not a data block distribution matches
+                ps= searchBlock.rolling(window).apply(lambda x: doMatch(x,comparison_block) ) 
+                possibles = df.loc[ps[(ps >= 0.1)].index] 
+                if len(possibles) > 0:
+                    #we need to further evaluate whether the matching distributions also match the date time structure of our missing data
+                    possibles['date']=possibles.index.to_datetime()
+                    
+                    #only weekdays should be matched with weekdays and weekends with weekends
+                    possibles =possibles[possibles['date'].apply(isWeekday) == isWeekday(stop)]
+                    possibles = possibles.drop('date',1)
+                    #if our missing data spans less than 1 day then we need to match the time of day as well
+                    if duration <= pd.Timedelta('1 days'):
+                        #we want the hour to be within 3 hours of the actual missing values
+                        possibles = possibles[abs(stop.hour -possibles.index.to_datetime().hour) <= 3]
+                    #first valid is the index of the first data row that matches in distribution as well as day and time structure
+                    first_valid = possibles.first_valid_index()
+            #we bump our searching start point up by a year to continue searching if no valid value was found in the current search year. 
+            searchStart = searchStart + pd.DateOffset(years = 1)
             
+       
+        #if we found a suitable block of values we insert them into the missing values otherwise we interpolate the missing values
+         if first_valid != None:
+            logging.info("replaced inline values %s through %s" %(str(min(missingBlock.index)), str(min(missingBlock.index))))
+            #this is our replacement data
+            replacement = df[df.index <= first_valid][0:window]
+            #here we actually replace these data
+            dataReplace(df,component, missingBlock, replacement)
+         elif len(missingBlock) < 20:
+           logging.info("No similar data subsets found. Using linear interpolation to replace inline values %s through %s" %(str(min(missingBlock.index)), str(min(missingBlock.index))))
+           index_list = missingBlock.index.tolist()
+           linearFix(index_list,df,component)
+         else:
+              logging.info("Could not replace missing values. Replace values for %s through %s manually" %(min(missingBlock.index),max(missingBlock.index)))
+
+          
+    #dataframe -> dataframe   
+    #fills values for all components for time blocks when data collection was offline  
+    def fixOfflineData(df,baddata):
+      #find offline time blocks 
+      inline = isInline(df['total_p'],2)
+      #the value is the difference between records, so 0 indicates two records are the same. 
+      inline = inline[inline.value == 0]
+      df.total_p[df.total_p == 0] = None
+      logging.debug('%d blocks of time consisting of %d rows of data are offline and are being replaced' % (len(inline), len(df[pd.isnull(df.total_p) ])))
+      #record the offline records in our baddata dictionary
+      badDictAdd(component,
+             baddata,'4.Offline',
+             df[pd.isnull(df.total_p)].index.tolist())
+      #here is where we actually replace values.
+      for l in inline.index.tolist():
+          
+          start_index = inline.start.loc[l]
+          end_index = inline.end.loc[l]
+          #attempt to replace using direct value transfer from similar data subset or linear interpolation
+          getReplacement(df,'total_p',start_index,end_index)  
+      return 
+        
     #dataframe, string, integer, integer, integer -> dataframe
     #replaces a subset of data in a series with another subset of data of the same length from the same series
-    def dataReplace(df,component, replacement_last_i, start, stop):
-        df.loc[start:stop,component] = df[(replacement_last_i - (stop-start)).astype(int):(replacement_last_i + 1).astype(int)][component].values
+    #if component is total_p then replaces all columns with replacement data
+    def dataReplace(df,component, missing, replacement):
+        if component == 'total_p':
+            df.loc[min(missing.index):max(missing.index),] = replacement.values   
+        else:
+            df.loc[start:stop,component] = df[(replacement_last_i - (stop-start)).astype(int):(replacement_last_i + 1).astype(int)][component].values
         return df
         
     #string, dictionary, string, list of integers -> dictionary
@@ -151,23 +209,29 @@ def fixBadData(df,setupDir,componentList,componentUnits=None,componentAttributes
             
     #numeric array, numeric array -> float       
     #returns the p value from the comparison of 2 distributions (x and y) using the Two-sample Kolmogorov-Smirnov Test
-    def doMatch(x,y):         
-        return stats.ks_2samp(x,y).pvalue
-    #list of index, dataframe, component -> dataframe
+    def doMatch(x,y): 
+       if len(x[pd.isnull(x)]) > 0:
+           return 0
+       else:
+           m1 =  stats.ks_2samp(x,y)       
+           return m1.pvalue
+    #list of datetime, dataframe, component -> dataframe
     #modifies the existing values in a dataframe using linear interpolation        
     def linearFix(index_list, df,component):
          
          for i in index_list: 
              index = getIndex(df[component],i)   
-             x = df[DATETIME]
+             x = (pd.to_timedelta(pd.Series(df.index.to_datetime()))).dt.total_seconds().astype(int)
+             x.index = pd.to_datetime(df.index)
              y = df[component]
+                      
              value =  linearEstimate(x[[min(index), max(index)+ 1]],
-                   y[[min(index),max(index)]], x[[i]])
-             df.loc[i, component]= value.tolist()[0]
+                   y[[min(index),max(index)]], x.loc[i])
+             df.loc[i, component]= value
              
          return df
     
-    #panda.Series, integer -> list of index
+    #panda.Series, datetime -> list of index
     #returns the closest 2 index valid values to i, i can range from 0 to len(df)
     def getIndex(y, i):
         base = y.index.get_loc(i)
@@ -222,6 +286,7 @@ def fixBadData(df,setupDir,componentList,componentUnits=None,componentAttributes
         else:
            value = 0
         return value 
+    #TODO get rid of slice warning
     #string, dataframe, dictionary -> dataframe, dictionary
     #changes netagive values to 0 for the specified component. Row indexes are stored in the baddata dictionary
     def negativeToZero(component,df,baddata):
@@ -229,13 +294,80 @@ def fixBadData(df,setupDir,componentList,componentUnits=None,componentAttributes
            df[component][df[component] < 0] = 0
            return df
        
-    #DataClass is object with raw_data, fixed_data,baddata dictionary, and data summaries.
+   
+     #dataframe, -> dataframe  
+     #scales raw values to standardized units for model input
+    def scaleData(df,ListOfComponents):
+         for c in ListOfComponents:
+             component = c.name.lower()
+             if component[-1:] == 'p':
+                componentAttributes = c.attribute
+                useName = component
+                componentUnits = c.units
+                # convert units
+                # cd to unit conventions file
+                dir_path = os.path.dirname(os.path.realpath(__file__))
+                unitConventionDir = dir_path +'..\\..\\GBSAnalyzer\\UnitConverters'
+                # get the default unit for the data type
+                units = readXmlTag('internalUnitDefault.xml', ['unitDefaults',componentAttributes], 'units', unitConventionDir)[0]
+                # if the units don't match, convert
+                if units.lower() != componentUnits.lower():
+                    unitConvertDir = dir_path + '..\\..\\GBSAnalyzer\\UnitConverters\\unitConverters.py'
+                    funcName = componentUnits.lower() + '2' + units.lower()
+                    # load the conversion
+                    spec = importlib.util.spec_from_file_location(funcName, unitConvertDir)
+                    uc = importlib.util.module_from_spec(spec)
+                    spec.loader.exec_module(uc)
+                    x = getattr(uc, funcName)
+                    # update data
+                    df[useName] = x(df[useName])
+                # get the scale and offset
+                scale = readXmlTag('internalUnitDefault.xml', ['unitDefaults', componentAttributes], 'scale',
+                                   unitConventionDir)[0]
+                offset = readXmlTag('internalUnitDefault.xml', ['unitDefaults', componentAttributes], 'offset',
+                               unitConventionDir)[0]
+                df[useName] = df[useName]*int(scale) + int(offset)
+                # get the desired data type and convert
+                datatype = readXmlTag('internalUnitDefault.xml', ['unitDefaults', componentAttributes], 'datatype',
+                                    unitConventionDir)
+                
+                if datatype[0][0:3] == 'int':
+                    df[useName] = round(df[useName].astype('float'),0)
+                else:  
+                    df[useName] = df[useName].astype(datatype[0])
+                 
+    
+    def isOffLine(df, window):
+        
+        var_frame = df.copy()
+        for column in df.columns:
+            ps= (df[column].diff() == 0) | (df[column].diff(-1) == 0)
+            var_frame[column] = ps              
+        var_frame['total_var'] = var_frame.sum(1)
+        var_frame['total_count'] = var_frame.count(1) - 1
+        offline = var_frame.total_var == var_frame.total_count
+        del var_frame
+        return offline
+
+        
+    class Component:
+         def __init__(self, component,units,attribute):
+            self.name = component
+            self.units = units
+            self.attribute = attribute
+            
+     #DataClass is object with raw_data, fixed_data,baddata dictionary, and data summaries.
     class DataClass:
        """A class with access to both raw and fixed dataframes."""
        def __init__(self, raw_df):
             self.raw = raw_df
             self.fixed = pd.DataFrame(raw_df.copy(),raw_df.index,raw_df.columns)
+            #give the fixed data a time index to work with
+            time_index = pd.to_datetime(self.fixed.iloc[:,0], unit = 's')
+            self.fixed.index = time_index
             self.fixed.columns = self.fixed.columns.str.lower()
+            self.fixed = self.fixed.drop(DATETIME, axis =1 )
+            
             self.baddata = {}
         #summarizes raw and fixed data 
        def summarize(self):
@@ -248,79 +380,65 @@ def fixBadData(df,setupDir,componentList,componentUnits=None,componentAttributes
            #plot raw and fixed data
            f, axarr = plt.subplots(len(components), sharex=True)
            for i in range(len(components)):
-               axarr[i].plot(self.raw[DATETIME],self.raw[components[i]])
-               axarr[i].plot(self.fixed[DATETIME],self.fixed[components[i]]);
+               axarr[i].plot(self.raw['DATE'],self.raw[components[i]])
+               axarr[i].plot(self.fixed[DATETIME],self.fixed[components[i].lower()]);
                axarr[i].set_title(component)
           
            f.subplots_adjust(hspace=0.3)
            plt.show()
-  
-     #dataframe, -> dataframe  
-     #scales raw values to standardized units for model input
-    def scaleData(df,componentUnits=None,componentAttributes=None ):
-    # convert units
-    # initiate lists
-        units = [None] * len(componentUnits)
-        scale = [None] * len(componentUnits)
-        offset = [None] * len(componentUnits)
-        for i in range(len(componentUnits)): # for each channel
-            #TODO: finish adding code to get unit conersion file and update and convert units to default internal units and values to intergers.
-            # cd to unit conventions file
-            dir_path = os.path.dirname(os.path.realpath(__file__))
-            unitConventionDir = dir_path +'..\\..\\GBSAnalyzer\\UnitConverters'
-            # get the default unit for the data type
-            units[i] = readXmlTag('internalUnitDefault.xml', ['unitDefaults',componentAttributes[i]], 'units', unitConventionDir)[0]
-            # if the units don't match, convert
-            if units[i].lower() != componentUnits[i].lower():
-                unitConvertDir = dir_path + '..\\..\\GBSAnalyzer\\UnitConverters\\unitConverters.py'
-                funcName = componentUnits[i].lower() + '2' + units[i].lower()
-                # load the conversion
-                spec = importlib.util.spec_from_file_location(funcName, unitConvertDir)
-                uc = importlib.util.module_from_spec(spec)
-                spec.loader.exec_module(uc)
-                x = getattr(uc, funcName)
-                # update data
-                df[useNames[i]] = x(df[useNames[i]])
-            # get the scale and offset
-            scale[i] = readXmlTag('internalUnitDefault.xml', ['unitDefaults', componentAttributes[i]], 'scale',
-                               unitConventionDir)[0]
-            offset[i] = readXmlTag('internalUnitDefault.xml', ['unitDefaults', componentAttributes[i]], 'offset',
-                           unitConventionDir)[0]
-            df[useNames[i]] = df[useNames[i]]*int(scale[i]) + int(offset[i])
-            # get the desired data type and convert
-            datatype = readXmlTag('internalUnitDefault.xml', ['unitDefaults', componentAttributes[i]], 'datatype',
-                                unitConventionDir)
-            df[useNames[i]] = df[useNames[i]].astype(datatype[0])
-    
-           
-    #create DataClass object to store raw, fixed, and summery output
+    #create DataClass object to store raw, fixed, and summery output 
     data = DataClass(df) 
+    ListOfComponents = []
+    for i in range(len(componentList)):
+        x = Component(componentList[i],componentUnits[i],componentAttributes[i])
+        ListOfComponents.append(x)
+    #identify when the entire system was offline - not collecting data.
+    data.fixed[isOffLine(data.fixed,2)] = None
+    unscaled_copy = data.fixed.copy()
+    #scale data
+    scaleData(data.fixed, ListOfComponents)
     
-    #run through data checks for each component
-    for component in componentList:
-        descriptorxmlpath = os.path.join(setupDir,'..','Components',COMPSEPERATOR.join([component,DESCXML]))        
-        try:
-            descriptorxml = ET.parse(descriptorxmlpath)
-            component = COMPSEPERATOR.join([component, COMPSUFFIX])
+    #create a total power column. Total power is more important than indavidual components
+    data.fixed['total_p'] = None
+     #run through data checks for each component that is a power output component (ends in p)
+    power_columns = []
+    for c in ListOfComponents:
+        component = c.name.lower()
+        if component[-1:] == 'p':
+            power_columns.append(component)
+    data.fixed['total_p'] = data.fixed[power_columns].sum(1)
+    
+    #now we replace the 0's with values from elsewhere in the dataset
+    fixOfflineData(data.fixed,data.baddata)  
+
+          
+     for c in ListOfComponents:
+        component = c.name.lower()
+        if component[-1:] == 'p':
+            descriptorxmlpath = os.path.join(setupDir,'..','Components',''.join([component[0:4],DESCXML]))      
             try:
-                #make negative values 0
-                negativeToZero(component,data.fixed,data.baddata)
+                descriptorxml = ET.parse(descriptorxmlpath)
                 
-                #find and fix repeated values first
-                inlineFix(component,data.fixed,data.baddata)
-                
-                #after replacing inline values replace values that are out of bounds
-                #out of bounds values are set to Nan first then linear interpolation is used.
-                checkMinMaxPower(component, data.fixed, descriptorxml,data.baddata)                 
-                linearFix(data.fixed[data.fixed[component].isnull()].index.tolist(),
-                                                 data.fixed,component) 
-                scaleData(data.fixed,componentUnits, componentAttributes)
-            except KeyError:
-                print('no column named %s' %component)
-        except FileNotFoundError:
-            print ('Descriptor xml for %s not found' %component)
-           
-    data.summerize()
+                try:
+                     #make negative values 0
+                     negativeToZero(component,data.fixed,data.baddata)
+                     #find repeated values first for individual components before we scale these data
+                     inline = isInline(unscaled_copy[component])
+                     #fix inline values using scaled data
+                     inlineFix(component,data.fixed,data.baddata,inline)
+                    
+                     #after replacing inline values replace values that are out of bounds
+                     #out of bounds values are set to Nan first then linear interpolation is used.
+                     checkMinMaxPower(component, data.fixed, descriptorxml,data.baddata)                 
+                     linearFix(data.fixed[data.fixed[component].isnull()].index.tolist(),
+                                         data.fixed,component) 
+                    
+                except KeyError:
+                    print('no column named %s' %component)
+            except FileNotFoundError:
+                print ('Descriptor xml for %s not found' %component)
+    data.fixed.insert(0,'date',data.fixed.index.to_datetime())    
+    data.summarize()
     data.visualize(componentList)
     
     return data.fixed, data.baddata
