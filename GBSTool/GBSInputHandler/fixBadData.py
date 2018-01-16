@@ -45,6 +45,35 @@ def fixBadData(df,setupDir,componentList,componentUnits=None,componentAttributes
             return inline
         except:
             return pd.DataFrame()
+     def isOffLine(x,maxinline):
+#        try:
+            #x has a datetime index so we reset it to numerical, then use the datetime index as a column called 'index' so that we can pull the min max indices
+        newx = x.reset_index().reset_index()
+        newx.columns=['intind','index','val']
+        
+        inline = newx.groupby(newx.val.diff().cumsum()).agg({'val':'first', 'index':['min','max']})
+        inline.columns = inline.columns.droplevel(0)
+        inline = inline.rename(columns={'first':'value','min':'start','max':'end'})
+        #create a column that counts the number of rows that are inline
+        inline['count'] = recordCount(data.fixed,inline)
+        #we get rid of inline rows that are within the acceptable number of duplicates
+        inline = inline[inline['count'] > maxinline]
+        return inline
+#        except:
+#            return pd.DataFrame()   
+##    def isOffLine(df, window):
+#        
+#        var_frame = df.copy()
+#        for column in df.columns:
+#            ps= (df[column].diff() == 0) | (df[column].diff(-1) == 0)
+#            var_frame[column] = ps              
+#        var_frame['total_var'] = var_frame.sum(1)
+#        var_frame['total_count'] = var_frame.count(1) - 1
+#        offline = var_frame.total_var == var_frame.total_count
+#        del var_frame
+#        return offline
+
+        
      #dataframe, dataframe -> list 
      #returns a list of the number of records in df between each indice provided in inline
     def recordCount(df, inline):
@@ -337,19 +366,7 @@ def fixBadData(df,setupDir,componentList,componentUnits=None,componentAttributes
                     df[useName] = df[useName].astype(datatype[0])
                  
     
-    def isOffLine(df, window):
-        
-        var_frame = df.copy()
-        for column in df.columns:
-            ps= (df[column].diff() == 0) | (df[column].diff(-1) == 0)
-            var_frame[column] = ps              
-        var_frame['total_var'] = var_frame.sum(1)
-        var_frame['total_count'] = var_frame.count(1) - 1
-        offline = var_frame.total_var == var_frame.total_count
-        del var_frame
-        return offline
-
-        
+    
     class Component:
          def __init__(self, component,units,attribute):
             self.name = component
@@ -392,21 +409,29 @@ def fixBadData(df,setupDir,componentList,componentUnits=None,componentAttributes
     for i in range(len(componentList)):
         x = Component(componentList[i],componentUnits[i],componentAttributes[i])
         ListOfComponents.append(x)
-    #identify when the entire system was offline - not collecting data.
-    data.fixed[isOffLine(data.fixed,2)] = None
-    unscaled_copy = data.fixed.copy()
-    #scale data
-    scaleData(data.fixed, ListOfComponents)
-    
+   
     #create a total power column. Total power is more important than indavidual components
     data.fixed['total_p'] = None
-     #run through data checks for each component that is a power output component (ends in p)
+    #run through data checks for each component that is a power output component (ends in p)
     power_columns = []
     for c in ListOfComponents:
         component = c.name.lower()
         if component[-1:] == 'p':
             power_columns.append(component)
+    #total power is the sum of values in all the power components        
     data.fixed['total_p'] = data.fixed[power_columns].sum(1)
+    
+    #identify when the entire system was offline - not collecting data.
+    offline = isOffLine(data.fixed.total_p,3)
+    for i in range(len(offline)):
+          data.fixed.loc[offline.start.iloc[i]:offline.end.iloc[i]] = None
+
+    #resum the total power. NA rows will sum to 0.
+    data.fixed['total_p'] = data.fixed[power_columns].sum(1)
+    #make a copy of these data before we scale them. We will need it to identify inline values.
+    unscaled_copy = data.fixed.copy()
+    #scale data
+    scaleData(data.fixed, ListOfComponents)
     
     #now we replace the 0's with values from elsewhere in the dataset
     fixOfflineData(data.fixed,data.baddata)  
