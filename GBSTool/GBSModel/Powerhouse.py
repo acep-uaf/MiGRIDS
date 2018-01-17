@@ -5,6 +5,10 @@
 
 import Generator
 import itertools
+import sys
+import numpy as np
+sys.path.append('../')
+from GBSAnalyzer.CurveAssemblers.genFuelCurveAssembler import GenFuelCurve
 
 # import GeneratorDispatch
 
@@ -79,23 +83,32 @@ class Powerhouse:
         self.genCombinationsUpperNormalLoading = []
         self.genCombinationsUpperLimit = []
         self.genCombinationsLowerLimit = []
+        self.genCombinationsPMax = []
+        self.genCombinationsFCurve = []
         for nGen in range(self.genIDS): # for all possible numbers of generators
             for subset in itertools.combinations(self.genIDS, nGen): # get all possible combinations with that number
                 self.genCombinationsID.append(subset) # list of lists of gen IDs
                 # get the minimum normal loading (if all operating at their MOL)
-                subsetMOL = 0
+                subsetMOLPU = 0
                 subsetGenUpperNormalLoading = 0 # the normal upper loading
                 subsetGenUpperLimit = 0
                 subsetGenLowerLimit = 0
+                subsetPMax = 0
+                powerLevelsPU = [] # pu power levels in combined fuel curve for combination
+                fuelConsumption = [] # fuel consumption for combined fuel curve
                 for gen in subset: # for each generator in the combination
-                    subsetMOL += self.genMol[self.genIDS.index(gen)] # add the corresponding MOL for the generator
+                    subsetPMax += self.generators[self.genIDS.index(gen)].genPMax
+                    subsetMOLPU = max(subsetMOLPU,self.genMol[self.genIDS.index(gen)]/self.generators[self.genIDS.index(gen)].genPMax) # get the max pu MOL of the generators
                     subsetGenUpperNormalLoading += self.genUpperNormalLoading[self.genIDS.index(gen)]
                     subsetGenUpperLimit += self.genUpperLimit[self.genIDS.index(gen)]
                     subsetGenLowerLimit += self.genLowerLimit[self.genIDS.index(gen)]
-                self.genCombinationsMOL.append(subsetMOL)
+
+                self.genCombinationsMOL.append(subsetMOLPU*subsetPMax) # pu MOL * P max =  MOL
                 self.genCombinationsUpperNormalLoading.append(subsetGenUpperNormalLoading)
                 self.genCombinationsUpperLimit.append(subsetGenUpperLimit)
                 self.genCombinationsLowerLimit.append(subsetGenLowerLimit)
+                self.genCombinationsPMax.append(subsetPMax)
+                self.genCombinationsFCurve.append(self.combFuelCurves(subset)) # append fuel curve for this combination
 
         # Update the current combination online
         for idx, combID in enumerate(self.combinationsID): # for each combination
@@ -104,6 +117,31 @@ class Powerhouse:
             # if the gen IDs of this combination equal the gen IDs that are currently online, then this is current online combination
             if sorted(self.genCombinationsID[idx]) == sorted(onlineGens):
                 self.genCombinationOnline = combID
+
+
+    # combine fuel curves for a combination of generators
+    # self - self reference
+    # generators - a list of generator objects in the combination
+    # combPMax - the name plate capacity of the combination of generators
+    def combFuelCurves(self, generators):
+        # get the max power of the combination
+        combPMax = 0 # initiate to zero
+        for gen in generators:
+            combPMax += int(gen.genPMax) # add each generator max power
+
+        combFuelConsumption = np.array([0]*combPMax) # initiate fuel consumption array
+        combFuelPower = list(range(combPMax)) # list of the powers corresponding to fuel consumption
+
+        # for each generator, resample the fuel curve to get the desired loading levels
+        for gen in generators:
+            powerStep = gen.genPMax / combPMax # the required power step in the fuel curve to get 1 kW steps in combined fuel curve
+            genFC = GenFuelCurve() # initiate fuel curve object
+            genFC.fuelCurveDataPoints = gen.genFuelCurve # populate with generator fuel curve points
+            genFC.genOverloadPMax = gen.genPMax # set the max power to the nameplate capacity
+            genFC.cubicSplineEstimator(powerStep) # calculate new fuel curve
+            combFuelConsumption += [y for x, y in genFC.fuelCurve] # add the fuel consumption for each generator
+
+        return zip(combFuelPower, list(combFuelConsumption)) # return list of tuples
 
     # genDispatch class method. Assigns a loading to each online generator and checks if they are inside operating bounds.
     # Inputs:
@@ -127,9 +165,8 @@ class Powerhouse:
         for idx in self.genIDS:
             self.generators[idx].checkOperatingCondtitions()
             # check if out of bounds
-            # TODO: add ability to adjust loading on other generators if able to avoid out of bounds operation on one
             self.outOfBounds[idx] = self.generators[idx].outOfBounds
-            self.genSRC[idx] = self.generators[idx].genPAvail
+            self.genSRC[idx] = self.generators[idx].genPAvail - self.generators[idx].genP
 
 
     # genSchedule class method. Brings another generator combination online
@@ -171,13 +208,18 @@ class Powerhouse:
                 genSwOn.remove(genID)
                 genSwOff.remove(genID)
             # for each gen to be switched get time, max time for combination is time will take to bring online
-            # need to get from genID to indicies
-            # for each gen to be switched on or off
-            for genID in genSwOff + genSwOn:
-                timeToSwitch.append(max(timeToSwitch,turnOnTime[self.genIDS.index(genID)]))
+
+            # find max time to switch generators online
+            onTime = []
+            for genID in genSwOn: # for each to be brought online
+                onTime = max(onTime,turnOnTime[self.genIDS.index(genID)]) # max turn on time
+            # find max of turn on time and turn off time
+            SwitchTime = onTime # initiate to max turn on time
+            for genID in genSwOff:
+                SwitchTime = max(SwitchTime, turnOffTime[self.genIDS.index(genID)]) # check if there is a higher turn off time
+            timeToSwitch.append(SwitchTime)
 
         ## then order the generator combinations based on their predicted fuel efficiency
-        # TODO: calculate combined fuel curve for gen combinations in init and use here to calculate efficiency of different options
 
 
         # bring the best option that can be switched immediatley, if any
