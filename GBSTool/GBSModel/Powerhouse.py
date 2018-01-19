@@ -219,7 +219,10 @@ class Powerhouse:
                 SwitchTime = max(SwitchTime, turnOffTime[self.genIDS.index(genID)]) # check if there is a higher turn off time
             timeToSwitch.append(SwitchTime)
 
-        ## then order the generator combinations based on their predicted fuel efficiency
+            # get the generator fuel consumption at this loading for this combination
+
+
+            ## then order the generator combinations based on their predicted fuel efficiency
 
 
         # bring the best option that can be switched immediatley, if any
