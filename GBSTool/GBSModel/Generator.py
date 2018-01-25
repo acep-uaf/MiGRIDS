@@ -103,13 +103,8 @@ class Generator:
         self.genState = genState  # Generator operating state [dimensionless, index]. See docs for key.
         self.timeStep = timeStep  # the time step used in the simulation in seconds
         # initiate operating condition flags and timers
-        self.overLimitFlag = False  # indicates when the generator is operating above the upperLimit (see genDescriptor.xml)
-        self.underLimitFlag = False  # indicates when the generator is operating below the lowerLimit (see genDescriptor.xml)
-        # an energy counter that keeps track of how much the generator is operating above the upperNormalLoadingLimit
-        # (see genDescriptor.xml)
-        self.overNormalLoadingFlag = False  # indicates when the generator is operating above upperNormalLoadingLimit
-        self.underMolFlag = False  # indicates
-        self.underMol = 0 # the amount by which the generator has operated under MOL in the past self.checkLoadingTime
+        self.outOfBounds = False  # indicates when the generator is operating above the upperLimit (see genDescriptor.xml) or below lowerLimit (see genDescriptor.xml)
+        self.outOfNormalBounds = False  # indicates when the generator is operating above upperNormalLoadingLimit or below MOL
         self.overGenUpperNormalLoading = 0 # the amount by which the generator has operated above genUpperNormalLoading in the past self.checkLoadingTime
         self.genDescriptorParser(genDescriptor)
 
@@ -142,22 +137,24 @@ class Generator:
         # the amount of energy that has been operated above genUpperNormalLoading in checkLoadingTime
         self.overGenUpperNormalLoading = sum([num for num in normalUpperDifference if num > 0]) * self.timeStep
 
-        ### Check if out of bounds operation, then flag outOfBounds ###
+        ### Check if out of bounds operation, then flag outOfNormalBounds ###
         # under MOL by specified amount and currently under
         if (self.underMol > self.underMolLimit) & (molDifference[-1] > 0):
-            self.outOfBounds = True
+            self.outOfNormalBounds = True
         # over normal max loading by specified amount and currently over
         elif (self.overGenUpperNormalLoading > self.genUpperNormalLoadingLimit) & (normalUpperDifference[-1] > 0):
-            self.outOfBounds = True
+            self.outOfNormalBounds = True
         # over the max loading
         elif self.genP > self.genUpperLimit:
-            self.outOfBounds = True
+            self.outOfNormalBounds = True
+            self.outOfBounds = True # special flags for upper and lower bounds, for more immediate action by scheduler
         # under the min loading
         elif self.genP < self.genLowerLimit:
-            self.outOfBounds = True
+            self.outOfNormalBounds = True
+            self.outOfBounds = True # special flags for upper and lower bounds, for more immediate action by scheduler
         # not out of bounds
         else:
-            self.outOfBounds = False
+            self.outOfNormalBounds = False
 
 
         ######## Update runtime timers and available power ##########
