@@ -21,8 +21,8 @@
   <!-- Power should be presented as P.U. of the nameplate real power capacity. Fuel consumption is kg/s -->
   <!-- Default is to have a data point at 0 and 1 P.U. power output. DEFAULT VALUES REQUIRE CHANGING for this to -->
   <!-- be sensible. -->
-  <pPu unit="pu" value="0 1"/>
-  <massFlow unit="kg/s" value="0 0"/>
+  <pPu unit="pu" value="0 0.3 0.5 0.7 0.9 1"/>
+  <massFlow unit="kg/s" value="0.022 0.022 0.022 0.026 0.028 0.032"/>
  </fuelCurve>
  <maxDiesCapCharge>
   <!-- 'maxDiesCapCharge' is the maximum capacity that charging the ESS can increase the diesel loading to. It
