@@ -6,7 +6,8 @@
 # General imports
 from bs4 import BeautifulSoup as Soup
 from GBSAnalyzer.CurveAssemblers.wtgPowerCurveAssembler import WindPowerCurve
-
+sys.path.append('../')
+from GBSAnalyzer.CurveAssemblers.wtgPowerCurveAssembler import WindPowerCurve
 
 class WindTurbine:
     """
@@ -34,25 +35,10 @@ class WindTurbine:
     :returns:
     """
 
-    # Wind turbine resources
-    wtgID = None
-    wtgName = None # This should come from the wtgDescriptor file and is merely uswed to trace back to that
-    wtgP = 0 # Current real power level [kW]
-    wtgQ = 0 # Current reactive power level [kW]
-    wtgState = 0 # Wind turbine operating state [dimensionless, index]. See docs for key.
-    wtgPMax = 0 # Nameplate capacity [kW]
-    wtgQMax = 0 # Nameplate capacity [kvar]
-    wtgPAvail = 0 # the available power from the wind [kW]
-    wtgQAvail = 0 # the available power form the wind [kar]
-    wtgStartTime = 0 # Time to start the wind turbine [s]
-    # TODO: the power curve is not needed here, since will convert to P avail. remove.
-    #wtgPowerCurve = [] # Power curve of the wind turbine, tuples of [kW, m/s]
 
-    wtgRunTimeAct = 0 # Run time since last start [s]
-    wtgRunTimeTot = 0 # Cummulative run time since model start [s]
 
     # Constructor
-    def __init__(self, wtgID, wtgP, wtgQ, windSpeed, wtgDescriptor):
+    def __init__(self, wtgID, wtgP, wtgQ, windSpeed, wtgState, timeStep, wtgDescriptor):
         """
         Constructor used for the initialization of an object within windfarm list of wind turbines.
 
@@ -63,9 +49,23 @@ class WindTurbine:
         """
         # Write initial values to internal variables.
         self.wtgID = wtgID
-        self.wtgP = wtgP
-        self.wtgQ = wtgQ
+        self.wtgP = wtgP # Current real power level [kW]
+        self.wtgQ = wtgQ # Current reactive power level [kW]
         wtgDescriptorParser(self, windSpeed, wtgDescriptor)
+
+        # Wind turbine resources
+        self.wtgState = wtgState  # Wind turbine operating state [dimensionless, index]. See docs for key.
+
+        self.wtgDescriptorParser(windSpeed,wtgDescriptor)
+
+        wtgPAvail = 0  # the available power from the wind [kW]
+        wtgQAvail = 0  # the available power form the wind [kar]
+        wtgStartTime = 0  # Time to start the wind turbine [s]
+        # TODO: the power curve is not needed here, since will convert to P avail. remove.
+        # wtgPowerCurve = [] # Power curve of the wind turbine, tuples of [kW, m/s]
+
+        wtgRunTimeAct = 0  # Run time since last start [s]
+        wtgRunTimeTot = 0  # Cummulative run time since model start [s]
 
     def wtgDescriptorParser(self, windSpeed, wtgDescriptor):
         """
@@ -86,7 +86,8 @@ class WindTurbine:
 
         # Dig through the tree for the required data
         self.wtgName = wtgSoup.component.get('name')
-        self.wtgPMax = float(wtgSoup.POutMaxPa.get('value'))
+        self.wtgPMax = float(wtgSoup.POutMaxPa.get('value')) # Nameplate capacity [kW]
+        self.wtgQMax = float(wtgSoup.QOutMaxPa.get('value'))  # Nameplate capacity [kvar]
 
         # Handle the fuel curve interpolation
         powerCurvePPuInpt = wtgSoup.powerCurveDataPoints.p.get('value').split()
@@ -99,5 +100,12 @@ class WindTurbine:
             powerCurveData.append((self.wtgPMax * float(powerCurvePPuInpt[idx]), float(powerCurveWsInpt[idx])))
         wtgPC = WindPowerCurve()
         wtgPC.powerCurveDataPoints = powerCurveData
+        wtgPC.cutInWindSpeed = float(wtgSoup.cutInWindSpeed.get('value')) # Cut-in wind speed, float, m/s
+        wtgPC.cutOutWindSpeedMin = float(wtgSoup.cutOutWindSpeedMin.get('value')) # Cut-out wind speed min, float, m/s
+        wtgPC.cutOutWindSpeedMax = float(wtgSoup.cutOutWindSpeedMax.get('value')) # Cut-out wind speed max, float, m/s
+        wtgPC.POutMaxPa = self.wtgPMax # Nameplate power, float, kW
+        wtgPC.cubicSplineCurveEstimator()
+        self.wtgPowerCurve = wtgPC.powerCurve
+
 
         # TODO: continue to implement this
