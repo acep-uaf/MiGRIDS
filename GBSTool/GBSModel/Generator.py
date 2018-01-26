@@ -44,9 +44,6 @@ class Generator:
         self.genName = genSoup.component.get('name')
         self.genPMax = float(genSoup.POutMaxPa.get('value')) # nameplate capacity
         self.genQMax = float(genSoup.QOutMaxPa.get('value'))  # nameplate capacity kvar
-        # TODO: what are these going to be used for? these should be used instead of PMax and QMax.
-        self.genPAvail = self.genPMax  # De-rating or nameplate capacity [kW]
-        self.genQAvail = self.genQMax  # De-rating or nameplate capacity [kvar]
         self.genMol = float(genSoup.mol.get('value')) * self.genPMax # the MOL, normal operation stay above this
         self.underMolLimit = float(genSoup.molLimit.get('value'))*self.genPMax # the maximum energy allowed below MOL in checkLoadingTime period
         # the loading above which normal operation stays below.
@@ -107,6 +104,13 @@ class Generator:
         self.outOfNormalBounds = False  # indicates when the generator is operating above upperNormalLoadingLimit or below MOL
         self.overGenUpperNormalLoading = 0 # the amount by which the generator has operated above genUpperNormalLoading in the past self.checkLoadingTime
         self.genDescriptorParser(genDescriptor)
+        # update genPAvail and genQAvail depending on Gstate
+        if genState == 2:
+            self.genPAvail = self.genPMax # P available is the how much power is avialable online. P max if online, 0 otherwise
+            self.genQAvail = self.genQMax
+        else:
+            self.genPAvail = 0
+            self.genQAvail = 0
 
     def checkOperatingConditions(self):
         """
@@ -117,49 +121,49 @@ class Generator:
         """
         # TODO: implement this, might include adding additional class-wide variables.
 
-        ######### Check for out of bound operation ################
-        # update the list of previous loadings and remove the oldest one
-        self.prevLoading.append(self.genP)
-        # limit the list to required length
-        # first reverse order, then take checkLoadingTime of points and reverse back again
-        # number of data points is (seconds required)/(# seconds per data point)
-        self.prevLoading = self.prevLoading[::-1][:round(self.checkLoadingTime/self.timeStep)][::-1]
+        # only need to check if online, otherwise not out of bounds
+        if self.genState == 2:
+            ######### Check for out of bound operation ################
+            # update the list of previous loadings and remove the oldest one
+            self.prevLoading.append(self.genP)
+            # limit the list to required length
+            # first reverse order, then take checkLoadingTime of points and reverse back again
+            # number of data points is (seconds required)/(# seconds per data point)
+            self.prevLoading = self.prevLoading[::-1][:round(self.checkLoadingTime/self.timeStep)][::-1]
 
-        ### Check the MOL constraint ###
-        # subtract prevLoading from MOL to get under MOL generation
-        molDifference = [self.genMol - x for x in self.prevLoading]
-        # the amount of energy that has been operated below MOL in checkLoadingTime
-        self.underMol = sum([num for num in molDifference if num > 0]) * self.timeStep
+            ### Check the MOL constraint ###
+            # subtract prevLoading from MOL to get under MOL generation
+            molDifference = [self.genMol - x for x in self.prevLoading]
+            # the amount of energy that has been operated below MOL in checkLoadingTime
+            self.underMol = sum([num for num in molDifference if num > 0]) * self.timeStep
 
-        ### Check the upper normal loading limit ###
-        # subtract genUpperNormalLoading from prevLoading to get over genUpperNormalLoading generation
-        normalUpperDifference = [x - self.genUpperNormalLoading for x in self.prevLoading]
-        # the amount of energy that has been operated above genUpperNormalLoading in checkLoadingTime
-        self.overGenUpperNormalLoading = sum([num for num in normalUpperDifference if num > 0]) * self.timeStep
+            ### Check the upper normal loading limit ###
+            # subtract genUpperNormalLoading from prevLoading to get over genUpperNormalLoading generation
+            normalUpperDifference = [x - self.genUpperNormalLoading for x in self.prevLoading]
+            # the amount of energy that has been operated above genUpperNormalLoading in checkLoadingTime
+            self.overGenUpperNormalLoading = sum([num for num in normalUpperDifference if num > 0]) * self.timeStep
 
-        ### Check if out of bounds operation, then flag outOfNormalBounds ###
-        # under MOL by specified amount and currently under
-        if (self.underMol > self.underMolLimit) & (molDifference[-1] > 0):
-            self.outOfNormalBounds = True
-        # over normal max loading by specified amount and currently over
-        elif (self.overGenUpperNormalLoading > self.genUpperNormalLoadingLimit) & (normalUpperDifference[-1] > 0):
-            self.outOfNormalBounds = True
-        # over the max loading
-        elif self.genP > self.genUpperLimit:
-            self.outOfNormalBounds = True
-            self.outOfBounds = True # special flags for upper and lower bounds, for more immediate action by scheduler
-        # under the min loading
-        elif self.genP < self.genLowerLimit:
-            self.outOfNormalBounds = True
-            self.outOfBounds = True # special flags for upper and lower bounds, for more immediate action by scheduler
-        # not out of bounds
-        else:
-            self.outOfNormalBounds = False
+            ### Check if out of bounds operation, then flag outOfNormalBounds ###
+            # under MOL by specified amount and currently under
+            if (self.underMol > self.underMolLimit) & (molDifference[-1] > 0):
+                self.outOfNormalBounds = True
+            # over normal max loading by specified amount and currently over
+            elif (self.overGenUpperNormalLoading > self.genUpperNormalLoadingLimit) & (normalUpperDifference[-1] > 0):
+                self.outOfNormalBounds = True
+            # over the max loading
+            elif self.genP > self.genUpperLimit:
+                self.outOfNormalBounds = True
+                self.outOfBounds = True # special flags for upper and lower bounds, for more immediate action by scheduler
+            # under the min loading
+            elif self.genP < self.genLowerLimit:
+                self.outOfNormalBounds = True
+                self.outOfBounds = True # special flags for upper and lower bounds, for more immediate action by scheduler
+            # not out of bounds
+            else:
+                self.outOfNormalBounds = False
 
-
-        ######## Update runtime timers and available power ##########
-        # update run times
-        if self.genState == 2: # if running online
+            ######## Update runtime timers and available power ##########
+            # update run times
             # the genStartTimeAct is not reset to zero here, because if the generator goes from running online to
             # running offline, it does not need to run for the full startTime. It is already warm and can be brought
             # directly back online
@@ -170,6 +174,10 @@ class Generator:
             self.genQAvail = self.genQMax
 
         elif self.genState == 1: # if running but offline (ie starting up)
+            # set out of bounds flags to zero
+            self.outOfNormalBounds = False
+            self.outOfBounds = False
+            # update timers
             self.genRunTimeAct = 0  # if not running online, reset to zero
             self.genStartTimeAct += self.timeStep # the time it has been starting up for
             # update available power
@@ -177,6 +185,10 @@ class Generator:
             self.genQAvail = 0
 
         else: # if not running and offline
+            # set out of bounds flags to zero
+            self.outOfNormalBounds = False
+            self.outOfBounds = False
+            # update timers
             self.genRunTimeAct = 0 # if not running online, reset to zero
             self.genStartTimeAct = 0 # if not starting reset to zero
             # update available power
