@@ -5,8 +5,10 @@
 
 # General imports
 from bs4 import BeautifulSoup as Soup
+import sys
+sys.path.append('../')
 from GBSAnalyzer.CurveAssemblers.wtgPowerCurveAssembler import WindPowerCurve
-
+from bisect import bisect_left
 
 class WindTurbine:
     """
@@ -34,25 +36,10 @@ class WindTurbine:
     :returns:
     """
 
-    # Wind turbine resources
-    wtgID = None
-    wtgName = None # This should come from the wtgDescriptor file and is merely uswed to trace back to that
-    wtgP = 0 # Current real power level [kW]
-    wtgQ = 0 # Current reactive power level [kW]
-    wtgState = 0 # Wind turbine operating state [dimensionless, index]. See docs for key.
-    wtgPMax = 0 # Nameplate capacity [kW]
-    wtgQMax = 0 # Nameplate capacity [kvar]
-    wtgPAvail = 0 # the available power from the wind [kW]
-    wtgQAvail = 0 # the available power form the wind [kar]
-    wtgStartTime = 0 # Time to start the wind turbine [s]
-    # TODO: the power curve is not needed here, since will convert to P avail. remove.
-    #wtgPowerCurve = [] # Power curve of the wind turbine, tuples of [kW, m/s]
 
-    wtgRunTimeAct = 0 # Run time since last start [s]
-    wtgRunTimeTot = 0 # Cummulative run time since model start [s]
 
     # Constructor
-    def __init__(self, wtgID, wtgP, wtgQ, windSpeed, wtgDescriptor):
+    def __init__(self, wtgID, wtgP, wtgQ, windSpeed, wtgState, timeStep, wtgDescriptor):
         """
         Constructor used for the initialization of an object within windfarm list of wind turbines.
 
@@ -62,10 +49,22 @@ class WindTurbine:
         :param wtgDescriptor:
         """
         # Write initial values to internal variables.
-        self.wtgID = wtgID
-        self.wtgP = wtgP
-        self.wtgQ = wtgQ
-        wtgDescriptorParser(self, windSpeed, wtgDescriptor)
+        self.wtgID = wtgID # internal id used in the Windfarm for tracking wind turbine objects. *type int*
+        self.wtgP = wtgP # Current real power level [kW] *type float*
+        self.wtgQ = wtgQ # Current reactive power level [kvar] *type float*
+        self.wtgState = wtgState  # Wind turbine operating state [dimensionless, index]. 0 - off, 1 - starting, 2 - online.
+        self.timeStep = timeStep
+        # grab data from descriptor file
+        self.wtgDescriptorParser(windSpeed,wtgDescriptor)
+
+        self.wtgPAvail = 0  # the available power from the wind [kW]
+        self.wtgQAvail = 0  # the available power form the wind [kar]
+        self.wtgStartTime = 0  # Time to start the wind turbine [s]
+
+        self.wtgRunTimeAct = 0  # Run time since last start [s]
+        self.wtgRunTimeTot = 0  # Cummulative run time since model start [s]
+        self.wtgStartTimeAct = 0 # time spent starting up since last start [s]
+        self.step = 0 # this keeps track of which step in the time series we are on
 
     def wtgDescriptorParser(self, windSpeed, wtgDescriptor):
         """
@@ -86,18 +85,62 @@ class WindTurbine:
 
         # Dig through the tree for the required data
         self.wtgName = wtgSoup.component.get('name')
-        self.wtgPMax = float(wtgSoup.POutMaxPa.get('value'))
+        self.wtgPMax = float(wtgSoup.POutMaxPa.get('value')) # Nameplate capacity [kW]
+        self.wtgQMax = float(wtgSoup.QOutMaxPa.get('value'))  # Nameplate capacity [kvar]
 
         # Handle the fuel curve interpolation
-        powerCurvePPuInpt = wtgSoup.powerCurveDataPoints.p.get('value').split()
+        powerCurvePPuInpt = wtgSoup.powerCurveDataPoints.pPu.get('value').split()
         powerCurveWsInpt = wtgSoup.powerCurveDataPoints.ws.get('value').split()
         if len(powerCurvePPuInpt) != len(powerCurveWsInpt):  # check that both input lists are of the same length
             raise ValueError('Power curve calculation error: Power and wind speed lists are not of same length.')
 
         powerCurveData = []
         for idx, item in enumerate(powerCurvePPuInpt):
-            powerCurveData.append((self.wtgPMax * float(powerCurvePPuInpt[idx]), float(powerCurveWsInpt[idx])))
+            powerCurveData.append((float(powerCurveWsInpt[idx]), self.wtgPMax * float(powerCurvePPuInpt[idx])))
         wtgPC = WindPowerCurve()
         wtgPC.powerCurveDataPoints = powerCurveData
+        wtgPC.cutInWindSpeed = float(wtgSoup.cutInWindSpeed.get('value')) # Cut-in wind speed, float, m/s
+        wtgPC.cutOutWindSpeedMin = float(wtgSoup.cutOutWindSpeedMin.get('value')) # Cut-out wind speed min, float, m/s
+        wtgPC.cutOutWindSpeedMax = float(wtgSoup.cutOutWindSpeedMax.get('value')) # Cut-out wind speed max, float, m/s
+        wtgPC.POutMaxPa = self.wtgPMax # Nameplate power, float, kW
+        wtgPC.cubicSplineCurveEstimator()
+        self.wtgPowerCurve = wtgPC.powerCurve
 
-        # TODO: continue to implement this
+        # generate possible wind power time series
+        # get the generator fuel consumption at this loading for this combination
+        PCws, PCpower = zip(*self.wtgPowerCurve)  # separate out the windspeed and power
+        # iterate through wind speeds
+        self.windPower = [] #initiate wind power list
+        for WS in windSpeed:
+            # bisect left gives the index of the last list item to not be over the number being searched for. it is faster than using min
+            # this finds the associated fuel consumption to the scheduled load for this combination
+            self.windPower.append(PCpower[self.findClosestInd(PCws, WS)])
+
+    # this finds the closest index of item in the list 'L'
+    def findClosestInd(self,L,item):
+        ind = bisect_left(L, item)
+        # check which list value is closest, the value below or above the item
+        if ind == len(L):
+            return ind - 1
+        elif (item - L[ind-1]) < (L[ind] - item):
+            return ind-1
+        else:
+            return ind
+
+    def checkOperatingConditions(self):
+        if self.wtgState == 2: # if running online
+            self.wtgPAvail = self.windPower[self.step]
+            self.wtgRunTimeAct += self.timeStep
+            self.wtgRunTimeTot += self.timeStep
+        elif self.wtgState == 1: # if starting up
+            self.wtgPAvail = 0 # not available to produce power yet
+            self.wtgQAvail = 0
+            self.wtgStartTimeAct += self.timeStep
+            self.wtgRunTimeAct = 0 # reset run time counter
+        else: # if off
+            # no power available and reset counters
+            self.wtgPAvail = 0
+            self.wtgQAvail = 0
+            self.wtgStartTimeAct = 0
+            self.wtgRunTimeAct = 0
+        self.step += 1 # increment which step we are on

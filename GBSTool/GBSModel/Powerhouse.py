@@ -77,11 +77,13 @@ class Powerhouse:
             self.genUpperLimit.append(self.generators[idx].genUpperLimit) # the upper limit of each generator
             self.genLowerLimit.append(self.generators[idx].genLowerLimit) # the lower limit of each generator
 
+            # check if
+
         # Create a list of all possible generator combination ID, MOL, upper normal loading, upper limit and lower limit
         # these will be used to schedule the diesel generators
-        self.combinationsID = np.array(range(2**len(self.genIDS)-1)) # the IDs of the generator combinations
+        self.combinationsID = range(2**len(self.genIDS)-1) # the IDs of the generator combinations
         self.genCombinationsID = [] # the gen IDs in each combination
-        self.genCombinationsMOL = []
+        self.genCombinationsMOL = np.array([])
         self.genCombinationsUpperNormalLoading = []
         self.genCombinationsUpperLimit = []
         self.genCombinationsLowerLimit = []
@@ -105,7 +107,7 @@ class Powerhouse:
                     subsetGenUpperLimit += self.genUpperLimit[self.genIDS.index(gen)]
                     subsetGenLowerLimit += self.genLowerLimit[self.genIDS.index(gen)]
 
-                self.genCombinationsMOL.append(subsetMOLPU*subsetPMax) # pu MOL * P max =  MOL
+                self.genCombinationsMOL = np.append(self.genCombinationsMOL, subsetMOLPU*subsetPMax) # pu MOL * P max =  MOL
                 self.genCombinationsUpperNormalLoading.append(subsetGenUpperNormalLoading)
                 self.genCombinationsUpperLimit.append(subsetGenUpperLimit)
                 self.genCombinationsLowerLimit.append(subsetGenLowerLimit)
@@ -118,7 +120,7 @@ class Powerhouse:
             onlineGens = [genIDS[idx] for idx, x in enumerate(genStates) if x == 2]
             # if the gen IDs of this combination equal the gen IDs that are currently online, then this is current online combination
             if sorted(self.genCombinationsID[idx]) == sorted(onlineGens):
-                self.genCombinationOnline = combID
+                self.onlineCombinationID = combID
 
 
     # combine fuel curves for a combination of generators
@@ -143,7 +145,7 @@ class Powerhouse:
             genFC.cubicSplineCurveEstimator(powerStep) # calculate new fuel curve
             combFuelConsumption += np.array([y for x, y in genFC.fuelCurve]) # add the fuel consumption for each generator
 
-        return zip(combFuelPower, list(combFuelConsumption)) # return list of tuples
+        return list(zip(combFuelPower, list(combFuelConsumption))) # return list of tuples
 
     # genDispatch class method. Assigns a loading to each online generator and checks if they are inside operating bounds.
     # Inputs:
@@ -199,7 +201,7 @@ class Powerhouse:
         # find all with capacity over the load and the required SRC
         indCap = np.array([idx for idx, x in enumerate(self.genCombinationsUpperNormalLoading) if x > scheduledLoad + scheduledSRC])
         # find all with MOL under the load
-        indMOLCap = [idx for idx, x in enumerate(self.combinationsID[indCap]) if x < scheduledLoad]
+        indMOLCap = [idx for idx, x in enumerate(self.genCombinationsMOL[indCap]) if x < scheduledLoad]
         indInBounds = indCap[indMOLCap]
 
         ## then check how long it will take to switch to any of the combinations online
@@ -219,24 +221,24 @@ class Powerhouse:
         fuelCons = [] # the predicted fuel consumption for each combination
         for idx in indInBounds: # for each combination that is in bounds
             # inititiate the generators to be switched on for this combination to all generators in the combination
-            genSwOn.append(self.genCombinationsID[idx])
+            genSwOn.append(list(self.genCombinationsID[idx]))
             # initiate the generators to be switched off for this combination to all generators currently online
-            genSwOff.append(self.genCombinationsID.index(self.genCombinationOnline))
+            genSwOff.append(list(self.genCombinationsID[self.combinationsID.index(self.onlineCombinationID)]))
             # find common elements between switch on and switch off lists
-            commonGen = list(set(genSwOff).intersection(genSwOn))
+            commonGen = list(set(genSwOff[-1]).intersection(genSwOn[-1]))
             # remove common generators from both lists
             for genID in commonGen:
-                genSwOn.remove(genID)
-                genSwOff.remove(genID)
+                genSwOn[-1].remove(genID)
+                genSwOff[-1].remove(genID)
             # for each gen to be switched get time, max time for combination is time will take to bring online
 
             # find max time to switch generators online
-            onTime = []
-            for genID in genSwOn: # for each to be brought online
+            onTime = 0
+            for genID in genSwOn[-1]: # for each to be brought online in the current combination
                 onTime = max(onTime,turnOnTime[self.genIDS.index(genID)]) # max turn on time
             # find max of turn on time and turn off time
             SwitchTime = onTime # initiate to max turn on time
-            for genID in genSwOff:
+            for genID in genSwOff[-1]: # for each generator to be switched off in the current combination
                 SwitchTime = max(SwitchTime, turnOffTime[self.genIDS.index(genID)]) # check if there is a higher turn off time
             timeToSwitch.append(SwitchTime)
 
@@ -255,6 +257,8 @@ class Powerhouse:
         # if the most efficient can be switched on now, switch to it
         if timeToSwitch[indSort[0]] <= 0:
             self.switchGenComb(genSwOn[indSort[0]], genSwOff[indSort[0]])  # switch generators
+            # update online generator combination
+            self.onlineCombinationID = self.combinationsID[indInBounds[indSort[0]]]
         # otherwise, start or continue warming up generators for most efficient combination
         else:
             self.startGenComb(genSwOn[indSort[0]])
@@ -262,6 +266,8 @@ class Powerhouse:
             if (True in (np.array(timeToSwitch)<=0)) & (True in self.outOfBounds):
                 # find most efficient option that can be switched now
                 indBest = next((x for x in range(len(indSort)) if timeToSwitch[indSort[x]] <= 0 )) # indBest wrt indSort
+                # update online generator combination
+                self.onlineCombinationID = self.combinationsID[indInBounds[indBest]]
                 self.switchGenComb(genSwOn[indSort[indBest]],genSwOff[indSort[indBest]]) # switch generators
 
 
