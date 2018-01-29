@@ -111,7 +111,7 @@ print('Standard deviation from average: ', np.nanstd(totLoadP), ' kW')
 
 # Wind power data set
 wtgP, wtgTime, wtgTimeStamps, wtgStart, wtgEnd = loadData(
-    '../../GBSProjects/StMary/InputData/TimeSeriesData/RawWindData/Calc55mPowerDS61.nc')
+    '../../GBSProjects/StMary/InputData/TimeSeriesData/RawWindData/Calc50mPowerDW52.nc')
 
 # fix any data gaps
 print('Patching wind power data...')
@@ -145,6 +145,8 @@ print('Wind power data set re-sampled from 10 to 15 min intervals. Size changed 
 genP = totLoadP - wtgP
 genDP = (genP[1:] - genP[:-1]) / (15 * 60)
 
+
+
 plt.figure(figsize=(8, 5.5))
 
 
@@ -153,29 +155,140 @@ plt.figure(figsize=(8, 5.5))
 gen1PMax = 499 #Cummins QSX15G9
 gen2PMax = 611 #Caterpillar 3508
 gen3PMax = 908 #Caterpillar 3512
-MOL = 0.15 # NOTE THE FILE SUPPLIED BY AVEC STATES 0% (!!!)
+MOL = 0#.15 # NOTE THE FILE SUPPLIED BY AVEC STATES 0% (!!!)
 
+# Minimum spinning reserve kept in the system
+# NOTE: this is a brute force approach, but with data available better estimates are not possible.
+srcP = 0#.15*np.nanmean(totLoadP)
 
-
-# Matplotlib formated timestamps for plotting routines.
-mpTimeStamps = md.date2num(stmTimeStamps)
+print('Assuming SRC : ', srcP, 'kW')
 
 # isolate the data where there is more wind power than demand.
 curtailedP = np.copy(genP)
 curtailedP[genP > MOL * gen1PMax] = np.nan
 curtailedP = -(curtailedP - MOL * gen1PMax)
-print((np.nansum(curtailedP) / 4) / (np.nansum(wtgP) / 4), (np.nansum(wtgP) / 4))
-plt.plot(mpTimeStamps, genP)
-#plt.plot(mpTimeStamps, wtgP)
-#plt.plot(mpTimeStamps, curtailedP)
 
+# Curtailment condition
+genP[genP < MOL*gen1PMax] = MOL*gen1PMax # Normal approach with MOL
+#genP[genP < 0] = 0 # Low load diesel, with 0 kW possible
+
+# Find which generator is online based on generator loading
+genPAvail = np.zeros(np.shape(genP))
+chngCnt = 0
+
+for i, p in enumerate(genP):
+    if p < MOL*gen1PMax:
+        genPAvail[i] = 0
+    elif p < (gen1PMax - srcP):
+        genPAvail[i] = gen1PMax
+    elif p < (gen2PMax - srcP):
+        genPAvail[i] = gen2PMax
+    elif p < (gen3PMax - srcP):
+        genPAvail[i] = gen3PMax
+    elif p < (gen1PMax + gen2PMax - srcP):
+        genPAvail[i] = gen1PMax + gen2PMax
+    else:
+        genPAvail[i] = -100
+
+    if chngCnt > 0 and (genPAvail[i]-genPAvail[i-1] < 0):
+        genPAvail[i] = genPAvail[i-1]
+
+    # Prevent excessive down transitions
+    if i > 3:
+        if (genPAvail[i] - genPAvail[i-1]) < 0:
+            chngCnt = 4
+        elif chngCnt > 0:
+            chngCnt = chngCnt - 1
+        else:
+            chngCnt = 0
+
+print('Number of diesel configuration changes : ', np.sum(np.abs(np.sign(np.diff(genPAvail)))))
+
+# Capacity factor
+nonZeroGenPAvail = np.copy(genPAvail)
+nonZeroGenPAvail[genPAvail == 0] = np.nan
+print('Diesel capacity factor :', np.nanmean(genP/nonZeroGenPAvail))
+print('Diesel kWh total: ', np.nansum(genP)/4)
+
+print('Wind power curtailed :', np.nansum(curtailedP)/4, ' kWh')
+
+essEMaxRng = [1, 10, 100, 200, 500, 750, 1000, 2500, 5000, 10000, 12500, 15000, 17500, 20000, 25000]
+wpRec = np.zeros(np.shape(essEMaxRng))
+essPMax = 500
+
+
+for j, essEMax in enumerate(essEMaxRng):
+    essEIn = np.zeros(np.shape(curtailedP))
+    essEIn[0] = 0#curtailedP[0] / 4
+    essEOut = np.zeros(np.shape(curtailedP))
+    essEOut[0] = 0
+    essP = np.zeros(np.shape(curtailedP))
+    essETot = 0 #0.5*essEMax
+    SOC = np.zeros(np.shape(curtailedP))
+    recoveredWtgE = 0
+    expendedWtgE = 0
+
+    for idx, wp in enumerate(curtailedP[1:]):
+        SOC[idx] = essETot/essEMax
+        if wp > 0 and essETot < essEMax:
+            essEOut[idx] = 0
+            dE = (essEMax - essETot)
+            if wp/4 < dE:
+                essEIn[idx] = essEIn[idx-1] + (wp/4)
+                essP[idx] = -wp
+                recoveredWtgE = recoveredWtgE + (wp/4)
+                essETot = essETot + (wp/4)
+            else:
+                essEIn[idx] = essEIn[idx - 1] + dE
+                essP[idx] = -dE
+                recoveredWtgE = recoveredWtgE + dE
+                essETot = essETot + dE
+        elif np.isnan(wp) and essETot > 10:
+            essEIn[idx] = 0
+            # if possible discharge at full power
+            if genP[idx] > essPMax and essETot > essPMax/4:
+                essETot = essETot - (essPMax/4)
+                #print('Full power; essETot = ', essETot)
+                essEOut[idx] = essEOut[idx - 1] + (essPMax/4)
+                essP[idx] = essPMax
+                expendedWtgE = expendedWtgE + (essPMax/4)
+            elif genP[idx] < essPMax and essETot > genP[idx]/4:
+                essETot = essETot - (genP[idx]/4)
+                essP[idx] = genP[idx]
+                #print('Reduced power; essETot = ', essETot)
+                essEOut[idx] = essEOut[idx - 1] + (genP[idx] / 4)
+                expendedWtgE = expendedWtgE + (genP[idx]/4)
+            else:
+                essEOut[idx] = essEOut[idx - 1] + essETot
+                essP[idx] = 4*essETot
+                expendedWtgE = expendedWtgE + essETot
+                #print('Remaining power; essETot = ', essETot)
+                essETot = 0
+
+
+    print('ESS cummulative kWh in: ', recoveredWtgE)
+    print('ESS cummulative kWh out: ', expendedWtgE)
+    wpRec[j] = recoveredWtgE
+
+
+# Matplotlib formated timestamps for plotting routines.
+mpTimeStamps = md.date2num(stmTimeStamps)
+
+
+print((np.nansum(curtailedP) / 4) / (np.nansum(wtgP) / 4), (np.nansum(wtgP) / 4))
+'''#plt.plot(mpTimeStamps, genP)
+#plt.plot(mpTimeStamps, genPAvail)
+#plt.plot(mpTimeStamps, curtailedP)
+plt.plot(mpTimeStamps, genP)
+plt.plot(mpTimeStamps, essP)
+#plt.plot(essEMaxRng, wpRec/1000)
 plt.show()
 
 curtailedP[np.isnan(curtailedP)] = 0
 curtailedPD = (curtailedP[1:] - curtailedP[:-1])/4
 
 
-sns.distplot(curtailedPD)
+sns.distplot(curtailedPD)'''
 
 
 # create total load time series for the powerhouse
@@ -195,7 +308,7 @@ sns.distplot(curtailedPD)
 
 # sns.distplot(dt)
 
-'''plt.subplots_adjust(bottom=0.2)
+plt.subplots_adjust(bottom=0.2)
 plt.xticks(rotation=25)
 ax = plt.gca()
 xfmt = md.DateFormatter('%Y-%m-%d')
@@ -207,12 +320,15 @@ ax.xaxis.set_major_formatter(xfmt)
 #plt.plot(mpTimeStamps, genP)
 #plt.hist(genP, bins='auto')
 #plt.savefig('StMarysAndMtVillageLoad.eps', format = 'eps')
-plt.plot(mpTimeStamps, genP)
-
+plt.plot(mpTimeStamps, totLoadP)
+plt.xlabel('Time')
+plt.ylabel('Total system load [kW]')
+plt.savefig('totalSystemLoad.eps', format = 'eps')
+'''
 vals, base = np.histogram(genDP, bins=150)
 cumDist = np.cumsum(vals)
-plt.plot(base[:-1], cumDist/genP.size)
-plt.show()'''
+plt.plot(base[:-1], cumDist/genP.size)'''
+plt.show()
 
 '''
 # Demo plot of loss of wind farm scenario
