@@ -155,6 +155,8 @@ gen2PMax = 611 #Caterpillar 3508
 gen3PMax = 908 #Caterpillar 3512
 MOL = 0.15 # NOTE THE FILE SUPPLIED BY AVEC STATES 0% (!!!)
 
+
+
 # Matplotlib formated timestamps for plotting routines.
 mpTimeStamps = md.date2num(stmTimeStamps)
 
@@ -164,13 +166,15 @@ curtailedP[genP > MOL * gen1PMax] = np.nan
 curtailedP = -(curtailedP - MOL * gen1PMax)
 print((np.nansum(curtailedP) / 4) / (np.nansum(wtgP) / 4), (np.nansum(wtgP) / 4))
 plt.plot(mpTimeStamps, genP)
-plt.plot(mpTimeStamps, wtgP)
-plt.plot(mpTimeStamps, curtailedP)
+#plt.plot(mpTimeStamps, wtgP)
+#plt.plot(mpTimeStamps, curtailedP)
 
 plt.show()
 
+curtailedP[np.isnan(curtailedP)] = 0
 curtailedPD = (curtailedP[1:] - curtailedP[:-1])/4
-curtailedPD[np.isnan(curtailedPD)] = 0
+
+
 sns.distplot(curtailedPD)
 
 
