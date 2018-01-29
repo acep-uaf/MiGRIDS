@@ -72,7 +72,7 @@ class Generator:
         genFC = GenFuelCurve()
         genFC.fuelCurveDataPoints = fuelCurveData
         genFC.genOverloadPMax = self.genPMax  # TODO: consider making this something else.
-        genFC.cubicSplineCurveEstimator()
+        genFC.linearCurveEstimator()
         self.genFuelCurve = genFC.fuelCurve  # TODO: consider making this the integer version.
 
     # Constructor

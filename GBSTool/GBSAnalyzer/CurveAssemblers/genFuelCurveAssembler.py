@@ -106,8 +106,33 @@ class GenFuelCurve:
 
         # The results are packaged into the fuel curve list, which is the key output of this class.
         self.fuelCurve = list(zip(powerLevels, fuelConsumption))
+
         # For computational and memory efficiency we also provide a rounded and integer only fuel curve. For this the
         # fuel consumption data points are multiplied by 10,000 and then type cast to integers. The power values are rounded to the nearest
         # kW and type cast to int.
         # NOTE that this variable is significantly more efficient in memory usage.
         self.fuelCurveInt = zip(np.rint(powerLevels).astype(int), np.rint(100000*fuelConsumption).astype(int))
+
+    def linearCurveEstimator(self, loadStep = 1):
+        '''
+        linearCurveEstimator calculates a linear curve for the given data points in fuelCurveDataPoints.
+
+        :return:
+        '''
+        self.checkInputs()
+        # Setup x and y coordinates as numpy arrays
+        x, y = zip(*self.coords)
+        # To pull an array of values from the linear interpolation, we need to setup a power level array. This sensibly starts at
+        # 0 kW and in this case we carry it out to the (rounded) overload power level, with a step size of 1 kW.
+        powerLevels = np.arange(0, int(self.genOverloadPMax), loadStep)
+        # With power level vector setup, we can extract values from the linear interpolation of each power level point.
+        fuelConsumption = np.interp(powerLevels,x,y)
+
+        # The results are packaged into the fuel curve list, which is the key output of this class.
+        self.fuelCurve = list(zip(powerLevels, fuelConsumption))
+
+        # For computational and memory efficiency we also provide a rounded and integer only fuel curve. For this the
+        # fuel consumption data points are multiplied by 10,000 and then type cast to integers. The power values are rounded to the nearest
+        # kW and type cast to int.
+        # NOTE that this variable is significantly more efficient in memory usage.
+        self.fuelCurveInt = zip(np.rint(powerLevels).astype(int), np.rint(100000 * fuelConsumption).astype(int))
