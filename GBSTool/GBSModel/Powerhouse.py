@@ -77,8 +77,6 @@ class Powerhouse:
             self.genUpperLimit.append(self.generators[idx].genUpperLimit) # the upper limit of each generator
             self.genLowerLimit.append(self.generators[idx].genLowerLimit) # the lower limit of each generator
 
-            # check if
-
         # Create a list of all possible generator combination ID, MOL, upper normal loading, upper limit and lower limit
         # these will be used to schedule the diesel generators
         self.combinationsID = range(2**len(self.genIDS)-1) # the IDs of the generator combinations
