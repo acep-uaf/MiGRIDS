@@ -18,6 +18,15 @@ children. -->
     <!-- NOTICE: NON-MODIFIED PARENT TAGS ARE NOT SHOWN, THEY SHOULD BE INHERITED FROM THE PARENT -->
 
     <!-- ESS specific parameters -->
+
+    <energyCapacity value="0" unit="kWs">
+        <!-- 'energyCapacity' is the energy capacity of the energy storage system. Units are kWs. Default is 0.  -->
+    </energyCapacity>
+    <useLossMap value="FALSE">
+        <!-- 'useLossMap' is a bool value that indicates whether or not use the lossMap in the simulation. Default is FALSE  -->
+    </useLossMap>
+
+    <lossMap>
     <!-- 'lossMap' describes the loss experienced by the energy storage system for each state of power and energy.
     they are described by the tuples 'pPu' for power, 'ePu' for the state of charge, 'tempAmb' for the ambient
     (outside) temperature and 'lossRate' for the loss. Units for power are P.U. of nameplate power capacity. Positive values
@@ -25,7 +34,6 @@ children. -->
     capacity. It should be between 0 and 1. 'loss' should include all losses including secondary systems. Units for
     'loss' are kW. Default values are data points at -1, 0 and 1 pu power, -->
     <!-- 0 and 1 pu SoC and 0 loss. -->
-    <lossMap>
         <pPu value="-1" unit="pu"/><ePu value="0" unit="pu"/><lossRate value="0" unit="kW"/><tempAmb value="298" unit="K"/>
         <pPu value="-1" unit="pu"/><ePu value="1" unit="pu"/><lossRate value="0" unit="kW"/><tempAmb value="298" unit="K"/>
         <pPu value="0" unit="pu"/><ePu value="0" unit="pu"/><lossRate value="0" unit="kW"/><tempAmb value="298" unit="K"/>
@@ -38,6 +46,7 @@ children. -->
      maximum charge or discharge power. This creates charging and discharging curves that exponentially approach full
      and zero charge. 'value' should be between 0 and 1. Default value is 0.1.  -->
     <chargeRate value="0.1" unit="NONE"/>
+
 
 
 

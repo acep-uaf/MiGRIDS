@@ -18,7 +18,7 @@ WF1 = Windfarm(wtgIDs, wtgP, wtgQ, windSpeed, wtgStates, timeStep, wtgDescriptor
 wtg0P = []
 wtg1P = []
 wtg2P = []
-for i in range(10000):
+for i in range(10000-1):
     WF1.wtgDispatch(70,0)
     wtg0P.append(WF1.windTurbines[0].wtgP)
     wtg1P.append(WF1.windTurbines[1].wtgP)

@@ -166,6 +166,14 @@ class WindPowerCurve:
         # cut-out wind speed.
         power = np.nan_to_num(cs(windSpeeds))
 
+        # check if any values from the cubic spline went out of bounds. Correct if did.
+        for index, item in enumerate(power):
+            if item > self.POutMaxPa:
+                power[index] = self.POutMaxPa
+            elif item < 0:
+                power[index] = 0
+
+
         # The results are packaged into the power curve list, which is the key output of this class.
         self.powerCurve = list(zip(windSpeeds, power))
         # For computational and memory efficiency we also provide a rounded and integer only power curve. For this the

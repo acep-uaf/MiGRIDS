@@ -47,22 +47,22 @@
     <!-- Dispatch Control parameters -->
     <!-- 'eesSrcTime' is the minimum amount of time that the ess must be able to discharge for at the current level of
       SRC that it is supplying. Units are in seconds. Default is 120 s.  -->
-    <eesSrcTime value="2" unit="s"/>
+    <eesSrcTime value="120" unit="s"/>
     <!-- 'eesDispatchTime' is the minimum amount of time that the ESS must be able to supply the load for in order to
-    be considered as an active discharge option in the diesel schedule. Units are in hours. Default is 0.5.   -->
-    <eesDispatchTime value="0.5" unit="hr"/>
+    be considered as an active discharge option in the diesel schedule. Units are in seconds. Default is 1800 s (0.5 hours).   -->
+    <eesDispatchTime value="1800" unit="s"/>
     <!-- In order to use the consider the equivalent fuel efficiency of dishcarging the ESS to allow running a smaller
      diesel generator, an equivalent fuel consumption of the ESS must be calculated in L/kWh. This is done by calculating
      how much diesel fuel went into charging the ESS to it'c current level. Divide the number of liters by the  state of
      charge to get the fuel consumption of using the energy storage. -->
     <!-- 'prevEesTime' is how far back that is used to assess what percentage of the current ESS charge came from
     the diesel generator. This is used in the dispatch schedule to determine the cost of discharging the ESS to supply
-     the load for peak shaving or load leveling purposes. Units are hours. Default is 24 hr. -->
-    <prevEesTime value="24" unit="hr"/>
+     the load for peak shaving or load leveling purposes. Units are seconds. Default is 86400 s (24 hr). -->
+    <prevEesTime value="86400" unit="s"/>
     <!-- 'eesCost' is the cost of discharging the ESS that is above the fuel cost that went into charging it. It is
-    stated as a fuel consumption per kWh, L/kWh. It is added to the effective fuel consumption of discharging the
+    stated as a fuel consumption per kWh, kg/kWh. It is added to the effective fuel consumption of discharging the
      ESS resulting from chargning it with the diesel generators. The cost is used to account for non-fuel costs of
-     discharging the ESS including maintenance and lifetime costs. Units are L/kWh. Default is 0. This should be updated
+     discharging the ESS including maintenance and lifetime costs. Units are kg/kWh. Default is 0. This should be updated
       to avoid overuse of the ESS. -->
     <eesCost value="0" unit="L/kWh"/>
 

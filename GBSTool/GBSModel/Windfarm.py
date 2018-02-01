@@ -87,8 +87,8 @@ class Windfarm:
                 self.wtgPAvail[idx] = self.windTurbines[idx].wtgPAvail
                 self.wtgQAvail[idx] = self.windTurbines[idx].wtgQAvail
             # get the loading pu for real and reactive power
-            loadingP = min([newWtgP / np.sum(self.wtgPAvail),1])  # this is the PU loading of each wtg, limited to 1
-            loadingQ = min([newWtgQ / np.sum(self.wtgQAvail) ,1]) # this is the PU loading of each wtg
+            loadingP = np.nanmin([newWtgP / np.sum(self.wtgPAvail),1])  # this is the PU loading of each wtg, limited to 1
+            loadingQ = np.nanmin([newWtgQ / np.sum(self.wtgQAvail) ,1]) # this is the PU loading of each wtg
             # cycle through each wtg and update with new P and Q
             for idx in range(len(self.wtgIDS)):
                 self.windTurbines[idx].wtgP = loadingP * self.wtgPAvail[idx]

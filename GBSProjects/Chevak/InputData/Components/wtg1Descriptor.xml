@@ -19,8 +19,8 @@
  <!-- Default is to have a data point at 0 m/s and at nameplate power. DEFAULT VALUES REQUIRE CHANGING for this to -->
  <!-- be sensible. -->
  <powerCurveDataPoints>
-  <ws unit="m/s" value="2.5 5 10 13.5"/>
-  <pPu unit="pu" value="0 0.11 0.67 1"/>
+  <ws unit="m/s" value="1 2 2.5 5 10 13.5 14 15 16 17 18 19 20 21 22 23 24"/>
+  <pPu unit="pu" value="0 0 0 0.11 0.67 1 1 1 1 1 1 1 1 1 1 1 1"/>
  </powerCurveDataPoints>
  <!-- 'cutInWindSpeed' describes the minimum wind speed at which the turbine will begin producing power from a -->
  <!-- previous complete stop. The default value is 0, which NEVER makes sense. Units are m/s. -->
