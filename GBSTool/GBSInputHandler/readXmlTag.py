@@ -4,8 +4,9 @@
 # License: MIT License (see LICENSE file of this package for more information)
 
 # read a value from an xml tag
-def readXmlTag(fileName,tag,attr,fileDir=''):
+def readXmlTag(fileName,tag,attr,fileDir='',returnDtype = ''):
     # general imports
+    # returnDtype specifies if the data type of the output is returned as float or int. If left empty, returns strings
     import os
     from bs4 import BeautifulSoup
 
@@ -27,6 +28,13 @@ def readXmlTag(fileName,tag,attr,fileDir=''):
     else: # if it is just one string
         a = soup.find(tag)
     tagValues = a[attr].split( ) # if a list was written to an attribute, this will be read as a string, which needs to be parsed using spaces.
+
+    if returnDtype == 'int':
+        tagValues = [int(x) for x in tagValues]
+    elif returnDtype == 'float':
+        tagValues = [float(x) for x in tagValues]
+
+
     return tagValues
 
 

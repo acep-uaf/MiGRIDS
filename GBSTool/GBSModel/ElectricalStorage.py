@@ -3,7 +3,12 @@
 # Jeremy VanderMeer, jbvandermeer@alaska.edu, Alaska Center for Energy and Power
 # Date: November 27, 2017
 # License: MIT License (see LICENSE file of this package for more information)
-
+from bisect import bisect_left
+from bs4 import BeautifulSoup as Soup
+import sys
+sys.path.append('../')
+from GBSAnalyzer.CurveAssemblers.esLossMapAssembler import esLossMap
+from GBSInputHandler.readXmlTag import readXmlTag
 
 class ElectricalEnergyStorage:
     '''
@@ -21,6 +26,7 @@ class ElectricalEnergyStorage:
         :param eesQ: initial reactive power level.
         :param eesSOC: initial state of charge.
         :param eesState: the current operating state, 0 - off, 1 - starting, 2 - online.
+        :param eesSRC: the amount of spinning reserve capacity that the EES must be able to supply, in addition to active discharge.
         :param eesDescriptor: relative path and file name of eesDescriptor-file used to populate static information.
         """
         # manage run time timers
@@ -37,11 +43,15 @@ class ElectricalEnergyStorage:
         self.eesSRC = eesSRC # the amount of SRC that the ess needs to be able to provide
         self.timeStep = timestep  # the time step used in the simulation in seconds
 
+        # out of bounds operation flags
+        self.underSRC = False # indicates when ees cannot supply required src
+
         # run the descriptor parser file to grab information from the descriptor file for this unit
         self.eesDescriptorParser(eesDescriptor)
 
         # update eesPAvail and eesQAvail depending on essState
         if eesState == 2:
+            # TODO: change p available to take into account soc
             self.eesPAvail = self.eesPMax  # P available is the how much power is avialable online. P max if online, 0 otherwise
             self.genQAvail = self.genQMax
         else:
@@ -49,7 +59,7 @@ class ElectricalEnergyStorage:
             self.genQAvail = 0
 
     # energy storage descriptor parser
-    def essDescriptorParser(self, eesDescriptor):
+    def eesDescriptorParser(self, eesDescriptor):
         """
         Reads the data from a given eesDescriptor file and uses the information given to populate the
         respective internal variables.
@@ -70,7 +80,7 @@ class ElectricalEnergyStorage:
         self.eesPMax = float(eesSoup.POutMaxPa.get('value'))  # nameplate capacity
         self.eesQMax = float(eesSoup.QOutMaxPa.get('value'))  # nameplate capacity kvar
         # TODO: add the effect of charge/discharge rate on capacity. Possibly add something similar to the LossMap
-        self.eesEMax = float(eesSoup.energyCapacity.get('value')) # the maximum energy capacity of the EES
+        self.eesEMax = float(eesSoup.energyCapacity.get('value')) # the maximum energy capacity of the EES in kWs
         # the amount of time in seconds that the EES must be able to discharge for at current level of SRC being provided
         self.eesSrcTime = float(eesSoup.eesSrcTime.get('value'))
         # 'eesDispatchTime' is the minimum amount of time that the ESS must be able to supply the load for in order to
@@ -92,16 +102,37 @@ class ElectricalEnergyStorage:
         # 'essChargeRate' is the fraction of power that it would take to fully charge or discharge the ESS that is the
         # maximum charge or discharge power. This creates charging and discharging curves that exponentially approach full
         # and zero charge.
-        self.essChargeRate = float(eesSoup.chargeRate.get('value'))
+        self.eesChargeRate = float(eesSoup.chargeRate.get('value'))
+
+        # handle the loss map interpolation
         # 'lossMap' describes the loss experienced by the energy storage system for each state of power and energy.
         # they are described by the tuples 'pPu' for power, 'ePu' for the state of charge, 'tempAmb' for the ambient
         # (outside) temperature and 'lossRate' for the loss. Units for power are P.U. of nameplate power capacity. Positive values
         # of power are used for discharging and negative values for charging. Units for 'ePu' are P.U. nameplate energy
         # capacity. It should be between 0 and 1. 'loss' should include all losses including secondary systems. Units for
         # 'loss' are kW.
-        self.essLossMap = float(eesSoup.lossMap.get('value'))
+        # initiate loss map class
+        eesLM = esLossMap()
+        eesLM.pPu = readXmlTag(eesDescriptor,['lossMap','pPu'],'value', 'int')
+
+
+        self.eesLossMap = float(eesSoup.lossMap.get('value'))
         # 'useLossMap' is a bool value that indicates whether or not use the lossMap in the simulation.
-        self.essUseLossMap = float(eesSoup.useLossMap.get('value'))
+        self.eesUseLossMap = float(eesSoup.useLossMap.get('value'))
+
+    def generateLossMap(self):
+        a = 1
+    def getLossDischargeTimes(self):
+        if self.eesUseLossMap:
+            # create a parallel matrix to the lossMap with the amount of time it is possible to discharge at each power for
+            # taking into account losses
+            for idxSoc, soc in enumerate(self.eesLossMap.ePu): # for every soc
+                for idxpPu, pPu in enumerate(self.eesLossMap.pPu): # for every power
+                    if pPu > 0: # if discharging
+                        a = 1
+
+        else:
+            self.eesLossDischargeTimes = []
 
     def checkOperatingConditions(self):
         """
@@ -114,9 +145,14 @@ class ElectricalEnergyStorage:
             # maximum available power is the minimum of the:
             # - stored energy (in kWs) divided by the number of seconds in a timestep
             # - maximum rated power
-            self.eesPAvail = min([self.eesPMax,self.essSOC*self.essEMax/self.timeStep])
+            self.eesPAvail = min([self.eesPMax,self.eesSOC*self.eesEMax/self.timeStep])
             self.eesQAvail = self.eesQMax # available reactive power is not directly tied to the state of charge
             # TODO: make sure enough power and soc for SRC, ...
+            # check enough power capability left to supply SRC
+            if self.eesSRC > (self.eesPAvail - self.eesP): # if required SRC is greater than the remaining available power
+                self.underSRC = True
+
+            # check that there is enough capacity left to supply SRC
             self.eesRunTimeAct += self.timeStep
             self.eesRunTimeTot += self.timeStep
         elif self.eesState == 1: # if starting up
@@ -130,4 +166,17 @@ class ElectricalEnergyStorage:
             self.eesQAvail = 0
             self.eesStartTimeAct = 0
             self.eesRunTimeAct = 0
-        self.step += 1  # increment which step we are on
+
+    # this finds the available discharge power given
+    def findPchAvail(self, duration):
+        if self.eesUseLossMap == False: # if don't use loss map
+            # the available charging power is the minimum of how much the SOC will support and the maximum rated power
+            # eesChargeRate is limits the power as based on SOC
+            self.eesPchAvail = min([self.eesPMax,self.eesChargeRate*self.eesEMax*self.eesSOC/self.timeStep])
+        else: # if use the loss map
+            # find the index of the closest P and E value on the loss map
+            # bisect left gives the index of the last list item to not be over the number being searched for. it is faster than using min
+            Pind = bisect_left(self.eesLossMap)
+
+            # this finds the associated fuel consumption to the scheduled load for this combination
+            fuelCons.append(FCcons[bisect_left(FCpower, scheduledLoad)])

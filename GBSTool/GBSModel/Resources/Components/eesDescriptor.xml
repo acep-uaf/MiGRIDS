@@ -64,7 +64,7 @@
      ESS resulting from chargning it with the diesel generators. The cost is used to account for non-fuel costs of
      discharging the ESS including maintenance and lifetime costs. Units are kg/kWh. Default is 0. This should be updated
       to avoid overuse of the ESS. -->
-    <eesCost value="0" unit="L/kWh"/>
+    <eesCost value="0" unit="kg/kWh"/>
 
 </component>
 <!-- EOF -->
