@@ -34,12 +34,10 @@ children. -->
     capacity. It should be between 0 and 1. 'loss' should include all losses including secondary systems. Units for
     'loss' are in pu of pPu (the fraction of power that is lost). Default values are data points at -1, 0 and 1 pu power, -->
     <!-- 0 and 1 pu SoC and 0 loss. -->
-        <pPu value="-1" unit="pu"/><ePu value="0" unit="pu"/><lossRate value="0" unit="pu of ch/dis power"/><tempAmb value="298" unit="K"/>
-        <pPu value="-1" unit="pu"/><ePu value="1" unit="pu"/><lossRate value="0" unit="pu of ch/dis power"/><tempAmb value="298" unit="K"/>
-        <pPu value="0" unit="pu"/><ePu value="0" unit="pu"/><lossRate value="0" unit="pu of ch/dis power"/><tempAmb value="298" unit="K"/>
-        <pPu value="0" unit="pu"/><ePu value="1" unit="pu"/><lossRate value="0" unit="pu of ch/dis power"/><tempAmb value="298" unit="K"/>
-        <pPu value="1" unit="pu"/><ePu value="0" unit="pu"/><lossRate value="0" unit="pu of ch/dis power"/><tempAmb value="298" unit="K"/>
-        <pPu value="1" unit="pu"/><ePu value="1" unit="pu"/><lossRate value="0" unit="pu of ch/dis power"/><tempAmb value="298" unit="K"/>
+        <pPu value="-1 -1 0 0 1 1" unit="pu"/>
+        <ePu value="0 1 0 1 0 1" unit="pu"/>
+        <loss value="0 0 0 0 0 0" unit="pu of ch/dis power"/>
+        <tempAmb value="298 298 298 298 298 298" unit="K"/>
     </lossMap>
 
     <!-- 'chargeRate' is the fraction of power that it would take to fully charge or discharge the ESS that is the

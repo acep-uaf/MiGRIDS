@@ -9,6 +9,7 @@ import sys
 sys.path.append('../')
 from GBSAnalyzer.CurveAssemblers.esLossMapAssembler import esLossMap
 from GBSInputHandler.readXmlTag import readXmlTag
+import numpy as np
 
 class ElectricalEnergyStorage:
     '''
@@ -77,8 +78,10 @@ class ElectricalEnergyStorage:
 
         # Dig through the tree for the required data
         self.eesName = eesSoup.component.get('name')
-        self.eesPMax = float(eesSoup.POutMaxPa.get('value'))  # nameplate capacity
-        self.eesQMax = float(eesSoup.QOutMaxPa.get('value'))  # nameplate capacity kvar
+        self.eesPOutMax = float(eesSoup.POutMaxPa.get('value'))  # max discharging power
+        self.eesPInMax = float(eesSoup.PInMaxPa.get('value'))  # max charging power
+        self.eesQOutMax = float(eesSoup.QOutMaxPa.get('value'))  # max discharging power reactive
+        self.eesQInMax = float(eesSoup.QInMaxPa.get('value'))  # max charging power reactive
         # TODO: add the effect of charge/discharge rate on capacity. Possibly add something similar to the LossMap
         self.eesEMax = float(eesSoup.energyCapacity.get('value')) # the maximum energy capacity of the EES in kWs
         # the amount of time in seconds that the EES must be able to discharge for at current level of SRC being provided
@@ -113,23 +116,54 @@ class ElectricalEnergyStorage:
         # 'loss' are kW.
         # initiate loss map class
         eesLM = esLossMap()
-        eesLM.pPu = readXmlTag(eesDescriptor,['lossMap','pPu'],'value', 'int')
+        pPu = np.array(readXmlTag(eesDescriptor,['lossMap','pPu'],'value','', 'float'))
+        ePu = readXmlTag(eesDescriptor, ['lossMap', 'ePu'], 'value','',  'float')
+        lossPu = readXmlTag(eesDescriptor, ['lossMap', 'loss'], 'value','',  'float')
+        tempAmb = readXmlTag(eesDescriptor, ['lossMap', 'tempAmb'], 'value','',  'float')
 
+        # convert per unit power to power
+        P = np.array(pPu)
+        P[P>0] = P[P>0]*self.eesPOutMax
+        P[P<0] = P[P<0]*self.eesPInMax
+        #convert per unit energy to energy
+        E = np.array(ePu)*self.eesEMax
+        # convert pu loss to power
+        L = np.abs(np.array(lossPu) * P)
 
-        self.eesLossMap = float(eesSoup.lossMap.get('value'))
+        lossMapDataPoints = []
+        for idx, item in enumerate(pPu):
+            lossMapDataPoints.append((float(P[idx]), float(E[idx]), float(L[idx]), float(tempAmb[idx])))
+
+        eesLM.lossMapDataPoints = lossMapDataPoints
+        eesLM.pInMax = self.eesPInMax
+        eesLM.pOutMax = self.eesPOutMax
+        eesLM.eMax = self.eesEMax
+        # check inputs
+        eesLM.checkInputs()
+        # perform the linear interpolation between points
+        eesLM.linearInterpolation()
+
+        self.eesLossMapP = eesLM.P
+        self.eesLossMapE = eesLM.E
+        self.eesLossMapTemp = eesLM.Temp
+        self.eesLossMapLoss = eesLM.loss
         # 'useLossMap' is a bool value that indicates whether or not use the lossMap in the simulation.
         self.eesUseLossMap = float(eesSoup.useLossMap.get('value'))
 
-    def generateLossMap(self):
-        a = 1
+# todo: finish this, handle 2D vs 3D if temperature is considered.
     def getLossDischargeTimes(self):
         if self.eesUseLossMap:
             # create a parallel matrix to the lossMap with the amount of time it is possible to discharge at each power for
             # taking into account losses
-            for idxSoc, soc in enumerate(self.eesLossMap.ePu): # for every soc
-                for idxpPu, pPu in enumerate(self.eesLossMap.pPu): # for every power
-                    if pPu > 0: # if discharging
-                        a = 1
+            for idxE, E in enumerate(self.eesLossMapE): # for every soc
+                for idxP, P in enumerate(self.eesLossMapP): # for every power
+                    for idxTemp, Temp in enumerate(self.essLossMapTemp):
+                        if P > 0: # if discharging
+                            # the maximum amount of time that can discharge for at this power
+                            self.eesLossDischargeTimes[idxP,idxE] = max([E/(P+self.eesLossMapLoss) - 1/self.eesChargeRate,0])
+                        else:
+                            # the maximum amount of time that can be discharged at
+                            self.eesLossDischargeTimes[idxP,idxE] = max([(self.eesEMax - E)/(-P+self.eesLossMapLoss) - 1/self.eesChargeRate,0])
 
         else:
             self.eesLossDischargeTimes = []
@@ -145,8 +179,8 @@ class ElectricalEnergyStorage:
             # maximum available power is the minimum of the:
             # - stored energy (in kWs) divided by the number of seconds in a timestep
             # - maximum rated power
-            self.eesPAvail = min([self.eesPMax,self.eesSOC*self.eesEMax/self.timeStep])
-            self.eesQAvail = self.eesQMax # available reactive power is not directly tied to the state of charge
+            self.eesPAvail = min([self.eesPOutMax,self.eesSOC*self.eesEMax/self.timeStep])
+            self.eesQAvail = self.eesQOutMax # available reactive power is not directly tied to the state of charge
             # TODO: make sure enough power and soc for SRC, ...
             # check enough power capability left to supply SRC
             if self.eesSRC > (self.eesPAvail - self.eesP): # if required SRC is greater than the remaining available power
