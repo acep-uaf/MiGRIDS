@@ -141,14 +141,15 @@ class ElectricalEnergyStorage:
         # check inputs
         eesLM.checkInputs()
         # perform the linear interpolation between points
-        eesLM.linearInterpolation()
+        eesLM.linearInterpolation(self.eesChargeRate, eStep = 3600*2)
 
         self.eesLossMapP = eesLM.P
         self.eesLossMapE = eesLM.E
         self.eesLossMapTemp = eesLM.Temp
         self.eesLossMapLoss = eesLM.loss
+        self.eesmaxDischTime = eesLM.maxDischTime
         # 'useLossMap' is a bool value that indicates whether or not use the lossMap in the simulation.
-        self.eesUseLossMap = float(eesSoup.useLossMap.get('value'))
+        self.eesUseLossMap = bool(eesSoup.useLossMap.get('value'))
 
 # todo: finish this, handle 2D vs 3D if temperature is considered.
     def getLossDischargeTimes(self):
