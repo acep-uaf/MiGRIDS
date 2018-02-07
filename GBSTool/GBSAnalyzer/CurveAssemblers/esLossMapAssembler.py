@@ -114,31 +114,33 @@ class esLossMap:
             # create another array with the maximum amount of time that can be spent charging or discharging at a power
             # given a state of charge
             # first, create an array with the time it takes to reach the next energy bin, taking into account losses
-            t = np.zeros([len(self.P), len(self.E)]) # initiate array
-            t[:] = np.nan # to nan
+            self.nextBinTime = np.zeros([len(self.P), len(self.E)]) # initiate array
+            #self.nextBinTime[:] = np.nan # to nan
             for idxE, E in enumerate(self.E): # for every energy level
                 for idxP, P in enumerate(self.P): # for every power
                     # if the power is within the chargeRate bounds
                     if (P >= (E - self.eMax) * chargeRate) & (P <= E * chargeRate):
                         if P > 0:  # if discharging
                             # find the amount of time to get to the next energy bin
-                            t[idxP, idxE] = (eStep) / (P + self.loss[idxP, idxE])
-                        elif np.round(P) < 0: # if charging
+                            self.nextBinTime[idxP, idxE] = (eStep) / (P + self.loss[idxP, idxE])
+                        elif P < 0: # if charging
                             # find the amount of time to get to the next energy bin
-                            t[idxP, idxE] = -(eStep) / (P + self.loss[idxP, idxE])
+                            self.nextBinTime[idxP, idxE] = -(eStep) / (P + self.loss[idxP, idxE])
+
             # now use the array of the time it takes to get to the next bin and calculate array of the max amount of
             # time the ES can charge or discharge at a certain power, starting at a certain energy level
             self.maxDischTime = np.zeros([len(self.P), len(self.E)])  # initiate array
-            self.maxDischTime[:] = np.nan  # to nan
+            #self.maxDischTime[:] = np.nan  # to nan
             for idxE, E in enumerate(self.E):  # for every energy level
                 for idxP, P in enumerate(self.P):  # for every power
-                    if t[idxP,idxE] != np.nan: # if nan, leave as is. a max time does not make sense here
-                        if P > 0: # if discharging
-                            # the total discharge time is the sum of the time taken to get to each consecutive bin.
-                            self.maxDischTime[idxP,idxE] = np.nansum(t[idxP,:idxE])
-                        if P < 0: # if charging
-                            # the total charge time is the sum of the time taken to get to each consecutive bin.
-                            self.maxDischTime[idxP,idxE] = np.nansum(t[idxP,idxE:])
+                    if P > 0: # if discharging
+                        # the total discharge time is the sum of the time taken to get to each consecutive bin.
+                        self.maxDischTime[idxP,idxE] = np.nansum(self.nextBinTime[idxP,:idxE])
+                    if P < 0: # if charging
+                        # the total charge time is the sum of the time taken to get to each consecutive bin.
+                        self.maxDischTime[idxP,idxE] = np.nansum(self.nextBinTime[idxP,idxE:])
+                    else:  # if power is zero
+                        self.maxDischTime[idxP, idxE] = np.inf
 
         else: # if more than one temperature defined
             # TODO: implement

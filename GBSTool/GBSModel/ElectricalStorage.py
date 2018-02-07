@@ -52,12 +52,19 @@ class ElectricalEnergyStorage:
 
         # update eesPAvail and eesQAvail depending on essState
         if eesState == 2:
-            # TODO: change p available to take into account soc
-            self.eesPAvail = self.eesPMax  # P available is the how much power is avialable online. P max if online, 0 otherwise
-            self.genQAvail = self.genQMax
+            # given the SRC required from the EES, find the maximum power available for a minimum of 1 timestep
+            self.eesPinAvail = self.findPchAvail(self.timeStep)
+            self.eesQinAvail = self.eesQInMax  # reactive power is not strictly tied to state of charge
+            # the maximum currently available discharge power for 1 timestep
+            self.eesPoutAvail = self.findPdisAvail(self.timeStep, 0, 0)
+            self.eesQoutAvail = self.eesQOutMax  # reactive power is not strictly tied to state of charge
+            # check if there is enough capacity left to supply the required SRC requirements
+            self.PsrcAvail = self.findPdisAvail(self.eesSrcTime, self.eesP, self.timeStep)
         else:
-            self.genPAvail = 0
-            self.genQAvail = 0
+            self.eesPinAvail = 0
+            self.eesQinAvail = 0
+            self.eesPoutAvail = 0
+            self.eesQoutAvail = 0
 
     # energy storage descriptor parser
     def eesDescriptorParser(self, eesDescriptor):
@@ -144,30 +151,15 @@ class ElectricalEnergyStorage:
         eesLM.linearInterpolation(self.eesChargeRate, eStep = 3600*2)
 
         self.eesLossMapP = eesLM.P
+        # save the index of where the power vector is zero. This is used to speed up run time calculations
+        self.eesLossMapPZeroInd = (np.abs(self.eesLossMapP)).argmin()
         self.eesLossMapE = eesLM.E
         self.eesLossMapTemp = eesLM.Temp
         self.eesLossMapLoss = eesLM.loss
         self.eesmaxDischTime = eesLM.maxDischTime
+        self.eesNextBinTime = eesLM.nextBinTime
         # 'useLossMap' is a bool value that indicates whether or not use the lossMap in the simulation.
         self.eesUseLossMap = bool(eesSoup.useLossMap.get('value'))
-
-# todo: finish this, handle 2D vs 3D if temperature is considered.
-    def getLossDischargeTimes(self):
-        if self.eesUseLossMap:
-            # create a parallel matrix to the lossMap with the amount of time it is possible to discharge at each power for
-            # taking into account losses
-            for idxE, E in enumerate(self.eesLossMapE): # for every soc
-                for idxP, P in enumerate(self.eesLossMapP): # for every power
-                    for idxTemp, Temp in enumerate(self.essLossMapTemp):
-                        if P > 0: # if discharging
-                            # the maximum amount of time that can discharge for at this power
-                            self.eesLossDischargeTimes[idxP,idxE] = max([E/(P+self.eesLossMapLoss) - 1/self.eesChargeRate,0])
-                        else:
-                            # the maximum amount of time that can be discharged at
-                            self.eesLossDischargeTimes[idxP,idxE] = max([(self.eesEMax - E)/(-P+self.eesLossMapLoss) - 1/self.eesChargeRate,0])
-
-        else:
-            self.eesLossDischargeTimes = []
 
     def checkOperatingConditions(self):
         """
@@ -177,41 +169,121 @@ class ElectricalEnergyStorage:
         :return:
         """
         if self.eesState == 2: # if running online
-            # maximum available power is the minimum of the:
-            # - stored energy (in kWs) divided by the number of seconds in a timestep
-            # - maximum rated power
-            self.eesPAvail = min([self.eesPOutMax,self.eesSOC*self.eesEMax/self.timeStep])
-            self.eesQAvail = self.eesQOutMax # available reactive power is not directly tied to the state of charge
-            # TODO: make sure enough power and soc for SRC, ...
-            # check enough power capability left to supply SRC
-            if self.eesSRC > (self.eesPAvail - self.eesP): # if required SRC is greater than the remaining available power
-                self.underSRC = True
+            # given the SRC required from the EES, find the maximum power available for a minimum of 1 timestep
+            self.eesPinAvail = self.findPchAvail(self.timeStep)
+            self.eesQinAvail = self.eesQInMax  # reactive power is not strictly tied to state of charge
+            # the maximum currently available discharge power for 1 timestep
+            self.eesPoutAvail = self.findPdisAvail(self.timeStep, 0,0)
+            self.eesQoutAvail = self.eesQOutMax # reactive power is not strictly tied to state of charge
 
-            # check that there is enough capacity left to supply SRC
+            # check if there is enough capacity left to supply the required SRC requirements, accounting for the current
+            # discharge power
+            self.PsrcAvail = self.findPdisAvail(self.eesSrcTime,self.eesP,self.timeStep)
+            if self.PsrcAvail < self.eesSRC:
+                self.underSRC = True
+            else:
+                self.underSRC = False
+
+            # check to make sure the current power output or input is not greater than the maximum allowed.
+            if (self.eesP > self.eesPoutAvail) | (self.eesP < -self.eesPinAvail):
+                self.outOfBoundsReal = True
+            else:
+                self.outOfBoundsReal = False
+            if (self.eesQ > self.eesQoutAvail) | (self.eesQ < -self.eesQinAvail):
+                self.outOfBoundsReactive = True
+            else:
+                self.outOfBoundsReactive = False
+
             self.eesRunTimeAct += self.timeStep
             self.eesRunTimeTot += self.timeStep
         elif self.eesState == 1: # if starting up
-            self.eesPAvail = 0 # not available to produce power yet
-            self.eesQAvail = 0
+            self.eesPinAvail = 0 # not available to produce power yet
+            self.eesQinAvail = 0
+            self.eesPoutAvail = 0  # not available to produce power yet
+            self.eesQoutAvail = 0
             self.eesStartTimeAct += self.timeStep
             self.eesRunTimeAct = 0 # reset run time counter
+            self.underSRC = False
+            self.outOfBoundsReal = False
+            self.outOfBoundsReactive = False
         else: # if off
             # no power available and reset counters
-            self.eesPAvail = 0
-            self.eesQAvail = 0
+            self.eesPinAvail = 0
+            self.eesQinAvail = 0
+            self.eesPoutAvail = 0
+            self.eesQoutAvail = 0
             self.eesStartTimeAct = 0
             self.eesRunTimeAct = 0
+            self.underSRC = False
+            self.outOfBoundsReal = False
+            self.outOfBoundsReactive = False
 
-    # this finds the available discharge power given
+    # this finds the available charging power
+    # duration is the duration that needs to be able to charge at that power for
     def findPchAvail(self, duration):
-        if self.eesUseLossMap == False: # if don't use loss map
-            # the available charging power is the minimum of how much the SOC will support and the maximum rated power
-            # eesChargeRate is limits the power as based on SOC
-            self.eesPchAvail = min([self.eesPMax,self.eesChargeRate*self.eesEMax*self.eesSOC/self.timeStep])
-        else: # if use the loss map
-            # find the index of the closest P and E value on the loss map
-            # bisect left gives the index of the last list item to not be over the number being searched for. it is faster than using min
-            Pind = bisect_left(self.eesLossMap)
+        # get the index of the closest E from the loss map
+        eInd = np.searchsorted(self.eesLossMapE,self.eesSOC*self.eesEMax,side='left')
+        # get the searchable array for charging power (negative) the discharge times for this are already sorted in
+        # increasing order, so do not need to be sorted
+        ChTimeSorted = self.eesmaxDischTime[:self.eesLossMapPZeroInd,eInd]
+        # get the index of the closest discharge time to duration
+        # need to reverse the order of discharge times to get
+        dInd  = np.searchsorted(ChTimeSorted,duration,side='right')
+        # the available charging power corresponds to the
+        return self.eesLossMapP[dInd]
 
-            # this finds the associated fuel consumption to the scheduled load for this combination
-            fuelCons.append(FCcons[bisect_left(FCpower, scheduledLoad)])
+    # this finds the available discharge power
+    # duration is the duration that needs to be able to discharge at that power for
+    # kWreserved is the amount of charging power that is already spoken for
+    # kWhReserved is the amount of energy that is already spoken for, for example for spinning reserve.  This must also
+    # take into account the losses involved. For example, if for spinning reserve need to be able to discharge at 100 kW
+    # for 180 sec, and at the current SOC this would result in 500 kWs of losses, then kWsReserved would be 18,500 kWs.
+    # findLoss is a bool value. if True, the associated loss will be calculated for discharging at that power
+    def findPdisAvail(self, duration, kWReserved, kWsReserved):
+        # get the index of the closest E from the loss map to the current energy state minus the reserved energy
+        eInd = np.searchsorted(self.eesLossMapE, self.eesSOC * self.eesEMax - kWsReserved, side='left')
+        # get the searchable array for discharging power (positive) the discharge times for this are sorted in
+        # decreasing order, so needs to be reversed
+        DisTimeSorted = self.eesmaxDischTime[self.eesLossMapPZeroInd+1:, eInd]
+        DisTimeSorted = DisTimeSorted[::-1]
+        # get the index of the closest discharge time to duration
+        # need to reverse the order of discharge times to get
+        dInd = np.searchsorted(DisTimeSorted, duration, side='right')
+
+        # the index is from the back of the array, since was from a reversed array.
+        return max([self.eesLossMapP[-(dInd+1)] - kWReserved, 0])
+
+    # findLoss returns the expected loss in kWs given a specific power and duration
+    # P is the power expected to discharge at
+    # duration is the time expected to discharge at P for
+    def findLoss(self,P,duration):
+
+        if P > 0: # if discharging
+            # if the power is within the chargeRate and max discharge bounds
+            if (P <= self.eesSOC * self.eesEMax * self.eesChargeRate)  & P <= self.eesPOutMax:
+                # get the index of the closest E from the loss map to the current energy state minus the reserved energy
+                eInd = np.searchsorted(self.eesLossMapE, self.eesSOC * self.eesEMax, side='left')
+                # get index of closest P
+                pInd = np.searchsorted(self.eesLossMapP, P, side = 'left')
+                # create a cumulative sum of discharge times
+                # since discharging, the stored energy will be going down, thus reverse the order
+                times = self.eesNextBinTime[pInd,:eInd]
+                times = times[::-1]
+                cumSumTime = np.cumsum(times)
+                # get the index closest to the duration required
+                dInd = np.searchsorted(cumSumTime,duration)
+                return sum(self.eesLossMapLoss[pInd,(eInd-dInd):eInd])
+
+
+        elif P < 0: # if charging
+            # if the power is within the chargeRate and max discharge bounds
+            if (P >= (self.eesSOC - 1)*self.eesEMax  * self.eesChargeRate) & P >= -self.eesPInMax:
+                # get the index of the closest E from the loss map to the current energy state minus the reserved energy
+                eInd = np.searchsorted(self.eesLossMapE, self.eesSOC * self.eesEMax, side='left')
+                # get index of closest P
+                pInd = np.searchsorted(self.eesLossMapP, P, side='left')
+                # create a cumulative sum of discharge times
+                cumSumTime = np.cumsum(self.eesNextBinTime[pInd, eInd:])
+                # get the index closest to the duration required
+                dInd = np.searchsorted(cumSumTime, duration)
+                return sum(self.eesLossMapLoss[pInd, eInd:(eInd + dInd)])
