@@ -51,6 +51,12 @@
     <!-- 'eesDispatchTime' is the minimum amount of time that the ESS must be able to supply the load for in order to
     be considered as an active discharge option in the diesel schedule. Units are in seconds. Default is 1800 s (0.5 hours).   -->
     <eesDispatchTime value="1800" unit="s"/>
+    <!-- 'eesPinAvail_1_time' is used to find the maximum power that the EES can charge for 'eesPinAvail_1_time'
+    amount of time before being fully charged.  Units are in seconds. Default is 300 s (5 min).   -->
+    <eesPinAvail_1_time value="300" unit="s"/>
+    <!-- 'eesPoutAvail_1_time' is used to find the maximum power that the EES can discharge for 'eesPoutAvail_1_time'
+    amount of time before going below the required SRC SOC.  Units are in seconds. Default is 300 s (5 min).   -->
+    <eesPoutAvail_1_time value="300" unit="s"/>
     <!-- In order to use the consider the equivalent fuel efficiency of dishcarging the ESS to allow running a smaller
      diesel generator, an equivalent fuel consumption of the ESS must be calculated in L/kWh. This is done by calculating
      how much diesel fuel went into charging the ESS to it'c current level. Divide the number of liters by the  state of

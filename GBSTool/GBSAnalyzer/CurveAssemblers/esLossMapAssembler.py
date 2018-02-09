@@ -136,7 +136,7 @@ class esLossMap:
                     if P > 0: # if discharging
                         # the total discharge time is the sum of the time taken to get to each consecutive bin.
                         self.maxDischTime[idxP,idxE] = np.nansum(self.nextBinTime[idxP,:idxE])
-                    if P < 0: # if charging
+                    elif P < 0: # if charging
                         # the total charge time is the sum of the time taken to get to each consecutive bin.
                         self.maxDischTime[idxP,idxE] = np.nansum(self.nextBinTime[idxP,idxE:])
                     else:  # if power is zero
