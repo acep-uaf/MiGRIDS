@@ -24,7 +24,7 @@ def buildProjectSetup(projectName,saveDir,componentNames):
     soup = BeautifulSoup(contents_child, 'xml')  # turn into soup
     # update the proejct name
     soup.project.attrs['name'] = projectName
-    soup.project.componentNames.findChildren('name')[0]['value'] = componentNames
+    soup.project.componentNames['value'] = componentNames
     # save
     os.chdir(saveDir)
     saveName = projectName + 'Setup.xml'

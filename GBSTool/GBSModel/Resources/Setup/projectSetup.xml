@@ -27,9 +27,7 @@
     <!-- 'componentNames' is a tuple of the names of components in the grid. Acceptable names must start with corresponding
      names to the component descriptor files, including: 'Gen', 'Wtg', 'Inv', 'Tes', 'Ees' and 'ControlledLoad'. For example 'Gen1',
       'Gen2', 'Wtg1',... -->
-    <componentNames>
-        <name value=""/>
-    </componentNames>
+    <componentNames value="" />
 
     <!-- 'componentChannels' describes the input data channels corresponding to grid components to read into the simulation.
     The tuple 'headerName' is the names or indices of the columns in the input data files. The component names are the names
