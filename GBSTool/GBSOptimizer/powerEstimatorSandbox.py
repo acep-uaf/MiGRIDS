@@ -104,6 +104,7 @@ stmTimeStamps = [datetime.datetime.fromtimestamp(ts) for ts in stmTime]
 # Calculate total combined load
 print('Calculating total combined load...')
 totLoadP = stmLoadP + mtvLoadP
+print('Peak load :', np.nanmax(totLoadP), ' kW')
 print('Average combined load: ', np.nanmean(totLoadP), ' kW')
 print('Standard deviation from average: ', np.nanstd(totLoadP), ' kW')
 
@@ -116,6 +117,9 @@ wtgP, wtgTime, wtgTimeStamps, wtgStart, wtgEnd = loadData(
 # fix any data gaps
 print('Patching wind power data...')
 wtgTime, wtgP = np.array(fillTimeAndPowerVector(wtgTime, 600, wtgP))
+wtgStart = datetime.datetime.fromtimestamp(wtgTime[0])
+wtgEnd = datetime.datetime.fromtimestamp(wtgTime[-1])
+print('Wind power data range: Start date: ', wtgStart, ' to ', wtgEnd )
 
 # Need to reorganize the time series so that it starts where the load time-series start
 # Entries 0 through 11520 need to appended at the end
@@ -150,13 +154,17 @@ genDP = (genP[1:] - genP[:-1]) / (15 * 60)
 plt.figure(figsize=(8, 5.5))
 
 
+# Matplotlib formated timestamps for plotting routines.
+mpTimeStamps = md.date2num(stmTimeStamps)
+
+
 # discretize the profile
 # Generator fleet as per 'Saint-Marys-REF8' project file
 gen1PMax = 499 #Cummins QSX15G9
 gen2PMax = 611 #Caterpillar 3508
 gen3PMax = 908 #Caterpillar 3512
-MOL = 0#.15 # NOTE THE FILE SUPPLIED BY AVEC STATES 0% (!!!)
-
+MOL = 0.15 # NOTE THE FILE SUPPLIED BY AVEC STATES 0% (!!!)
+print('Assuming: ', 100*MOL, '% MOL')
 # Minimum spinning reserve kept in the system
 # NOTE: this is a brute force approach, but with data available better estimates are not possible.
 srcP = 0#.15*np.nanmean(totLoadP)
@@ -170,40 +178,51 @@ curtailedP = -(curtailedP - MOL * gen1PMax)
 
 # Curtailment condition
 genP[genP < MOL*gen1PMax] = MOL*gen1PMax # Normal approach with MOL
-#genP[genP < 0] = 0 # Low load diesel, with 0 kW possible
+
 
 # Find which generator is online based on generator loading
-genPAvail = np.zeros(np.shape(genP))
-chngCnt = 0
+def dieselSchedule(genP, MOL, srcP, gen1PMax, gen2PMax, gen3PMax):
+    genPAvail = np.zeros(np.shape(genP))
+    chngCnt = 0
+    runHours = 0
 
-for i, p in enumerate(genP):
-    if p < MOL*gen1PMax:
-        genPAvail[i] = 0
-    elif p < (gen1PMax - srcP):
-        genPAvail[i] = gen1PMax
-    elif p < (gen2PMax - srcP):
-        genPAvail[i] = gen2PMax
-    elif p < (gen3PMax - srcP):
-        genPAvail[i] = gen3PMax
-    elif p < (gen1PMax + gen2PMax - srcP):
-        genPAvail[i] = gen1PMax + gen2PMax
-    else:
-        genPAvail[i] = -100
-
-    if chngCnt > 0 and (genPAvail[i]-genPAvail[i-1] < 0):
-        genPAvail[i] = genPAvail[i-1]
-
-    # Prevent excessive down transitions
-    if i > 3:
-        if (genPAvail[i] - genPAvail[i-1]) < 0:
-            chngCnt = 4
-        elif chngCnt > 0:
-            chngCnt = chngCnt - 1
+    for i, p in enumerate(genP):
+        if p <= MOL*gen1PMax:
+            genPAvail[i] = 0
+        elif p < (gen1PMax - srcP):
+            genPAvail[i] = gen1PMax
+            runHours = runHours + 15/60
+        elif p < (gen2PMax - srcP):
+            genPAvail[i] = gen2PMax
+            runHours = runHours + 15/60
+        elif p < (gen3PMax - srcP):
+            genPAvail[i] = gen3PMax
+            runHours = runHours + 15/60
+        elif p < (gen1PMax + gen2PMax - srcP):
+            genPAvail[i] = gen1PMax + gen2PMax
+            runHours = runHours + 2*15/60
         else:
-            chngCnt = 0
+            genPAvail[i] = -100
+
+        if chngCnt > 0 and (genPAvail[i]-genPAvail[i-1] < 0):
+            genPAvail[i] = genPAvail[i-1]
+
+        # Prevent excessive down transitions
+        if i > 3:
+            if (genPAvail[i] - genPAvail[i-1]) < 0:
+                chngCnt = 4
+            elif chngCnt > 0:
+                chngCnt = chngCnt - 1
+            else:
+                chngCnt = 0
+
+    return genPAvail, runHours
+
+
+genPAvail, runHours = dieselSchedule(genP, MOL, srcP, gen1PMax, gen2PMax, gen3PMax)
 
 print('Number of diesel configuration changes : ', np.sum(np.abs(np.sign(np.diff(genPAvail)))))
-
+print('Total generator run-hours: ', runHours, ' h')
 # Capacity factor
 nonZeroGenPAvail = np.copy(genPAvail)
 nonZeroGenPAvail[genPAvail == 0] = np.nan
@@ -211,11 +230,16 @@ print('Diesel capacity factor :', np.nanmean(genP/nonZeroGenPAvail))
 print('Diesel kWh total: ', np.nansum(genP)/4)
 
 print('Wind power curtailed :', np.nansum(curtailedP)/4, ' kWh')
+print('Wind power available :', np.nansum(wtgP)/4, ' kWh')
 
-essEMaxRng = [1, 10, 100, 200, 500, 750, 1000, 2500, 5000, 10000, 12500, 15000, 17500, 20000, 25000]
+essEMaxRng = [1, 10, 20, 50, 75, 100, 125, 150, 175, 200, 250, 300, 400, 500, 750, 1000, 1500, 2000, 2500, 3500, 5000]#, 10000, 15000, 17500, 20000, 25000, 35000, 50000, 75000, 100000]
 wpRec = np.zeros(np.shape(essEMaxRng))
-essPMax = 500
-
+essPMax = 5000
+runHoursArray = np.zeros(np.shape(essEMaxRng))
+dieselEReductionArray = np.zeros(np.shape(essEMaxRng))
+essPMaxAct = np.zeros(np.shape(essEMaxRng))
+configChngTot = np.zeros(np.shape(essEMaxRng))
+genCapFac = np.zeros(np.shape(essEMaxRng))
 
 for j, essEMax in enumerate(essEMaxRng):
     essEIn = np.zeros(np.shape(curtailedP))
@@ -227,52 +251,104 @@ for j, essEMax in enumerate(essEMaxRng):
     SOC = np.zeros(np.shape(curtailedP))
     recoveredWtgE = 0
     expendedWtgE = 0
+    genPNew = np.copy(genP)
 
     for idx, wp in enumerate(curtailedP[1:]):
         SOC[idx] = essETot/essEMax
+        # if there is some curtailed power, try put it in the battery at max possible rate
         if wp > 0 and essETot < essEMax:
-            essEOut[idx] = 0
-            dE = (essEMax - essETot)
-            if wp/4 < dE:
+            essEOut[idx] = 0   # charging, so the cummulative discharing counter is reset
+            dE = (essEMax - essETot)     # remaining energy capacity until battery full
+
+            # if the available energy fits, and the available power does not exceed max battery power, just charge
+            if wp/4 < dE and wp < essPMax:
                 essEIn[idx] = essEIn[idx-1] + (wp/4)
                 essP[idx] = -wp
                 recoveredWtgE = recoveredWtgE + (wp/4)
                 essETot = essETot + (wp/4)
-            else:
+            # if the available energy fits, but we are limited by the max battery power, charge at max battery power
+            elif wp/4 < dE and wp >= essPMax:
+                essEIn[idx] = essEIn[idx-1] + essPMax
+                essP[idx] = -essPMax
+                recoveredWtgE = recoveredWtgE + essPMax/4
+                essETot = essETot + essPMax/4
+            # if the available energy does not fit, but the available power is fine
+            elif wp/4 >= dE and 4*dE < essPMax:
                 essEIn[idx] = essEIn[idx - 1] + dE
-                essP[idx] = -dE
+                essP[idx] = -dE*4
                 recoveredWtgE = recoveredWtgE + dE
                 essETot = essETot + dE
+            # if the available energy does not fit, and the available power exceeds battery power
+            else:
+                essEIn[idx] = essEIn[idx - 1] + essPMax/4
+                essP[idx] = -essPMax
+                recoveredWtgE = recoveredWtgE + essPMax/4
+                essETot = essETot + essPMax/4
+        # if there is no excess wind power, try discharge the battery at maximum power possible
         elif np.isnan(wp) and essETot > 10:
-            essEIn[idx] = 0
-            # if possible discharge at full power
+            essEIn[idx] = 0  # discharging, so the cummulative charging counter is reset
+            # if the requested power exceeds battteru power and requested energy is available, discharge at max power
             if genP[idx] > essPMax and essETot > essPMax/4:
                 essETot = essETot - (essPMax/4)
-                #print('Full power; essETot = ', essETot)
                 essEOut[idx] = essEOut[idx - 1] + (essPMax/4)
                 essP[idx] = essPMax
                 expendedWtgE = expendedWtgE + (essPMax/4)
+                genPNew[idx] = genPNew[idx] - essPMax
+            # if the requested power and requested energy are available, discharge at the requested power
             elif genP[idx] < essPMax and essETot > genP[idx]/4:
                 essETot = essETot - (genP[idx]/4)
                 essP[idx] = genP[idx]
-                #print('Reduced power; essETot = ', essETot)
                 essEOut[idx] = essEOut[idx - 1] + (genP[idx] / 4)
                 expendedWtgE = expendedWtgE + (genP[idx]/4)
-            else:
+                genPNew[idx] = genPNew[idx] - genP[idx]
+            # if the requested power exceeds the max battery power, and the requested energy is not available, discharge at constant rate to 0 kWh
+            elif (genP[idx] > essPMax and essETot < essPMax/4) or (genP[idx] < essPMax and essETot < genP[idx]/4):
                 essEOut[idx] = essEOut[idx - 1] + essETot
                 essP[idx] = 4*essETot
                 expendedWtgE = expendedWtgE + essETot
-                #print('Remaining power; essETot = ', essETot)
                 essETot = 0
-
-
+            # if the requested power is available, but the
+            #else:
+             
+            #if totLoadP[idx] - wtgP[idx] - essP[idx] - genPNew[idx] < 0:
+               # print('Power balance :', totLoadP[idx] - wtgP[idx] - essP[idx] - genPNew[idx], totLoadP[idx], wtgP[idx], genPNew[idx])
+    print('*****************************************')
+    print('GBS Energy capacity [kWh]: ', essEMax)
     print('ESS cummulative kWh in: ', recoveredWtgE)
     print('ESS cummulative kWh out: ', expendedWtgE)
     wpRec[j] = recoveredWtgE
 
 
-# Matplotlib formated timestamps for plotting routines.
-mpTimeStamps = md.date2num(stmTimeStamps)
+
+    # Re-calc diesel power
+    genPReduced = np.copy(genP)
+    essPOut = np.copy(essP)
+    essPOut[essP < 0] = 0
+    essPIn = np.copy(essP)
+    essPIn[essP > 0] = 0
+    essPIn = -essPIn
+    genPReduced = genP - essPOut
+    genPAvailRed, runHoursRed = dieselSchedule(genPReduced, MOL, srcP, gen1PMax, gen2PMax, gen3PMax)
+    #print('Net ESS power: ', np.sum(essP)/4)
+    #plt.plot(mpTimeStamps, essP)#totLoadP - wtgP - genP + curtailedP)
+    #plt.plot(mpTimeStamps, genPReduced)
+    print('Reduced diesel kWh: ', np.nansum(genP - genPReduced)/4)
+    dieselEReductionArray[j] = np.nansum(genP - genPReduced)/4
+    print('Reduced diesel run hours: ', runHoursRed)
+    runHoursArray[j] = runHoursRed
+    print('Number of diesel configuration changes : ', np.sum(np.abs(np.sign(np.diff(genPAvailRed)))))
+    configChngTot[j] = np.sum(np.abs(np.sign(np.diff(genPAvailRed))))
+    nonZeroGenPAvailRed = np.copy(genPAvailRed)
+    nonZeroGenPAvailRed[genPAvailRed == 0] = np.nan
+    print('Diesel capacity factor : ', np.nanmean(genPReduced/nonZeroGenPAvailRed))
+    genCapFac[j] = np.nanmean(genPReduced/nonZeroGenPAvailRed)
+    print('Max. ESS P: ', np.nanmax(np.abs(essP)))
+    essPMaxAct[j] = np.nanmax(np.abs(essP))
+    #print('Net power balance :', np.nansum(totLoadP - wtgP - essP - genPReduced))
+    
+
+
+
 
 
 print((np.nansum(curtailedP) / 4) / (np.nansum(wtgP) / 4), (np.nansum(wtgP) / 4))
@@ -281,7 +357,7 @@ print((np.nansum(curtailedP) / 4) / (np.nansum(wtgP) / 4), (np.nansum(wtgP) / 4)
 #plt.plot(mpTimeStamps, curtailedP)
 plt.plot(mpTimeStamps, genP)
 plt.plot(mpTimeStamps, essP)
-#plt.plot(essEMaxRng, wpRec/1000)
+plt.plot(essEMaxRng, wpRec/1000)
 plt.show()
 
 curtailedP[np.isnan(curtailedP)] = 0
@@ -308,26 +384,31 @@ sns.distplot(curtailedPD)'''
 
 # sns.distplot(dt)
 
-plt.subplots_adjust(bottom=0.2)
-plt.xticks(rotation=25)
-ax = plt.gca()
-xfmt = md.DateFormatter('%Y-%m-%d')
-ax.xaxis.set_major_formatter(xfmt)
+#plt.subplots_adjust(bottom=0.2)
+#plt.xticks(rotation=25)
+#ax = plt.gca()
+#xfmt = md.DateFormatter('%Y-%m-%d')
+#ax.xaxis.set_major_formatter(xfmt)
 #plt.plot(mpTimeStamps, mtvLoadP)
 #plt.plot(mpTimeStamps, stmLoadP)
 #plt.plot(mpTimeStamps, totLoadP)
 #plt.plot(mpTimeStamps, wtgP)
-#plt.plot(mpTimeStamps, genP)
+#plt.plot(mpTimeStamps, genP)          
 #plt.hist(genP, bins='auto')
 #plt.savefig('StMarysAndMtVillageLoad.eps', format = 'eps')
-plt.plot(mpTimeStamps, totLoadP)
-plt.xlabel('Time')
-plt.ylabel('Total system load [kW]')
-plt.savefig('totalSystemLoad.eps', format = 'eps')
+#plt.plot(mpTimeStamps, genP, label='GenP')
+#plt.plot(mpTimeStamps, curtailedP, label= 'CurtailedP')
+#plt.legend(loc='upper right')
+plt.xlabel('GBS Energy Capacity [kWh]')
+plt.ylabel('Total diesel fleet configuration changes [#/yr]')
+
+plt.plot(essEMaxRng, wpRec)
+#plt.semilogx(essEMaxRng, wpRec/1000)
 '''
 vals, base = np.histogram(genDP, bins=150)
 cumDist = np.cumsum(vals)
 plt.plot(base[:-1], cumDist/genP.size)'''
+#plt.savefig('dieselConfigChanges_VSD.eps', format = 'eps')
 plt.show()
 
 '''
