@@ -51,12 +51,16 @@ class ElectricalEnergyStorage:
         # energy that must be maintained
         self.setSRC(eesSRC)
 
+        # this updates the power availble from this ees to be used in scheduling generating units
+        self.updatePScheduleMax()
+
         # these values will be set when checkOperatingConditions is run
         self.eesPinAvail = 0
         self.eesPinAvail_1 = 0
-        self.eesQinAvail = 0
+        self.eesPsrcAvail = 0
+        self.eesQinAvail = self.eesQInMax
         self.eesPoutAvail = 0
-        self.eesQoutAvail = 0
+        self.eesQoutAvail = self.eesQOutMax
         self.underSRC = 0
         self.outOfBoundsReal = 0
         self.outOfBoundsReactive = 0
@@ -178,21 +182,25 @@ class ElectricalEnergyStorage:
             self.eesPloss = self.findLoss(self.eesP,self.timeStep)
             # update the SOC
             self.eesSOC = min([max([self.eesSOC - (self.eesP + self.eesPloss)*self.timeStep/self.eesEMax,0]),1])
-            # given the SRC required from the EES, find the maximum power available for a minimum of 1 timestep
+            # find the available real power (reactive is set to max)
             self.eesPinAvail = self.findPchAvail(self.timeStep)
+            self.eesPoutAvail = self.findPdisAvail(self.timeStep, 0, 0)
+
+            ''' calculate these as needed in dispatch 
+            # given the SRC required from the EES, find the maximum power available for a minimum of 1 timestep
+            
             self.eesPinAvail_1 = self.findPchAvail(self.eesPinAvail_1_time)
             self.eesQinAvail = self.eesQInMax  # reactive power is not strictly tied to state of charge
             # the maximum currently available discharge power for 1 timestep
-            self.eesPoutAvail = self.findPdisAvail(self.timeStep, 0,0)
+            
             self.eesQoutAvail = self.eesQOutMax # reactive power is not strictly tied to state of charge
 
             # The max power available while reserving enough capacity for SRC, this will return a negative value if not
             # enough capacity left for SRC.
             self.eesPoutAvailOverSrc = self.findPdisAvail(self.timeStep,self.eesSRC,self.eesMinSrcE)
             self.eesPoutAvailOverSrc_1 = self.findPdisAvail(self.eesPoutAvail_1_time, self.eesSRC, self.eesMinSrcE)
-
+            '''
             # check if not enough SRC
-            # TODO: this is redundant, can just use eesPoutAvailOverSrc
             if self.eesPoutAvailOverSrc < 0:
                 self.underSRC = True
             else:
@@ -250,7 +258,7 @@ class ElectricalEnergyStorage:
         # need to reverse the order of discharge times to get
         dInd  = np.searchsorted(ChTimeSorted,duration,side='right')
         # the available charging power corresponds to the
-        return self.eesLossMapP[dInd]
+        return -self.eesLossMapP[dInd]
 
     # this finds the available discharge power
     # duration is the duration that needs to be able to discharge at that power for
@@ -348,3 +356,12 @@ class ElectricalEnergyStorage:
         eInd = np.searchsorted(self.eesmaxDischTime[pInd, :], self.eesSrcTime, side='left')
         # set the required energy stored in the ees to supply the SRC, in kWs
         self.eesMinSrcE = self.eesLossMapE[eInd]
+
+    # this finds the available SRC given the current power
+    def updateSrcAvail(self):
+        useP = max([self.eesP,0]) # only take into account discharging power
+        self.eesPsrcAvail = self.findPdisAvail(self.eesSrcTime, useP, useP*self.timeStep)
+
+    # this finds the power this ees is capable of being scheduled for.
+    def updatePScheduleMax(self):
+        self.eesPScheduleMax = self.findPdisAvail(self.eesDispatchTime, self.eesSRC, self.eesMinSrcE)

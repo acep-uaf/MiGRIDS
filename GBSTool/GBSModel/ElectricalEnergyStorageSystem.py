@@ -9,6 +9,7 @@ import sys
 import numpy as np
 sys.path.append('../')
 import importlib.util
+import os
 # import EESSDispatch
 
 class ElectricalEnergyStorageSystem:
@@ -24,7 +25,9 @@ class ElectricalEnergyStorageSystem:
         :param eesSRC: list of the amount of spinning reserve capacity that the EESs must be able to supply, in addition
         to active discharge.
         :param eesDescriptor: list of relative path and file name of eesDescriptor-files used to populate static information.
-        :param eesDispatch: Is the path and filename of the dispatch class used to dispatch the energy storage units.
+        :param eesDispatch: If a user defines their own dispatch, it is the path and filename of the dispatch class used
+        to dispatch the energy storage units. Otherwise, it is the name of the dispatch filename included in the software
+        package. Options include: eesDispatch1. The class name in the file must be 'eesDispatch'
         """
         # check to make sure same length data coming in
         if not len(eesIDS) == len(eesP) == len(eesQ) == len(eesSOC)==len(eesStates)==len(eesSRC)==len(eesDescriptor):
@@ -53,6 +56,7 @@ class ElectricalEnergyStorageSystem:
         self.eesRunTimeTot = []
 
         # Operational data
+        # TODO: remove what is not being used
         self.eesP = list(eesP)
         self.eesQ = list(eesQ)
         self.eesSOC = list(eesSOC)
@@ -63,8 +67,10 @@ class ElectricalEnergyStorageSystem:
         self.eesQinAvail = []
         self.eesPoutAvail = []
         self.eesQoutAvail = []
+        self.eesPloss = []
         self.eesPoutAvailOverSrc = []
         self.eesPoutAvailOverSrc_1 = []
+        self.eesPScheduleMax = [0]*len(self.eesP)
 
         # Populate the list of ees with ees objects
         # TODO: consider leaving values at ees level, not bringing them to this level if not necessary
@@ -77,6 +83,7 @@ class ElectricalEnergyStorageSystem:
             self.eesQinAvail.append(self.electricalEnergyStorageUnits[idx].eesQinAvail)
             self.eesPoutAvail.append(self.electricalEnergyStorageUnits[idx].eesPoutAvail)
             self.eesQoutAvail.append(self.electricalEnergyStorageUnits[idx].eesQoutAvail)
+            self.eesPloss.append(self.electricalEnergyStorageUnits[idx].eesPloss)
             self.eesPinAvail_1.append(self.electricalEnergyStorageUnits[idx].eesPinAvail)
             self.eesPoutAvailOverSrc.append(self.electricalEnergyStorageUnits[idx].eesPoutAvailOverSrc)
             self.eesPoutAvailOverSrc_1.append(self.electricalEnergyStorageUnits[idx].eesPoutAvailOverSrc_1)
@@ -89,9 +96,46 @@ class ElectricalEnergyStorageSystem:
             self.eesRunTimeAct.append(self.electricalEnergyStorageUnits[idx].eesRunTimeAct)
             self.eesRunTimeTot.append(self.electricalEnergyStorageUnits[idx].eesRunTimeTot)
 
+            # total power and energy capacities
+            self.eesPInMax += self.electricalEnergyStorageUnits[idx].eesPInMax
+            self.eesQInMax += self.electricalEnergyStorageUnits[idx].eesQInMax
+            self.eesPOutMax += self.electricalEnergyStorageUnits[idx].eesPOutMax
+            self.eesQOutMax += self.electricalEnergyStorageUnits[idx].eesQOutMax
+            self.eesEMax += self.electricalEnergyStorageUnits[idx].eesEMax
+
         # import the dispatch scheme
-        # TODO: test this
-        spec = importlib.util.spec_from_file_location("eesDispatch", eesDispatch)
-        eesDispatch = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(eesDispatch)
+        # split into path and filename
+        modPath, modFile = os.path.split(eesDispatch)
+        # if located in a different directory, add to sys path
+        if len(modPath) != 0:
+            sys.path.append(modPath)
+        # split extension off of file
+        modFileName, modFileExt = os.path.splitext(modFile)
+        # import module
+        dispatchModule = importlib.import_module(modFileName)
+        self.eesDispatch = dispatchModule.eesDispatch
+
+
+    # this runs the ees dispatch schedule
+    def runEesDispatch(self, newP, newQ, newSRC):
+        self.eesDispatch(self, newP, newQ, newSRC)
+        # check the operating conditions of ees, update counters
+        for idx, ees in enumerate(self.electricalEnergyStorageUnits):
+            ees.checkOperatingConditions()
+            self.eesP[idx] = ees.eesP
+            self.eesQ[idx] = ees.eesQ
+            self.eesSOC[idx] = ees.eesSOC
+            self.eesStates[idx] = ees.eesState
+            self.eesSRC[idx] = ees.eesSRC
+            self.eesPinAvail[idx] = ees.eesPinAvail
+            self.eesPoutAvail[idx] = ees.eesPoutAvail
+            self.eesQinAvail[idx] = ees.eesQinAvail
+            self.eesQoutAvail[idx] = ees.eesQoutAvail
+            self.eesPloss[idx] = ees.eesPloss
+
+    # this finds the power each energy storage unit is capable of being scheduled for.
+    def updateEesPScheduleMax(self):
+        for idx, ees in enumerate(self.electricalEnergyStorageUnits):
+            ees.updatePScheduleMax()
+            self.eesPScheduleMax[idx] = ees.eesPScheduleMax
 

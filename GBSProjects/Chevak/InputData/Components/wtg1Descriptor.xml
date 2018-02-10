@@ -19,18 +19,18 @@
  <!-- Default is to have a data point at 0 m/s and at nameplate power. DEFAULT VALUES REQUIRE CHANGING for this to -->
  <!-- be sensible. -->
  <powerCurveDataPoints>
-  <ws unit="m/s" value="1 2 2.5 5 10 13.5 14 15 16 17 18 19 20 21 22 23 24"/>
-  <pPu unit="pu" value="0 0 0 0.11 0.67 1 1 1 1 1 1 1 1 1 1 1 1"/>
+  <ws unit="m/s" value="0 0"/>
+  <pPu unit="pu" value="0 0"/>
  </powerCurveDataPoints>
  <!-- 'cutInWindSpeed' describes the minimum wind speed at which the turbine will begin producing power from a -->
  <!-- previous complete stop. The default value is 0, which NEVER makes sense. Units are m/s. -->
- <cutInWindSpeed unit="m/s" value="2.5"/>
+ <cutInWindSpeed unit="m/s" value="0"/>
  <!-- 'cutOutWindSpeedMax' describes the maximum wind speed at which a turbine still produces power. Default value -->
  <!-- is 0, which NEVER makes sense. Units are m/s. -->
- <cutOutWindSpeedMax unit="m/s" value="25"/>
+ <cutOutWindSpeedMax unit="m/s" value="0"/>
  <!-- 'cutOutWindSpeedMin' describes the minimum wind speed at which a turbine stops producing power due to lack of -->
  <!-- wind power. Default value is 0, which NEVER makes sense. Units are m/s. -->
- <cutOutWindSpeedMin unit="m/s" value="2.5"/>
+ <cutOutWindSpeedMin unit="m/s" value="0"/>
  <PInMaxPa unit="kW" value="0">
   <!-- 'PInMaxPa' is the maximum real power the unit can receive from the grid, should be 0 if source. Units: kW -->
  </PInMaxPa>
