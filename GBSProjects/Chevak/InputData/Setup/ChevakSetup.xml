@@ -13,7 +13,7 @@
   self
  </childOf>
  <!-- 'inputFileDir' is the directory where the input data files are stored.  -->
- <inputFileDir value="C:\\Users\jbvandermeer\Documents\ACEP\GBS\GBSTools\GBSProjects\Chevak\InputData\TimeSeriesData\RawData"/>
+ <inputFileDir value="Chevak InputData TimeSeriesData RawData"/>
  <!-- 'inputFileType' is the file type of the input data files. Eg '.CSV'  -->
  <inputFileType value="CSV"/>
  <!-- 'inputFileFormat' is format that the input files are in. This includes formatting specific to certain data sources
@@ -23,16 +23,7 @@
  <!-- 'componentNames' is a tuple of the names of components in the grid. Acceptable names must start with corresponding
      names to the component descriptor files, including: 'Gen', 'Wtg', 'Inv', 'Tes', 'Ees' and 'ControlledLoad'. For example 'Gen1',
       'Gen2', 'Wtg1',... -->
- <componentNames>
-  <componentName value="gen1"/>
-  <componentName value="gen2"/>
-  <componentName value="gen3"/>
-  <componentName value="wtg1"/>
-  <componentName value="wtg2"/>
-  <componentName value="wtg3"/>
-  <componentName value="wtg4"/>
-  <componentName value="tes1"/>
- </componentNames>
+ <componentNames value="gen1 gen2 gen3 wtg1 wtg2 wtg3 wtg4 tes1"/>
  <!-- 'componentChannels' describes the input data channels corresponding to grid components to read into the simulation.
     The tuple 'headerName' is the names or indices of the columns in the input data files. The component names are the names
     in the componentDescriptor files. 'componentAttribute' describes what was measured and what the units were. For example,

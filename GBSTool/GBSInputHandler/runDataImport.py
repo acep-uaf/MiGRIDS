@@ -24,8 +24,8 @@ from readXmlTag import readXmlTag
 Village = readXmlTag(fileName,'project','name')[0]
 # input specification
 inputSpecification = readXmlTag(fileName,'inputFileFormat','value')[0]
-# input time series data files location
-fileLocation = readXmlTag(fileName,'inputFileDir','value')[0]
+# input a list of subdirectories under the GBSProjects directory
+fileLocation = readXmlTag(fileName,'inputFileDir','value')
 # file type
 fileType = readXmlTag(fileName,'inputFileType','value')[0]
 interval = readXmlTag(fileName,'timeStep','value')[0] + readXmlTag(fileName,'timeStep','unit')[0]

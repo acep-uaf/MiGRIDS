@@ -3,8 +3,11 @@
 # Date: October 24, 2017
 # License: MIT License (see LICENSE file of this package for more information)
 
+# imports
+import os
+
 # reads data files from user and outputs a dataframe.
-def readDataFile(inputSpecification,fileLocation='',fileType='csv',columnNames=None,useNames=None,componentUnits=None,componentAttributes=None):
+def readDataFile(inputSpecification,fileLocationSubDirs=[],fileType='csv',columnNames=None,useNames=None,componentUnits=None,componentAttributes=None):
     # inputSpecification points to a script to accept data from a certain input data format *type string*
     # fileLocation is the dir where the data files are stored. It is either absolute or relative to the GBS project InputData dir *type string*
     # fileType is the file type. default is csv. All files of this type will be read from the dir *type string*
@@ -22,14 +25,27 @@ def readDataFile(inputSpecification,fileLocation='',fileType='csv',columnNames=N
 
     ###### go to directory with time series data is located #######
     here = os.getcwd()
-    if fileLocation=='':
+    if len(fileLocationSubDirs) == 0:
         print('Choose directory where input data files are located.')
         import tkinter as tk
         root = tk.Tk()
         root.withdraw()
         root.attributes('-topmost',1)
         fileLocation = filedialog.askdirectory()
-    os.chdir(fileLocation)
+        os.chdir(fileLocation)
+    else:
+        # convert list of subdirectories in the Project folder to a file path
+        # get directory of this file, which is in the GBSInputHandler directory in GBSTool
+        fileDir = os.path.dirname(os.path.abspath(__file__))
+        # change to this file's directory and then to the relative path to the Projects directory
+        os.chdir(fileDir)
+        os.chdir('../../GBSProjects')
+        # move down sub directories to location of data files
+        for projDir in fileLocationSubDirs:
+            os.chdir(projDir)
+        # current directory is the location of data files.
+        fileLocation = os.getcwd()
+
     # get just the filenames ending with fileType
     fileNames = [f for f in os.listdir(fileLocation) if os.path.isfile(f) & f.endswith(fileType)]
 
