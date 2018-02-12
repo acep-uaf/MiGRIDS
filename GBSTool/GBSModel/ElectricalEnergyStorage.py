@@ -19,13 +19,12 @@ class ElectricalEnergyStorage:
         SystemOperations.py).
         '''
     # Constructor
-    def __init__(self, eesID, eesSOC, eesState, eesSRC, timestep, eesDescriptor):
+    def __init__(self, eesID, eesSOC, eesState, timestep, eesDescriptor):
         """
         Constructor used for intialization of an Energy Storage unit in Energy Storage System class.
         :param eesID: integer for identification of object within Energy Storage System list of ees units.
         :param eesSOC: initial state of charge.
         :param eesState: the current operating state, 0 - off, 1 - starting, 2 - online.
-        :param eesSRC: the amount of spinning reserve capacity that the EES must be able to supply, in addition to active discharge.
         :param eesDescriptor: relative path and file name of eesDescriptor-file used to populate static information.
         """
         # manage run time timers
@@ -44,8 +43,8 @@ class ElectricalEnergyStorage:
         self.eesDescriptorParser(eesDescriptor)
 
         # this sets the amount of SRC that the ess needs to be able to provide and the calculates the minimum ees stored
-        # energy that must be maintained
-        self.setSRC(eesSRC)
+        # energy that must be maintained. run self.setSRC to set the SRC.
+        self.eesSRC = 0
 
         # this updates the power availble from this ees to be used in scheduling generating units
         self.updatePScheduleMax()

@@ -14,21 +14,19 @@ import os
 
 class ElectricalEnergyStorageSystem:
 
-    def __init__(self, eesIDS, eesSOC, eesStates, eesSRC, timeStep, eesDescriptor, eesDispatch):
+    def __init__(self, eesIDS, eesSOC, eesStates, timeStep, eesDescriptor, eesDispatch):
         """
         Constructor used for intialization of all Energy Storage units in this Energy Storage System.
         :param eesIDS: list of integers for identification of Energy Storage units.
         :param eesSOC: list of initial state of charge.
         :param eesState: list of the initial operating state, 0 - off, 1 - starting, 2 - online.
-        :param eesSRC: list of the amount of spinning reserve capacity that the EESs must be able to supply, in addition
-        to active discharge.
         :param eesDescriptor: list of relative path and file name of eesDescriptor-files used to populate static information.
         :param eesDispatch: If a user defines their own dispatch, it is the path and filename of the dispatch class used
         to dispatch the energy storage units. Otherwise, it is the name of the dispatch filename included in the software
         package. Options include: eesDispatch1. The class name in the file must be 'eesDispatch'
         """
         # check to make sure same length data coming in
-        if not len(eesIDS) == len(eesSOC)==len(eesStates)==len(eesSRC)==len(eesDescriptor):
+        if not len(eesIDS) == len(eesSOC)==len(eesStates)==len(eesDescriptor):
             raise ValueError('The length eesIDS, eesP, eesQ, eesSOC, eesStates,eesSRC and eesDescriptor inputs to '
                              'ElectricalEnergyStorage must be equal.')
         # ************ EESS variables**********************
@@ -57,7 +55,6 @@ class ElectricalEnergyStorageSystem:
         # TODO: remove what is not being used
         self.eesSOC = list(eesSOC)
         self.eesStates = list(eesStates)
-        self.eesSRC = list(eesSRC)
         self.eesPinAvail = []
         self.eesPinAvail_1 = []
         self.eesQinAvail = []
@@ -69,12 +66,13 @@ class ElectricalEnergyStorageSystem:
         self.eesPScheduleMax = [0]*len(self.eesSOC)
         self.eesP = [0] * len(self.eesSOC)
         self.eesQ = [0] * len(self.eesSOC)
+        self.eesSRC = [0] * len(self.eesSOC)
 
         # Populate the list of ees with ees objects
         # TODO: consider leaving values at ees level, not bringing them to this level if not necessary
         for idx, eesID in enumerate(eesIDS):
             # Initialize EES
-            self.electricalEnergyStorageUnits.append(ElectricalEnergyStorage(eesID, eesSOC[idx], eesStates[idx], eesSRC[idx], timeStep, eesDescriptor[idx]))
+            self.electricalEnergyStorageUnits.append(ElectricalEnergyStorage(eesID, eesSOC[idx], eesStates[idx], timeStep, eesDescriptor[idx]))
 
             # Initial operating values
             self.eesPinAvail.append(self.electricalEnergyStorageUnits[idx].eesPinAvail)
