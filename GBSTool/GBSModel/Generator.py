@@ -76,12 +76,10 @@ class Generator:
         self.genFuelCurve = genFC.fuelCurve  # TODO: consider making this the integer version.
 
     # Constructor
-    def __init__(self, genID, genP, genQ, genState, timeStep, genDescriptor):
+    def __init__(self, genID, genState, timeStep, genDescriptor):
         """
         Constructor used for intialization of generator fleet in Powerhouse class.
         :param genID: integer for identification of object within Powerhouse list of generators.
-        :param genP: initial real power level.
-        :param genQ: initial reactive power level.
         :param genState: the current operating state, 0 - off, 1 - running, 2 - online.
         :param timeStep: the time step used in the simulation, in seconds.
         :param genDescriptor: relative path and file name of genDescriptor-file used to populate static information.
@@ -95,8 +93,8 @@ class Generator:
 
         # Write initial values to internal variables.
         self.genID = genID  # internal id used in Powerhouse for tracking generator objects. *type int*
-        self.genP = genP  # Current real power level [kW]
-        self.genQ = genQ  # Current reactive power level [kvar]
+        self.genP = 0  # Current real power level [kW]
+        self.genQ = 0  # Current reactive power level [kvar]
         self.genState = genState  # Generator operating state [dimensionless, index]. See docs for key.
         self.timeStep = timeStep  # the time step used in the simulation in seconds
         # initiate operating condition flags and timers

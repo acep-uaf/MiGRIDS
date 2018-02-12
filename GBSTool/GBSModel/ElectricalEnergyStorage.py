@@ -19,12 +19,10 @@ class ElectricalEnergyStorage:
         SystemOperations.py).
         '''
     # Constructor
-    def __init__(self, eesID, eesP, eesQ, eesSOC, eesState, eesSRC, timestep, eesDescriptor):
+    def __init__(self, eesID, eesSOC, eesState, eesSRC, timestep, eesDescriptor):
         """
         Constructor used for intialization of an Energy Storage unit in Energy Storage System class.
         :param eesID: integer for identification of object within Energy Storage System list of ees units.
-        :param eesP: initial real power level.
-        :param eesQ: initial reactive power level.
         :param eesSOC: initial state of charge.
         :param eesState: the current operating state, 0 - off, 1 - starting, 2 - online.
         :param eesSRC: the amount of spinning reserve capacity that the EES must be able to supply, in addition to active discharge.
@@ -37,8 +35,6 @@ class ElectricalEnergyStorage:
 
         # write initial values to internal variables
         self.eesID = eesID  # internal id used in Powerhouse for tracking generator objects. *type int*
-        self.eesP = eesP  # Current real power level [kW]
-        self.eesQ = eesQ  # Current reactive power level [kvar]
         self.eesSOC = eesSOC # Current state of charge in pu
         self.eesState = eesState  # Generator operating state [dimensionless, index]. See docs for key.
         self.timeStep = timestep  # the time step used in the simulation in seconds
@@ -55,6 +51,8 @@ class ElectricalEnergyStorage:
         self.updatePScheduleMax()
 
         # these values will be set when checkOperatingConditions is run
+        self.eesP = 0
+        self.eesQ = 0
         self.eesPinAvail = 0
         self.eesPinAvail_1 = 0
         self.eesPsrcAvail = 0

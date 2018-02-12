@@ -9,5 +9,5 @@ inputFileFormat,,,,,value,AVEC
 inputFileType,,,,,value,CSV
 timeStep,,,,,value,30
 timeStep,,,,,unit,s
-inputFileDir,,,,,value,C:\\Users\jbvandermeer\Documents\ACEP\GBS\GBSTools\GBSProjects\Chevak\InputData\TimeSeriesData\RawData
-project,,,,,name,Chevak
+inputFileDir,,,,,value,
+project,,,,,name,StMary

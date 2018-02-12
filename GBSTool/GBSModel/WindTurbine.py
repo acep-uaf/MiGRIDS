@@ -39,19 +39,17 @@ class WindTurbine:
 
 
     # Constructor
-    def __init__(self, wtgID, wtgP, wtgQ, windSpeed, wtgState, timeStep, wtgDescriptor):
+    def __init__(self, wtgID, windSpeed, wtgState, timeStep, wtgDescriptor):
         """
         Constructor used for the initialization of an object within windfarm list of wind turbines.
 
         :param wtgID:
-        :param wtgP:
-        :param wtgQ:
         :param wtgDescriptor:
         """
         # Write initial values to internal variables.
         self.wtgID = wtgID # internal id used in the Windfarm for tracking wind turbine objects. *type int*
-        self.wtgP = wtgP # Current real power level [kW] *type float*
-        self.wtgQ = wtgQ # Current reactive power level [kvar] *type float*
+        self.wtgP = 0 # Current real power level [kW] *type float*
+        self.wtgQ = 0 # Current reactive power level [kvar] *type float*
         self.wtgState = wtgState  # Wind turbine operating state [dimensionless, index]. 0 - off, 1 - starting, 2 - online.
         self.timeStep = timeStep
         # grab data from descriptor file

@@ -22,9 +22,9 @@ class Windfarm:
     # wtgStates - list of wind turbine operating states 0 - off, 1 - starting, 2 - online.
     # wtgDescriptor - list of generator descriptor XML files for the respective generators listed in genIDS, this should
     #   be a string with a relative path and file name, e.g., /InputData/Components/wtg1Descriptor.xml
-    def __init__(self, wtgIDS, wtgP, wtgQ, windSpeed, wtgStates, timeStep, wtgDescriptor):
+    def __init__(self, wtgIDS, windSpeed, wtgStates, timeStep, wtgDescriptor):
         # check to make sure same length data coming in
-        if not len(wtgIDS) == len(wtgP) == len(wtgQ) == len(wtgStates):
+        if not len(wtgIDS) == len(wtgStates):
             raise ValueError('The length wtgIDS, wtgP, wtgQ and wtgStates inputs to Windfarm must be equal.')
 
         # ************Windfarm variables**********************
@@ -59,7 +59,7 @@ class Windfarm:
             else: # if windSpeed is a list of values, not lists, then use for all turbines
                 WS = windSpeed
             # Initialize wtg
-            self.windTurbines.append(WindTurbine(wtgID, wtgP[idx], wtgQ[idx], WS, wtgStates[idx], timeStep, wtgDescriptor[idx]))
+            self.windTurbines.append(WindTurbine(wtgID, WS, wtgStates[idx], timeStep, wtgDescriptor[idx]))
 
             # Initial value for wtgP, wtgQ, wtgPAvail and wtgQAvail can be handled while were in this loop
             self.wtgPMax = self.wtgPMax + self.windTurbines[idx].wtgPMax

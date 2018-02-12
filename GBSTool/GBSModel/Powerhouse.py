@@ -21,9 +21,9 @@ class Powerhouse:
     # genQ - list of generator reactive power levels for respective generators listed in genIDS
     # genDescriptor - list of generator descriptor XML files for the respective generators listed in genIDS, this should
     #   be a string with a relative path and file name, e.g., /InputData/Components/gen1Descriptor.xml
-    def __init__(self, genIDS, genP, genQ, genStates, timeStep, genDescriptor):
+    def __init__(self, genIDS, genStates, timeStep, genDescriptor):
         # check to make sure same length data coming in
-        if not len(genIDS)==len(genP)==len(genQ)==len(genStates):
+        if not len(genIDS)==len(genStates):
             raise ValueError('The length genIDS, genP, genQ and genStates inputs to Powerhouse must be equal.')
         # ************Powerhouse variables**********************
         # List of generators and their respective IDs
@@ -61,7 +61,7 @@ class Powerhouse:
         # Populate the list of generators with generator objects
         for idx, genID in enumerate(genIDS):
             # Initialize generators
-            self.generators.append(Generator(genID, genP[idx], genQ[idx], genStates[idx], timeStep, genDescriptor[idx]))
+            self.generators.append(Generator(genID, genStates[idx], timeStep, genDescriptor[idx]))
 
             # Initial value for genP, genQ, genPAvail and genQAvail can be handled while were in this loop
             self.genPMax = self.genPMax + self.generators[idx].genPMax

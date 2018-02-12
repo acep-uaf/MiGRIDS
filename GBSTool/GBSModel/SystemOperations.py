@@ -6,7 +6,7 @@
 import Powerhouse
 import Windfarm
 import Solarfarm
-import ElectricalStorage
+import ElectricalStorageSystem
 import ThermalSystems
 import Demand
 
@@ -17,8 +17,11 @@ class SystemOperations:
     powerhouse = Powerhouse()
     windfarm = Windfarm()
     solarfarm = Solarfarm()
-    electricalStorage = ElectricalStorage()
+    electricalStorageSystem = ElectricalStorageSystem()
     thermalSystems = ThermalSystems()
     demand = Demand()
+
+    def __init__(self, systemConfigFile):
+
 
 
