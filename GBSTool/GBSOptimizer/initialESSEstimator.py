@@ -36,49 +36,49 @@ def getTotalGrossLoad(projectPath, projectName):
 
     # Construct path to 'projectSetup'
     projectSetup = projectPath + 'InputData/Setup/' + projectName + 'Setup.xml'
-    print(projectSetup)
+    print('Project path: ' + projectSetup)
 
     # Search all 'source' assets
     projectSetupFile = open(projectSetup, "r")
     projectSetupXML = projectSetupFile.read()
     projectSetupFile.close()
     projectSoup = bs(projectSetupXML, "xml")
+    components = projectSoup.componentNames.get("value").split()
+    print('Project components found: ' + ' '.join(components))
 
-    for component in projectSoup.componentNames.children:
-        componentPath = 'empty'
-        componentSoup = []
-        try:
-            componentString = component.get('value')
-            componentPath = projectPath + 'InputData/Components/' + componentString + 'Descriptor.xml'
-            componentFile = open(componentPath, 'r')
-            componentFileXML = componentFile.read()
-            componentFile.close()
-            componentSoup = bs(componentFileXML, "xml")
+    # Iterate through components and check if they are a source.
+    for component in components:
 
-            # Now we need to check if the component selected is a source
-            if componentSoup.type.get('value') == 'source':
-                # Construct path to the input data file
-                dataFilePath = projectPath + 'InputData/TimeSeriesData/ProcessedData/' + componentString +'P.nc'
-                tempLoadP, tempTime, tempTS, tempSD, tempED = loadData(dataFilePath)
+        componentString = component
+        componentPath = projectPath + 'InputData/Components/' + componentString + 'Descriptor.xml'
+        print('Loading: ' + componentPath)
+        componentFile = open(componentPath, 'r')
+        componentFileXML = componentFile.read()
+        componentFile.close()
+        componentSoup = bs(componentFileXML, "xml")
 
-                # Handle first entry
-                if loadP == []:
-                    loadP = tempLoadP
-                    # Note the start and end dates for comparison
-                    refSD = tempSD
-                    refED = tempED
-                    time = tempTime
-                    timeStamps = tempTS
-                elif tempSD == refSD and tempED == refED and loadP.shape == tempLoadP.shape:
-                    loadP = loadP + tempLoadP
-                else:
-                    print('Consistency issue with time series inputs.')
+        # Now we need to check if the component selected is a source
+        if componentSoup.type.get('value') == 'source':
+            # Construct path to the input data file
+            dataFilePath = projectPath + 'InputData/TimeSeriesData/ProcessedData/' + componentString +'P.nc'
+            print('Loading: ' + dataFilePath)
+            print('Adding ' + componentString + 'P to gross load sum.')
+            tempLoadP, tempTime, tempTS, tempSD, tempED = loadData(dataFilePath)
+            # Note the start and end dates for comparison
+            refSD = tempSD
+            refED = tempED
+            time = tempTime
+            ts = tempTS
 
-        except AttributeError: #this filters potential NavigableString issues due to spaces in XML file
-             print('NavigableString found.')
-             pass
+            # Handle first entry
+            if loadP == []:
+                loadP = tempLoadP
+            elif tempSD == refSD and tempED == refED and loadP.shape == tempLoadP.shape:
+                loadP = loadP + tempLoadP
+            else:
+                print('Consistency issue with time series inputs.')
 
-    return time, timeStamps, loadP, refSD, refED
+    return time, ts, loadP, refSD, refED
 
 
 def loadData(filePath):
@@ -104,11 +104,41 @@ def loadData(filePath):
 
     return value, time, timeStamps, startDate, endDate
 
+def checkTSData(time, loadP):
+    """
+    checkData does a cursory check of the time step sizes, and flags artifacts that clear are due to outages (data or
+    physical) so that they are not part of any future ramp rate considerations.
+    :param time: [Series] time vector, time is assumed to be in unix epochs
+    :param loadP: [Series] load vector, load is assumed to be in kW
+    :return status: [integer] status flag, 1 if ramp-rate assessment ok (avg. deltaT < 5 s), 0 else.
+    :return ignoreIdx: [Series] list of indices with black listed ramp rates due to outages
+    """
+    status = 0
+    ignoreIdx = []
+
+    # TODO: check delta-T and set status accordingly
+    # TODO: search for 'drops to zero' and 'rises from zero' - blacklist in ignoreIdx as outages.
+
+    return status, ignoreIdx
+
+def loadDieselFleet(projectPath, ProjectName):
+    '''
+    Loads the key parameters for the diesel fleet. This is used for a very preliminary sizing based on generator
+    nameplate differences.
+    :param projectPath:
+    :param ProjectName:
+    :return dieselNameplates: [list] nameplate capacities of available diesels
+    '''
+
+    # TODO: load and sort the diesel data [consider what other data from the xml files might be needed.]
+
+    return dieselNameplates
+
 
 
 time, timeStamps, loadP, startDate, endDate = getTotalGrossLoad('../../GBSProjects/Chevak/','Chevak')
 
-print(startDate, endDate)
+print(len(time), type(loadP))
 
 plt.figure(figsize=(8, 5.5))
 # Matplotlib formated timestamps for plotting routines.
