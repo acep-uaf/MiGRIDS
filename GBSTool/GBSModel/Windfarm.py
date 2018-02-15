@@ -10,6 +10,9 @@ import numpy as np
 sys.path.append('../')
 from GBSAnalyzer.CurveAssemblers.wtgPowerCurveAssembler import WindPowerCurve
 from bisect import bisect_left
+from netCDF4 import Dataset
+from readNCFile import readNCFile
+from Generator import Generator
 
 
 class Windfarm:
@@ -22,7 +25,7 @@ class Windfarm:
     # wtgStates - list of wind turbine operating states 0 - off, 1 - starting, 2 - online.
     # wtgDescriptor - list of generator descriptor XML files for the respective generators listed in genIDS, this should
     #   be a string with a relative path and file name, e.g., /InputData/Components/wtg1Descriptor.xml
-    def __init__(self, wtgIDS, windSpeed, wtgStates, timeStep, wtgDescriptor):
+    def __init__(self, wtgIDS, windSpeedFiles, wtgStates, timeStep, wtgDescriptor):
         # check to make sure same length data coming in
         if not len(wtgIDS) == len(wtgStates):
             raise ValueError('The length wtgIDS, wtgP, wtgQ and wtgStates inputs to Windfarm must be equal.')
@@ -50,14 +53,32 @@ class Windfarm:
         # Populate the list of wtg with windTurbine objects
         for idx, wtgID in enumerate(wtgIDS):
             # check if only one wind profile was given, or if profiles were given for each turbine (list of lists)
-            if isinstance(windSpeed[0],(list,tuple,np.ndarray)):
-                # if windSpeed is a list of lists with length greater than one (more than one list) the one for each turbine
-                if len(windSpeed) > 1:
-                    WS = windSpeed[idx]
+            if isinstance(windSpeedFiles[0],(list,tuple,np.ndarray)):
+                # if windSpeedFiles is a list of files with length greater than one (more than one file) then one for each turbine
+                if len(windSpeedFiles) > 1:
+                    NCF = readNCFile(windSpeedFiles[idx])
+                    WS = np.array(NCF.value)*NCF.scale + NCF.offset
                 else: # if there is only 1 list, then use for all turbines
-                    WS = windSpeed[0]
+                    NCF = readNCFile(windSpeedFiles[0])
+                    WS = np.array(NCF.value) * NCF.scale + NCF.offset
             else: # if windSpeed is a list of values, not lists, then use for all turbines
-                WS = windSpeed
+                NCF = readNCFile(windSpeedFiles)
+                WS = np.array(NCF.value) * NCF.scale + NCF.offset
+
+                # check if any nan values
+                if any(np.isnan(NCF.time)) or any(np.isnan(NCF.value)):
+                    raise ValueError(
+                        'There are nan values in the wind files.')
+                # check the units for time
+                elif NCF.timeUnits.lower() != 's' and NCF.timeUnits.lower() != 'sec' and NCF.timeUnits.lower() != 'seconds':
+                    raise ValueError('The units for time must be s.')
+                # check time step to make sure within +- 10% of timeStep input
+                # this will have a problem with daylight savings
+                #elif min(np.diff(NCF.time)) < 0.9 * timeStep or max(np.diff(NCF.time)) > 1.1 * timeStep:
+                #    raise ValueError(
+                 #       'The difference in the time stamps is more than the 10% different than the time step defined for '
+                 #       'this simulation ({} s). The timestamps should be in epoch format.'.format(timeStep))
+
             # Initialize wtg
             self.windTurbines.append(WindTurbine(wtgID, WS, wtgStates[idx], timeStep, wtgDescriptor[idx]))
 
