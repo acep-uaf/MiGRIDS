@@ -15,5 +15,6 @@ loadRealFiles = [
 
 
 D1 = Demand(timeStep, loadRealFiles)
-
+import matplotlib.pyplot as plt
+plt.plot(D1.realLoad)
 print('done')

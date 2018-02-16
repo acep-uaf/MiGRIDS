@@ -5,26 +5,17 @@
 
 from Powerhouse import Powerhouse
 from Windfarm import Windfarm
-from SolarFarm import Solarfarm
+#from SolarFarm import Solarfarm
 from ElectricalEnergyStorageSystem import ElectricalEnergyStorageSystem
-from ThermalSystem import ThermalSystem
-import Demand
-
-
+#from ThermalSystem import ThermalSystem
+from Demand import Demand
 
 class SystemOperations:
     # System Variables
     # Generation and dispatch resources
-    powerhouse = Powerhouse()
-    windfarm = Windfarm()
-    solarfarm = Solarfarm()
-    electricalStorageSystem = ElectricalStorageSystem()
-    thermalSystems = ThermalSystems()
-    demand = Demand()
-
     def __init__(self, timeStep = 1, loadRealFiles = [], loadReactiveFiles = [],
                  genIDs = [], genStates = [], genDescriptors = [], genDispatch = [],
-                 wtgIDs = [], wtgStates = [], wtgDescriptors = [], wtgSpeeds = [],
+                 wtgIDs = [], wtgStates = [], wtgDescriptors = [], wtgSpeedFiles = [],
                  eesIDs = [], eesStates = [], eesSOCs = [], eesDescriptors = [], eesDispatch = []):
         """
         Constructor used for intialization of all sytem components
@@ -58,7 +49,7 @@ class SystemOperations:
             self.PH = Powerhouse(genIDs, genStates, timeStep, genDescriptors)
         # initiate wind farm
         if len(wtgIDs) != 0:
-            self.WF = Windfarm(wtgIDs, wtgSpeeds, wtgStates, timeStep, wtgDescriptors)
+            self.WF = Windfarm(wtgIDs, wtgSpeedFiles, wtgStates, timeStep, wtgDescriptors)
         # initiate electrical energy storage system
         if len(eesIDs) != 0:
             self.EESS = ElectricalEnergyStorageSystem(eesIDs, eesSOCs, eesStates, timeStep, eesDescriptors, eesDispatch)
@@ -68,6 +59,31 @@ class SystemOperations:
 
     # TODO: Put in seperate input file
     def runSimulation(self):
-        ## Dispatch units
-        ## If conditions met, schedule units
+        for P in self.DM.realLoad[:1000]: #self.DM.realLoad: # for each real load
+            ## Dispatch units
+            # get available wind power
+            wtgPAvail = sum(self.WF.wtgPAvail)
+            # the maximum amount of power that can be imported from renewable resources
+            rePlimit = P - sum(self.PH.genMol)
+            # amount of imported wind power
+            wtgPimport = min(rePlimit,wtgPAvail)
+            # amount of wind power used to charge the eess is the minimum of maximum charging power and the difference
+            # between available wind power and wind power imported to the grid.
+            wtgPch = min(sum(self.EESS.eesPinAvail),wtgPAvail - wtgPimport)
+            # get the required spinning reserve. Start off with a simple estimate
+            srcMin = 100 + wtgPimport
+            # discharge the eess to cover the difference between load and generation
+            eessDis = min(max([P - wtgPimport - sum(self.PH.genPAvail),0],sum(self.EESS.eessPoutAvail)))
+            # get the diesel power output, the difference between demand and supply
+            genP = P - wtgPimport - eessDis
+            # find the remaining ability of the EESS to supply SRC not supplied by the diesel generators
+            eessSrcRequested = max([srcMin - sum(self.PH.genPAvail) + genP, 0])
+            # dispatch the wind turbines
+            self.WF.wtgDispatch(wtgPimport, 0)
+            # dispatch the generators
+            self.PH.genDispatch(genP, 0)
+            # dispatch the eess
+            self.EESS.runEesDispatch(wtgPimport, 0, eessSrcRequested)
+
+            ## If conditions met, schedule units
 

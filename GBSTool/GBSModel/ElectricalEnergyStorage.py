@@ -44,7 +44,7 @@ class ElectricalEnergyStorage:
 
         # this sets the amount of SRC that the ess needs to be able to provide and the calculates the minimum ees stored
         # energy that must be maintained. run self.setSRC to set the SRC.
-        self.eesSRC = 0
+        self.setSRC(0)
 
         # this updates the power availble from this ees to be used in scheduling generating units
         self.updatePScheduleMax()

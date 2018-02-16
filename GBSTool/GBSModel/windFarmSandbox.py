@@ -9,11 +9,9 @@ wtgQ = [0]*3
 wtgStates = [2]*3
 timeStep = 1
 wtgDescriptor = ['C:\\Users\jbvandermeer\Documents\ACEP\GBS\GBSTools\GBSProjects\Chevak\InputData\Components\wtg1Descriptor.xml']*3
-windSpeed = []
-for i in range(10000):
-    windSpeed.append(randint(0,30))
+windSpeed = 'C:\\Users\jbvandermeer\Documents\ACEP\GBS\GBSTools\GBSProjects\Chevak\InputData\TimeSeriesData\ProcessedData\wtg1WS.nc'
 
-WF1 = Windfarm(wtgIDs, wtgP, wtgQ, windSpeed, wtgStates, timeStep, wtgDescriptor)
+WF1 = Windfarm(wtgIDs, windSpeed, wtgStates, timeStep, wtgDescriptor)
 
 wtg0P = []
 wtg1P = []

@@ -6,6 +6,7 @@
 # imports
 from netCDF4 import Dataset
 import numpy as np
+from readNCFile import readNCFile
 
 class Demand:
 
@@ -35,46 +36,33 @@ class Demand:
         # check if it is a list or tuple
         if type(loadFiles) is list or type(loadFiles) is tuple:
             for idx, file in enumerate(loadFiles):
-                rootgrp = Dataset(file, "r", format="NETCDF4")
-                time = rootgrp.variables['time']
-                value = rootgrp.variables['value']
-                # find all attributes
-                attributes = rootgrp.variables['value'].ncattrs()
-                scale = np.nan
-                offset = np.nan
-                units = ''
-                for attr in attributes:
-                    if attr.lower() == 'scale':
-                        scale = float(getattr(rootgrp.variables['value'],attr))
-                    elif attr.lower() == 'offset':
-                        offset = float(getattr(rootgrp.variables['value'],attr))
-                    elif  attr.lower() == 'units':
-                        units = str(getattr(rootgrp.variables['value'],attr))
-                    elif attr.lower() == 'unit':
-                        units = str(getattr(rootgrp.variables['value'], attr))
-                # check to make sure scale, offset and units were found
-                if scale == np.nan:
-                    raise ValueError('There is no scale attribute for the value variable. ')
-                elif units == '':
-                    raise ValueError('There is no units attribute for the value variable. ')
-                elif offset == np.nan:
-                    raise ValueError('There is no offset attribute for the value variable. ')
+                ncFile = readNCFile(file)
+                time = ncFile.time
+                value = ncFile.value
+                scale = ncFile.scale
+                offset = ncFile.offset
+                timeUnits = ncFile.timeUnits
+                valueUnits = ncFile.valueUnits
 
                 # check if any nan values
                 if any(np.isnan(time)) or any(np.isnan(value)):
                     raise ValueError(
-                        'There are nan values in the real load files.')
+                        'There are nan values in the load files.')
+                # check the units for time
+                elif timeUnits.lower() != 's' and timeUnits.lower() != 'sec' and timeUnits.lower() != 'seconds':
+                    raise ValueError('The units for time must be s.')
                 # check time step to make sure within +- 10% of timeStep input
-                elif min(np.diff(time)) < 0.9 * self.timeStep or max(np.diff(time)) > 1.1 * self.timeStep:
-                    raise ValueError(
-                        'The difference in the time stamps is more than the 10% different than the time step defined for '
-                        'this simulation ({} s). The timestamps should be in epoch format.'.format(self.timeStep))
-                elif units.lower() != 'kw' and isReal:
+                # this will have a problem with daylight savings
+                #elif min(np.diff(time)) < 0.9 * self.timeStep or max(np.diff(time)) > 1.1 * self.timeStep:
+                 #   raise ValueError(
+                  #      'The difference in the time stamps is more than the 10% different than the time step defined for '
+                  #      'this simulation ({} s). The timestamps should be in epoch format.'.format(self.timeStep))
+                elif valueUnits.lower() != 'kw' and isReal:
                     raise ValueError('The units for real load must be kW.')
-                elif units.lower() != 'kvar' and not isReal:
+                elif valueUnits.lower() != 'kvar' and not isReal:
                     raise ValueError('The units for reactive load must be kvar.')
 
-                # if the first file, initiae the real load variable
+                # if the first file, initiate the real load variable
                 if idx == 0:
                     load = np.array(value)*scale + offset
                 # otherwise, add on to the previous values
