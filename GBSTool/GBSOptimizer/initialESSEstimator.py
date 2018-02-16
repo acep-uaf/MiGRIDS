@@ -18,6 +18,7 @@ import netCDF4
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.dates as md
+from TimeStampVectorError import TimeStampVectorError
 
 
 def getTotalGrossLoad(projectPath, projectName):
@@ -104,22 +105,87 @@ def loadData(filePath):
 
     return value, time, timeStamps, startDate, endDate
 
-def checkTSData(time, loadP):
+def checkTSData(time, loadP, timeStepCutOff = 5, maxTimeStepAcceptedFactor = 1.1, maxRampFactor = 1.5):
     """
     checkData does a cursory check of the time step sizes, and flags artifacts that clear are due to outages (data or
-    physical) so that they are not part of any future ramp rate considerations.
+    physical) so that they are not part of any future ramp rate considerations. Note that 'normal' time step size is
+    'guessed' using the median of the differences in time steps. This is based on the assumption, that most time steps
+    are of the median size, while mean values could be skewed by a few long outages.
     :param time: [Series] time vector, time is assumed to be in unix epochs
     :param loadP: [Series] load vector, load is assumed to be in kW
-    :return status: [integer] status flag, 1 if ramp-rate assessment ok (avg. deltaT < 5 s), 0 else.
+    :param timeStepCutOff: [float] maximum time step size where ramp rate assessment still is recommended
+    :param maxTimeStepAcceptedFactor: [float] factor to calculate maximum time step size not flagged as out of bounds
+        for subsequent assessments as a function of the median time step size.
+    :param maxRampFactor: maximum ramping not considered a data artefact as function of median, non-zero load.
+    :return status: [integer] status flag, TRUE if ramp-rate assessment ok (avg. deltaT <= timeStepCutOff), FALSE else.
     :return ignoreIdx: [Series] list of indices with black listed ramp rates due to outages
+    :return msg: [List of strings] status messages for the log file
     """
-    status = 0
+    status = False
     ignoreIdx = []
+    msg = []
 
-    # TODO: check delta-T and set status accordingly
-    # TODO: search for 'drops to zero' and 'rises from zero' - blacklist in ignoreIdx as outages.
+    # *** Check delta-T and set status accordingly ***
+    # Get differences in time stamps and run simple stats
+    dt = np.diff(time)
+    medianDt = np.nanmedian(dt)
+    meanDt = np.nanmean(dt)
 
-    return status, ignoreIdx
+    # Record for log or messaging
+    msg.append('Mean difference between time stamps: ' + str(meanDt) + ' s')
+    msg.append('Median difference between time stamps : ' + str(medianDt) + ' s')
+
+    # Check step size and set status accordingly
+    if medianDt <= timeStepCutOff  and medianDt > 0:
+        status = True
+        msg.append('Time steps sufficiently small, ramp rate assessment recommended.')
+    elif medianDt > timeStepCutOff:
+        status = False
+        msg.append('Time steps are too large, ramp rate assessment not recommended.')
+    else:
+        status = False
+        raise TimeStampVectorError(medianDt, 'Time stamp issue, causality not preserved: median dt < 0.')
+
+    # *** Blacklist large differences between time steps ***
+    for idx, dtVal in np.ndenumerate(dt):
+        if dtVal > maxTimeStepAcceptedFactor*medianDt:
+            ignoreIdx.append(idx)
+
+    # *** Search for 'drops to zero' and 'rises from zero' - blacklist in ignoreIdx as outages. Also add all 0 kW
+    # entries to the ignoreIdx ***
+
+    # Previous value in time series, random value initially
+    prevVal = 100
+
+    #Step through the loadP vector and search for rises from and drops to 0 kW
+    for i, val in np.ndenumerate(loadP):
+        if val == 0 and prevVal != 0:
+            ignoreIdx.append(i)
+            msg.append('Drop from ' + str(prevVal) + ' kW to 0 kW detected. Index: ' + str(i))
+        elif prevVal == 0 and val != 0:
+            msg.append('Rise from 0 kW to ' + str(val) + ' kW detected. Index: ' + str(i))
+            ignoreIdx.append(i)
+        elif val == 0:
+            ignoreIdx.append(i)
+            msg.append('0 kW value found at index: ' + str(i))
+        prevVal = val
+
+    # *** Search for excessive ramp rates that are likely to be a data artifact ***
+    medianLoadP = np.nanmedian(loadP)
+    print(medianLoadP/medianDt)
+    loadDP = np.diff(loadP)
+
+    for j, valDP in np.ndenumerate(loadDP):
+        if np.abs(valDP/medianDt) >= maxRampFactor*medianLoadP/medianDt:
+            ignoreIdx.append(j)
+            msg.append('Excessive ramping found : ' + str(valDP/medianDt) + ' kW/s at index ' + str(j))
+
+
+    # The ignoreIdx needs some cleaning up: remove duplicates, and sort ascending
+    ignoreIdx = np.unique(ignoreIdx)
+    ignoreIdx.sort(0)
+
+    return status, ignoreIdx, msg
 
 def loadDieselFleet(projectPath, ProjectName):
     '''
@@ -134,14 +200,41 @@ def loadDieselFleet(projectPath, ProjectName):
 
     return dieselNameplates
 
+def getMaxFilteredRampRate(loadP, rampTime, ignoreIndex):
+    """
+    Searches for maximum ramp rate in a given time window (ramp time, should be normal time to dispatch a generator. If
+    an 'ignoreIndex' is part of the ramping interval considered the entire interval is discarded.
+    :param loadP: [ndarray of int32] load time series
+    :param rampTime: [int]  ramp time interval length to consider [Units: seconds]
+    :param ignoreIndex: [ndarray of int32] container of blacklisted indices.
+    :return maxRampRate:
+    :return rampRateDistr:
+    """
+    maxRampRate = 0
+    rampRateDistr = 0
 
+    # TODO: implement this [find 1-s data for bootstrap prototyping]
+
+    return maxRampRate, rampRateDistr
+
+# **** EXECUTION ***
 
 time, timeStamps, loadP, startDate, endDate = getTotalGrossLoad('../../GBSProjects/Chevak/','Chevak')
 
-print(len(time), type(loadP))
+stat, igIdx, msg =checkTSData(time, loadP, 5, 1.5)
+
+print(len(time), type(loadP[1]), len(igIdx))
+timeF = time.copy()
+#timeF[igIdx] = -10
+loadPF = loadP.copy()
+loadPF[igIdx] = -10
 
 plt.figure(figsize=(8, 5.5))
 # Matplotlib formated timestamps for plotting routines.
 mpTimeStamps = md.date2num(timeStamps)
-plt.plot(time[1:], np.diff(time))
+#plt.plot(time[1:], 200*np.diff(loadP)/np.nanmedian(np.diff(time)))
+
+plt.plot(time, loadPF)
+plt.plot(time[igIdx], loadPF[igIdx],'.')
+
 plt.show()
