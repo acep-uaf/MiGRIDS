@@ -101,15 +101,9 @@ class Windfarm:
 
         # dispatch
         if self.wtgDispatchType == 1:  # if proportional loading
-            # check available power
-            for idx in range(len(self.wtgIDS)):
-                # update available power and runtimes
-                self.windTurbines[idx].checkOperatingConditions()
-                self.wtgPAvail[idx] = self.windTurbines[idx].wtgPAvail
-                self.wtgQAvail[idx] = self.windTurbines[idx].wtgQAvail
             # get the loading pu for real and reactive power
-            loadingP = np.nanmin([newWtgP / np.sum(self.wtgPAvail),1])  # this is the PU loading of each wtg, limited to 1
-            loadingQ = np.nanmin([newWtgQ / np.sum(self.wtgQAvail) ,1]) # this is the PU loading of each wtg
+            loadingP = np.nanmin([np.nanmax([newWtgP / np.sum(self.wtgPAvail),0]),1])  # this is the PU loading of each wtg, limited to 1
+            loadingQ = np.nanmin([np.nanmax([newWtgQ / np.sum(self.wtgQAvail),0]) ,1]) # this is the PU loading of each wtg
             # cycle through each wtg and update with new P and Q
             for idx in range(len(self.wtgIDS)):
                 self.windTurbines[idx].wtgP = loadingP * self.wtgPAvail[idx]
@@ -122,6 +116,10 @@ class Windfarm:
                 # check to see if turbines that are starting up are ready to switch online
                 if self.windTurbines[idx].wtgStartTimeAct >= self.windTurbines[idx].wtgStartTime:
                     self.windTurbines[idx].wtgState = 2
+                # update available power and runtimes
+                self.windTurbines[idx].checkOperatingConditions()
+                self.wtgPAvail[idx] = self.windTurbines[idx].wtgPAvail
+                self.wtgQAvail[idx] = self.windTurbines[idx].wtgQAvail
         else:
-            print('The wind turbine dispatch is not supported. ')
+            raise ValueError('The wind turbine dispatch is not supported. ')
 

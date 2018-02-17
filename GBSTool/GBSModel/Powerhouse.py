@@ -50,6 +50,9 @@ class Powerhouse:
         # Total available gen power without new dispatch
         self.genPAvail = []
         self.genQAvail = []
+
+        # the minimum power output based on MOL
+        self.genMolAvail = []
         """
 
         :param genIDS:
@@ -70,6 +73,7 @@ class Powerhouse:
             self.genQ += [self.generators[idx].genQ]
             self.genPAvail += [self.generators[idx].genPAvail]
             self.genQAvail += [self.generators[idx].genQAvail]
+            self.genMolAvail += [self.generators[idx].genMolAvail]
             self.outOfNormalBounds.append(self.generators[idx].outOfNormalBounds)
             self.outOfBounds.append(self.generators[idx].outOfBounds)
             self.genMol.append(self.generators[idx].genMol) # the MOLs of each generator
@@ -172,9 +176,10 @@ class Powerhouse:
             # check if out of bounds
             self.outOfNormalBounds[idx] = self.generators[idx].outOfNormalBounds
             self.outOfBounds[idx] = self.generators[idx].outOfBounds
-            # get available power from each
+            # get available power and minimum loading from each
             self.genPAvail[idx] = self.generators[idx].genPAvail
             self.genQAvail[idx] = self.generators[idx].genQAvail
+            self.genMolAvail[idx] = self.generators[idx].genMolAvail
             # get the spinning reserve being supplied by the generators
             #self.genSRC[idx] = self.generators[idx].genPAvail - self.generators[idx].genP
 

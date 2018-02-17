@@ -64,6 +64,7 @@ class ElectricalEnergyStorage:
         self.eesPoutAvailOverSrc = 0
         self.eesPoutAvailOverSrc_1 = 0
         self.eesPloss = 0
+        self.checkOperatingConditions()
 
     # energy storage descriptor parser
     def eesDescriptorParser(self, eesDescriptor):
@@ -198,7 +199,7 @@ class ElectricalEnergyStorage:
             self.eesPoutAvailOverSrc_1 = self.findPdisAvail(self.eesPoutAvail_1_time, self.eesSRC, self.eesMinSrcE)
             '''
             # check if not enough SRC
-            if self.eesPoutAvailOverSrc < 0:
+            if self.eesMinSrcE > self.eesSOC*self.eesEMax or self.eesSRC > (self.eesPoutAvail - self.eesP):
                 self.underSRC = True
             else:
                 self.underSRC = False

@@ -102,13 +102,15 @@ class Generator:
         self.outOfNormalBounds = False  # indicates when the generator is operating above upperNormalLoadingLimit or below MOL
         self.overGenUpperNormalLoading = 0 # the amount by which the generator has operated above genUpperNormalLoading in the past self.checkLoadingTime
         self.genDescriptorParser(genDescriptor)
-        # update genPAvail and genQAvail depending on Gstate
+        # update genMolAvail, genPAvail and genQAvail depending on Gstate
         if genState == 2:
             self.genPAvail = self.genPMax # P available is the how much power is avialable online. P max if online, 0 otherwise
             self.genQAvail = self.genQMax
+            self.genMolAvail = self.genMol # the lowest loading it can run at
         else:
             self.genPAvail = 0
             self.genQAvail = 0
+            self.genMolAvail = 0
 
     def checkOperatingConditions(self):
         """
@@ -170,6 +172,7 @@ class Generator:
             # update available power
             self.genPAvail = self.genPMax
             self.genQAvail = self.genQMax
+            self.genMolAvail = self.genMol  # the lowest loading it can run at
 
         elif self.genState == 1: # if running but offline (ie starting up)
             # set out of bounds flags to zero
@@ -181,6 +184,7 @@ class Generator:
             # update available power
             self.genPAvail = 0
             self.genQAvail = 0
+            self.genMolAvail = 0  # the lowest loading it can run at
 
         else: # if not running and offline
             # set out of bounds flags to zero
@@ -192,6 +196,7 @@ class Generator:
             # update available power
             self.genPAvail = 0
             self.genQAvail = 0
+            self.genMolAvail = 0  # the lowest loading it can run at
 
 
 

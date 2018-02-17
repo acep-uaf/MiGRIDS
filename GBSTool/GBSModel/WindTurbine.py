@@ -64,6 +64,9 @@ class WindTurbine:
         self.wtgStartTimeAct = 0 # time spent starting up since last start [s]
         self.step = 0 # this keeps track of which step in the time series we are on
 
+        # initiate runtime values
+        self.checkOperatingConditions()
+
     def wtgDescriptorParser(self, windSpeed, wtgDescriptor):
         """
         wtgDescriptorParser: parses the necessary data from the wtgDescriptor.xml file provided.

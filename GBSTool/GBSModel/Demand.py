@@ -23,12 +23,13 @@ class Demand:
         # the timestep the simulation is run at.
         self.timeStep = timeStep
         # read the real load in
-        self.realLoad = self.loadLoadFiles(loadRealFiles)
+        self.realTime, self.realLoad = self.loadLoadFiles(loadRealFiles)
 
         # if loadReactiveFiles is not empty, load reactive files
         if len(loadReactiveFiles) != 0:
-            self.reactiveLoad = self.loadLoadFiles(loadReactiveFiles)
+            self. reactiveTime, self.reactiveLoad = self.loadLoadFiles(loadReactiveFiles)
         else:
+            self.reactiveTime = np.array([])
             self.reactiveLoad = np.array([])
 
     def loadLoadFiles(self,loadFiles, isReal = True):
@@ -72,7 +73,7 @@ class Demand:
                         raise ValueError(
                             'The length of input load files must be equal.')
                     load += np.array(value)*scale + value
-            return load
+            return time, load
 
         # if not a list or tuple, this file should represent the total load
         else:
@@ -95,4 +96,4 @@ class Demand:
                 raise ValueError('The units for real load must be kW.')
             elif units.lower() != 'kvar' and not isReal:
                 raise ValueError('The units for reactive load must be kvar.')
-            return np.array(value)*scale + offset
+            return time, np.array(value)*scale + offset

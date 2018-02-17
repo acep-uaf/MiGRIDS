@@ -128,6 +128,9 @@ class ElectricalEnergyStorageSystem:
             self.eesQinAvail[idx] = ees.eesQinAvail
             self.eesQoutAvail[idx] = ees.eesQoutAvail
             self.eesPloss[idx] = ees.eesPloss
+            self.underSRC[idx] = ees.underSRC
+            self.outOfBoundsReal[idx] = ees.outOfBoundsReal
+            self.outOfBoundsReactive[idx] = ees.outOfBoundsReactive
 
     # this finds the power each energy storage unit is capable of being scheduled for.
     def updateEesPScheduleMax(self):
