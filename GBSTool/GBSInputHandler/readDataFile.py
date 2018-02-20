@@ -70,12 +70,12 @@ def readDataFile(inputSpecification,fileLocation='',fileType='csv',columnNames=N
        
                 # cd to unit conventions file
                 dir_path = os.path.dirname(os.path.realpath(__file__))                
-                unitConventionDir = dir_path +'..\\..\\GBSAnalyzer\\UnitConverters'
+                unitConventionDir = os.path.join(dir_path, '../GBSAnalyzer/UnitConverters')
                 # get the default unit for the data type
                 units = readXmlTag('internalUnitDefault.xml', ['unitDefaults', componentAttributes[i]], 'units', unitConventionDir)[0]
                 # if the units don't match, convert
                 if units.lower() != componentUnits[i].lower():
-                    unitConvertDir = dir_path + '..\\..\\GBSAnalyzer\\UnitConverters\\unitConverters.py'
+                    unitConvertDir = os.path.join( dir_path,'../GBSAnalyzer/UnitConverters/unitConverters.py')
                     funcName = componentUnits[i].lower() + '2' + units.lower()
                     # load the conversion
                     spec = importlib.util.spec_from_file_location(funcName, unitConvertDir)
