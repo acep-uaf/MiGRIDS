@@ -151,8 +151,10 @@ def fixBadData(df, setupDir, ListOfComponents, sampleInterval):
     if GEN:
         data.fixGen(powerColumns)
         data.totalPower()
-        data.removeAnomolies()
-        
+        print('no anomoly')
+    
+    data.removeAnomolies()
+    data.totalPower()   
     data.fixed.to_sql("fixed_data", connection,if_exists='replace')       
     
     return data
@@ -431,7 +433,7 @@ class DataClass:
     #list, string -> pdf
     def visualize(self, components, setupDir):
         '''produces a pdf comparing raw and fixed data'''
-        filename = os.path.join(setupDir + '../../TimeSeriesData', 'fixed_data_compare.pdf')
+        filename = os.path.join(setupDir, '../../TimeSeriesData', 'fixed_data_compare.pdf')
 
         #plot raw and fixed data
         with PdfPages(filename) as pdf:
