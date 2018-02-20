@@ -386,8 +386,9 @@ class DataClass:
             self.fixed = pd.DataFrame(raw_df.copy(), raw_df.index, raw_df.columns)
             #give the fixed data a time index to work with - assumes this is in the first column
             time_index = pd.to_datetime(self.fixed.iloc[:, 0], unit='s')
-            self.fixed.index = time_index            
-            self.fixed = self.fixed.drop(self.fixed.iloc[:, 0], axis=1)
+                      
+            self.fixed = self.fixed.drop(self.fixed.columns[0], axis = 1)
+            self.fixed.index = time_index  
         else:
             self.raw = pd.DataFrame()
             self.fixed = pd.DataFrame()
