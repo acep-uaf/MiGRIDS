@@ -74,7 +74,8 @@ class eesDispatch:
         if sum(PsrcAvail) <= 0 :
             SrcRatio = 0
         else:
-            SrcRatio = min([newSRC / sum(PsrcAvail),1])  # the fraction of available SRC power assigned to each ees
+            # SrcRatio is not limited to 1, so can over assign SRC, this will lead to underSRC flag being raised.
+            SrcRatio = newSRC / sum(PsrcAvail)  # the fraction of available SRC power assigned to each ees
         # set the SRC for each ees and find available remaining power
         for idx, ees in enumerate(eess.electricalEnergyStorageUnits):
             ees.setSRC(PsrcAvail[idx] * SrcRatio)

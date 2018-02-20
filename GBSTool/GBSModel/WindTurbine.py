@@ -63,6 +63,9 @@ class WindTurbine:
         self.wtgRunTimeTot = 0  # Cummulative run time since model start [s]
         self.wtgStartTimeAct = 0 # time spent starting up since last start [s]
         self.step = 0 # this keeps track of which step in the time series we are on
+        self.wtgSpilledWind = [] # time series of spilled wind power
+        self.wtgSpilledWindCum = 0 # amount of spilled wind power in last wtgCheckWindPowerTime seconds
+        self.wtgSpilledWindFlag = False # indicates over spilled wind power limit
 
         # initiate runtime values
         self.checkOperatingConditions()
@@ -88,6 +91,9 @@ class WindTurbine:
         self.wtgName = wtgSoup.component.get('name')
         self.wtgPMax = float(wtgSoup.POutMaxPa.get('value')) # Nameplate capacity [kW]
         self.wtgQMax = float(wtgSoup.QOutMaxPa.get('value'))  # Nameplate capacity [kvar]
+        self.wtgCheckWindTime = float(wtgSoup.checkWindTime.get('value'))  # time to check spilled wind power over
+        self.wtgSpilledWindLimit = float(
+            wtgSoup.spilledWindLimit.get('value'))  # time to check spilled wind power over
 
         # Handle the fuel curve interpolation
         powerCurvePPuInpt = wtgSoup.powerCurveDataPoints.pPu.get('value').split()
@@ -133,6 +139,15 @@ class WindTurbine:
             self.wtgPAvail = self.windPower[self.step]
             self.wtgRunTimeAct += self.timeStep
             self.wtgRunTimeTot += self.timeStep
+
+            # update spilled wind power time series
+            self.wtgSpilledWind.append(max([self.wtgPAvail-self.wtgP, 0]))
+            # get the spilled wind power in checkWindPowerTime
+            self.wtgSpilledWindCum = sum(self.wtgSpilledWind[-int(self.wtgCheckWindTime/self.timeStep):])
+            # if enough wind spilled, set flag
+            if (self.wtgSpilledWindCum > self.wtgSpilledWindLimit) and (self.wtgSpilledWind[-1] > 0):
+                self.wtgSpilledWindFlag = True
+
         elif self.wtgState == 1: # if starting up
             self.wtgPAvail = 0 # not available to produce power yet
             self.wtgQAvail = 0
