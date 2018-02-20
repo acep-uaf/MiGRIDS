@@ -10,7 +10,7 @@ timeStep = 1
 # Energy Storage
 
 eesIDS = [0,1]
-eesSOC = [0]*2
+eesSOC = [0.5]*2
 eesStates = [2]*2
 eesSRC = [100]*2
 eesDescriptor = ['C:\\Users\jbvandermeer\Documents\ACEP\GBS\GBSTools\GBSProjects\\test\InputData\Components\ees0Descriptor.xml']\
@@ -19,10 +19,10 @@ eesDispatch = 'eesDispatch1'
 
 # Wind Turbines
 
-wtgIDs = [0,1,3]
-wtgStates = [2]*3
+wtgIDs = list(range(12))
+wtgStates = [2]*12
 timeStep = 1
-wtgDescriptor = ['C:\\Users\jbvandermeer\Documents\ACEP\GBS\GBSTools\GBSProjects\Chevak\InputData\Components\wtg1Descriptor.xml']*3
+wtgDescriptor = ['C:\\Users\jbvandermeer\Documents\ACEP\GBS\GBSTools\GBSProjects\Chevak\InputData\Components\wtg1Descriptor.xml']*12
 windSpeed = 'C:\\Users\jbvandermeer\Documents\ACEP\GBS\GBSTools\GBSProjects\Chevak\InputData\TimeSeriesData\ProcessedData\wtg1WS.nc'
 
 # Generators
@@ -60,6 +60,7 @@ print('done')
 
 import matplotlib.pyplot as plt
 plt.figure()
+plt.plot(np.array(SO.DM.realLoad[:100000]))
 plt.plot(SO.genP) # gen output
 plt.plot(SO.genPAvail)
 plt.plot(SO.wtgPImport) # wtg import
@@ -67,6 +68,12 @@ plt.plot(SO.rePlimit)
 plt.plot(SO.wtgPAvail)
 plt.plot(SO.wtgPch) # wtg charging of eess
 plt.plot(SO.eesDis)
+
+# over gen operation
+genDiff = np.array(SO.genP) - np.array(SO.genPAvail)
+genDiff[genDiff < 0 ] = 0
+
+plt.plot(SO.genPAvail)
 
 plt.figure()
 plt.plot(SO.eessSrc)
@@ -77,4 +84,6 @@ plt.plot(np.array(SO.genP) + np.array(SO.wtgPImport) + np.array(SO.eesDis))
 plt.plot(SO.DM.realLoad[:100000])
 plt.plot(np.array(SO.DM.realLoad[:100000]) - (np.array(SO.genP) + np.array(SO.wtgPImport) + np.array(SO.eesDis)))
 
-
+plt.figure()
+plt.plot(SO.outOfNormalBounds)
+plt.plot(SO.underSRC)

@@ -55,6 +55,7 @@ class ElectricalEnergyStorage:
         self.eesPinAvail = 0
         self.eesPinAvail_1 = 0
         self.eesPsrcAvail = 0
+        self.eesPsrcAvailMax = 0
         self.eesQinAvail = self.eesQInMax
         self.eesPoutAvail = 0
         self.eesQoutAvail = self.eesQOutMax
@@ -199,7 +200,9 @@ class ElectricalEnergyStorage:
             self.eesPoutAvailOverSrc_1 = self.findPdisAvail(self.eesPoutAvail_1_time, self.eesSRC, self.eesMinSrcE)
             '''
             # check if not enough SRC
-            if self.eesMinSrcE > self.eesSOC*self.eesEMax or self.eesSRC > (self.eesPoutAvail - self.eesP):
+            #if self.eesMinSrcE > self.eesSOC*self.eesEMax or self.eesSRC > (self.eesPoutAvail - self.eesP):
+            # eesPsrcAvail is updated in the dispatch.
+            if self.eesPsrcAvail < self.eesSRC:
                 self.underSRC = True
             else:
                 self.underSRC = False
@@ -350,8 +353,10 @@ class ElectricalEnergyStorage:
         self.eesSRC = SRC
         # get index of closest P to SRC
         pInd = np.searchsorted(self.eesLossMapP, SRC, side='left')
+        pInd = min([len(self.eesLossMapP)-1,pInd])
         # get the index of the closest max discharge time to the required SRC time
         eInd = np.searchsorted(self.eesmaxDischTime[pInd, :], self.eesSrcTime, side='left')
+        eInd = min([len(self.eesLossMapE)-1, eInd])
         # set the required energy stored in the ees to supply the SRC, in kWs
         self.eesMinSrcE = self.eesLossMapE[eInd]
 
@@ -359,6 +364,7 @@ class ElectricalEnergyStorage:
     def updateSrcAvail(self):
         useP = max([self.eesP,0]) # only take into account discharging power
         self.eesPsrcAvail = self.findPdisAvail(self.eesSrcTime, useP, useP*self.timeStep)
+
 
     # this finds the power this ees is capable of being scheduled for.
     def updatePScheduleMax(self):

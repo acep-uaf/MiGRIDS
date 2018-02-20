@@ -49,6 +49,7 @@ class Windfarm:
         # Total available wtg power without new dispatch
         self.wtgPAvail = []
         self.wtgQAvail = []
+        self.wtgSpilledWindFlag = []  # indicates over spilled wind power limit
 
         # Populate the list of wtg with windTurbine objects
         for idx, wtgID in enumerate(wtgIDS):
@@ -89,6 +90,7 @@ class Windfarm:
             self.wtgQ += [self.windTurbines[idx].wtgQ]
             self.wtgPAvail += [self.windTurbines[idx].wtgPAvail]
             self.wtgQAvail += [self.windTurbines[idx].wtgQAvail]
+            self.wtgSpilledWindFlag += [self.windTurbines[idx].wtgSpilledWindFlag]
 
     # wtgDispatch class method. Assigns a loading to each online wind turbine. It will not allow overloading.
     # TODO: some turbines (eg EWT) are able to slow down their rotors to supply overcurrent for a short duration. This can be incorporated
@@ -120,6 +122,7 @@ class Windfarm:
                 self.windTurbines[idx].checkOperatingConditions()
                 self.wtgPAvail[idx] = self.windTurbines[idx].wtgPAvail
                 self.wtgQAvail[idx] = self.windTurbines[idx].wtgQAvail
+                self.wtgSpilledWindFlag[idx] = self.windTurbines[idx].wtgSpilledWindFlag
         else:
             raise ValueError('The wind turbine dispatch is not supported. ')
 
