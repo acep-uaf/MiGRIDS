@@ -34,30 +34,8 @@ GEN = True #does the system need diesel generators running.
 #returns a DataClass object with raw and cleaned data and powercomponent information
 def fixBadData(df, setupDir, ListOfComponents, sampleInterval):
     '''returns cleaned dataframe'''  
+    
     #local functions - not used outside fixBadData
-    #string, dataframe, dictionary -> empty
-    #changes netagive values to 0 for the specified component. Row indexes are stored in the baddata dictionary
-#    def negativeToZero(component, df, baddata):
-#        badDictAdd(component, baddata, '3.Negative value', df[df[component] < 0].index.tolist())
-#        df[component][df[component] < 0] = 0
-#        return df
-
-    #String, DataFrame, Dictionary, grouped object -> DataFrame, Dictionary
-    #inline values are replaced and index is recorded in datadictionary
-#    def inlineFix(component, df, baddata, inline):
-#        '''corrects inline data within a dataframe'''
-#        logging.info("inline component is: %s", component)
-#        logging.info('Attempting to replace %d subsets for %s.' %(len(inline), component))
-#        
-#         #here is where we actually replace values.
-#        for name, group  in inline:
-#            if(len(group) > 3) | (min(group[component]) != 0):
-#               badDictAdd(component,
-#                       baddata, '2.Inline values',
-#                       group.index.tolist())
-#            #attempt to replace using direct value transfer from similar data subset or linear interpolation
-#               getReplacement(df, group.index, component)
-#        return df, baddata
 
     #string, dataframe, xml, dictionary -> dataframe, dictionary
     #returns a dictionary of bad values for a given variable and change out of bounds values to Nan in the dataframe
@@ -151,7 +129,6 @@ def fixBadData(df, setupDir, ListOfComponents, sampleInterval):
     if GEN:
         data.fixGen(powerColumns)
         data.totalPower()
-        print('no anomoly')
     
     data.removeAnomolies()
     data.totalPower()   
@@ -232,51 +209,6 @@ def dataReplace(df, missing, replacement, component=None):
     else:
         df.loc[min(missing.index):max(missing.index), component] = replacement[component].values
     return df
-
-#datetime -> boolean
-#returns true if the datetime provided is a weekday
-#def isWeekday(dt):
-#    return bool(dt.dayofweek <= 5)
-
-#dataframe, dataframe, dataframe,string -> dataframe
-#returns scaled data to insert into missing data block
-#def scaleMatch(df, missingBlock, replacement,component):
-#    '''produces a model of the relationship between replacement and missing
-#    data based on surrounding values and scales replacment data based on
-#    the model'''
-#    newreplacement = pd.DataFrame()
-#    #values before and after the missing block
-#    match = df.loc[:min(missingBlock.index), component][-5:]
-#    new = df.loc[:min(replacement.index), component][-5:]
-#    d = dict(y=np.array(match),x=np.array(new)) 
-#    temporary_df = pd.DataFrame(dict([ (k,pd.Series(v)) for k,v in d.items() ]))
-#   
-#    match = df.loc[max(missingBlock.index): , component][0:5]
-#    new= df.loc[max(replacement.index): , component][0:5]
-#    d = dict(y=np.array(match),x=np.array(new)) 
-#    temporary_df = pd.concat([temporary_df,pd.DataFrame(dict([ (k,pd.Series(v)) for k,v in d.items() ]))])
-#    temporary_df=temporary_df.dropna(0)
-#    #model to rescale replacement values to values surrounding the missing block
-#    try:
-#        lm = stats.linregress(temporary_df['x'], temporary_df['y'])
-#    except ValueError:
-#        return pd.DataFrame()  
-#    newreplacement = replacement[component] * lm.slope + lm.intercept
-#    if component == 'total_p':        
-#        #fill each component based on the proportion of the total it is in the replacement block
-#        adjuster = np.mean(replacement)/np.mean(replacement[component]) 
-#        
-#    elif component == 'gentotal':
-#        #TODO remove hardwire for generator columns 
-#        genColumns = ['gen1P','gen2P','gen3P']
-#        adjuster = np.mean(replacement[genColumns])/np.mean(replacement[component]) 
-#    n = newreplacement.apply(lambda x : x * adjuster)
-# 
-#
-#    #newreplacement = n.transpose() 
-#    #reorder t he columns to match the missing block
-#    #newreplacement = newreplacement[replacement.columns]
-#    return n
 
 #dataframe, list of indices, string -> Boolean
 #returns true if a replacement was made, false if it was not
@@ -433,7 +365,7 @@ class DataClass:
     #list, string -> pdf
     def visualize(self, components, setupDir):
         '''produces a pdf comparing raw and fixed data'''
-        filename = os.path.join(setupDir, '../../TimeSeriesData', 'fixed_data_compare.pdf')
+        filename = os.path.join(setupDir, '../TimeSeriesData', 'fixed_data_compare.pdf')
 
         #plot raw and fixed data
         with PdfPages(filename) as pdf:
@@ -449,20 +381,11 @@ class DataClass:
             plt.title('Fixed data total power')
             pdf.savefig()
             plt.close()
-            #individual component plots
-            f, axarr = plt.subplots(len(components), sharex=True)
-            for i in range(len(components)):
-                if len(self.fixed) == len(self.raw):
-                    axarr[i].plot(self.fixed.index, self.raw[components[i]])
-                axarr[i].plot(self.fixed.index, self.fixed[components[i].lower()])
-                axarr[i].set_title(components[i])
-            f.subplots_adjust(hspace=0.3)
-            pdf.savefig()
-            
+              
 #    #string -> pickle
     def preserve(self,setupDir):
         '''pickles the dataframe so it can be restored later'''
-        filename = os.path.join(setupDir + '../../TimeSeriesData', 'fixed_data.pickle')
+        filename = os.path.join(setupDir + '../TimeSeriesData', 'fixed_data.pickle')
         pickle_out = open(filename, 'wb')
         pickle.dump(self.fixed, pickle_out)
         pickle_out.close

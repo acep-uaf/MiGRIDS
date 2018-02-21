@@ -26,10 +26,12 @@ Village = readXmlTag(fileName,'project','name')[0]
 inputSpecification = readXmlTag(fileName,'inputFileFormat','value')[0]
 # input a list of subdirectories under the GBSProjects directory
 fileLocation = readXmlTag(fileName,'inputFileDir','value')
+fileLocation = os.path.join(*fileLocation)
+fileLocation = os.path.join('../../../',fileLocation)
 # file type
 fileType = readXmlTag(fileName,'inputFileType','value')[0]
-interval = readXmlTag(fileName,'timeStep','value')[0] + readXmlTag(fileName,'timeStep','unit')[0]
-
+outputInterval = readXmlTag(fileName,'outputTimeStep','value')[0] + readXmlTag(fileName,'outputTimeStep','unit')[0]
+inputInterval = readXmlTag(fileName,'inputTimeStep','value')[0] + readXmlTag(fileName,'inputTimeStep','unit')[0]
 '''
 # input data
 Village = 'Chevak'
@@ -47,20 +49,20 @@ headerNames, componentUnits, componentAttributes, componentNames, newHeaderNames
 
 # read time series data
 from readDataFile import readDataFile
-df, units, scale, offset = readDataFile(inputSpecification,fileLocation,fileType,headerNames,newHeaderNames,componentUnits,componentAttributes) # dataframe with time series information. replace header names with column names
+df, listOfComponents= readDataFile(inputSpecification,fileLocation,fileType,headerNames,newHeaderNames,componentUnits,componentAttributes) # dataframe with time series information. replace header names with column names
 
 # now fix the bad data
 from fixBadData import fixBadData
-df_fixed = fixBadData(df,setupDir,componentNames)
+df_fixed = fixBadData(df,setupDir,listOfComponents,inputInterval)
 
 # check the fixed data with the old data
 # plot data, display statistical differences (min, max, mean std difference etc)
 
 # fix the intervals
 from fixDataInterval import fixDataInterval
-df_fixed_interval = fixDataInterval(df_fixed,interval)
+df_fixed_interval = fixDataInterval(df_fixed,outputInterval)
 
 # now convert to a netcdf
 from dataframe2netcdf import dataframe2netcdf
-dataframe2netcdf(df_fixed_interval,units,scale,offset)
+dataframe2netcdf(df_fixed_interval, listOfComponents)
 # save ncfile in folder `ModelInputData' in the path ../GBSProjects/[VillageName]/InputData/TimeSeriesData/
