@@ -16,44 +16,17 @@ def fixDataInterval(data,interval):
     import pandas as pd
     import sqlite3 as lite
 
-   #local functions
-   #generates a group id for groups of values within a series that are the same
-   #Series -> Series
-    def isInline(x):
-        grouping = x.diff().ne(0).cumsum()
-        return grouping
-    
-    #g is a row from from the groups dataframe, df is the dataframe containing component data
-    #components is the list of power components within the dataframe
-    #fills a specified block within a dataframe with simulated values
-    #row, dataframe, list
-    def langeEstimate(g,df,components):
-        import numpy as np
-        #the column containing a sum of power components
-        s = df['total_p']
-        #standard deviation of values before the missing values (excludes nan)
-        sigma = np.std(s[:g['first']][-10:-1])
-        
-        #mean of values before the missing values (excludes nan)
-        mu = np.mean(s[:g['first']][-10:-1]) 
-        #previous total_p value is our start for estimating new values
-        start = s[:g['first']][-2]  
-        #estimateDistribution returns a list of times and values
-        y = estimateDistribution(1,len(s[g['first']:g['last']]),start, mu,sigma,g['first'])           
-        #this sets the total_p column to the new values
-        s.loc[g['first']:g['last']]  = y[0] 
-        #this distributes the total_p across all components
-        #TODO if we only need power components change this to data.powerComponents
-        for c in df.columns[0:-1]:
-            #the adjuster is the proportion of total_p that a component was in the previous record
-            adj = df.loc[:g['first'],c][-2]/df.loc[:g['first'],'total_p'][-2]
-            df.loc[g['first']:g['last'],c] = round(adj * df.loc[g['first']:g['last'],'total_p'],0)
-        return 
-    
-    #uses a langevin estimator to produce a specified number of 
-    #values based on a start value, mean, and standard deviation 
-    #elapsed_time is in seconds
-    #int, numeric, numberic, numeric ->numeric array, numeric array
+    #make a copy of the input dataframe - original remains the same
+    resample_df = pd.DataFrame(data.fixed.copy())
+    df = resample_df.copy()
+    df['mu'] = df.total_p.rolling(10,2).mean()
+
+    df['sigma'] = df.total_p.rolling(10,2).std()
+    df['mu'] = df['mu'].bfill()
+    df['sigma'] = df['sigma'].bfill()
+    #up or down sample to our desired interval
+    #down sampling results in averaged values
+    resample_df = resample_df.resample(interval).mean()
     def getValues(elapsed_time, start, mu, sigma):
         import numpy as np
         #seconds between samples
@@ -76,68 +49,42 @@ def fixDataInterval(data,interval):
             x[i+1] = x[i] + timestep*(-(x[i]-mu)/tau) + sigma_bis * sqrtdt * (np.random.randn())
         x[x < 0] = 0
         #drop the starter value when the arrays are returned
-        return t[1:], x[1:]
-    # returns a list with 1 datetime array at specified intervals and 1 numeric array of simulated values          
-    #int, int, numeric, numeric, numeric, datetime -> list
-    def estimateDistribution(interval, records, start, mu, sigma,datetime):
-       import pandas as pd 
-       #get the estimated values
-       t, x = getValues(records,start, mu, sigma)     
-       #convert t to a range of times at the specified intervals
-       t = pd.date_range(datetime - pd.to_timedelta(interval * records, unit='s'), periods=records,freq='s')
-       #pair the time and values into a list to be returned
-       distribution = [x[-records:],t[-records:]]
-       return distribution
-#TODO rempove sqlite backups      
-#    database = 'fixedData0219.db'
-#    connection = lite.connect(database)
-    
-    #make a copy of the input dataframe - original remains the same
-    resample_df = pd.DataFrame(data.fixed.copy())
-   
-    #up or down sample to our desired interval
-    #down sampling results in averaged values
-    resample_df = resample_df.resample(interval).mean()
-    #upsamping results in nan at new timesteps
-    #make the nan's 0 for the total_p column so we can group it
-    resample_df[pd.isnull(resample_df.total_p)] = 0
-    resample_df['grouping']  = 0
-    resample_df['grouping'] = isInline(resample_df.total_p)
-    
-    #create groups dataframe of repeated values
-    groups = resample_df.reset_index().groupby('grouping').agg({resample_df.index.name:['count','first','last'],'total_p':['mean']})
-    #remove the second column name level and keep only the groups where there is 0 for total_p
-    groups.columns = groups.columns.droplevel(0)
-    groups = groups[groups['mean'] ==0]
-    
-    #TODO remove loop through groups - only need for writing to sqlite
-    previous_subgroup = 0
-    for subgroup in range(10000, len(groups), 10000):
-        print (subgroup)
-        groups.loc[previous_subgroup:subgroup].apply(lambda x: langeEstimate(x,resample_df,data.powerComponents),axis = 1)
+        return x
+        #upsamping results in nan at new timesteps
+        #make the nan's 0 for the total_p column so we can group it
+    def estimateDistribution(x,df):
+        #x.name is current location
+       mu = x['mu']
+       start = x['total_p']
+       sigma = x['sigma']
+       if df.loc[x.name:][1:].first_valid_index() != None:
+           records = (df.loc[x.name:][1:].first_valid_index() - x.name) / interval
+       else:
+           return 
+       y = getValues(records,start, mu, sigma) 
+       y = y[1:-1]
        
-#        s = groups.iloc[previous_subgroup]['first']
-#        e = groups.iloc[subgroup]['last']
-#       if connection != None:
-#            resample_df[s:e].to_sql("resampled_data",connection, if_exists='append')
-        previous_subgroup = subgroup
-    subgroup = len(groups)
-    groups.iloc[previous_subgroup:subgroup].apply(lambda x: langeEstimate(x,resample_df,data.powerComponents),axis = 1)
+       #convert t to a range of times at the specified intervals
+       t = pd.date_range(x.name,  x.name + pd.to_timedelta(interval) * records, unit='s',freq='s')  
+       t = t[1:-1]
+    #pair the time and values into a list to be returned
+       return t,y
+       
 
-    #check if there are 0's that came in for simulated total_p
-    resample_df.loc[resample_df.total_p ==0,data.powerComponents] = None
-    resample_df.loc[resample_df.total_p ==0,'total_p'] = None
-    #fill with linear interpolation
-    resample_df.total_p = resample_df.total_p.interpolate()
-    #TODO remove sqlite backup
-#    if connection != None:
-#        resample_df.to_sql("resampled_data",connection, if_exists='replace')
-    
-    #put in a date column to be used when we convert to netcdf
+    k =df.apply(lambda x: estimateDistribution(x,df), axis=1)
+    nd = pd.DataFrame()
+    for x in k:
+        if x != None:
+           nd =  nd.append(pd.DataFrame({'t':x[0],'y':x[1]}))
+    nd= nd.set_index(nd['t'])
+    resample_df = resample_df.join(nd,how='left')
+    resample_df.loc[pd.isnull(resample_df['total_p']),'total_p'] = resample_df['y']
+    adj_m = resample_df[resample_df.columns[0:-4]].div(resample_df['total_p'], axis=0)
+    adj_m = adj_m.ffill()
+    resample_df = adj_m.multiply(resample_df['total_p'], axis = 0)
+      #put in a date column to be used when we convert to netcdf
     resample_df.insert(0, 'date', pd.to_numeric(resample_df.index))
     #drop temporary columns that won't be used in netCDF files
-    resample_df = resample_df.drop('total_p',1)
-    resample_df = resample_df.drop('grouping',1)
  
     return resample_df
 
