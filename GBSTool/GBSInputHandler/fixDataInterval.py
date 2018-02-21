@@ -72,10 +72,9 @@ def fixDataInterval(data,interval):
        
 
     k =df.apply(lambda x: estimateDistribution(x,df), axis=1)
-    nd = pd.DataFrame()
-    for x in k:
-        if x != None:
-           nd =  nd.append(pd.DataFrame({'t':x[0],'y':x[1]}))
+    k = k[k.notnull()]
+    kdf = k.apply(lambda x: pd.DataFrame({'t':x[0],'y':x[1]}))
+    nd = pd.concat(kdf.tolist())
     nd= nd.set_index(nd['t'])
     resample_df = resample_df.join(nd,how='left')
     resample_df.loc[pd.isnull(resample_df['total_p']),'total_p'] = resample_df['y']
