@@ -205,7 +205,7 @@ class Powerhouse:
         indCap = np.array([idx for idx, x in enumerate(self.genCombinationsUpperNormalLoading) if x > scheduledLoad + scheduledSRC])
         # if there are no gen combinations large enough to supply, automatically add largest (last combination)
         if len(indCap) == 0:
-            indCap = np.array([len(self.genCombinationsUpperNormalLoading)])
+            indCap = np.array([len(self.genCombinationsUpperNormalLoading)-1])
         # find all with MOL under the load
         indMOLCap = [idx for idx, x in enumerate(self.genCombinationsMOL[indCap]) if x < scheduledLoad]
         # ind of in bounds combinations
@@ -257,7 +257,8 @@ class Powerhouse:
             FCpower, FCcons = zip(*self.genCombinationsFCurve[idx]) # separate out the consumption and power
             # bisect left gives the index of the last list item to not be over the number being searched for. it is faster than using min
             # this finds the associated fuel consumption to the scheduled load for this combination
-            fuelCons.append(FCcons[bisect_left(FCpower,scheduledLoad)])
+            indFCcons = min([np.searchsorted(FCpower,scheduledLoad, side='left'),len(FCpower)-1])
+            fuelCons.append(FCcons[indFCcons])
             # TODO: Add cost of switching generators
 
         ## bring the best option that can be switched immediatley, if any
