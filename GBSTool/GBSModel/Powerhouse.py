@@ -203,9 +203,17 @@ class Powerhouse:
         ## first find all generator combinations that can supply the load within their operating bounds
         # find all with capacity over the load and the required SRC
         indCap = np.array([idx for idx, x in enumerate(self.genCombinationsUpperNormalLoading) if x > scheduledLoad + scheduledSRC])
+        # if there are no gen combinations large enough to supply, automatically add largest (last combination)
+        if len(indCap) == 0:
+            indCap = np.array([len(self.genCombinationsUpperNormalLoading)-1])
         # find all with MOL under the load
         indMOLCap = [idx for idx, x in enumerate(self.genCombinationsMOL[indCap]) if x < scheduledLoad]
+        # ind of in bounds combinations
         indInBounds = indCap[indMOLCap]
+        # if there are no gen combinations with a low enough MOL enough to supply, automatically add combination 1,
+        # which is to smallest generator combination without turning off the generators
+        if len(indInBounds) == 0:
+            indInBounds = np.array([1])
 
         ## then check how long it will take to switch to any of the combinations online
         turnOnTime = []
@@ -249,7 +257,8 @@ class Powerhouse:
             FCpower, FCcons = zip(*self.genCombinationsFCurve[idx]) # separate out the consumption and power
             # bisect left gives the index of the last list item to not be over the number being searched for. it is faster than using min
             # this finds the associated fuel consumption to the scheduled load for this combination
-            fuelCons.append(FCcons[bisect_left(FCpower,scheduledLoad)])
+            indFCcons = min([np.searchsorted(FCpower,scheduledLoad, side='left'),len(FCpower)-1])
+            fuelCons.append(FCcons[indFCcons])
             # TODO: Add cost of switching generators
 
         ## bring the best option that can be switched immediatley, if any
@@ -270,7 +279,7 @@ class Powerhouse:
                 # find most efficient option that can be switched now
                 indBest = next((x for x in range(len(indSort)) if timeToSwitch[indSort[x]] <= 0 )) # indBest wrt indSort
                 # update online generator combination
-                self.onlineCombinationID = self.combinationsID[indInBounds[indBest]]
+                self.onlineCombinationID = self.combinationsID[indInBounds[indSort[indBest]]]
                 self.switchGenComb(genSwOn[indSort[indBest]],genSwOff[indSort[indBest]]) # switch generators
 
 

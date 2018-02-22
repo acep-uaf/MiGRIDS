@@ -73,8 +73,31 @@
      Default is 1 second. -->
     <timeStep value="1" unit="s"/>
 
+    <!-- 'predictLoad' refers to the function that is used to predict the load. If a user defines their own load
+    predicting function, it is the path and filename of the function used to predict short term (several hours) future
+    load. Otherwise, it is the name of the dispatch filename included in the software package. Options include:
+    predictLoad0. The class name in the file must be 'predictLoad'. Inputs to the class are the load profile up till the
+    current time step and the date-time in epoch format. Default is predictLoad1 -->
+    <predictLoad value="predictLoad0"/>
 
+    <!-- 'predictWind' refers to the function that is used to predict the wind speed. If a user defines their own wind
+    predicting function, it is the path and filename of the function used to predict short term (several hours) future
+    load. Otherwise, it is the name of the dispatch filename included in the software package. Options include:
+    predictWind0. The class name in the file must be 'predictWind'. Inputs to the class are the wind speed profile up
+    till the current time step and the date-time in epoch format. Default is predictWind0 -->
+    <predictWind value="predictWind0"/>
 
+    <!-- 'eesDispatch' refers to the class that is used to dispatch the energy storage units.  If a user defines their
+    own dispatch, it is the path and filename of the dispatch class used to dispatch the energy storage units.
+    Otherwise, it is the name of the dispatch filename included in the software package. Options include: eesDispatch0.
+    The class name in the file must be 'eesDispatch'. Default value is 'eesDispatch0'-->
+    <eesDispatch value="eesDispatch0"/>
+
+    <!-- 'genDispatch' refers to the class that is used to dispatch the generators.  If a user defines their
+    own dispatch, it is the path and filename of the dispatch class used to dispatch the generators.
+    Otherwise, it is the name of the dispatch filename included in the software package. Options include: genDispatch0.
+    The class name in the file must be 'genDispatch'. Default value is 'genDispatch0'-->
+    <genDispatch value="eesDispatch0"/>
 
 </project>
 <!-- EOF -->

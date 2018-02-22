@@ -23,7 +23,8 @@ class ElectricalEnergyStorageSystem:
         :param eesDescriptor: list of relative path and file name of eesDescriptor-files used to populate static information.
         :param eesDispatch: If a user defines their own dispatch, it is the path and filename of the dispatch class used
         to dispatch the energy storage units. Otherwise, it is the name of the dispatch filename included in the software
-        package. Options include: eesDispatch1. The class name in the file must be 'eesDispatch'
+        package. Options include: eesDispatch1. The class name in the file must be 'eesDispatch'. It needs to run the function
+        updateSrcAvail() for each energy storage unit, after assigning the power to eesP, to update the eesSrcAvail property.
         """
         # check to make sure same length data coming in
         if not len(eesIDS) == len(eesSOC)==len(eesStates)==len(eesDescriptor):
@@ -60,6 +61,7 @@ class ElectricalEnergyStorageSystem:
         self.eesQinAvail = []
         self.eesPoutAvail = []
         self.eesQoutAvail = []
+        self.eesPsrcAvail = []
         self.eesPloss = []
         self.eesPoutAvailOverSrc = []
         self.eesPoutAvailOverSrc_1 = []
@@ -79,6 +81,7 @@ class ElectricalEnergyStorageSystem:
             self.eesQinAvail.append(self.electricalEnergyStorageUnits[idx].eesQinAvail)
             self.eesPoutAvail.append(self.electricalEnergyStorageUnits[idx].eesPoutAvail)
             self.eesQoutAvail.append(self.electricalEnergyStorageUnits[idx].eesQoutAvail)
+            self.eesPsrcAvail.append(self.electricalEnergyStorageUnits[idx].eesPsrcAvail)
             self.eesPloss.append(self.electricalEnergyStorageUnits[idx].eesPloss)
             self.eesPinAvail_1.append(self.electricalEnergyStorageUnits[idx].eesPinAvail)
             self.eesPoutAvailOverSrc.append(self.electricalEnergyStorageUnits[idx].eesPoutAvailOverSrc)
@@ -123,6 +126,7 @@ class ElectricalEnergyStorageSystem:
             self.eesSOC[idx] = ees.eesSOC
             self.eesStates[idx] = ees.eesState
             self.eesSRC[idx] = ees.eesSRC
+            self.eesPsrcAvail[idx] = ees.eesPsrcAvail
             self.eesPinAvail[idx] = ees.eesPinAvail
             self.eesPoutAvail[idx] = ees.eesPoutAvail
             self.eesQinAvail[idx] = ees.eesQinAvail

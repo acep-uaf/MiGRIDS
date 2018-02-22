@@ -12,11 +12,12 @@ from Demand import Demand
 import os
 import sys
 import importlib.util
+import numpy as np
 
 class SystemOperations:
     # System Variables
     # Generation and dispatch resources
-    def __init__(self, timeStep = 1, loadRealFiles = [], loadReactiveFiles = [], predictLoad = [],
+    def __init__(self, timeStep = 1, loadRealFiles = [], loadReactiveFiles = [], predictLoad = 'predictLoad1', predictWind = 'predictWind0',
                  genIDs = [], genStates = [], genDescriptors = [], genDispatch = [],
                  wtgIDs = [], wtgStates = [], wtgDescriptors = [], wtgSpeedFiles = [],
                  eesIDs = [], eesStates = [], eesSOCs = [], eesDescriptors = [], eesDispatch = []):
@@ -27,7 +28,12 @@ class SystemOperations:
         :param loadReactiveFiles: list of net cdf files that add up to the full reactive load. This can be left empty.
         :param predictLoad: If a user defines their own load predicting function, it is the path and filename of the function used
         to predict short term (several hours) future load. Otherwise, it is the name of the dispatch filename included in the software
-        package. Options include: predictLoad1. The class name in the file must be 'predictLoad'
+        package. Options include: predictLoad0. The class name in the file must be 'predictLoad'. Inputs to the class are
+        the load profile up till the current time step and the date-time in epoch format.
+        :param predictWind: If a user defines their own wind predicting function, it is the path and filename of the function used
+        to predict short term (several hours) future wind power. Otherwise, it is the name of the dispatch filename included in the software
+        package. Options include: predictWind0. The class name in the file must be 'predictWind'. Inputs to the class are
+        the wind profile up till the current time step and the date-time in epoch format.
         :param loadReactive: the net cdf file with the reactive load time series
         :param genIDS: list of generator IDs, which should be integers
         :param genP: list of generator real power levels for respective generators listed in genIDS
@@ -46,9 +52,9 @@ class SystemOperations:
         :param eesDescriptor: list of relative path and file name of eesDescriptor-files used to populate static information.
         :param eesDispatch: If a user defines their own dispatch, it is the path and filename of the dispatch class used
         to dispatch the energy storage units. Otherwise, it is the name of the dispatch filename included in the software
-        package. Options include: eesDispatch1. The class name in the file must be 'eesDispatch'
+        package. Options include: eesDispatch0. The class name in the file must be 'eesDispatch'
         """
-        # import the dispatch scheme
+        # import the load predictor
         # split into path and filename
         modPath, modFile = os.path.split(predictLoad)
         # if located in a different directory, add to sys path
@@ -59,6 +65,18 @@ class SystemOperations:
         # import module
         dispatchModule = importlib.import_module(modFileName)
         self.predictLoad = dispatchModule.predictLoad()
+
+        # import the wind predictor
+        # split into path and filename
+        modPath, modFile = os.path.split(predictWind)
+        # if located in a different directory, add to sys path
+        if len(modPath) != 0:
+            sys.path.append(modPath)
+        # split extension off of file
+        modFileName, modFileExt = os.path.splitext(modFile)
+        # import module
+        dispatchModule = importlib.import_module(modFileName)
+        self.predictWind = dispatchModule.predictWind()
 
         # initiate generator power house
         # TODO: seperate genDispatch from power house, put as input
@@ -74,10 +92,14 @@ class SystemOperations:
         if len(loadRealFiles) != 0:
             self.DM = Demand(timeStep, loadRealFiles, loadReactiveFiles)
 
+        # save local variables
+        self.timeStep = timeStep
+
     # TODO: Put in seperate input file
     def runSimulation(self):
         self.wtgPImport = []
         self.wtgPch = []
+        self.wtgPTot = []
         self.srcMin = []
         self.eesDis = []
         self.genP = []
@@ -92,6 +114,7 @@ class SystemOperations:
         self.outOfNormalBounds = [0]*len(self.DM.realLoad)
         self.genStartTime = []
         self.genRunTime = []
+        self.onlineCombinationID = []
 
         for idx, P in enumerate(self.DM.realLoad[:1000]): #self.DM.realLoad: # for each real load
             ## Dispatch units
@@ -124,37 +147,59 @@ class SystemOperations:
             self.wtgPAvail.append(wtgPAvail)
             self.wtgPImport.append(wtgPimport)
             self.wtgPch.append(wtgPch)
+            self.wtgPTot.append(wtgPch+wtgPimport)
             self.srcMin.append(srcMin)
             self.eesDis.append(eessDis)
             self.genP.append(genP)
             self.genPAvail.append(sum(self.PH.genPAvail))
             self.eessSrc.append(self.EESS.eesSRC[:])
             self.eessSoc.append(self.EESS.eesSOC[:])
+            self.onlineCombinationID.append(self.PH.onlineCombinationID)
             # record for troubleshooting
             genStartTime = []
             genRunTime = []
             for gen in self.PH.generators:
-                genStartTime.append(gen.genStartTime)
+                genStartTime.append(gen.genStartTimeAct)
                 genRunTime.append(gen.genRunTimeAct)
             self.genStartTime.append(genStartTime[:])
             self.genRunTime.append(genRunTime[:])
 
             ## If conditions met, schedule units
             # check if out of bounds opperation
-            if any(self.EESS.underSRC) or any(self.EESS.outOfBoundsReal) or any(self.PH.outOfNormalBounds):
+            if any(self.EESS.underSRC) or any(self.EESS.outOfBoundsReal) or any(self.PH.outOfNormalBounds) or \
+                    any(self.WF.wtgSpilledWindFlag):
                 # predict what load will be
+                # the previous 24 hours. 24hr * 60min/hr * 60sec/min = 86400 sec.
                 self.predictLoad.predictLoad(self.DM.realLoad[:idx+1], self.DM.realTime[idx])
                 futureLoad = self.predictLoad.futureLoad
+
+                # predict what the wind will be
+                self.predictWind.predictWind(self.wtgPTot, self.DM.realTime[idx])
+                futureWind = self.predictWind.futureWind
+
+                # TODO: add other RE
+
+                # get the ability of the energy storage system to supply SRC
+                eesSrcAvailMax = 0 # the amount of SRC available from all ees units
+                # iterate through all ees and add their available SRC
+                for ees in self.EESS.electricalEnergyStorageUnits:
+                    eesSrcAvailMax += ees.findPdisAvail(ees.eesSrcTime, 0, 0)
+
+                # find the required capacity of the diesel generators
+                # how much RE can EESS cover? This can be subtracted from the load that the diesel generators must be
+                # able to supply
+                coveredRE = min([eesSrcAvailMax, futureWind])
+
                 # schedule the generators accordingly
-                self.PH.genSchedule(futureLoad, 0)
+                self.PH.genSchedule(futureLoad - coveredRE, 0)
                 # TODO: incorporate energy storage capabilities and wind power into diesel schedule. First predict
                 # the future amount of wind power. find available SRC from EESS. Accept the amount of predicted wind
                 # power that can be covered by ESS (likely some scaling needed to avoid switching too much)
+
                 # record for trouble shooting purposes
                 self.futureLoad[idx] = futureLoad
                 if any(self.EESS.underSRC):
                     self.underSRC[idx] = 1
                 if any(self.PH.outOfNormalBounds):
                     self.outOfNormalBounds[idx] = 1
-
 

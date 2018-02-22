@@ -59,8 +59,12 @@
      calculated as the difference between all input generating unit data channels and input controllable loads data
      channels. -->
  <imaginaryLoadChannel unit="" value=""/>
- <!-- 'timeStep' is the desired timestep to be used in the simulation. The data will be resampled to this value.
+ <!-- 'outputTimeStep' is the desired timestep to be used in the simulation. The data will be resampled to this value.
      Default is 1 second. -->
- <timeStep unit="s" value="30"/>
+ <outputTimeStep unit="s" value="1"/>
+  <!-- 'inputTimeStep' is the timestep that the input data is sampled at. Time intervals of missing data longer than the 
+  inputTimestep will be consided missing data.
+     Default is 1 minute. -->
+ <inputTimeStep unit="s" value="70"/>
 </project>
 <!-- EOF -->

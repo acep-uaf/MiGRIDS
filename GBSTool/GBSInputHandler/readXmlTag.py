@@ -9,7 +9,8 @@ def readXmlTag(fileName,tag,attr,fileDir='',returnDtype = ''):
     # returnDtype specifies if the data type of the output is returned as float or int. If left empty, returns strings
     import os
     from bs4 import BeautifulSoup
-
+    
+    here = os.getcwd()
     # cd to file location
     if fileDir != '':
         os.chdir(fileDir)
@@ -34,7 +35,7 @@ def readXmlTag(fileName,tag,attr,fileDir='',returnDtype = ''):
     elif returnDtype == 'float':
         tagValues = [float(x) for x in tagValues]
 
-
+    os.chdir(here)
     return tagValues
 
 

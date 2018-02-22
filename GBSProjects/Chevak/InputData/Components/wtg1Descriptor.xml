@@ -31,6 +31,12 @@
  <!-- 'cutOutWindSpeedMin' describes the minimum wind speed at which a turbine stops producing power due to lack of -->
  <!-- wind power. Default value is 0, which NEVER makes sense. Units are m/s. -->
  <cutOutWindSpeedMin unit="m/s" value="2.5"/>
+ <!-- 'checkWindTime' is the amount of time that spilledWindLimit is measured over. Units are s. Default is 300.  -->
+ <checkWindTime value="300" unit="s"/>
+ <!-- 'spilledWindLimit' is the amount of spilled wind power that is the limit before a flag is set to initiate
+   scheduling new diesel and energy storage units. Units are in PU of nameplate capacity times seconds. It is measured
+   over the period of time indicated by checkWindTime. Default is 60 PU. -->
+ <spilledWindLimit value="60" unit="PU"/>
  <PInMaxPa unit="kW" value="0">
   <!-- 'PInMaxPa' is the maximum real power the unit can receive from the grid, should be 0 if source. Units: kW -->
  </PInMaxPa>

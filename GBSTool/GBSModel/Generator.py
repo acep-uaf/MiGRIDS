@@ -101,6 +101,7 @@ class Generator:
         self.outOfBounds = False  # indicates when the generator is operating above the upperLimit (see genDescriptor.xml) or below lowerLimit (see genDescriptor.xml)
         self.outOfNormalBounds = False  # indicates when the generator is operating above upperNormalLoadingLimit or below MOL
         self.overGenUpperNormalLoading = 0 # the amount by which the generator has operated above genUpperNormalLoading in the past self.checkLoadingTime
+        self.underMol = 0 # the amount by which operating below MOL
         self.genDescriptorParser(genDescriptor)
         # update genMolAvail, genPAvail and genQAvail depending on Gstate
         if genState == 2:
@@ -175,9 +176,6 @@ class Generator:
             self.genMolAvail = self.genMol  # the lowest loading it can run at
 
         elif self.genState == 1: # if running but offline (ie starting up)
-            # set out of bounds flags to zero
-            self.outOfNormalBounds = False
-            self.outOfBounds = False
             # update timers
             self.genRunTimeAct = 0  # if not running online, reset to zero
             self.genStartTimeAct += self.timeStep # the time it has been starting up for
@@ -186,10 +184,15 @@ class Generator:
             self.genQAvail = 0
             self.genMolAvail = 0  # the lowest loading it can run at
 
+            ### Check if out of bounds operation, then flag outOfNormalBounds ###
+            if self.genP > 0:
+                self.outOfNormalBounds = True
+                self.outOfBounds = True
+            else:
+                self.outOfNormalBounds = False
+                self.outOfBounds = False
+
         else: # if not running and offline
-            # set out of bounds flags to zero
-            self.outOfNormalBounds = False
-            self.outOfBounds = False
             # update timers
             self.genRunTimeAct = 0 # if not running online, reset to zero
             self.genStartTimeAct = 0 # if not starting reset to zero
@@ -197,6 +200,14 @@ class Generator:
             self.genPAvail = 0
             self.genQAvail = 0
             self.genMolAvail = 0  # the lowest loading it can run at
+
+            ### Check if out of bounds operation, then flag outOfNormalBounds ###
+            if self.genP > 0:
+                self.outOfNormalBounds = True
+                self.outOfBounds = True
+            else:
+                self.outOfNormalBounds = False
+                self.outOfBounds = False
 
 
 
