@@ -24,6 +24,8 @@ def fixDataInterval(data,interval):
     df['sigma'] = df.total_p.rolling(10,2).std()
     df['mu'] = df['mu'].bfill()
     df['sigma'] = df['sigma'].bfill()
+    df['timediff']=pd.Series(pd.to_datetime(df.index),index=df.index).diff(1).shift(-1) 
+    df['timediff'] = df['timediff'].fillna(0)
     #up or down sample to our desired interval
     #down sampling results in averaged values
     resample_df = resample_df.resample(interval).mean()
@@ -34,56 +36,68 @@ def fixDataInterval(data,interval):
         #time constant
         tau = 3
         #number of steps 
-        n = int(elapsed_time/timestep) + 1
-        #vecter of times
-        t=np.linspace(0.,elapsed_time,n)
+        n = (elapsed_time/timestep) + 1
+        
         #renormalized variables
         sigma_bis = sigma * np.sqrt(2.0 / tau )
         sqrtdt = np.sqrt(timestep)
         #x is the array that will contain the new values
-        x = np.zeros(n)
+        x = np.zeros(shape=(len(mu),int(max(n))))
         #the starter value
-        x[0] = start
+        x[:,0] = start
     
-        for i in range(n-1):
-            x[i+1] = x[i] + timestep*(-(x[i]-mu)/tau) + sigma_bis * sqrtdt * (np.random.randn())
-        x[x < 0] = 0
+        for i in range(int(max(n)-1)):
+            x[:,i+1] = x[:,i] + timestep*(-(x[:,i]-mu)/tau) + sigma_bis * sqrtdt * (np.random.randn())
+        
         #drop the starter value when the arrays are returned
         return x
         #upsamping results in nan at new timesteps
         #make the nan's 0 for the total_p column so we can group it
-    def estimateDistribution(x,df):
-        #x.name is current location
-       mu = x['mu']
-       start = x['total_p']
-       sigma = x['sigma']
-       if df.loc[x.name:][1:].first_valid_index() != None:
-           records = (df.loc[x.name:][1:].first_valid_index() - x.name) / interval
-       else:
-           return 
-       y = getValues(records,start, mu, sigma) 
-       y = y[1:-1]
+    def estimateDistribution(df):
+       import numpy as np
+        #feeders for the langevin estimate
+       mu = df['mu']
+       start = df['total_p']
+       sigma = df['sigma']
+       records = df['timediff']/pd.to_timedelta(interval)
+       timestep = pd.Timedelta(interval).seconds
+       #return an array of arrays of values
+       y = getValues(records,start, mu, sigma)
+       #steps is an array of timesteps in seconds with length = max(records)
+       steps = np.arange(0, max(records)+1, timestep)
+       steps = steps * 1000000000
+       #t is the numeric value of the dataframe timestamps
+       t = pd.to_numeric(pd.to_datetime(df.index.values,unit='s')).values
+ 
+       #intervals is the steps arrray repeated for every row of time
+       intervals = np.repeat(steps,len(t), axis=0)
+       #reshape the interval matrix so each row has every timestep
+       intervals_reshaped = intervals.reshape(len(steps), len(t))
+       tr = t.repeat(len(steps))
+       rs = tr.reshape(len(t),len(steps))
+       time_matrix = rs + intervals_reshaped.transpose()
+       #put all the times in a single array
+       time_array = np.concatenate(time_matrix)
+       #put all the values in a single array
+       values=np.concatenate(y)
        
-       #convert t to a range of times at the specified intervals
-       t = pd.date_range(x.name,  x.name + pd.to_timedelta(interval) * records, unit='s',freq='s')  
-       t = t[1:-1]
-    #pair the time and values into a list to be returned
-       return t,y
+      
+       return time_array,values
        
-
-    k =df.apply(lambda x: estimateDistribution(x,df), axis=1)
-    k = k[k.notnull()]
-    kdf = k.apply(lambda x: pd.DataFrame({'t':x[0],'y':x[1]}))
-    nd = pd.concat(kdf.tolist())
-    nd= nd.set_index(nd['t'])
-    resample_df = resample_df.join(nd,how='left')
-    resample_df.loc[pd.isnull(resample_df['total_p']),'total_p'] = resample_df['y']
-    adj_m = resample_df[resample_df.columns[0:-4]].div(resample_df['total_p'], axis=0)
+    #t is the time, k is the estimated value
+    t,k =estimateDistribution(df)
+    simulated_df = pd.DataFrame({'time':t,'value':k})
+    simulated_df= simulated_df.set_index(pd.to_datetime(simulated_df['time']))
+    simulated_df = simulated_df[~simulated_df.index.duplicated(keep='last')]
+    #join the simulated values to the upsampled dataframe by timestamp
+    resample_df = resample_df.join(simulated_df,how='left')
+    #fill na's for total_p with simulated values
+    resample_df.loc[pd.isnull(resample_df['total_p']),'total_p'] = resample_df['value']
+    #component values get calculated based on teh proportion that they made up previously
+    adj_m = resample_df[resample_df.columns[0:-1]].div(resample_df['total_p'], axis=0)
     adj_m = adj_m.ffill()
     resample_df = adj_m.multiply(resample_df['total_p'], axis = 0)
-      #put in a date column to be used when we convert to netcdf
+     #put in a date column to be used when we convert to netcdf
     resample_df.insert(0, 'date', pd.to_numeric(resample_df.index))
-    #drop temporary columns that won't be used in netCDF files
- 
+    
     return resample_df
-
