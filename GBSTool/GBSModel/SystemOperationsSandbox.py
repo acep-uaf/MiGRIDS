@@ -2,6 +2,7 @@
 import os
 import numpy as np
 from SystemOperations import SystemOperations
+import cProfile
 
 # Time step
 
@@ -47,14 +48,26 @@ loadRealFiles = [
 # Predict Load
 
 predictLoad = 'predictLoad1'
-
+# code profiler
+pr0 = cProfile.Profile()
+pr0.enable()
 SO = SystemOperations(timeStep = timeStep, loadRealFiles = loadRealFiles, loadReactiveFiles = [], predictLoad = predictLoad,
                  genIDs = genIDs, genStates = genStates, genDescriptors = genDescriptors, genDispatch = [],
                  wtgIDs = wtgIDs, wtgStates = wtgStates, wtgDescriptors = wtgDescriptor, wtgSpeedFiles = windSpeed,
                  eesIDs = eesIDS, eesStates = eesStates, eesSOCs = eesSOC, eesDescriptors = eesDescriptor, eesDispatch = eesDispatch)
+# stop profiler
+pr0.disable()
+pr0.print_stats(sort="calls")
 
 # run the simulation
+# code profiler
+pr1 = cProfile.Profile()
+pr1.enable()
+# run sim
 SO.runSimulation()
+# stop profiler
+pr1.disable()
+pr1.print_stats(sort="calls")
 
 print('done')
 

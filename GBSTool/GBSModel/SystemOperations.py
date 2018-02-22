@@ -17,7 +17,7 @@ import numpy as np
 class SystemOperations:
     # System Variables
     # Generation and dispatch resources
-    def __init__(self, timeStep = 1, loadRealFiles = [], loadReactiveFiles = [], predictLoad = 'predictLoad1', predictWind = 'predictWind1',
+    def __init__(self, timeStep = 1, loadRealFiles = [], loadReactiveFiles = [], predictLoad = 'predictLoad1', predictWind = 'predictWind0',
                  genIDs = [], genStates = [], genDescriptors = [], genDispatch = [],
                  wtgIDs = [], wtgStates = [], wtgDescriptors = [], wtgSpeedFiles = [],
                  eesIDs = [], eesStates = [], eesSOCs = [], eesDescriptors = [], eesDispatch = []):
@@ -28,11 +28,11 @@ class SystemOperations:
         :param loadReactiveFiles: list of net cdf files that add up to the full reactive load. This can be left empty.
         :param predictLoad: If a user defines their own load predicting function, it is the path and filename of the function used
         to predict short term (several hours) future load. Otherwise, it is the name of the dispatch filename included in the software
-        package. Options include: predictLoad1. The class name in the file must be 'predictLoad'. Inputs to the class are
+        package. Options include: predictLoad0. The class name in the file must be 'predictLoad'. Inputs to the class are
         the load profile up till the current time step and the date-time in epoch format.
         :param predictWind: If a user defines their own wind predicting function, it is the path and filename of the function used
         to predict short term (several hours) future wind power. Otherwise, it is the name of the dispatch filename included in the software
-        package. Options include: predictWind1. The class name in the file must be 'predictWind'. Inputs to the class are
+        package. Options include: predictWind0. The class name in the file must be 'predictWind'. Inputs to the class are
         the wind profile up till the current time step and the date-time in epoch format.
         :param loadReactive: the net cdf file with the reactive load time series
         :param genIDS: list of generator IDs, which should be integers
@@ -52,7 +52,7 @@ class SystemOperations:
         :param eesDescriptor: list of relative path and file name of eesDescriptor-files used to populate static information.
         :param eesDispatch: If a user defines their own dispatch, it is the path and filename of the dispatch class used
         to dispatch the energy storage units. Otherwise, it is the name of the dispatch filename included in the software
-        package. Options include: eesDispatch1. The class name in the file must be 'eesDispatch'
+        package. Options include: eesDispatch0. The class name in the file must be 'eesDispatch'
         """
         # import the load predictor
         # split into path and filename
@@ -99,6 +99,7 @@ class SystemOperations:
     def runSimulation(self):
         self.wtgPImport = []
         self.wtgPch = []
+        self.wtgPTot = []
         self.srcMin = []
         self.eesDis = []
         self.genP = []
@@ -115,7 +116,7 @@ class SystemOperations:
         self.genRunTime = []
         self.onlineCombinationID = []
 
-        for idx, P in enumerate(self.DM.realLoad[:70000]): #self.DM.realLoad: # for each real load
+        for idx, P in enumerate(self.DM.realLoad[:1000]): #self.DM.realLoad: # for each real load
             ## Dispatch units
             # get available wind power
             wtgPAvail = sum(self.WF.wtgPAvail)
@@ -146,6 +147,7 @@ class SystemOperations:
             self.wtgPAvail.append(wtgPAvail)
             self.wtgPImport.append(wtgPimport)
             self.wtgPch.append(wtgPch)
+            self.wtgPTot.append(wtgPch+wtgPimport)
             self.srcMin.append(srcMin)
             self.eesDis.append(eessDis)
             self.genP.append(genP)
@@ -168,12 +170,11 @@ class SystemOperations:
                     any(self.WF.wtgSpilledWindFlag):
                 # predict what load will be
                 # the previous 24 hours. 24hr * 60min/hr * 60sec/min = 86400 sec.
-                self.predictLoad.predictLoad(self.DM.realLoad[max([0,idx-int(86400/self.timeStep)]):idx+1], self.DM.realTime[idx])
+                self.predictLoad.predictLoad(self.DM.realLoad[:idx+1], self.DM.realTime[idx])
                 futureLoad = self.predictLoad.futureLoad
 
                 # predict what the wind will be
-                prevWind = self.getPrevWind(idx)
-                self.predictWind.predictWind(prevWind, self.DM.realTime[idx])
+                self.predictWind.predictWind(self.wtgPTot, self.DM.realTime[idx])
                 futureWind = self.predictWind.futureWind
 
                 # TODO: add other RE
@@ -202,15 +203,3 @@ class SystemOperations:
                 if any(self.PH.outOfNormalBounds):
                     self.outOfNormalBounds[idx] = 1
 
-    # this gets the previous wind power
-    def getPrevWind(self, idx):
-        # for each wind turbine
-        for idx1, wtg in enumerate(self.WF.windTurbines):
-            # if fist turbine, assign initial values to array
-            if idx1 == 0:
-                # the previous 24 hours. 24hr * 60min/hr * 60sec/min = 86400 sec.
-                prevWind = np.array(wtg.windPower[max([0,idx-int(86400/self.timeStep)]):idx+1])
-            else:
-                # the previous 24 hours. 24hr * 60min/hr * 60sec/min = 86400 sec.
-                prevWind += np.array(wtg.windPower[max([0,idx-int(86400/self.timeStep)]):idx+1])
-        return prevWind
