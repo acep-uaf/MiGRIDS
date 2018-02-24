@@ -6,7 +6,7 @@
 #Reads a dataframe and ouputs a new dataframe with the specified sampling time interval.
 #interval is a string with time units. (i.e. '30s' for 30 seconds, '1T' for 1 minute)
 #If interval is less than the interval within the dataframe mean values are used to create a down-sampled dataframe
-#DataClass, String -> dataframe
+#DataClass, String -> DataClass
 def fixDataInterval(data,interval):
     ''' data is a DataClass with a pandas dataframe with datetime index.
      interval is the desired interval of data samples. If this is 
@@ -14,7 +14,7 @@ def fixDataInterval(data,interval):
      in missing times. If the interval is greater thant the original time interval
      the mean of values within the new interval will be generated'''
     import pandas as pd
-    import sqlite3 as lite
+    
 
     #make a copy of the input dataframe - original remains the same
     resample_df = pd.DataFrame(data.fixed.copy())
@@ -29,12 +29,11 @@ def fixDataInterval(data,interval):
     #up or down sample to our desired interval
     #down sampling results in averaged values
     resample_df = resample_df.resample(interval).mean()
-    def getValues(elapsed_time, start, mu, sigma):
+    def getValues(elapsed_time, start, mu, sigma,tau):
         import numpy as np
         #seconds between samples
         timestep = 1
-        #time constant
-        tau = 3
+        
         #number of steps 
         n = (elapsed_time/timestep) + 1
         
@@ -61,10 +60,14 @@ def fixDataInterval(data,interval):
        sigma = df['sigma']
        records = df['timediff']/pd.to_timedelta(interval)
        timestep = pd.Timedelta(interval).seconds
+       #scaling
+       tau = 70
        #return an array of arrays of values
-       y = getValues(records,start, mu, sigma)
+       y = getValues(records,start, mu, sigma,tau)
        #steps is an array of timesteps in seconds with length = max(records)
        steps = np.arange(0, max(records)+1, timestep)
+       #scaling
+       #TODO get scaling from timestamp
        steps = steps * 1000000000
        #t is the numeric value of the dataframe timestamps
        t = pd.to_numeric(pd.to_datetime(df.index.values,unit='s')).values
@@ -99,5 +102,12 @@ def fixDataInterval(data,interval):
     resample_df = adj_m.multiply(resample_df['total_p'], axis = 0)
      #put in a date column to be used when we convert to netcdf
     resample_df.insert(0, 'date', pd.to_numeric(resample_df.index))
+    #get rid of columns added
     
-    return resample_df
+    resample_df = resample_df.drop('time',1)
+    resample_df = resample_df.drop('grouping',1)
+        
+
+    data.fixed = resample_df
+    #data.removeAnomolies()
+    return data

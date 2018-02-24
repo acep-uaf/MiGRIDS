@@ -1,4 +1,3 @@
-# Project: GBS Tool
 # Author: Jeremy VanderMeer, jbvandermeer@alaska.edu
 # Date: October 24, 2017
 # License: MIT License (see LICENSE file of this package for more information)
@@ -11,7 +10,7 @@
 # get input data to run the functions to import data into the project
 from tkinter import filedialog
 import tkinter as tk
-print('Select the xml project setup file.')
+#print('Select the xml project setup file')
 root = tk.Tk()
 root.withdraw()
 root.attributes('-topmost',1)
@@ -27,21 +26,11 @@ inputSpecification = readXmlTag(fileName,'inputFileFormat','value')[0]
 # input a list of subdirectories under the GBSProjects directory
 fileLocation = readXmlTag(fileName,'inputFileDir','value')
 fileLocation = os.path.join(*fileLocation)
-fileLocation = os.path.join('../../../',fileLocation)
+fileLocation = os.path.join('../../GBSProjects', fileLocation)
 # file type
 fileType = readXmlTag(fileName,'inputFileType','value')[0]
 outputInterval = readXmlTag(fileName,'outputTimeStep','value')[0] + readXmlTag(fileName,'outputTimeStep','unit')[0]
 inputInterval = readXmlTag(fileName,'inputTimeStep','value')[0] + readXmlTag(fileName,'inputTimeStep','unit')[0]
-'''
-# input data
-Village = 'Chevak'
-setupDir = 'C:\\Users\jbvandermeer\Documents\ACEP\GBS\GBSTools1\GBSProjects\Chevak\InputData\Setup'
-inputSpecification = 'AVEC'
-fileLocation = ''
-fileType = '.CSV'
-columnNames = None
-interval = '30s' # the desired number of seconds between data points. This needs to be pulled from a file, not set here
-'''
 
 # get data units and header names
 from getUnits import getUnits
@@ -62,7 +51,8 @@ df_fixed = fixBadData(df,setupDir,listOfComponents,inputInterval)
 from fixDataInterval import fixDataInterval
 df_fixed_interval = fixDataInterval(df_fixed,outputInterval)
 
+
 # now convert to a netcdf
 from dataframe2netcdf import dataframe2netcdf
-dataframe2netcdf(df_fixed_interval, listOfComponents)
+dataframe2netcdf(df_fixed_interval.fixed, listOfComponents)
 # save ncfile in folder `ModelInputData' in the path ../GBSProjects/[VillageName]/InputData/TimeSeriesData/

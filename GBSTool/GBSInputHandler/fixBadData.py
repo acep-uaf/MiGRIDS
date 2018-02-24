@@ -21,8 +21,6 @@ from scipy import stats
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 
-import sqlite3 as lite
-
  #constants
 DATETIME = 'DATE' #the name of the column containing sampling datetime as a numeric
 DESCXML = 'Descriptor.xml' #the suffix of the xml for each component that contains max/min values 
@@ -42,12 +40,12 @@ def fixBadData(df, setupDir, ListOfComponents, sampleInterval):
     def checkMinMaxPower(component, df, descriptorxml, baddata):
         '''change out of bounds values to be within limits'''
         #look up possible min/max
-        max_power = getValue(descriptorxml, "POutMaxPa")
-        min_power = 0
-        if (not max_power is None) & (not min_power is None):
+        maxPower = getValue(descriptorxml, "POutMaxPa")
+        minPower = 0
+        if (not maxPower is None) & (not minPower is None):
             try:
-                over = df[component] > max_power
-                under = df[component] < min_power
+                over = df[component] > maxPower
+                under = df[component] < minPower
                 df[component] = data.fixed[component].mask((over | under))
                 badDictAdd(component, baddata, '1.Exceeds Min/Max',
                            df[component][pd.isnull(df[component])].index.tolist())
@@ -68,9 +66,6 @@ def fixBadData(df, setupDir, ListOfComponents, sampleInterval):
 
     filename = os.path.join(setupDir + '../../TimeSeriesData', 'BadData.log')
     logging.basicConfig(filename=filename, level=logging.DEBUG, format='%(asctime)s %(message)s')
-    #TODO remove sqlite backups
-    database = 'fixedData.db'
-    connection = lite.connect(database)
     
     #create DataClass object to store raw, fixed, and summery outputs
     data = DataClass(df,sampleInterval)
@@ -90,18 +85,12 @@ def fixBadData(df, setupDir, ListOfComponents, sampleInterval):
     data.checkDataGaps()
     #total power is the sum of values in all the power components
     data.totalPower()
-    #TODO remove sqlite backup
-    data.fixed.to_sql('data_with_gaps',connection,if_exists='replace')
-    connection.commit()
    
     #identify when the entire system was offline - not collecting any data for more than 2 time intervals.
     #grouping column is the id of groups of rows where total_p value is repeated over more that 2 timesteps
     data.fixed['grouping'] = 0
     data.fixed['grouping'] = isInline(data.fixed['total_p'])
     
-    #TODO remove sqlite backup
-    data.fixed.to_sql('data_with_grouping',connection,if_exists='replace')
-    connection.commit()
   
     #scale data based on units and offset in the component xml file
     data.scaleData(ListOfComponents)
@@ -132,7 +121,6 @@ def fixBadData(df, setupDir, ListOfComponents, sampleInterval):
     
     data.removeAnomolies()
     data.totalPower()   
-    data.fixed.to_sql("fixed_data", connection,if_exists='replace')       
     
     return data
 
@@ -187,7 +175,6 @@ def linearEstimate(x, y, t):
     k = stats.linregress(x, y)
     return  k.slope *t + k.intercept
 
-#TODO replace with pandas get_last, get_first
 #integer, Series, integer -> index
 #returns the closest valid index to i
 def getNext(i, l, step):
@@ -215,8 +202,8 @@ def dataReplace(df, missing, replacement, component=None):
 def getReplacement(df, indices, component = None):
      #index,range in same units as index, dataframe, dataframe, index
     def getReplacementStart(searchStart, searchRange, df, missingBlock, directMatch = None):
-         #if there is a match then we can stop looking,
-         #otherwise we increment our search window by a year and look again
+         #if there is a match then stop looking,
+         #otherwise increment the search window by a year and look again
          #start is the index of our first missing record
          start = min(missingBlock.index)
          #searchBlock is the portion of the dataframe that we will search for a match in
@@ -229,15 +216,19 @@ def getReplacement(df, indices, component = None):
          #find the match in the searchBlock as long as it isn't empty
          if not searchBlock.empty:
           #order by proximity
-             doy = start.dayofyear
-             searchBlock['doydiff'] = abs(searchBlock.index.to_datetime().dayofyear - doy)
-             searchBlock['hourdiff'] = abs(searchBlock.index.to_datetime().hour - start.hour)
-             searchBlock['mindiff'] = abs(searchBlock.index.to_datetime().minute - start.minute)
-
-             sortedSearchBlock = searchBlock.sort_values(['doydiff','hourdiff','mindiff'])
+             #doy = start.dayofyear
+             #match up the year then order by nearest
+#             searchBlock['doydiff'] = abs(searchBlock.index.to_datetime().dayofyear - doy)
+#             searchBlock['hourdiff'] = abs(searchBlock.index.to_datetime().hour - start.hour)
+#             searchBlock['mindiff'] = abs(searchBlock.index.to_datetime().minute - start.minute)
+             searchBlock['newtime'] = pd.Series(searchBlock.index.to_datetime(),searchBlock.index).apply(lambda dt: dt.replace(year=start.year))
+             
+             searchBlock['timeapart'] = searchBlock['newtime'] - start
+             sortedSearchBlock = searchBlock.sort_values('timeapart')
              #if replacment is long enough return indices, otherwise move on
              blockLength = df[min(sortedSearchBlock.index):max(sortedSearchBlock.index)][::-1].rolling(len(missingBlock)).apply(lambda x: len(x))[::-1]
-             #a matching record is one that is the same day of the week, similar time of day and has enough valid records following it to fill the empty block
+             #a matching record is one that is the same day of the week, similar time of day and has enough
+             #valid records following it to fill the empty block
              directMatch = blockLength[blockLength == len(missingBlock)].first_valid_index()
          #move the search window to the following year   
          searchStart = searchStart+ pd.DateOffset(years=1)
@@ -352,7 +343,7 @@ class DataClass:
         badDictAdd('gen',
                    self.baddata, '4.Generator offline',
                    self.fixed[pd.isnull(self.fixed.gentotal)].index.tolist())
-        #self.fixed.gentotal[self.fixed.gentotal == 0] = None
+      
         self.fixed.gentotal.replace(0,np.nan)
         for name, group in groups:
             if min(group.gentotal) == 0:
@@ -371,18 +362,18 @@ class DataClass:
         with PdfPages(filename) as pdf:
             #plot the raw data
             plt.figure(figsize=(8 ,6))
-            plt.plot(pd.to_datetime(self.raw.DATE, unit = 's'), self.raw.total_p)
+            plt.plot(pd.to_datetime(self.raw.DATE, unit = 's'), self.raw[TOTALP])
             plt.title('Raw data total power')
             pdf.savefig()  # saves the current figure into a pdf page
             plt.close()
             #plot the fixed data
             plt.figure(figsize=(8, 6))
-            plt.plot(self.fixed.index, self.fixed.total_p, 'b-')
+            plt.plot(self.fixed.index, self.fixed[TOTALP], 'b-')
             plt.title('Fixed data total power')
             pdf.savefig()
             plt.close()
               
-#    #string -> pickle
+    #string -> pickle
     def preserve(self,setupDir):
         '''pickles the dataframe so it can be restored later'''
         filename = os.path.join(setupDir + '../TimeSeriesData', 'fixed_data.pickle')
@@ -417,12 +408,14 @@ class DataClass:
             c.setDatatype(self.fixed)
         return
     
-    #replaces time interval data where the power output drops significanly with similar profiled data
+    #replaces time interval data where the power output drops or increases significantly 
+    #compared to overall data characteristics
     def removeAnomolies(self):  
-        mean = np.mean(self.fixed.total_p)
-        std = np.std(self.fixed.total_p)
-        self.fixed[self.fixed.total_p < mean - 3 * std] = None
-        #this may leave the value too high
+        mean = np.mean(self.fixed[TOTALP])
+        std = np.std(self.fixed[TOTALP])
+        self.fixed[(self.fixed[TOTALP] < mean - 3 * std)]=None
+        #self.fixed[(self.fixed[TOTALP] < mean - 2.5 * std) |  (self.fixed[TOTALP] > mean + 2.5 * std)] = None
+        #replace values with linear interpolation from surrounding values
         self.fixed = self.fixed.interpolate()
         self.totalPower()     
         return 
@@ -437,12 +430,12 @@ class DataClass:
         #record the offline records in our baddata dictionary
         badDictAdd(TOTALP,
                    self.baddata, '4.Offline',
-                   self.fixed[pd.isnull(self.fixed.total_p)].index.tolist())
+                   self.fixed[pd.isnull(self.fixed[TOTALP])].index.tolist())
        
-        self.fixed.total_p.replace(0,None)
+        self.fixed[TOTALP].replace(0,None)
         #based on our list of bad groups of data, replace the values
         for name, group in groups:
-            if(len(group) > 3) | (min(group.total_p) == 0):               
+            if(len(group) > 3) | (min(group[TOTALP]) == 0):               
                 getReplacement(self.fixed, group.index,'total_p')
         return
     
