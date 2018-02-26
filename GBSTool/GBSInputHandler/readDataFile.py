@@ -2,7 +2,7 @@
 # Author: Jeremy VanderMeer, jbvandermeer@alaska.edu
 # Date: October 24, 2017
 # License: MIT License (see LICENSE file of this package for more information)
-
+# assumes the first column is always a date column
 # reads data files from user and outputs a dataframe.
 def readDataFile(inputSpecification,fileLocation='',fileType='csv',columnNames=None,useNames=None,componentUnits=None,componentAttributes=None):
     # inputSpecification points to a script to accept data from a certain input data format *type string*
@@ -29,10 +29,14 @@ def readDataFile(inputSpecification,fileLocation='',fileType='csv',columnNames=N
         root.withdraw()
         root.attributes('-topmost',1)
         fileLocation = filedialog.askdirectory()
+    else:
+        fileLocation = os.path.join(here,fileLocation)
     os.chdir(fileLocation)
     # get just the filenames ending with fileType
+    
     fileNames = [f for f in os.listdir(fileLocation) if os.path.isfile(f) & f.endswith(fileType)]
-
+    
+    df = pd.DataFrame()
     ####### Parse the time series data files ############
     # depending on input specification, different procedure
     if inputSpecification=='AVEC':
@@ -48,15 +52,15 @@ def readDataFile(inputSpecification,fileLocation='',fileType='csv',columnNames=N
                 #TODO: this does not maintain the order. It needs to be modified to maintain order of columns
                 #dfNewCol = list(set(df2Col).intersection(dfCol))
                 dfNewCol = [val for val in dfCol if val in df2Col]
-                # resize dataframes to only contain collumns contained in both dataframes
+                # resize dataframes to only contain columns contained in both dataframes
                 df = df[dfNewCol]
                 df2 = df2[dfNewCol]
                 df = df.append(df2) # append
-
+        
     # try to convert to numeric
     df = df.apply(pd.to_numeric,errors='ignore')
     #order by datetime
-    df = df.sort_values(['DATE']).reset_index(drop=True)
+    df = df.sort_values([df.columns[0]]).reset_index(drop=True)
     
     # convert units
     if np.all(componentUnits != None):
@@ -102,12 +106,13 @@ def readDataFile(inputSpecification,fileLocation='',fileType='csv',columnNames=N
 #Component class consisting of component name, units and attribute
 class Component:
     """A class with access to characteristics of a component."""
-    def __init__(self, component, units, scale, attribute, datatype):
+    def __init__(self, component, units, scale, offset, datatype):
         self.name = component
         self.units = units
-        self.attribute = attribute
+        self.offset = offset
         self.datatype = datatype
         self.scale = scale
+        
         
     def setDatatype(self,df):
          if self.datatype[0][0:3] == 'int':

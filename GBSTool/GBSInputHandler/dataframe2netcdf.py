@@ -4,7 +4,7 @@
 # License: MIT License (see LICENSE file of this package for more information)
 
 # this function is passed a pandas dataframe and converts it to net cdf format
-def dataframe2netcdf(df,units,scale,offset,varnames=None,saveLocation=''):
+def dataframe2netcdf(df,components,varnames=None,saveLocation=''):
     # df is the dataframe. The headers will be used as the variable names unless they are specified by the 'headers' input
     # argument
     # units are the units corresponding to the collumns in the dataframe, *type string*
@@ -19,6 +19,7 @@ def dataframe2netcdf(df,units,scale,offset,varnames=None,saveLocation=''):
     import os
 
     # go to save directory
+    
     if saveLocation == '':
         print('Choose directory where to save the netCDF file.')
         import tkinter as tk
@@ -32,6 +33,9 @@ def dataframe2netcdf(df,units,scale,offset,varnames=None,saveLocation=''):
     for i in range(1,df.shape[1]): # skip the first column, Date
         # get header name from data frame
         column = df.columns.values[i]
+        component = [x for x in components if x.name == column]
+        
+        component = component[0]
         if varnames != None:
             ncName = varnames[i-1] + '.nc'
         else:
@@ -46,9 +50,9 @@ def dataframe2netcdf(df,units,scale,offset,varnames=None,saveLocation=''):
         rootgrp.variables['value'][:] = np.array(df[column])  # fill with values
         # assign attributes
         rootgrp.variables['time'].units = 'seconds'  # set unit attribute
-        rootgrp.variables['value'].units = units[i-1] # set unit attribute
-        rootgrp.variables['value'].Scale = scale[i - 1]  # set unit attribute
-        rootgrp.variables['value'].offset = offset[i - 1]  # set unit attribute
+        rootgrp.variables['value'].units = component.units # set unit attribute
+        rootgrp.variables['value'].Scale = component.scale # set unit attribute
+        rootgrp.variables['value'].offset = 0  # set unit attribute
         # close file
         rootgrp.close()
 
