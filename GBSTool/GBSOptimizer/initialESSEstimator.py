@@ -17,6 +17,7 @@ import datetime
 import netCDF4
 import numpy as np
 import pandas as pd
+from GBSAnalyzer.PerformanceAnalyzers.getFuelUse import getFuelUse
 import matplotlib.pyplot as plt
 import matplotlib.dates as md
 from GBSController.GBSExceptions.TimeStampVectorError import TimeStampVectorError
@@ -348,16 +349,16 @@ timeF = pd.Series(range(0, len(time)) + time[0], time.index)
 
 # Check loadP data
 print('++++++++++++ TOTAL DEMAND ASSESSMENT +++++++++++')
-stat, igIdx, msgCTSD =checkTSData(time, loadP, cumPMaxOut, 5, 1.1)
+stat, igIdx, msgCTSD=checkTSData(time, loadP, cumPMaxOut, 5, 1.1)
 print(msgCTSD[0:2])
 
 # Get rampRates for loadP
-rr, wdwLoadChng = getMaxFilteredRampRate(timeF.copy(), loadP.copy(), 30, igIdx)
+rr, wdwLoadChng=getMaxFilteredRampRate(timeF.copy(), loadP.copy(), 30, igIdx)
 
 # Check genP data
 print('++++++++++++ GENERATOR DEMAND ASSESSMENT +++++++++++')
-dfl, cdp = dieselFleetCheck('../../GBSProjects/Chevak/','Chevak')
-statGen, igIdxGen, msgCTSD =checkTSData(time, genP, dfl['POutMaxPa'].astype('int').sum(), 5, 1.1)
+dfl, cdp=dieselFleetCheck('../../GBSProjects/Chevak/','Chevak')
+statGen, igIdxGen, msgCTSD=checkTSData(time, genP, dfl['POutMaxPa'].astype('int').sum(), 5, 1.1)
 
 # Get rampRates for loadP
 rrGen, wdwLoadChngGen = getMaxFilteredRampRate(timeF.copy(), genP.copy(), 30, igIdx)
