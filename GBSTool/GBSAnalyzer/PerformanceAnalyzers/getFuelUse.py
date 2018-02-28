@@ -3,7 +3,10 @@
 # Date: February 22, 2018
 # License: MIT License (see LICENSE file of this package for more information)
 
+import pandas as pd
+import operator
 from GBSAnalyzer.CurveAssemblers.genFuelCurveAssembler import GenFuelCurve
+
 
 def getFuelUse(genAllP, fuelCurveDataPoints):
     '''
@@ -18,6 +21,9 @@ def getFuelUse(genAllP, fuelCurveDataPoints):
     # Step through the data per generator
     genList = fuelCurveDataPoints.index
 
+    genAllFuelUsed = pd.DataFrame([])
+    fuelStats = pd.DataFrame([])
+
     for gen in genList:
 
         pPu = list(map(float, fuelCurveDataPoints['fuelCurve_pPu'].loc[gen].split()))
@@ -25,9 +31,16 @@ def getFuelUse(genAllP, fuelCurveDataPoints):
         massFlow = list(map(float, fuelCurveDataPoints['fuelCurve_massFlow'].loc[gen].split()))
         fcDataPnts = list(zip(pPu, massFlow))
         fc = GenFuelCurve()
+        fc.genOverloadPMax = fuelCurveDataPoints['POutMaxPa'].loc[gen]
         fc.fuelCurveDataPoints = fcDataPnts
         fc.linearCurveEstimator()
-        
+
+        # TODO make sure itemgetter is fed with integer values
+        genFuelGetter = operator.itemgetter(genAllP[gen + 'P'].values)
+        genFuel = genFuelGetter(fc.fuelCurve)
+        print(genFuel)
+
+    return genAllFuelUsed, fuelStats
 
 
 
