@@ -3,8 +3,9 @@
 # Date: February 22, 2018
 # License: MIT License (see LICENSE file of this package for more information)
 
-import pandas as pd
 import numpy as np
+import pandas as pd
+
 from GBSAnalyzer.CurveAssemblers.genFuelCurveAssembler import GenFuelCurve
 
 
@@ -67,7 +68,6 @@ def getFuelUse(genAllP, fuelCurveDataPoints):
     fuelStats['median'].loc['Fleet'] = fleetSum.median()
     fuelStats['max'].loc['Fleet'] = fleetSum.max()
 
-    print(fuelStats)
     return genAllFuelUsed, fuelStats
 
 
