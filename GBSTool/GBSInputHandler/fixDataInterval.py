@@ -29,7 +29,7 @@ def fixDataInterval(data,interval):
     #up or down sample to our desired interval
     #down sampling results in averaged values
     resample_df = resample_df.resample(interval).mean()
-    def getValues(elapsed_time, start, mu, sigma,tau):
+    def getValues(elapsed_time, start, mu, sigma):
         import numpy as np
         #seconds between samples
         timestep = 1
@@ -38,7 +38,7 @@ def fixDataInterval(data,interval):
         n = (elapsed_time/timestep) + 1
         
         #renormalized variables
-        sigma_bis = sigma * np.sqrt(2.0 / tau )
+        sigma_bis = sigma * np.sqrt(2.0 / n )
         sqrtdt = np.sqrt(timestep)
         #x is the array that will contain the new values
         x = np.zeros(shape=(len(mu),int(max(n))))
@@ -46,7 +46,7 @@ def fixDataInterval(data,interval):
         x[:,0] = start
     
         for i in range(int(max(n)-1)):
-            x[:,i+1] = x[:,i] + timestep*(-(x[:,i]-mu)/tau) + sigma_bis * sqrtdt * (np.random.randn())
+            x[:,i+1] = x[:,i] + timestep*(-(x[:,i]-mu)/n) + sigma_bis * sqrtdt * (np.random.randn())
         
         #drop the starter value when the arrays are returned
         return x
@@ -60,10 +60,9 @@ def fixDataInterval(data,interval):
        sigma = df['sigma']
        records = df['timediff']/pd.to_timedelta(interval)
        timestep = pd.Timedelta(interval).seconds
-       #scaling
-       tau = 70
+       
        #return an array of arrays of values
-       y = getValues(records,start, mu, sigma,tau)
+       y = getValues(records,start, mu, sigma)
        #steps is an array of timesteps in seconds with length = max(records)
        steps = np.arange(0, max(records)+1, timestep)
        #scaling
