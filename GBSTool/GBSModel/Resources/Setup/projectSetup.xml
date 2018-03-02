@@ -72,7 +72,9 @@
     <!-- 'timeStep' is the desired timestep to be used in the simulation. The data will be resampled to this value.
      Default is 1 second. -->
     <timeStep value="1" unit="s"/>
-
+    <!-- 'inputTimeStep' is the original timestep recorded in the raw timeseries data fed into the model.
+     Default is 1 minute. -->
+    <inputTimestepStep value="1" unit="T"/>
     <!-- 'predictLoad' refers to the function that is used to predict the load. If a user defines their own load
     predicting function, it is the path and filename of the function used to predict short term (several hours) future
     load. Otherwise, it is the name of the dispatch filename included in the software package. Options include:
