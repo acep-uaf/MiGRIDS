@@ -3,26 +3,37 @@
 # Date: February 22, 2018
 # License: MIT License (see LICENSE file of this package for more information)
 
+import numpy as np
 import pandas as pd
-import operator
+
 from GBSAnalyzer.CurveAssemblers.genFuelCurveAssembler import GenFuelCurve
 
 
 def getFuelUse(genAllP, fuelCurveDataPoints):
     '''
+    Calculates fuel consumption for each generator and time step given.
+
+    FUTUREFEATURE: currently just tosses generator loads greater than POutMaxPa and replaces them with fuel use at 'POutMaxPa'. Better handling of overloads would be good.
 
     :param genAllP: [DataFrame] individual genXP channels and time channel, index is integers numbering samples
     :param fuelCurveDataPoints: [DataFrame] index is generator names, columns are 'fuelCurve_pPu' and
         'fuelCurve_massFlow', 'POutMaxPa'
-    :return genAllFuelUsed: [DataFrame] contains individual genX fuel used and time channel, index is integers
+    :return genAllFuelUsed: [DataFrame] contains individual genX fuel used [kg] and time channel, index is integers
     :return fuelStats: [DataFrame] fuel stats for each gen and totals
     '''
 
     # Step through the data per generator
     genList = fuelCurveDataPoints.index
+    gcols = list(genList.values)
+    gcols.insert(0, 'time')
+    gcols = pd.Index(gcols[:])
+    genAllFuelUsed = pd.DataFrame(genAllP['time'], genAllP.index, gcols)
 
-    genAllFuelUsed = pd.DataFrame([])
-    fuelStats = pd.DataFrame([])
+    fuelStats = pd.DataFrame([], genList.append(pd.Index(['Fleet'])), ['total', 'mean', 'std', 'median', 'max'])
+
+    # Get time steps, since the fuel curve is only providing mass flow. Total mass requires multiplication by time.
+    dt = genAllP['time'].diff()
+    fleetSum = np.zeros(np.shape(dt))
 
     for gen in genList:
 
@@ -35,10 +46,26 @@ def getFuelUse(genAllP, fuelCurveDataPoints):
         fc.fuelCurveDataPoints = fcDataPnts
         fc.linearCurveEstimator()
 
-        # TODO make sure itemgetter is fed with integer values
-        genFuelGetter = operator.itemgetter(genAllP[gen + 'P'].values)
-        genFuel = genFuelGetter(fc.fuelCurve)
-        print(genFuel)
+        # Get the 'indices' (power levels) for which to retrieve fuel data for
+        retrieveIdx = genAllP[gen + 'P'].values.astype(int)
+
+        # If there's bad data [exceeding index in fc.fuelCurve] it needs to be tossed.
+        retrieveIdx[retrieveIdx > len(fc.fuelCurve)-1] = len(fc.fuelCurve)-1
+        genFuel = [fc.fuelCurve[ridx][1] for ridx in retrieveIdx]
+        genFuel = genFuel * dt
+        fleetSum = fleetSum + genFuel
+        genAllFuelUsed[gen] = genFuel
+        fuelStats['total'].loc[gen] = genFuel.sum()
+        fuelStats['mean'].loc[gen] = genFuel.mean()
+        fuelStats['std'].loc[gen] = genFuel.std()
+        fuelStats['median'].loc[gen] = genFuel.median()
+        fuelStats['max'].loc[gen] = genFuel.max()
+
+    fuelStats['total'].loc['Fleet'] = fleetSum.sum()
+    fuelStats['mean'].loc['Fleet'] = fleetSum.mean()
+    fuelStats['std'].loc['Fleet'] = fleetSum.std()
+    fuelStats['median'].loc['Fleet'] = fleetSum.median()
+    fuelStats['max'].loc['Fleet'] = fleetSum.max()
 
     return genAllFuelUsed, fuelStats
 
