@@ -4,11 +4,11 @@
 # License: MIT License (see LICENSE file of this package for more information)
 
 # reads dataframe of data input compares values to descriptor xmls and returns a clean dataframe from a DataClass object
-#offline data is replaced first, followed by individual component data that is inline, and finally out of bounds values.
+#Out of bounds values for each component are replaced first, followed by datagaps and periods of inline data.
 #assumes df column headings match header values in setup.xml
+#assumes columns names ending in 'P' are power output components
 #assumes data is ordered by time ascending and index increases with time
 #a log of data that has been replaced will be generated in the TimeSeriesData folder
-#a pdf with graphs comparing original and fixed data will be generated in the TimeSeriesData folder
 
 
 import xml.etree.ElementTree as ET
@@ -21,7 +21,7 @@ from scipy import stats
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 
- #constants
+#constants
 DATETIME = 'DATE' #the name of the column containing sampling datetime as a numeric
 DESCXML = 'Descriptor.xml' #the suffix of the xml for each component that contains max/min values 
 TOTALP = 'total_p' #the name of the column that contains the sum of power output for all components. 
@@ -149,7 +149,7 @@ def linearFix(index_list, df, component):
     for i in index_list:
         index = getIndex(df[component], i)
         x = (pd.to_timedelta(pd.Series(df.index.to_datetime()))).dt.total_seconds().astype(int)
-        x.index = pd.to_datetime(df.index)
+        x.index = pd.to_datetime(df.index,unit='s')
         y = df[component]
         value = linearEstimate(x[[min(index), max(index)+ 1]],
                                y[[min(index), max(index)]], x.loc[i])
@@ -216,17 +216,13 @@ def getReplacement(df, indices, component = None):
          #find the match in the searchBlock as long as it isn't empty
          if not searchBlock.empty:
           #order by proximity
-             #doy = start.dayofyear
-             #match up the year then order by nearest
-#             searchBlock['doydiff'] = abs(searchBlock.index.to_datetime().dayofyear - doy)
-#             searchBlock['hourdiff'] = abs(searchBlock.index.to_datetime().hour - start.hour)
-#             searchBlock['mindiff'] = abs(searchBlock.index.to_datetime().minute - start.minute)
              searchBlock['newtime'] = pd.Series(searchBlock.index.to_datetime(),searchBlock.index).apply(lambda dt: dt.replace(year=start.year))
              
              searchBlock['timeapart'] = searchBlock['newtime'] - start
              sortedSearchBlock = searchBlock.sort_values('timeapart')
              #if replacment is long enough return indices, otherwise move on
-             blockLength = df[min(sortedSearchBlock.index):max(sortedSearchBlock.index)][::-1].rolling(len(missingBlock)).apply(lambda x: len(x))[::-1]
+             blockLength = df[min(sortedSearchBlock.index):max(sortedSearchBlock.index)][::-1].rolling(len(missingBlock)).count()[::-1]
+
              #a matching record is one that is the same day of the week, similar time of day and has enough
              #valid records following it to fill the empty block
              directMatch = blockLength[blockLength == len(missingBlock)].first_valid_index()
@@ -385,7 +381,7 @@ class DataClass:
     #fills in records at specified time interval where no data exists. 
     #new records will have NA for values
     def checkDataGaps(self):   
-        timeDiff =  pd.Series(self.fixed.index.to_datetime(), self.fixed.index).diff()
+        timeDiff =  pd.Series(pd.to_datetime(self.fixed.index, unit='s'), self.fixed.index).diff()
         timeDiff = timeDiff.sort_index(0,ascending=True)
         timeDiff = timeDiff[timeDiff > 2 * pd.to_timedelta(self.timeInterval)]
         #fill the gaps with NA
