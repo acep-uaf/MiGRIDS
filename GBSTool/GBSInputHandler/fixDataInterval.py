@@ -74,7 +74,7 @@ def fixDataInterval(data, interval):
         steps = np.arange(0, max(records) + 1, timestep)
 
         #t is the numeric value of the dataframe timestamps
-        t = pd.to_timedelta(pd.to_datetime(df.index.values, unit='s')).dt.total_seconds()
+        t = pd.to_timedelta(pd.Series(pd.to_datetime(df.index.values, unit='s'),index=df.index)).dt.total_seconds()
 
         #intervals is the steps array repeated for every row of time
         intervals = np.repeat(steps, len(t), axis=0)

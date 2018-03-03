@@ -22,7 +22,7 @@ def buildProjectSetup(projectName,saveDir,componentNames):
     contents_child = infile_child.read()
     infile_child.close()
     soup = BeautifulSoup(contents_child, 'xml')  # turn into soup
-    # update the proejct name
+    # update the project name
     soup.project.attrs['name'] = projectName
     soup.project.componentNames['value'] = componentNames
     # save
