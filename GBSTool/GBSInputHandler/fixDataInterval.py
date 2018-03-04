@@ -31,14 +31,13 @@ def fixDataInterval(data, interval):
 
     #up or down sample to our desired interval
     #down sampling results in averaged values
-    data.fixed = data.fixed.resample(interval).mean()
+    data.fixed = data.fixed.resample(pd.to_timedelta(interval)).mean()
 
     #integer, numeric, numeric, numeric -> numeric array
     #uses the Langevin equation to estimate records based on provided mean (mu) and standard deviation and a start value
-    def getValues(records, start, mu, sigma):
+    def getValues(records, start, mu, sigma,timestep):
         import numpy as np
-        #seconds between samples
-        timestep = 1
+
 
         #number of steps 
         n = (records / timestep) + 1
@@ -59,7 +58,7 @@ def fixDataInterval(data, interval):
     #dataframe -> integer array, integer array
     #returns arrays of time as seconds and values estimated using the Langevin equation
     #for all gaps of data within a dataframe
-    def estimateDistribution(df):
+    def estimateDistribution(df,interval):
         import numpy as np
         #feeders for the langevin estimate
         mu = df['mu']
@@ -69,7 +68,7 @@ def fixDataInterval(data, interval):
         timestep = pd.Timedelta(interval).seconds
 
         #return an array of arrays of values
-        y = getValues(records, start, mu, sigma)
+        y = getValues(records, start, mu, sigma,timestep)
         #steps is an array of timesteps in seconds with length = max(records)
         steps = np.arange(0, max(records) + 1, timestep)
 
@@ -90,23 +89,25 @@ def fixDataInterval(data, interval):
 
         return timeArray, values
 
-    #t is the time, k is the estimated value
-    t, k = estimateDistribution(df)
-    simulatedDf = pd.DataFrame({'time': t, 'value': k})
-    simulatedDf = simulatedDf.set_index(pd.to_datetime(simulatedDf['time']))
-    simulatedDf = simulatedDf[~simulatedDf.index.duplicated(keep='last')]
-    #join the simulated values to the upsampled dataframe by timestamp
-    data.fixed = data.fixed.join(simulatedDf, how='left')
-    #fill na's for total_p with simulated values
-    data.fixed.loc[pd.isnull(data.fixed['total_p']), 'total_p'] = data.fixed['value']
-    #component values get calculated based on the proportion that they made up previously
-    adj_m = data.fixed[data.fixed.columns[0:-1]].div(data.fixed['total_p'], axis=0)
-    adj_m = adj_m.ffill()
-    data.fixed = adj_m.multiply(data.fixed['total_p'], axis=0)
+    #if the resampled dataframe is bigger fill in new values
+    if len(df) < len(data.fixed):
+        #t is the time, k is the estimated value
+        t, k = estimateDistribution(df,interval)
+        simulatedDf = pd.DataFrame({'time': t, 'value': k})
+        simulatedDf = simulatedDf.set_index(pd.to_datetime(simulatedDf['time']))
+        simulatedDf = simulatedDf[~simulatedDf.index.duplicated(keep='last')]
+        #join the simulated values to the upsampled dataframe by timestamp
+        data.fixed = data.fixed.join(simulatedDf, how='left')
+        #fill na's for total_p with simulated values
+        data.fixed.loc[pd.isnull(data.fixed['total_p']), 'total_p'] = data.fixed['value']
+        #component values get calculated based on the proportion that they made up previously
+        adj_m = data.fixed[data.fixed.columns[0:-1]].div(data.fixed['total_p'], axis=0)
+        adj_m = adj_m.ffill()
+        data.fixed = adj_m.multiply(data.fixed['total_p'], axis=0)
 
-    #get rid of columns added
-    data.fixed = data.fixed.drop('time', 1)
-    data.fixed = data.fixed.drop('grouping', 1)
+        #get rid of columns added
+        data.fixed = data.fixed.drop('time', 1)
+
 
     data.removeAnomolies()
     return data
