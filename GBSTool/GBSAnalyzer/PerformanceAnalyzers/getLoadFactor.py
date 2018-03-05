@@ -6,8 +6,6 @@
 import pandas as pd
 
 
-# TODO test this function 
-
 def getLoadFactor(genAllP, genAllPOutMaxPa):
     """
     Calculates the load factor for all generator power channels provided as input, and a cumulative load factor for the
@@ -22,19 +20,21 @@ def getLoadFactor(genAllP, genAllPOutMaxPa):
     genList = genAllPOutMaxPa.index
     genListP = [gen + 'P' for gen in genList]
     genListPu = [gen + 'PPu' for gen in genList]
-    gcols = list(genListPu.values)
+    gcols = genListPu.copy()
     gcols.insert(0, 'time')
     gcols.append('genTotPPu')
     gcols = pd.Index(gcols[:])
     genAllPPu = pd.DataFrame(genAllP['time'], genAllP.index, gcols)
+    genTotPPa = 0
 
     # Crank through the df to get the values calculated.
     for gen in genList:
-        genTotP
-        genPPu = genAllP[gen + 'P'] / genAllPOutMaxPa['POutMaxPa'].loc[gen]
+        genTotPPa = genTotPPa + int(genAllPOutMaxPa.loc[gen])
+        genPPu = genAllP[gen + 'P'] / int(genAllPOutMaxPa.loc[gen])
         genAllPPu[gen + 'PPu'] = genPPu
 
     # Do the totals.
-    genAllPPu['genTotPPu'] = genAllP.sum(genListP)/genAllPOutMaxPa.sum()
+    genAllPPu['genTotPPu'] = genAllP[genListP].sum(axis=1)/genTotPPa
 
     return genAllPPu
+
