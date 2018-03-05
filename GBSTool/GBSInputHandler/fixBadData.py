@@ -230,7 +230,7 @@ def dataReplace(df, missing, replacement, component=None):
         df.loc[min(missing.index):max(missing.index), component] = replacement[component].values
     return df
 
-
+# TODO PERFORMANCE  slowest part of module because iterates through every missing interval
 # dataframe, list of indices, string -> Boolean
 # returns true if a replacement was made, false if it was not
 def getReplacement(df, indices, component=None):
