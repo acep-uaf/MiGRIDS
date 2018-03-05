@@ -46,7 +46,8 @@ def fixBadData(df, setupDir, ListOfComponents, sampleInterval):
                over = df[component] > maxPower
                under = df[component] < minPower
                df[component] = data.fixed[component].mask((over | under))
-               badDictAdd(component, baddata, '1.Exceeds Min/Max',
+               if(len(df[component][pd.isnull(df[component])].index.tolist()) > 0):
+                   badDictAdd(component, baddata, '1.Exceeds Min/Max',
                            df[component][pd.isnull(df[component])].index.tolist())
            except KeyError:
                print("%s was not found in the dataframe" % component)
@@ -385,8 +386,8 @@ class DataClass:
             len(groups), len(self.fixed[pd.isnull(self.fixed.total_p)])))
         # record the offline records in our baddata dictionary
         badDictAdd('gen',
-                   self.baddata, '4.Generator offline',
-                   self.fixed[pd.isnull(self.fixed.gentotal)].index.tolist())
+                   self.baddata, '2.Generator offline',
+                   self.fixed[self.fixed.gentotal==0].index.tolist())
 
         self.fixed.gentotal.replace(0, np.nan)
         for name, group in groups:
@@ -477,7 +478,7 @@ class DataClass:
             len(groups), len(self.fixed[pd.isnull(self.fixed.total_p)])))
         # record the offline records in our baddata dictionary
         badDictAdd(TOTALP,
-                   self.baddata, '4.Offline',
+                   self.baddata, '2.Offline',
                    self.fixed[pd.isnull(self.fixed[TOTALP])].index.tolist())
 
         self.fixed[TOTALP].replace(0, None)
