@@ -101,5 +101,17 @@
     The class name in the file must be 'genDispatch'. Default value is 'genDispatch0'-->
     <genDispatch value="eesDispatch0"/>
 
+    <!-- 'wtgDispatch' refers to the class that is used to dispatch the wind turbines.  If a user defines their
+    own dispatch, it is the path and filename of the dispatch class used to dispatch the wind turbines.
+    Otherwise, it is the name of the dispatch filename included in the software package. Options include: wtgDispatch0.
+    The class name in the file must be 'wtgDispatch'. Default value is 'wtgDispatch0'-->
+    <wtgDispatch value="wtgDispatch0"/>
+
+    <!-- 'getMinSrc' refers to the class that is used to calculate the minimum required spinning reserve capacity. If
+    the user defines their own calculation, it is the path and the filename of the class with the src calculation.
+    Otherwise, it is the name of the filename included in the software package. Options include: getMinSrc0. The class
+    name in the file must be 'getMinSrc'. Default value is 'getMinSrc0'. -->
+    <getMinSrc value="getMinSrc0"/>
+
 </project>
 <!-- EOF -->

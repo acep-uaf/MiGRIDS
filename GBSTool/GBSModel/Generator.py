@@ -4,14 +4,11 @@
 # License: MIT License (see LICENSE file of this package for more information)
 
 # General imports
-from bs4 import BeautifulSoup as Soup
-import os
-#here = os.getcwd()
-#os.chdir('../GBSAnalyzer/CurveAssemblers')
-#from genFuelCurveAssembler import GenFuelCurve
-#os.chdir(here)
 import sys
-sys.path.append('../')
+import os
+here = os.path.dirname(os.path.realpath(__file__))
+sys.path.append(os.path.join(here, '../'))
+from bs4 import BeautifulSoup as Soup
 from GBSAnalyzer.CurveAssemblers.genFuelCurveAssembler import GenFuelCurve
 
 
@@ -90,6 +87,8 @@ class Generator:
         self.genRunTimeTot = 0  # Cummulative run time since model start [s]
         self.genStartTimeAct = 0  # the amount of time spent warming up
         self.prevLoading = [] # a list of the last x seconds of loading on the diesel generator, updated with checkOperatingConditions()
+        self.molDifference = [] # a list of the last x seconds with the amount operated below MOL
+        self.normalUpperDifference = [] # a list of the last x seconds with the amount operated above normalUpperLimit
 
         # Write initial values to internal variables.
         self.genID = genID  # internal id used in Powerhouse for tracking generator objects. *type int*
@@ -130,26 +129,38 @@ class Generator:
             # limit the list to required length
             # first reverse order, then take checkLoadingTime of points and reverse back again
             # number of data points is (seconds required)/(# seconds per data point)
-            self.prevLoading = self.prevLoading[::-1][:round(self.checkLoadingTime/self.timeStep)][::-1]
+            self.prevLoading = self.prevLoading[-round(self.checkLoadingTime/self.timeStep):]
 
             ### Check the MOL constraint ###
+            '''
             # subtract prevLoading from MOL to get under MOL generation
             molDifference = [self.genMol - x for x in self.prevLoading]
             # the amount of energy that has been operated below MOL in checkLoadingTime
             self.underMol = sum([num for num in molDifference if num > 0]) * self.timeStep
+            '''
+            # try faster check
+            self.molDifference.append(max([self.genMol - self.genP,0]))
+            self.molDifference = self.molDifference[-round(self.checkLoadingTime / self.timeStep):]
+            self.underMol = sum(self.molDifference)*self.timeStep
 
             ### Check the upper normal loading limit ###
+            '''
             # subtract genUpperNormalLoading from prevLoading to get over genUpperNormalLoading generation
             normalUpperDifference = [x - self.genUpperNormalLoading for x in self.prevLoading]
             # the amount of energy that has been operated above genUpperNormalLoading in checkLoadingTime
             self.overGenUpperNormalLoading = sum([num for num in normalUpperDifference if num > 0]) * self.timeStep
+            '''
+            # try faster check
+            self.normalUpperDifference.append(max([self.genP - self.genUpperNormalLoading, 0]))
+            self.normalUpperDifference = self.normalUpperDifference[-round(self.checkLoadingTime / self.timeStep):]
+            self.overGenUpperNormalLoading = sum(self.normalUpperDifference) * self.timeStep
 
             ### Check if out of bounds operation, then flag outOfNormalBounds ###
             # under MOL by specified amount and currently under
-            if (self.underMol > self.underMolLimit) & (molDifference[-1] > 0):
+            if (self.underMol > self.underMolLimit) & (self.molDifference[-1] > 0):
                 self.outOfNormalBounds = True
             # over normal max loading by specified amount and currently over
-            elif (self.overGenUpperNormalLoading > self.genUpperNormalLoadingLimit) & (normalUpperDifference[-1] > 0):
+            elif (self.overGenUpperNormalLoading > self.genUpperNormalLoadingLimit) & (self.normalUpperDifference[-1] > 0):
                 self.outOfNormalBounds = True
             # over the max loading
             elif self.genP > self.genUpperLimit:

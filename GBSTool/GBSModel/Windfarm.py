@@ -3,15 +3,17 @@
 # Date: November 27, 2017
 # License: MIT License (see LICENSE file of this package for more information)
 
-from WindTurbine import WindTurbine
 import itertools
-import sys
 import numpy as np
+import sys
+
+from WindTurbine import WindTurbine
+
 sys.path.append('../')
 from GBSAnalyzer.CurveAssemblers.wtgPowerCurveAssembler import WindPowerCurve
 from bisect import bisect_left
 from netCDF4 import Dataset
-from readNCFile import readNCFile
+from GBSAnalyzer.DataRetrievers.readNCFile import readNCFile
 from Generator import Generator
 
 
@@ -53,35 +55,18 @@ class Windfarm:
 
         # Populate the list of wtg with windTurbine objects
         for idx, wtgID in enumerate(wtgIDS):
-            # check if only one wind profile was given, or if profiles were given for each turbine (list of lists)
-            if isinstance(windSpeedFiles[0],(list,tuple,np.ndarray)):
+            # check if only one wind profile was given
+            if isinstance(windSpeedFiles,(list,tuple,np.ndarray)):
                 # if windSpeedFiles is a list of files with length greater than one (more than one file) then one for each turbine
                 if len(windSpeedFiles) > 1:
-                    NCF = readNCFile(windSpeedFiles[idx])
-                    WS = np.array(NCF.value)*NCF.scale + NCF.offset
+                    WSF = windSpeedFiles[idx]
                 else: # if there is only 1 list, then use for all turbines
-                    NCF = readNCFile(windSpeedFiles[0])
-                    WS = np.array(NCF.value) * NCF.scale + NCF.offset
+                    WSF = windSpeedFiles[0]
             else: # if windSpeed is a list of values, not lists, then use for all turbines
-                NCF = readNCFile(windSpeedFiles)
-                WS = np.array(NCF.value) * NCF.scale + NCF.offset
-
-                # check if any nan values
-                if any(np.isnan(NCF.time)) or any(np.isnan(NCF.value)):
-                    raise ValueError(
-                        'There are nan values in the wind files.')
-                # check the units for time
-                elif NCF.timeUnits.lower() != 's' and NCF.timeUnits.lower() != 'sec' and NCF.timeUnits.lower() != 'seconds':
-                    raise ValueError('The units for time must be s.')
-                # check time step to make sure within +- 10% of timeStep input
-                # this will have a problem with daylight savings
-                #elif min(np.diff(NCF.time)) < 0.9 * timeStep or max(np.diff(NCF.time)) > 1.1 * timeStep:
-                #    raise ValueError(
-                 #       'The difference in the time stamps is more than the 10% different than the time step defined for '
-                 #       'this simulation ({} s). The timestamps should be in epoch format.'.format(timeStep))
+                WSF = windSpeedFiles
 
             # Initialize wtg
-            self.windTurbines.append(WindTurbine(wtgID, WS, wtgStates[idx], timeStep, wtgDescriptor[idx]))
+            self.windTurbines.append(WindTurbine(wtgID, WSF, wtgStates[idx], timeStep, wtgDescriptor[idx]))
 
             # Initial value for wtgP, wtgQ, wtgPAvail and wtgQAvail can be handled while were in this loop
             self.wtgPMax = self.wtgPMax + self.windTurbines[idx].wtgPMax

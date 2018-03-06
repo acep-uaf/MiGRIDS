@@ -41,7 +41,7 @@ def buildComponentDescriptor(componentNames,saveDir):
             contents_child = infile_child.read()
             infile_child.close()
             soup = BeautifulSoup(contents_child, 'xml') # turn into soup
-            parent = soup.childOf.string.lower() # find the anme of parent. if 'self', no parent file
+            parent = soup.childOf.string # find the anme of parent. if 'self', no parent file
             # update the component name
             soup.component.attrs['name'] = componentNames[i]
             componentNamesGood.append(componentNames[i])

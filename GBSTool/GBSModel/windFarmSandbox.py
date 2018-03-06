@@ -3,13 +3,16 @@
 import os
 from random import randint
 from Windfarm import Windfarm
-wtgIDs = [0,1,3]
-wtgP = [0]*3
-wtgQ = [0]*3
-wtgStates = [2]*3
+wtgIDs = [1,2,3,4]
+wtgP = [0]*4
+wtgQ = [0]*4
+wtgStates = [2]*4
 timeStep = 1
-wtgDescriptor = ['C:\\Users\jbvandermeer\Documents\ACEP\GBS\GBSTools\GBSProjects\Chevak\InputData\Components\wtg1Descriptor.xml']*3
-windSpeed = 'C:\\Users\jbvandermeer\Documents\ACEP\GBS\GBSTools\GBSProjects\Chevak\InputData\TimeSeriesData\ProcessedData\wtg1WS.nc'
+wtgDescriptor = ['C:\\Users\jbvandermeer\Documents\ACEP\GBS\GBSTools\GBSProjects\Chevak\InputData\Components\wtg1Descriptor.xml']*4
+windSpeed = ['C:\\Users\jbvandermeer\Documents\ACEP\GBS\GBSTools\GBSProjects\Chevak\InputData\TimeSeriesData\ProcessedData\wtg1WS.nc',
+'C:\\Users\jbvandermeer\Documents\ACEP\GBS\GBSTools\GBSProjects\Chevak\InputData\TimeSeriesData\ProcessedData\wtg2WS.nc',
+'C:\\Users\jbvandermeer\Documents\ACEP\GBS\GBSTools\GBSProjects\Chevak\InputData\TimeSeriesData\ProcessedData\wtg3WS.nc',
+'C:\\Users\jbvandermeer\Documents\ACEP\GBS\GBSTools\GBSProjects\Chevak\InputData\TimeSeriesData\ProcessedData\wtg4WS.nc']
 
 WF1 = Windfarm(wtgIDs, windSpeed, wtgStates, timeStep, wtgDescriptor)
 

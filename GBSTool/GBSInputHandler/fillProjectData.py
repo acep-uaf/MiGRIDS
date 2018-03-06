@@ -4,8 +4,13 @@
 # License: MIT License (see LICENSE file of this package for more information)
 
 # fill in information about the project into the descriptor and setup xml files
-def fillProjectData():
+def fillProjectData(projectDir = ''):
     # general imports
+    # add to sys path
+    import sys
+    import os
+    here = os.path.dirname(os.path.realpath(__file__))
+    sys.path.append(here)
     import tkinter as tk
     from tkinter import filedialog
     import pandas as pd
@@ -13,16 +18,18 @@ def fillProjectData():
     from buildComponentDescriptor import buildComponentDescriptor
     from buildProjectSetup import buildProjectSetup
     import numpy as np
-    import os
 
     # TODO: some sore of GUI to get data from user
     # for now get data from csv files
     # get the project directory. This is all that should be needed, since folder structure and filenames should be
     # standardized
-    print('Choose the project directory')
-    root = tk.Tk()
-    root.withdraw()
-    projectDir = filedialog.askdirectory()
+    # if project directory not specified, ask for it
+    if projectDir == '':
+        print('Choose the project directory')
+        root = tk.Tk()
+        root.withdraw()
+        projectDir = filedialog.askdirectory()
+
     userInputDir = projectDir + '/InputData/Setup/UserInput/'
 
     os.chdir(userInputDir)

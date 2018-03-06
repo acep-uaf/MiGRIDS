@@ -1,19 +1,21 @@
 
-import os
-import numpy as np
-from SystemOperations import SystemOperations
 import cProfile
+import numpy as np
+import numpy as np
+import os
+import os
+import pandas as pd
+import sys
 import tkinter as tk
 from tkinter import filedialog
-import numpy as np
-import pandas as pd
-import os
-import sys
+
+from SystemOperations import SystemOperations
+
 sys.path.append('../')
 from GBSInputHandler.writeXmlTag import writeXmlTag
 from GBSInputHandler.readXmlTag import readXmlTag
 import glob
-import writeNCFile
+from GBSAnalyzer.DataWriters import writeNCFile
 
 print('Choose the project directory')
 root = tk.Tk()
@@ -118,7 +120,7 @@ for run in range(componentsMX.shape[0]): # for each column, each simulation run
     pr1.print_stats(sort="calls")
 
     # save data
-    writeNCFile(SO.DM.realTime,SO.genP,1,0,'kW','genPRun'+str(run)+'.nc') # gen P
+    writeNCFile(SO.DM.realTime, SO.genP, 1, 0, 'kW', 'genPRun' + str(run) + '.nc') # gen P
     writeNCFile(SO.DM.realTime, SO.rePlimit, 1, 0, 'kW', 'rePlimit' + str(run) + '.nc')  # rePlimit
     writeNCFile(SO.DM.realTime, SO.wtgPAvail, 1, 0, 'kW', 'wtgPAvail' + str(run) + '.nc')  # wtgPAvail
     writeNCFile(SO.DM.realTime, SO.wtgPImport, 1, 0, 'kW', 'wtgPImport' + str(run) + '.nc')  # wtgPImport

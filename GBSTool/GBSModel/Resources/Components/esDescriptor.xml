@@ -40,6 +40,17 @@ children. -->
         <tempAmb value="298 298 298 298 298 298" unit="K"/>
     </lossMap>
 
+    <lossMapEstep value = "3600" unit = 'kWs'>
+        <!-- 'lossMapEstep' is the step interval that ePu will be interpolated along. Units are in kWs. Default is every
+          1 kWh (3600 kWs). -->
+    </lossMapEstep>
+
+    <lossMapPstep value = "1" unit = 'kW'>
+        <!-- 'lossMapPstep' is the step interval that pPu will be interpolated along. Units are in kW. Default is
+          1 kW. -->
+    </lossMapPstep>
+
+
     <!-- 'chargeRate' is the fraction of power that it would take to fully charge or discharge the ESS that is the
      maximum charge or discharge power. This creates charging and discharging curves that exponentially approach full
      and zero charge. 'value' should be between 0 and 1. Default value is 0.1.  -->

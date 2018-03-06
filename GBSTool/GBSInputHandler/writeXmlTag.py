@@ -4,13 +4,14 @@
 # License: MIT License (see LICENSE file of this package for more information)
 
 # write a value to an xml tag
-def writeXmlTag(fileName,tag,attr,value,fileDir):
+def writeXmlTag(fileName,tag,attr,value,fileDir=''):
     # general imports
     import os
     from bs4 import BeautifulSoup
 
     # cd to file location
-    os.chdir(fileDir)
+    if fileDir != '':
+        os.chdir(fileDir)
 
     # open file and read into soup
     infile_child = open(fileName, "r")  # open
@@ -34,7 +35,8 @@ def writeXmlTag(fileName,tag,attr,value,fileDir):
 
 
     # save again
-    os.chdir(fileDir)
+    if fileDir != '':
+        os.chdir(fileDir)
     f = open(fileName, "w")
     f.write(soup.prettify())
     f.close()
