@@ -5,6 +5,10 @@
 
 
 # *** General Imports ***
+import sys
+import os
+here = os.path.dirname(os.path.realpath(__file__))
+sys.path.append(os.path.join(here, '../../'))
 from scipy.interpolate import CubicSpline
 import numpy as np
 

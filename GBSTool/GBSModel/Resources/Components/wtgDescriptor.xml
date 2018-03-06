@@ -36,10 +36,10 @@
     <cutOutWindSpeedMin value="0" unit="m/s"/>
     <!-- 'checkWindTime' is the amount of time that windSpillLimit is measured over. Units are s. Default is 300.  -->
     <checkWindTime value="300" unit="s"/>
-    <!-- 'wtgSpilledWindLimit' is the amount of spilled wind power that is the limit before a flag is set to initiate
+    <!-- 'spilledWindLimit' is the amount of spilled wind power that is the limit before a flag is set to initiate
       scheduling new diesel and energy storage units. Units are in PU of nameplate capacity times seconds. It is measured
       over the period of time indicated by checkWindTime. Default is 60 PU. -->
-    <wtgSpilledWindLimit value="60" unit="PU"/>
+    <spilledWindLimit value="60" unit="PU"/>
 
 </component>
 <!-- EOF -->

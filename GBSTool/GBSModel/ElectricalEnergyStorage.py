@@ -10,6 +10,7 @@ sys.path.append('../')
 from GBSAnalyzer.CurveAssemblers.esLossMapAssembler import esLossMap
 from GBSInputHandler.readXmlTag import readXmlTag
 import numpy as np
+from getIntListIndex import getIntListIndex
 
 class ElectricalEnergyStorage:
     '''
@@ -90,7 +91,7 @@ class ElectricalEnergyStorage:
         self.eesPInMax = float(eesSoup.PInMaxPa.get('value'))  # max charging power
         self.eesQOutMax = float(eesSoup.QOutMaxPa.get('value'))  # max discharging power reactive
         self.eesQInMax = float(eesSoup.QInMaxPa.get('value'))  # max charging power reactive
-        # TODO: add the effect of charge/discharge rate on capacity. Possibly add something similar to the LossMap
+        # FUTUREFEATURE: add the effect of charge/discharge rate on capacity. Possibly add something similar to the LossMap
         self.eesEMax = float(eesSoup.energyCapacity.get('value')) # the maximum energy capacity of the EES in kWs
         # the amount of time in seconds that the EES must be able to discharge for at current level of SRC being provided
         self.eesSrcTime = float(eesSoup.eesSrcTime.get('value'))
@@ -120,6 +121,12 @@ class ElectricalEnergyStorage:
         # maximum charge or discharge power. This creates charging and discharging curves that exponentially approach full
         # and zero charge.
         self.eesChargeRate = float(eesSoup.chargeRate.get('value'))
+        # 'lossMapEstep' is the step interval that ePu will be interpolated along in the lossmap
+        self.lossMapEstep = float(eesSoup.lossMapEstep.get('value'))
+        # 'lossMapPstep' is the step interval that pPu will be interpolated along in the lossmap
+        self.lossMapPstep = float(eesSoup.lossMapPstep.get('value'))
+        # 'useLossMap' is a bool value that indicates whether or not use the lossMap in the simulation.
+        self.useLossMap = eesSoup.useLossMap.get('value').lower() in ['true','1']
 
         # handle the loss map interpolation
         # 'lossMap' describes the loss experienced by the energy storage system for each state of power and energy.
@@ -156,7 +163,7 @@ class ElectricalEnergyStorage:
         eesLM.checkInputs()
         # TODO: remove *2, this is for testing purposes
         # perform the linear interpolation between points, with an energy step every 1 kWh (3600 seconds)
-        eesLM.linearInterpolation(self.eesChargeRate, eStep = 3600*2)
+        eesLM.linearInterpolation(self.eesChargeRate, eStep = self.lossMapEstep, pStep= self.lossMapPstep)
 
         self.eesLossMapP = eesLM.P
         # save the index of where the power vector is zero. This is used to speed up run time calculations
@@ -250,16 +257,23 @@ class ElectricalEnergyStorage:
     # this finds the available charging power
     # duration is the duration that needs to be able to charge at that power for
     def findPchAvail(self, duration):
-        # get the index of the closest E from the loss map
-        eInd = np.searchsorted(self.eesLossMapE,self.eesSOC*self.eesEMax,side='left')
-        # get the searchable array for charging power (negative) the discharge times for this are already sorted in
-        # increasing order, so do not need to be sorted
-        ChTimeSorted = self.eesmaxDischTime[:self.eesLossMapPZeroInd,eInd]
-        # get the index of the closest discharge time to duration
-        # need to reverse the order of discharge times to get
-        dInd  = np.searchsorted(ChTimeSorted,duration,side='right')
-        # the available charging power corresponds to the
-        return -self.eesLossMapP[dInd]
+        if self.useLossMap:
+            # get the index of the closest E from the loss map
+            eInd = getIntListIndex(self.eesSOC*self.eesEMax, self.eesLossMapE, self.lossMapEstep)
+            '''       
+            eInd = np.searchsorted(self.eesLossMapE,self.eesSOC*self.eesEMax,side='left')
+            # get the searchable array for charging power (negative) the discharge times for this are already sorted in
+            # increasing order, so do not need to be sorted
+            '''
+            ChTimeSorted = self.eesmaxDischTime[:self.eesLossMapPZeroInd,eInd]
+            # get the index of the closest discharge time to duration
+            # need to reverse the order of discharge times to get
+            dInd  = np.searchsorted(ChTimeSorted,duration,side='right')
+            # the available charging power corresponds to the
+            return -self.eesLossMapP[dInd]
+        else:
+            # charging power is simply amount of energy left till full divided by the duration
+            return (1 - self.eesSOC)*self.eesEMax/duration
 
     # this finds the available discharge power
     # duration is the duration that needs to be able to discharge at that power for
@@ -269,45 +283,39 @@ class ElectricalEnergyStorage:
     # for 180 sec, and at the current SOC this would result in 500 kWs of losses, then kWsReserved would be 18,500 kWs.
     # findLoss is a bool value. if True, the associated loss will be calculated for discharging at that power
     def findPdisAvail(self, duration, kWReserved, kWsReserved):
-        # get the index of the closest E from the loss map to the current energy state minus the reserved energy.
-        # Subtracting the kWsReserved from the current SOC is not the most accurate way to do this, but it is a good
-        # estimate. Ideally would search between current SOC down to kWsReserved, instead of of (current SOC -
-        # kWsReserved) down to zero. However, this would not allow precalculating the matrix eesmaxDischTime.
-        # TODO remove once other works
-        eInd = np.searchsorted(self.eesLossMapE, self.eesSOC * self.eesEMax - kWsReserved, side='left')
+        if self.useLossMap:
+            # get the index of the closest E from the loss map to the current energy state minus the reserved energy.
+            # Subtracting the kWsReserved from the current SOC is not the most accurate way to do this, but it is a good
+            # estimate. Ideally would search between current SOC down to kWsReserved, instead of of (current SOC -
+            # kWsReserved) down to zero. However, this would not allow precalculating the matrix eesmaxDischTime.
+            # TODO remove once other works
+            #eInd = np.searchsorted(self.eesLossMapE, self.eesSOC * self.eesEMax - kWsReserved, side='left')
 
-        # index of the energy closest to the current energy level stored
-        eIndHere = np.searchsorted(self.eesLossMapE, self.eesSOC * self.eesEMax, side='left')
-        # index of the energy required for SRC
-        # TODO: consider saving this index to avoid this search
-        eIndSrc = np.searchsorted(self.eesLossMapE, kWsReserved, side='left')
-        # get the searchable array for discharging power (positive). The discharge time is the difference between the
-        # time to fully discharge the current energy bin and the time to fully discharge the energy bin required for
-        # spinning reserve
-        DisTimeSorted = self.eesmaxDischTime[self.eesLossMapPZeroInd + 1:, eIndHere] - \
-                        self.eesmaxDischTime[self.eesLossMapPZeroInd + 1:, eIndSrc]
-        # the discharge times for this are sorted in
-        # decreasing order, so needs to be reversed
-        DisTimeSorted = DisTimeSorted[::-1]
-        dInd = np.searchsorted(DisTimeSorted, duration, side='right')
-        # the index is from the back of the array, since was from a reversed array.
-        # the maximum discharging power is the minimum of the power allowed to reserve the required capacity and the
-        # difference between the maximum power and the reserved power in order to keep that power capability reserved.
-        return min([self.eesLossMapP[-(dInd + 1)], self.eesPOutMax - kWReserved])
+            # index of the energy closest to the current energy level stored
+            eIndHere = getIntListIndex(self.eesSOC * self.eesEMax, self.eesLossMapE, self.lossMapEstep)
+            #eIndHere = np.searchsorted(self.eesLossMapE, self.eesSOC * self.eesEMax, side='left')
+            # index of the energy required for SRC
+            # TODO: consider saving this index to avoid this search
+            eIndSrc = getIntListIndex(kWsReserved,self.eesLossMapE, self.lossMapEstep)
+            #eIndSrc = np.searchsorted(self.eesLossMapE, kWsReserved, side='left')
+            # get the searchable array for discharging power (positive). The discharge time is the difference between the
+            # time to fully discharge the current energy bin and the time to fully discharge the energy bin required for
+            # spinning reserve
+            DisTimeSorted = self.eesmaxDischTime[self.eesLossMapPZeroInd + 1:, eIndHere] - \
+                            self.eesmaxDischTime[self.eesLossMapPZeroInd + 1:, eIndSrc]
+            # the discharge times for this are sorted in
+            # decreasing order, so needs to be reversed
+            DisTimeSorted = DisTimeSorted[::-1]
+            dInd = np.searchsorted(DisTimeSorted, duration, side='right')
+            # the index is from the back of the array, since was from a reversed array.
+            # the maximum discharging power is the minimum of the power allowed to reserve the required capacity and the
+            # difference between the maximum power and the reserved power in order to keep that power capability reserved.
+            return min([self.eesLossMapP[-(dInd + 1)], self.eesPOutMax - kWReserved])
+        else:
+            # discharging power is simply the stored energy divided by duration
+            return self.eesSOC * self.eesEMax / duration
 
-        ''' # TODO: remove this once determine other working
-        # get the searchable array for discharging power (positive) the discharge times for this are sorted in
-        # decreasing order, so needs to be reversed
-        DisTimeSorted = self.eesmaxDischTime[self.eesLossMapPZeroInd+1:, eInd]
-        DisTimeSorted = DisTimeSorted[::-1]
-        # get the index of the closest discharge time to duration
-        # need to reverse the order of discharge times to get
-        dInd = np.searchsorted(DisTimeSorted, duration, side='right')
 
-        # the index is from the back of the array, since was from a reversed array.
-        return self.eesLossMapP[-(dInd+1)] - kWReserved
-
-        '''
     # findLoss returns the expected loss in kWs given a specific power and duration
     # P is the power expected to discharge at
     # duration is the time expected to discharge at P for
@@ -317,9 +325,11 @@ class ElectricalEnergyStorage:
             # if the power is within the chargeRate and max discharge bounds
             #if (P <= self.eesSOC * self.eesEMax * self.eesChargeRate)  & P <= self.eesPOutMax:
                 # get the index of the closest E from the loss map to the current energy state minus the reserved energy
-                eInd = np.searchsorted(self.eesLossMapE, self.eesSOC * self.eesEMax, side='left')
+                eInd = getIntListIndex(self.eesSOC * self.eesEMax, self.eesLossMapE, self.lossMapEstep)
+                # eInd = np.searchsorted(self.eesLossMapE, self.eesSOC * self.eesEMax, side='left')
                 # get index of closest P
-                pInd = np.searchsorted(self.eesLossMapP, P, side = 'left')
+                pInd = getIntListIndex(P, self.eesLossMapP,self.lossMapPstep)
+                #pInd = np.searchsorted(self.eesLossMapP, P, side = 'left')
                 # create a cumulative sum of discharge times
                 # since discharging, the stored energy will be going down, thus reverse the order
                 times = self.eesNextBinTime[pInd,:eInd]
@@ -334,9 +344,11 @@ class ElectricalEnergyStorage:
             # if the power is within the chargeRate and max discharge bounds
            # if (P >= (self.eesSOC - 1)*self.eesEMax  * self.eesChargeRate) & P >= -self.eesPInMax:
                 # get the index of the closest E from the loss map to the current energy state minus the reserved energy
-                eInd = np.searchsorted(self.eesLossMapE, self.eesSOC * self.eesEMax, side='left')
+                eInd = getIntListIndex(self.eesSOC * self.eesEMax, self.eesLossMapE, self.lossMapEstep)
+                #eInd = np.searchsorted(self.eesLossMapE, self.eesSOC * self.eesEMax, side='left')
                 # get index of closest P
-                pInd = np.searchsorted(self.eesLossMapP, P, side='left')
+                pInd = getIntListIndex(P, self.eesLossMapP, self.lossMapPstep)
+                #pInd = np.searchsorted(self.eesLossMapP, P, side='left')
                 # create a cumulative sum of discharge times
                 cumSumTime = np.cumsum(self.eesNextBinTime[pInd, eInd:])
                 # get the index closest to the duration required
@@ -352,8 +364,9 @@ class ElectricalEnergyStorage:
         # set the required SRC in kW
         self.eesSRC = SRC
         # get index of closest P to SRC
-        pInd = np.searchsorted(self.eesLossMapP, SRC, side='left')
-        pInd = min([len(self.eesLossMapP)-1,pInd])
+        pInd = getIntListIndex(SRC, self.eesLossMapP, self.lossMapPstep)
+        #pInd = np.searchsorted(self.eesLossMapP, SRC, side='left')
+        #pInd = min([len(self.eesLossMapP)-1,pInd])
         # get the index of the closest max discharge time to the required SRC time
         eInd = np.searchsorted(self.eesmaxDischTime[pInd, :], self.eesSrcTime, side='left')
         eInd = min([len(self.eesLossMapE)-1, eInd])

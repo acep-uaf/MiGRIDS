@@ -6,9 +6,15 @@
 # General imports
 from bs4 import BeautifulSoup as Soup
 import sys
-sys.path.append('../')
+import os
+here = os.path.dirname(os.path.realpath(__file__))
+sys.path.append(os.path.join(here, '../'))
 from GBSAnalyzer.CurveAssemblers.wtgPowerCurveAssembler import WindPowerCurve
 from bisect import bisect_left
+from readNCFile import readNCFile
+from writeNCFile import writeNCFile
+from getIntListIndex import getIntListIndex
+import numpy as np
 
 class WindTurbine:
     """
@@ -39,7 +45,7 @@ class WindTurbine:
 
 
     # Constructor
-    def __init__(self, wtgID, windSpeed, wtgState, timeStep, wtgDescriptor):
+    def __init__(self, wtgID, windSpeedFile, wtgState, timeStep, wtgDescriptor):
         """
         Constructor used for the initialization of an object within windfarm list of wind turbines.
 
@@ -53,7 +59,7 @@ class WindTurbine:
         self.wtgState = wtgState  # Wind turbine operating state [dimensionless, index]. 0 - off, 1 - starting, 2 - online.
         self.timeStep = timeStep
         # grab data from descriptor file
-        self.wtgDescriptorParser(windSpeed,wtgDescriptor)
+        self.wtgDescriptorParser(windSpeedFile,wtgDescriptor)
 
         self.wtgPAvail = 0  # the available power from the wind [kW]
         self.wtgQAvail = 0  # the available power form the wind [kar]
@@ -70,7 +76,7 @@ class WindTurbine:
         # initiate runtime values
         self.checkOperatingConditions()
 
-    def wtgDescriptorParser(self, windSpeed, wtgDescriptor):
+    def wtgDescriptorParser(self, windSpeedFile, wtgDescriptor):
         """
         wtgDescriptorParser: parses the necessary data from the wtgDescriptor.xml file provided.
 
@@ -111,17 +117,54 @@ class WindTurbine:
         wtgPC.cutOutWindSpeedMax = float(wtgSoup.cutOutWindSpeedMax.get('value')) # Cut-out wind speed max, float, m/s
         wtgPC.POutMaxPa = self.wtgPMax # Nameplate power, float, kW
         wtgPC.cubicSplineCurveEstimator()
-        self.wtgPowerCurve = wtgPC.powerCurve
+        self.wtgPowerCurve = wtgPC.powerCurveInt
 
-        # generate possible wind power time series
-        # get the generator fuel consumption at this loading for this combination
-        PCws, PCpower = zip(*self.wtgPowerCurve)  # separate out the windspeed and power
-        # iterate through wind speeds
-        self.windPower = [] #initiate wind power list
+        # check if there are wind power files in the wind speed directory
+        windSpeedDir = os.path.dirname(windSpeedFile)
+        if os.path.isfile(os.path.join(windSpeedDir,'wtg'+str(self.wtgID)+'WP.nc')):
+            # if there is, then read it
+            NCF = readNCFile(os.path.join(windSpeedDir,'wtg'+str(self.wtgID)+'WP.nc'))
+            self.windPower = np.array(NCF.value)*NCF.scale + NCF.offset
+
+        else:
+            # read wind speed file
+            NCF = readNCFile(windSpeedFile)
+            windSpeed = np.array(NCF.value) * NCF.scale + NCF.offset
+            # check if any nan values
+            if any(np.isnan(NCF.time)) or any(np.isnan(NCF.value)):
+                raise ValueError(
+                    'There are nan values in the wind files.')
+            # check the units for time
+            elif NCF.timeUnits.lower() != 's' and NCF.timeUnits.lower() != 'sec' and NCF.timeUnits.lower() != 'seconds':
+                raise ValueError('The units for time must be s.')
+                # check time step to make sure within +- 10% of timeStep input
+                # this will have a problem with daylight savings
+                # elif min(np.diff(NCF.time)) < 0.9 * timeStep or max(np.diff(NCF.time)) > 1.1 * timeStep:
+                #    raise ValueError(
+                #       'The difference in the time stamps is more than the 10% different than the time step defined for '
+                #       'this simulation ({} s). The timestamps should be in epoch format.'.format(timeStep))
+
+            # generate possible wind power time series
+            # get the generator fuel consumption at this loading for this combination
+            PCws, PCpower = zip(*self.wtgPowerCurve)  # separate out the windspeed and power
+            # get wind power
+            self.windPower = self.getWP(PCpower,PCws,windSpeed, wtgPC.wsScale)
+            writeNCFile(NCF.time[:], self.windPower, 1, 0, 'kW', os.path.join(windSpeedDir,'wtg'+str(self.wtgID)+'WP.nc'))
+
+    # get wind power available from wind speeds and power curve
+    # using integer list indexing is much faster than np.searchsorted
+    # PCws is an interger list, with no missing values, of wind speeds in 0.1 m/s
+    # PCpower is the corresonding power in kW
+    # windSpeed is a list of windspeeds in m/s
+    def getWP(self,PCpower,PCws,windSpeed, wsScale):
+        windPower = []
         for WS in windSpeed:
-            # bisect left gives the index of the last list item to not be over the number being searched for. it is faster than using min
-            # this finds the associated fuel consumption to the scheduled load for this combination
-            self.windPower.append(PCpower[self.findClosestInd(PCws, WS)])
+            # get the index of the wind speed
+            idx = getIntListIndex(WS,PCws)
+            # append the corresponding wind power
+            windPower.append(PCpower[idx])
+        return windPower
+
 
     # this finds the closest index of item in the list 'L'
     def findClosestInd(self,L,item):
@@ -136,14 +179,19 @@ class WindTurbine:
 
     def checkOperatingConditions(self):
         if self.wtgState == 2: # if running online
-            self.wtgPAvail = self.windPower[self.step]
+            self.wtgPAvail = self.windPower[min([self.step,len(self.windPower)-1])]
             self.wtgRunTimeAct += self.timeStep
             self.wtgRunTimeTot += self.timeStep
 
             # update spilled wind power time series
             self.wtgSpilledWind.append(max([self.wtgPAvail-self.wtgP, 0]))
             # get the spilled wind power in checkWindPowerTime
-            self.wtgSpilledWindCum = sum(self.wtgSpilledWind[-int(self.wtgCheckWindTime/self.timeStep):])
+            # if the spilled length of time measured spilled wind power over is less than the check time
+            if len(self.wtgSpilledWind) > int(self.wtgCheckWindTime/self.timeStep):
+                self.wtgSpilledWindCum = self.wtgSpilledWindCum + self.wtgSpilledWind[-1]- self.wtgSpilledWind[-int(self.wtgCheckWindTime/self.timeStep)]
+            else:
+                self.wtgSpilledWindCum = self.wtgSpilledWindCum + self.wtgSpilledWind[-1]
+
             # if enough wind spilled, set flag
             if (self.wtgSpilledWindCum > self.wtgSpilledWindLimit) and (self.wtgSpilledWind[-1] > 0):
                 self.wtgSpilledWindFlag = True

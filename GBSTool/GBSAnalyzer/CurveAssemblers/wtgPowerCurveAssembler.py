@@ -158,8 +158,19 @@ class WindPowerCurve:
         cs = CubicSpline(xCoords, yCoords, bc_type='clamped', extrapolate=False)
 
         # To pull an array of values from the cubic spline, we need to setup a wind speed array. This sensibly starts at
-        # 0 m/s and in this case we carry it out to twice the maximum cut-out wind speed, with a step size of 0.1 m/s.
-        windSpeeds = np.arange(0, self.cutOutWindSpeedMax*2, 0.1)
+        # 0 m/s and in this case we carry it out to twice the maximum cut-out wind speed, with a step size depending on
+        # the range of wind speeds observed.
+
+        # check the cut out value of ws is less than 10 m/s. If this is the case, use a higher scaling to achieve better
+        # resolution in the power curve. This is usefull when using the wind turbine class for hydro kinetic turbines.
+
+        if self.cutOutWindSpeedMax < 10:
+            self.wsScale = 100
+        else:
+            self.wsScale = 10
+
+        windSpeeds = np.arange(0, self.cutOutWindSpeedMax*2, 1/self.wsScale)
+
         # With wind speed vector setup, we can extract values from the cubic spline of each wind speed point. We
         # immediately backfill the NaNs created by requesting data outside of the initial data range with zeros.
         # NOTE that this assumes that we know that this is true because we have defined values all the way to the
@@ -180,7 +191,8 @@ class WindPowerCurve:
         # wind speeds are multiplied by 10 and then type cast to integers. The power values are rounded to the nearest
         # kW and type cast to int.
         # NOTE that this variable is significantly more efficient in memory usage.
-        self.powerCurveInt = zip(np.rint(10*windSpeeds).astype(int), np.rint(power).astype(int))
+
+        self.powerCurveInt = zip(np.rint(self.wsScale*windSpeeds).astype(int), np.rint(power).astype(int))
 
 
 

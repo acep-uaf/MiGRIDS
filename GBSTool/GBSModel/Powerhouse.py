@@ -9,6 +9,7 @@ import sys
 import numpy as np
 sys.path.append('../')
 from GBSAnalyzer.CurveAssemblers.genFuelCurveAssembler import GenFuelCurve
+from getIntListIndex import getIntListIndex
 from bisect import bisect_left
 # import GeneratorDispatch
 
@@ -83,7 +84,7 @@ class Powerhouse:
 
         # Create a list of all possible generator combination ID, MOL, upper normal loading, upper limit and lower limit
         # these will be used to schedule the diesel generators
-        self.combinationsID = range(2**len(self.genIDS)-1) # the IDs of the generator combinations
+        self.combinationsID = range(2**len(self.genIDS)) # the IDs of the generator combinations
         self.genCombinationsID = [] # the gen IDs in each combination
         self.genCombinationsMOL = np.array([])
         self.genCombinationsUpperNormalLoading = []
@@ -91,7 +92,7 @@ class Powerhouse:
         self.genCombinationsLowerLimit = []
         self.genCombinationsPMax = []
         self.genCombinationsFCurve = []
-        for nGen in range(len(self.genIDS)): # for all possible numbers of generators
+        for nGen in range(len(self.genIDS)+1): # for all possible numbers of generators
             for subset in itertools.combinations(self.genIDS, nGen): # get all possible combinations with that number
                 self.genCombinationsID.append(subset) # list of lists of gen IDs
                 # get the minimum normal loading (if all operating at their MOL)
@@ -257,7 +258,9 @@ class Powerhouse:
             FCpower, FCcons = zip(*self.genCombinationsFCurve[idx]) # separate out the consumption and power
             # bisect left gives the index of the last list item to not be over the number being searched for. it is faster than using min
             # this finds the associated fuel consumption to the scheduled load for this combination
-            indFCcons = min([np.searchsorted(FCpower,scheduledLoad, side='left'),len(FCpower)-1])
+            #indFCcons = min([np.searchsorted(FCpower,scheduledLoad, side='left'),len(FCpower)-1])
+            indFCcons = getIntListIndex(scheduledLoad,FCpower)
+
             fuelCons.append(FCcons[indFCcons])
             # TODO: Add cost of switching generators
 

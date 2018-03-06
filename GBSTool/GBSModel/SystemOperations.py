@@ -19,7 +19,7 @@ class SystemOperations:
     # Generation and dispatch resources
     def __init__(self, timeStep = 1, loadRealFiles = [], loadReactiveFiles = [], predictLoad = 'predictLoad1', predictWind = 'predictWind0',
                  genIDs = [], genStates = [], genDescriptors = [], genDispatch = [],
-                 wtgIDs = [], wtgStates = [], wtgDescriptors = [], wtgSpeedFiles = [],
+                 wtgIDs = [], wtgStates = [], wtgDescriptors = [], wtgSpeedFiles = [], wtgDispatch = [],
                  eesIDs = [], eesStates = [], eesSOCs = [], eesDescriptors = [], eesDispatch = []):
         """
         Constructor used for intialization of all sytem components
@@ -116,7 +116,7 @@ class SystemOperations:
         self.genRunTime = []
         self.onlineCombinationID = []
 
-        for idx, P in enumerate(self.DM.realLoad[:1000]): #self.DM.realLoad: # for each real load
+        for idx, P in enumerate(self.DM.realLoad[:]): #self.DM.realLoad: # for each real load
             ## Dispatch units
             # get available wind power
             wtgPAvail = sum(self.WF.wtgPAvail)

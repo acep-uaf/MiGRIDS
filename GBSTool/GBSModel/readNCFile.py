@@ -20,6 +20,13 @@ class readNCFile:
         rootgrp = Dataset(file, "r", format="NETCDF4")
         self.time = rootgrp.variables['time']
         self.value = rootgrp.variables['value']
+
+        # sometimes variables get read as a list of np array
+        if type(self.time[0]) is np.ndarray or type(self.time[0]) is list:
+            self.time = self.time[0]
+        if type(self.value[0]) is np.ndarray or type(self.value[0]) is list:
+            self.value = self.value[0]
+
         # find all value attributes
         valueAttributes = rootgrp.variables['value'].ncattrs()
         self.scale = np.nan
