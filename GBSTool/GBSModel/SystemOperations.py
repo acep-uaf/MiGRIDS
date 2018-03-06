@@ -17,7 +17,8 @@ import numpy as np
 class SystemOperations:
     # System Variables
     # Generation and dispatch resources
-    def __init__(self, timeStep = 1, loadRealFiles = [], loadReactiveFiles = [], predictLoad = 'predictLoad1', predictWind = 'predictWind0',
+    def __init__(self, timeStep = 1, loadRealFiles = [], loadReactiveFiles = [], predictLoad = 'predictLoad1',
+                 predictWind = 'predictWind0', getMinSrc = 'getMinSrc0',
                  genIDs = [], genStates = [], genDescriptors = [], genDispatch = [],
                  wtgIDs = [], wtgStates = [], wtgDescriptors = [], wtgSpeedFiles = [], wtgDispatch = [],
                  eesIDs = [], eesStates = [], eesSOCs = [], eesDescriptors = [], eesDispatch = []):
@@ -78,6 +79,18 @@ class SystemOperations:
         dispatchModule = importlib.import_module(modFileName)
         self.predictWind = dispatchModule.predictWind()
 
+        # import the wind predictor
+        # split into path and filename
+        modPath, modFile = os.path.split(getMinSrc)
+        # if located in a different directory, add to sys path
+        if len(modPath) != 0:
+            sys.path.append(modPath)
+        # split extension off of file
+        modFileName, modFileExt = os.path.splitext(modFile)
+        # import module
+        getMinSrc = importlib.import_module(modFileName)
+        self.getMinSrc = getMinSrc.getMinSrc()
+
         # initiate generator power house
         # TODO: seperate genDispatch from power house, put as input
         if len(genIDs) != 0:
@@ -116,7 +129,7 @@ class SystemOperations:
         self.genRunTime = []
         self.onlineCombinationID = []
 
-        for idx, P in enumerate(self.DM.realLoad[:]): #self.DM.realLoad: # for each real load
+        for idx, P in enumerate(self.DM.realLoad[:1000000]): #self.DM.realLoad: # for each real load
             ## Dispatch units
             # get available wind power
             wtgPAvail = sum(self.WF.wtgPAvail)
@@ -128,7 +141,9 @@ class SystemOperations:
             # between available wind power and wind power imported to the grid.
             wtgPch = min(sum(self.EESS.eesPinAvail),wtgPAvail - wtgPimport)
             # get the required spinning reserve. Start off with a simple estimate
-            srcMin = 100 + wtgPimport
+            self.getMinSrc.getMinSrc(wtgPimport, self.DM.realLoad[:idx+1], self.timeStep)
+            srcMin = self.getMinSrc.srcMin
+            #srcMin = 100 + wtgPimport
             # discharge the eess to cover the difference between load and generation
             eessDis = min([max([P - wtgPimport - sum(self.PH.genPAvail),0]),sum(self.EESS.eesPoutAvail)])
             # get the diesel power output, the difference between demand and supply
@@ -202,4 +217,6 @@ class SystemOperations:
                     self.underSRC[idx] = 1
                 if any(self.PH.outOfNormalBounds):
                     self.outOfNormalBounds[idx] = 1
+
+
 

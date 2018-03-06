@@ -3,10 +3,12 @@
 # Date: November 27, 2017
 # License: MIT License (see LICENSE file of this package for more information)
 
+import numpy as np
 # imports
 from netCDF4 import Dataset
-import numpy as np
-from readNCFile import readNCFile
+
+from GBSAnalyzer.DataRetrievers.readNCFile import readNCFile
+
 
 class Demand:
 

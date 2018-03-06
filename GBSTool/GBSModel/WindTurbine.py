@@ -3,16 +3,17 @@
 # Date: November 27, 2017
 # License: MIT License (see LICENSE file of this package for more information)
 
+import os
+import sys
 # General imports
 from bs4 import BeautifulSoup as Soup
-import sys
-import os
+
 here = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(os.path.join(here, '../'))
 from GBSAnalyzer.CurveAssemblers.wtgPowerCurveAssembler import WindPowerCurve
 from bisect import bisect_left
-from readNCFile import readNCFile
-from writeNCFile import writeNCFile
+from GBSAnalyzer.DataRetrievers.readNCFile import readNCFile
+from GBSAnalyzer.DataWriters.writeNCFile import writeNCFile
 from getIntListIndex import getIntListIndex
 import numpy as np
 
