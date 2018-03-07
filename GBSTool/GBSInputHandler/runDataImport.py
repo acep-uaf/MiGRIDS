@@ -51,8 +51,11 @@ df_fixed = fixBadData(df,setupDir,listOfComponents,inputInterval)
 from fixDataInterval import fixDataInterval
 df_fixed_interval = fixDataInterval(df_fixed,outputInterval)
 
+d = {}
+for c in listOfComponents:
+    c.toDictionary(d)
 
 # now convert to a netcdf
 from dataframe2netcdf import dataframe2netcdf
-dataframe2netcdf(df_fixed_interval.fixed, listOfComponents)
+dataframe2netcdf(df_fixed_interval.fixed, d)
 # save ncfile in folder `ModelInputData' in the path ../GBSProjects/[VillageName]/InputData/TimeSeriesData/

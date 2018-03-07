@@ -6,9 +6,7 @@
 # this function is passed a pandas dataframe and converts it to net cdf format
 def dataframe2netcdf(df,components,varnames=None,saveLocation=''):
     # df is the dataframe. The headers will be used as the variable names unless they are specified by the 'headers' input
-    # argument
-    # units are the units corresponding to the collumns in the dataframe, *type string*
-    # scale and offset correspond to the data collumns *type float*
+    # components is a dictionary of units and offsets for each component
     # varNames are the names of the variables specified by the columns of the dataframe *type string*
     # saveLocation is where the net CDF files are saved *type string*
 
@@ -31,9 +29,9 @@ def dataframe2netcdf(df,components,varnames=None,saveLocation=''):
 
     # create a netCDF file for each data column of the data frame containing the timestamps and the data
     for i in range(1,df.shape[1]): # skip the first column, Date
-        # get header name from data frame
+        # get header name from dataframe
         column = df.columns.values[i]
-        component = [x for x in components if x.name == column]
+        component = [x for x in components.keys() if x == column]
         
         component = component[0]
         if varnames != None:
@@ -50,14 +48,11 @@ def dataframe2netcdf(df,components,varnames=None,saveLocation=''):
         rootgrp.variables['value'][:] = np.array(df[column])  # fill with values
         # assign attributes
         rootgrp.variables['time'].units = 'seconds'  # set unit attribute
-        rootgrp.variables['value'].units = component.units # set unit attribute
-        rootgrp.variables['value'].Scale = component.scale # set unit attribute
-        rootgrp.variables['value'].offset = 0  # set unit attribute
+        rootgrp.variables['value'].units = component['units'] # set unit attribute
+        rootgrp.variables['value'].Scale = component['scale'] # set unit attribute
+        rootgrp.variables['value'].offset = component['offset']  # set unit attribute
         # close file
         rootgrp.close()
-
-
-
 
     # end of file
 
