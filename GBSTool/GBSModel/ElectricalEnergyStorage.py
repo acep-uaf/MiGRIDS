@@ -98,6 +98,9 @@ class ElectricalEnergyStorage:
         # 'eesDispatchTime' is the minimum amount of time that the ESS must be able to supply the load for in order to
         # be considered as an active discharge option in the diesel schedule.
         self.eesDispatchTime = float(eesSoup.eesDispatchTime.get('value'))
+        # 'eesDispatchMinSoc' is the minimum SOC of the ESS in order to be considered as an active discharge option in
+        # the diesel schedule. Units are in pu of full energy capacity.
+        self.eesDispatchMinSoc = float(eesSoup.eesDispatchMinSoc.get('value'))
         # 'eesPinAvail_1_time' is used to find the maximum power that the EES can charge for 'eesPinAvail_1_time'
         # amount of time before being fully charged.  Units are in seconds. Default is 300 s (5 min).
         self.eesPinAvail_1_time = float(eesSoup.eesPinAvail_1_time.get('value'))
@@ -321,41 +324,45 @@ class ElectricalEnergyStorage:
     # duration is the time expected to discharge at P for
     def findLoss(self,P,duration):
 
-        if P > 0: # if discharging
-            # if the power is within the chargeRate and max discharge bounds
-            #if (P <= self.eesSOC * self.eesEMax * self.eesChargeRate)  & P <= self.eesPOutMax:
-                # get the index of the closest E from the loss map to the current energy state minus the reserved energy
-                eInd = getIntListIndex(self.eesSOC * self.eesEMax, self.eesLossMapE, self.lossMapEstep)
-                # eInd = np.searchsorted(self.eesLossMapE, self.eesSOC * self.eesEMax, side='left')
-                # get index of closest P
-                pInd = getIntListIndex(P, self.eesLossMapP,self.lossMapPstep)
-                #pInd = np.searchsorted(self.eesLossMapP, P, side = 'left')
-                # create a cumulative sum of discharge times
-                # since discharging, the stored energy will be going down, thus reverse the order
-                times = self.eesNextBinTime[pInd,:eInd]
-                times = times[::-1]
-                cumSumTime = np.cumsum(times)
-                # get the index closest to the duration required
-                dInd = np.searchsorted(cumSumTime,duration)
-                return sum(self.eesLossMapLoss[pInd,(eInd-dInd-1):eInd])
+        if self.useLossMap: # if use loss map, otherwise, no loss
+
+            if P > 0: # if discharging
+                # if the power is within the chargeRate and max discharge bounds
+                #if (P <= self.eesSOC * self.eesEMax * self.eesChargeRate)  & P <= self.eesPOutMax:
+                    # get the index of the closest E from the loss map to the current energy state minus the reserved energy
+                    eInd = getIntListIndex(self.eesSOC * self.eesEMax, self.eesLossMapE, self.lossMapEstep)
+                    # eInd = np.searchsorted(self.eesLossMapE, self.eesSOC * self.eesEMax, side='left')
+                    # get index of closest P
+                    pInd = getIntListIndex(P, self.eesLossMapP,self.lossMapPstep)
+                    #pInd = np.searchsorted(self.eesLossMapP, P, side = 'left')
+                    # create a cumulative sum of discharge times
+                    # since discharging, the stored energy will be going down, thus reverse the order
+                    times = self.eesNextBinTime[pInd,:eInd]
+                    times = times[::-1]
+                    cumSumTime = np.cumsum(times)
+                    # get the index closest to the duration required
+                    dInd = np.searchsorted(cumSumTime,duration)
+                    return sum(self.eesLossMapLoss[pInd,(eInd-dInd-1):eInd])
 
 
-        elif P < 0: # if charging
-            # if the power is within the chargeRate and max discharge bounds
-           # if (P >= (self.eesSOC - 1)*self.eesEMax  * self.eesChargeRate) & P >= -self.eesPInMax:
-                # get the index of the closest E from the loss map to the current energy state minus the reserved energy
-                eInd = getIntListIndex(self.eesSOC * self.eesEMax, self.eesLossMapE, self.lossMapEstep)
-                #eInd = np.searchsorted(self.eesLossMapE, self.eesSOC * self.eesEMax, side='left')
-                # get index of closest P
-                pInd = getIntListIndex(P, self.eesLossMapP, self.lossMapPstep)
-                #pInd = np.searchsorted(self.eesLossMapP, P, side='left')
-                # create a cumulative sum of discharge times
-                cumSumTime = np.cumsum(self.eesNextBinTime[pInd, eInd:])
-                # get the index closest to the duration required
-                dInd = np.searchsorted(cumSumTime, duration)
-                return sum(self.eesLossMapLoss[pInd, eInd:(eInd + dInd+1)])
+            elif P < 0: # if charging
+                # if the power is within the chargeRate and max discharge bounds
+               # if (P >= (self.eesSOC - 1)*self.eesEMax  * self.eesChargeRate) & P >= -self.eesPInMax:
+                    # get the index of the closest E from the loss map to the current energy state minus the reserved energy
+                    eInd = getIntListIndex(self.eesSOC * self.eesEMax, self.eesLossMapE, self.lossMapEstep)
+                    #eInd = np.searchsorted(self.eesLossMapE, self.eesSOC * self.eesEMax, side='left')
+                    # get index of closest P
+                    pInd = getIntListIndex(P, self.eesLossMapP, self.lossMapPstep)
+                    #pInd = np.searchsorted(self.eesLossMapP, P, side='left')
+                    # create a cumulative sum of discharge times
+                    cumSumTime = np.cumsum(self.eesNextBinTime[pInd, eInd:])
+                    # get the index closest to the duration required
+                    dInd = np.searchsorted(cumSumTime, duration)
+                    return sum(self.eesLossMapLoss[pInd, eInd:(eInd + dInd+1)])
 
-        else: # if not doing anything
+            else: # if not doing anything
+                return 0
+        else:
             return 0
 
     # this will set the required SRC and find the minimum SOC that the ees must stay above to be able to supply the

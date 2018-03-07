@@ -133,6 +133,8 @@ class Powerhouse:
     def combFuelCurves(self, genIDs):
         # get the max power of the combination
         combPMax = 0 # initiate to zero
+        combFuelPower = [0]
+        combFuelConsumption = [0]
         for genID in genIDs:
             combPMax += int(self.generators[self.genIDS.index(genID)].genPMax) # add each generator max power
 
@@ -147,6 +149,10 @@ class Powerhouse:
             genFC.genOverloadPMax = self.generators[self.genIDS.index(genID)].genPMax # set the max power to the nameplate capacity
             genFC.cubicSplineCurveEstimator(powerStep) # calculate new fuel curve
             combFuelConsumption += np.array([y for x, y in genFC.fuelCurve]) # add the fuel consumption for each generator
+
+        if len(combFuelPower) == 0:
+            combFuelPower = [0]
+            combFuelConsumption = [0]
 
         return list(zip(combFuelPower, list(combFuelConsumption))) # return list of tuples
 
@@ -200,15 +206,21 @@ class Powerhouse:
     # self - self reference
     # scheduledLoad - the load that the generators will be expected to supply, this is predicted based on previous loading
     # scheduledSRC -  the minimum spinning reserve that the generators will be expected to supply
-    def genSchedule(self, scheduledLoad, scheduledSRC):
+    def genSchedule(self, scheduledLoad, scheduledSRC, powerAvailToSwitch, powerAvailToStay):
         ## first find all generator combinations that can supply the load within their operating bounds
         # find all with capacity over the load and the required SRC
-        indCap = np.array([idx for idx, x in enumerate(self.genCombinationsUpperNormalLoading) if x > scheduledLoad + scheduledSRC])
+        indCap = np.array([idx for idx, x in enumerate(self.genCombinationsUpperNormalLoading) if x >= scheduledLoad -
+                           powerAvailToSwitch + scheduledSRC])
+        # check if the current online combination is capable of supplying the projected load minus the power available to
+        # help the current generator combination stay online
+        if self.onlineCombinationID not in indCap and \
+                        self.genCombinationsUpperNormalLoading[self.onlineCombinationID] >= scheduledLoad + scheduledSRC - powerAvailToStay:
+            indCap = np.append(indCap,self.onlineCombinationID)
         # if there are no gen combinations large enough to supply, automatically add largest (last combination)
         if len(indCap) == 0:
             indCap = np.array([len(self.genCombinationsUpperNormalLoading)-1])
         # find all with MOL under the load
-        indMOLCap = [idx for idx, x in enumerate(self.genCombinationsMOL[indCap]) if x < scheduledLoad]
+        indMOLCap = [idx for idx, x in enumerate(self.genCombinationsMOL[indCap]) if x <= scheduledLoad]
         # ind of in bounds combinations
         indInBounds = indCap[indMOLCap]
         # if there are no gen combinations with a low enough MOL enough to supply, automatically add combination 1,
@@ -255,11 +267,14 @@ class Powerhouse:
             timeToSwitch.append(SwitchTime)
 
             # get the generator fuel consumption at this loading for this combination
-            FCpower, FCcons = zip(*self.genCombinationsFCurve[idx]) # separate out the consumption and power
-            # bisect left gives the index of the last list item to not be over the number being searched for. it is faster than using min
-            # this finds the associated fuel consumption to the scheduled load for this combination
-            #indFCcons = min([np.searchsorted(FCpower,scheduledLoad, side='left'),len(FCpower)-1])
-            indFCcons = getIntListIndex(scheduledLoad,FCpower)
+            FCpower, FCcons = zip(*self.genCombinationsFCurve[idx]) # separate out the consumptio n and power
+            # check if this is the online combination. If so, use the power available to stay online to calculate the
+            # the load required by the generator
+            if idx == self.onlineCombinationID:
+                useScheduledLoad = int(max([scheduledLoad - powerAvailToStay, self.genCombinationsMOL[idx]]))
+            else:
+                useScheduledLoad = int(max([scheduledLoad - powerAvailToSwitch, self.genCombinationsMOL[idx]]))
+            indFCcons = getIntListIndex(useScheduledLoad,FCpower)
 
             fuelCons.append(FCcons[indFCcons])
             # TODO: Add cost of switching generators

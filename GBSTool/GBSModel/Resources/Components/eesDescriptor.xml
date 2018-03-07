@@ -51,6 +51,9 @@
     <!-- 'eesDispatchTime' is the minimum amount of time that the ESS must be able to supply the load for in order to
     be considered as an active discharge option in the diesel schedule. Units are in seconds. Default is 1800 s (0.5 hours).   -->
     <eesDispatchTime value="1800" unit="s"/>
+    <!-- 'eesDispatchMinSoc' is the minimum SOC of the ESS in order to be considered as an active discharge option in
+    the diesel schedule. Units are in pu of full energy capacity. Default is 0.9.   -->
+    <eesDispatchMinSoc value="0.9" unit="pu"/>
     <!-- 'eesPinAvail_1_time' is used to find the maximum power that the EES can charge for 'eesPinAvail_1_time'
     amount of time before being fully charged.  Units are in seconds. Default is 300 s (5 min).   -->
     <eesPinAvail_1_time value="300" unit="s"/>

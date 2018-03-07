@@ -59,7 +59,7 @@ def runSimulation(projectDir = ''):
     eesDispatch = readXmlTag(projectSetupFile,'eesDispatch','value')[0]
 
     # get the minimum required SRC calculation
-    getMinSrc = readXmlTag(projectSetupFile, 'getMinSrc', 'value')[0]
+    getMinSrcFile = readXmlTag(projectSetupFile, 'getMinSrc', 'value')[0]
 
     # TODO
     # get the gen dispatch
@@ -129,7 +129,7 @@ def runSimulation(projectDir = ''):
         # code profiler
         pr0 = cProfile.Profile()
         pr0.enable()
-        SO = SystemOperations(timeStep = timeStep, loadRealFiles = loadRealFiles, loadReactiveFiles = [], predictLoad = predictLoad, predictWind = predictWind, getMinSrc = getMinSrc,
+        SO = SystemOperations(timeStep = timeStep, loadRealFiles = loadRealFiles, loadReactiveFiles = [], predictLoad = predictLoad, predictWind = predictWind, getMinSrcFile = getMinSrcFile,
                          genIDs = genIDs, genStates = genStates, genDescriptors = genDescriptors, genDispatch = genDispatch,
                          wtgIDs = wtgIDs, wtgStates = wtgStates, wtgDescriptors = wtgDescriptors, wtgSpeedFiles = windSpeed, wtgDispatch = wtgDispatch,
                          eesIDs = eesIDs, eesStates = eesStates, eesSOCs = eesSOC, eesDescriptors = eesDescriptors, eesDispatch = eesDispatch)

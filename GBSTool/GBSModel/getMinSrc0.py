@@ -6,15 +6,15 @@
 # imports
 import numpy as np
 
-# calculate a short term future load
-class getMinSrc:
+# calculate the minimum required src
 
-    def __init__(self):
-        self.srcMin = 0
-
-    def getMinSrc(self, wtgPimport, prevLoad, timeStep):
-        # Take the average load of this hour last week 24.5hr * 3600 s/hr = 617400s , 23.5hr * 3600 = 592200
-        # try with and without, compare the difference in performance.
-        #meanLastWeek = np.mean(prevLoad[int(-617400/timeStep):int(-592200/timeStep)])
+def getMinSrc(wtgPimport, prevLoad, timeStep):
+    # Take the average load of this hour last week 24.5hr * 3600 s/hr = 617400s , 23.5hr * 3600 = 592200
+    # try with and without, compare the difference in performance.
+    #meanLastWeek = np.mean(prevLoad[int(-617400/timeStep):int(-592200/timeStep)])
+    # if a list is given for prevLoad, get mean value, otherwise, use the value given
+    if type(prevLoad) is list or type(prevLoad) is np.ndarray:
         meanLastTenMin = np.mean(prevLoad[int(-600/timeStep):])
-        self.srcMin = meanLastTenMin*0.25 + wtgPimport*.75
+    else:
+        meanLastTenMin = prevLoad
+    return meanLastTenMin*0.25 + wtgPimport*.75

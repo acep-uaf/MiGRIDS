@@ -18,7 +18,7 @@ class SystemOperations:
     # System Variables
     # Generation and dispatch resources
     def __init__(self, timeStep = 1, loadRealFiles = [], loadReactiveFiles = [], predictLoad = 'predictLoad1',
-                 predictWind = 'predictWind0', getMinSrc = 'getMinSrc0',
+                 predictWind = 'predictWind0', getMinSrcFile = 'getMinSrc0',
                  genIDs = [], genStates = [], genDescriptors = [], genDispatch = [],
                  wtgIDs = [], wtgStates = [], wtgDescriptors = [], wtgSpeedFiles = [], wtgDispatch = [],
                  eesIDs = [], eesStates = [], eesSOCs = [], eesDescriptors = [], eesDispatch = []):
@@ -79,17 +79,17 @@ class SystemOperations:
         dispatchModule = importlib.import_module(modFileName)
         self.predictWind = dispatchModule.predictWind()
 
-        # import the wind predictor
-        # split into path and filename
-        modPath, modFile = os.path.split(getMinSrc)
+        # import min src calculator
+        modPath, modFile = os.path.split(getMinSrcFile)
         # if located in a different directory, add to sys path
         if len(modPath) != 0:
             sys.path.append(modPath)
         # split extension off of file
         modFileName, modFileExt = os.path.splitext(modFile)
         # import module
-        getMinSrc = importlib.import_module(modFileName)
-        self.getMinSrc = getMinSrc.getMinSrc()
+        A = importlib.import_module(modFileName)
+        self.getMinSrc = A.getMinSrc
+        #self.getMinSrc = getMinSrc.getMinSrc()
 
         # initiate generator power house
         # TODO: seperate genDispatch from power house, put as input
@@ -129,7 +129,7 @@ class SystemOperations:
         self.genRunTime = []
         self.onlineCombinationID = []
 
-        for idx, P in enumerate(self.DM.realLoad[:1000000]): #self.DM.realLoad: # for each real load
+        for idx, P in enumerate(self.DM.realLoad[:10000000]): #self.DM.realLoad: # for each real load
             ## Dispatch units
             # get available wind power
             wtgPAvail = sum(self.WF.wtgPAvail)
@@ -141,8 +141,8 @@ class SystemOperations:
             # between available wind power and wind power imported to the grid.
             wtgPch = min(sum(self.EESS.eesPinAvail),wtgPAvail - wtgPimport)
             # get the required spinning reserve. Start off with a simple estimate
-            self.getMinSrc.getMinSrc(wtgPimport, self.DM.realLoad[:idx+1], self.timeStep)
-            srcMin = self.getMinSrc.srcMin
+            srcMin = self.getMinSrc(wtgPimport, self.DM.realLoad[:idx+1], self.timeStep)
+
             #srcMin = 100 + wtgPimport
             # discharge the eess to cover the difference between load and generation
             eessDis = min([max([P - wtgPimport - sum(self.PH.genPAvail),0]),sum(self.EESS.eesPoutAvail)])
@@ -195,18 +195,36 @@ class SystemOperations:
                 # TODO: add other RE
 
                 # get the ability of the energy storage system to supply SRC
-                eesSrcAvailMax = 0 # the amount of SRC available from all ees units
+                eesSrcAvailMax = [] # the amount of SRC available from all ees units
                 # iterate through all ees and add their available SRC
                 for ees in self.EESS.electricalEnergyStorageUnits:
-                    eesSrcAvailMax += ees.findPdisAvail(ees.eesSrcTime, 0, 0)
+                    eesSrcAvailMax.append(ees.findPdisAvail(ees.eesSrcTime, 0, 0))
 
                 # find the required capacity of the diesel generators
-                # how much RE can EESS cover? This can be subtracted from the load that the diesel generators must be
+                # how much SRC can EESS cover? This can be subtracted from the load that the diesel generators must be
                 # able to supply
-                coveredRE = min([eesSrcAvailMax, futureWind])
+                futureSRC = self.getMinSrc(futureWind, futureLoad, self.timeStep)
+                coveredSRC = min([sum(eesSrcAvailMax), futureSRC])
+                # get the amount of SRC provided by each ees
+                eesSrcScheduled = np.array(eesSrcAvailMax)*coveredSRC/sum(eesSrcAvailMax)
+
+                # get the ability of the energy storage system to supply the load by discharging, on top of the RE it is
+                # covering with SRC
+                eesSchedDischAvail = 0  # the amount of discharge available from all ees units for specified amount of time
+                # iterate through all ees and add their available discharge
+                for index, ees in enumerate(self.EESS.electricalEnergyStorageUnits):
+                    # if generators running online, only schedule the ESS to be able to discharge if over the min SOC
+                    # the problem is that this will not
+                    if ees.eesSOC > ees.eesDispatchMinSoc:
+                        # find the loss associated with the spinning reserve
+                        eesLoss = ees.findLoss(eesSrcScheduled[index], ees.eesSrcTime)
+                        # calculate the available discharge, taking into account the amount reserved to supply SRC and the
+                        # energy capacity required taking into account losses
+                        eesSchedDischAvail += ees.findPdisAvail(ees.eesDispatchTime, eesSrcScheduled[index], eesLoss + ees.eesSrcTime*eesSrcScheduled[index])
 
                 # schedule the generators accordingly
-                self.PH.genSchedule(futureLoad - coveredRE, 0)
+                self.PH.genSchedule(max([futureLoad - futureWind ,0]), futureSRC - coveredSRC,
+                                    eesSchedDischAvail, sum(eesSrcAvailMax) - sum(eesSrcScheduled))
                 # TODO: incorporate energy storage capabilities and wind power into diesel schedule. First predict
                 # the future amount of wind power. find available SRC from EESS. Accept the amount of predicted wind
                 # power that can be covered by ESS (likely some scaling needed to avoid switching too much)
