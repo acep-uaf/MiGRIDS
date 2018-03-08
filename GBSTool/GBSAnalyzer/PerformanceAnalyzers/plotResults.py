@@ -14,6 +14,7 @@ here = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(os.path.join(here, '../../'))
 sys.path.append(here)
 from GBSAnalyzer.DataRetrievers.readNCFile import readNCFile
+from GBSModel.getSeriesIndecies import getSeriesIndecies
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -40,7 +41,7 @@ def plotProjectRun(projectRunDir = '', steps = 'all'):
     
     # load diesel generator output
     genP = readNCFile('genPRun'+str(run)+'.nc')
-    plotIdx = getPlotIndecies(steps, genP)
+    plotIdx = getSeriesIndecies(steps, len(genP))
     # plot generator power
     plt.figure()
     plt.plot(genP.time[plotIdx], np.array(genP.value[plotIdx])*genP.scale + genP.offset)
@@ -49,24 +50,10 @@ def plotProjectRun(projectRunDir = '', steps = 'all'):
 
     # load wtg import
     wtgImport = readNCFile('wtgPImportRun' + str(run) + '.nc')
-    plotIdx = getPlotIndecies(steps, wtgImport)
+    plotIdx = getSeriesIndecies(steps, len(wtgImport))
     # plot wtg import
     plt.figure()
     plt.plot(wtgImport.time[plotIdx], np.array(wtgImport.value[plotIdx]) * wtgImport.scale + wtgImport.offset)
     plt.savefig('wtgImport')
     plt.show()
 
-
-
-def getPlotIndecies(steps, values):
-    if steps == 'all' or steps == ':':
-        plotIdx = range(len(values))
-    elif (type(steps) is list or type(steps) is np.ndarray) or len(steps) == 2:
-        plotIdx = range(steps[0],steps[1])
-    elif type(steps) is int:
-        plotIdx = range(steps)
-    else:
-        plotIdx = steps
-
-    return plotIdx
-    

@@ -9,6 +9,7 @@ from Windfarm import Windfarm
 from ElectricalEnergyStorageSystem import ElectricalEnergyStorageSystem
 #from ThermalSystem import ThermalSystem
 from Demand import Demand
+from getSeriesIndices import getSeriesIndices
 import os
 import sys
 import importlib.util
@@ -17,7 +18,7 @@ import numpy as np
 class SystemOperations:
     # System Variables
     # Generation and dispatch resources
-    def __init__(self, timeStep = 1, loadRealFiles = [], loadReactiveFiles = [], predictLoad = 'predictLoad1',
+    def __init__(self, timeStep = 1, runTimeSteps = 'all', loadRealFiles = [], loadReactiveFiles = [], predictLoad = 'predictLoad1',
                  predictWind = 'predictWind0', getMinSrcFile = 'getMinSrc0',
                  genIDs = [], genStates = [], genDescriptors = [], genDispatch = [],
                  wtgIDs = [], wtgStates = [], wtgDescriptors = [], wtgSpeedFiles = [], wtgDispatch = [],
@@ -25,6 +26,8 @@ class SystemOperations:
         """
         Constructor used for intialization of all sytem components
         :param timeStep: the length of time steps the simulation is run at in seconds.
+        :param runTimeSteps: the timesteps to run. This can be 'all', an interger that the simulation runs up till, a list
+        of two values of the start and stop indecies, or a list of indecies of length greater than 2 to use directly.
         :param loadRealFiles: list of net cdf files that add up to the full real load
         :param loadReactiveFiles: list of net cdf files that add up to the full reactive load. This can be left empty.
         :param predictLoad: If a user defines their own load predicting function, it is the path and filename of the function used
@@ -55,6 +58,7 @@ class SystemOperations:
         to dispatch the energy storage units. Otherwise, it is the name of the dispatch filename included in the software
         package. Options include: eesDispatch0. The class name in the file must be 'eesDispatch'
         """
+
         # import the load predictor
         # split into path and filename
         modPath, modFile = os.path.split(predictLoad)
@@ -105,6 +109,9 @@ class SystemOperations:
         if len(loadRealFiles) != 0:
             self.DM = Demand(timeStep, loadRealFiles, loadReactiveFiles)
 
+        # get the run indices
+        self.indRun = getSeriesIndices(runTimeSteps, len(self.DM.realLoad))
+
         # save local variables
         self.timeStep = timeStep
 
@@ -129,7 +136,8 @@ class SystemOperations:
         self.genRunTime = []
         self.onlineCombinationID = []
 
-        for idx, P in enumerate(self.DM.realLoad[:10000000]): #self.DM.realLoad: # for each real load
+        # FUTUREFEATURE: run through parts of the year at a time and save the output.
+        for idx, P in enumerate(self.DM.realLoad[self.indRun]): #self.DM.realLoad: # for each real load
             ## Dispatch units
             # get available wind power
             wtgPAvail = sum(self.WF.wtgPAvail)
@@ -204,9 +212,14 @@ class SystemOperations:
                 # how much SRC can EESS cover? This can be subtracted from the load that the diesel generators must be
                 # able to supply
                 futureSRC = self.getMinSrc(futureWind, futureLoad, self.timeStep)
-                coveredSRC = min([sum(eesSrcAvailMax), futureSRC])
-                # get the amount of SRC provided by each ees
-                eesSrcScheduled = np.array(eesSrcAvailMax)*coveredSRC/sum(eesSrcAvailMax)
+                # check if available SRC from EES is zero, to avoid dividing by zero
+                if sum(eesSrcAvailMax) > 0:
+                    coveredSRC = min([sum(eesSrcAvailMax), futureSRC])
+                    # get the amount of SRC provided by each ees
+                    eesSrcScheduled = np.array(eesSrcAvailMax)*coveredSRC/sum(eesSrcAvailMax)
+                else:
+                    coveredSRC = 0
+                    eesSrcScheduled = eesSrcAvailMax
 
                 # get the ability of the energy storage system to supply the load by discharging, on top of the RE it is
                 # covering with SRC

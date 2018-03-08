@@ -66,12 +66,13 @@ class esLossMap:
         # Check if data was initialized at all.
         if not inptDataPoints:
             raise ValueError('Loss map is empty list.')
-        elif self.pInMax == 0:
-            raise ValueError('Maximum input power is not configured, or set to 0.')
-        elif self.pOutMax == 0:
-            raise ValueError('Maximum output power is not configured, or set to 0.')
-        elif self.eMax == 0:
-            raise ValueError('Maximum energy capacoty is not configured, or set to 0.')
+        # remove these checks, since having the option to run a simulation with a zero EES is needed
+        #elif self.pInMax == 0:
+        #    raise ValueError('Maximum input power is not configured, or set to 0.')
+        #elif self.pOutMax == 0:
+        #    raise ValueError('Maximum output power is not configured, or set to 0.')
+        #elif self.eMax == 0:
+         #   raise ValueError('Maximum energy capacoty is not configured, or set to 0.')
 
         # Check for negative values in loss, temperature and soc - there shouldn't be any
         for tpls in inptDataPoints:
