@@ -1,19 +1,12 @@
 # -*- coding: utf-8 -*-
 #
 import sys
-from PyQt5.QtWidgets import QApplication, QWidget, QDialog
-from UISetupForm import UISetupForm
+from PyQt5 import QtCore, QtGui, QtWidgets
+from UISetupForm import UISetup
 
-def callSetupForm():
-    class AppWindow(QDialog):
-        def __init__(self):
-            super().__init__()
-            #set the main setup form class
-            self.ui = UISetupForm()
-            self.ui.setupUi(self)
-            self.show()
-            
-    app = QApplication(sys.argv)
-    w=AppWindow()
+        
+if __name__ == '__main__':
     
+    app = QtWidgets.QApplication(sys.argv)
+    ex = UISetup()
     sys.exit(app.exec_())
