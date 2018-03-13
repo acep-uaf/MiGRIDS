@@ -8,5 +8,5 @@ from UISetupForm import UISetup
 if __name__ == '__main__':
     
     app = QtWidgets.QApplication(sys.argv)
-    ex = UISetup()
+    s = UISetup()
     sys.exit(app.exec_())
