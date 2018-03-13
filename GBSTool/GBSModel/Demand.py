@@ -3,9 +3,11 @@
 # Date: November 27, 2017
 # License: MIT License (see LICENSE file of this package for more information)
 
-import numpy as np
+
 # imports
-from netCDF4 import Dataset
+from getSeriesIndices import getSeriesIndices
+import numpy as np
+
 
 from GBSAnalyzer.DataRetrievers.readNCFile import readNCFile
 
@@ -13,7 +15,7 @@ from GBSAnalyzer.DataRetrievers.readNCFile import readNCFile
 class Demand:
 
     # Constuctor
-    def __init__(self, timeStep, loadRealFiles, loadReactiveFiles = []):
+    def __init__(self, timeStep, loadRealFiles, loadReactiveFiles = [], runTimeSteps = 'all'):
         """
         Constructors used for initialization of load profiles
         :param timeStep: the time step in seconds that the simulation will be run at
@@ -24,6 +26,8 @@ class Demand:
         """
         # the timestep the simulation is run at.
         self.timeStep = timeStep
+        # steps to run
+        self.runTimeSteps = runTimeSteps
         # read the real load in
         self.realTime, self.realLoad = self.loadLoadFiles(loadRealFiles)
 
@@ -52,13 +56,14 @@ class Demand:
                         raise ValueError(
                             'The length of input load files must be equal.')
                     load += load0
-            return time, load
-
         # if not a list or tuple, this file should represent the total load
         else:
             ncFile = readNCFile(loadFiles)
             time, load = self.checkNCFile(ncFile)
-            return time, load
+
+        # get the indices of the timesteps to simulate
+        indRun = getSeriesIndices(self.runTimeSteps, len(load))
+        return time[indRun], load[indRun]
 
     def checkNCFile(self,ncFile, isReal = True):
         time = ncFile.time

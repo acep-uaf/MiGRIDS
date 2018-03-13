@@ -101,16 +101,13 @@ class SystemOperations:
             self.PH = Powerhouse(genIDs, genStates, timeStep, genDescriptors)
         # initiate wind farm
         if len(wtgIDs) != 0:
-            self.WF = Windfarm(wtgIDs, wtgSpeedFiles, wtgStates, timeStep, wtgDescriptors)
+            self.WF = Windfarm(wtgIDs, wtgSpeedFiles, wtgStates, timeStep, wtgDescriptors, runTimeSteps)
         # initiate electrical energy storage system
         if len(eesIDs) != 0:
             self.EESS = ElectricalEnergyStorageSystem(eesIDs, eesSOCs, eesStates, timeStep, eesDescriptors, eesDispatch)
         # load the real load
         if len(loadRealFiles) != 0:
-            self.DM = Demand(timeStep, loadRealFiles, loadReactiveFiles)
-
-        # get the run indices
-        self.indRun = getSeriesIndices(runTimeSteps, len(self.DM.realLoad))
+            self.DM = Demand(timeStep, loadRealFiles, loadReactiveFiles, runTimeSteps)
 
         # save local variables
         self.timeStep = timeStep
@@ -137,7 +134,7 @@ class SystemOperations:
         self.onlineCombinationID = []
 
         # FUTUREFEATURE: run through parts of the year at a time and save the output.
-        for idx, P in enumerate(self.DM.realLoad[self.indRun]): #self.DM.realLoad: # for each real load
+        for idx, P in enumerate(self.DM.realLoad): #self.DM.realLoad: # for each real load
             ## Dispatch units
             # get available wind power
             wtgPAvail = sum(self.WF.wtgPAvail)

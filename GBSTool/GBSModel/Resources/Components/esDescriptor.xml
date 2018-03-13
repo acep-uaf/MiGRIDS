@@ -19,9 +19,9 @@ children. -->
 
     <!-- ESS specific parameters -->
 
-    <energyCapacity value="0" unit="kWs">
-        <!-- 'energyCapacity' is the energy capacity of the energy storage system. Units are kWs. Default is 0.  -->
-    </energyCapacity>
+    <ratedDuration value="0" unit="s">
+        <!-- 'ratedDuration' is the amount of time the es is rated to discharge for at the rated POutMaxPa. Units are s. Default is 0.  -->
+    </ratedDuration>
     <useLossMap value="FALSE">
         <!-- 'useLossMap' is a bool value that indicates whether or not use the lossMap in the simulation. Default is FALSE  -->
     </useLossMap>

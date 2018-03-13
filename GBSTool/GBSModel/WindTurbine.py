@@ -15,6 +15,7 @@ from bisect import bisect_left
 from GBSAnalyzer.DataRetrievers.readNCFile import readNCFile
 from GBSAnalyzer.DataWriters.writeNCFile import writeNCFile
 from getIntListIndex import getIntListIndex
+from getSeriesIndices import getSeriesIndices
 import numpy as np
 
 class WindTurbine:
@@ -46,7 +47,7 @@ class WindTurbine:
 
 
     # Constructor
-    def __init__(self, wtgID, windSpeedFile, wtgState, timeStep, wtgDescriptor):
+    def __init__(self, wtgID, windSpeedFile, wtgState, timeStep, wtgDescriptor, runTimeSteps = 'all'):
         """
         Constructor used for the initialization of an object within windfarm list of wind turbines.
 
@@ -59,6 +60,7 @@ class WindTurbine:
         self.wtgQ = 0 # Current reactive power level [kvar] *type float*
         self.wtgState = wtgState  # Wind turbine operating state [dimensionless, index]. 0 - off, 1 - starting, 2 - online.
         self.timeStep = timeStep
+        self.runTimeSteps = runTimeSteps # the input to calculate which timesteps to run in the simulation
         # grab data from descriptor file
         self.wtgDescriptorParser(windSpeedFile,wtgDescriptor)
 
@@ -126,7 +128,9 @@ class WindTurbine:
             # if there is, then read it
             NCF = readNCFile(os.path.join(windSpeedDir,'wtg'+str(self.wtgID)+'WP.nc'))
             self.windPower = np.array(NCF.value)*NCF.scale + NCF.offset
-
+            # get the indices of the timesteps to simulate
+            indRun = getSeriesIndices(self.runTimeSteps, len(self.windPower))
+            self.windPower = self.windPower[indRun]
         else:
             # read wind speed file
             NCF = readNCFile(windSpeedFile)
@@ -150,7 +154,11 @@ class WindTurbine:
             PCws, PCpower = zip(*self.wtgPowerCurve)  # separate out the windspeed and power
             # get wind power
             self.windPower = self.getWP(PCpower,PCws,windSpeed, wtgPC.wsScale)
+            # save nc file to avoid having to calculate for future simulations
             writeNCFile(NCF.time[:], self.windPower, 1, 0, 'kW', os.path.join(windSpeedDir,'wtg'+str(self.wtgID)+'WP.nc'))
+            # get the indices of the timesteps to simulate
+            indRun = getSeriesIndices(self.runTimeSteps, len(self.windPower))
+            self.windPower = self.windPower[indRun]
 
     # get wind power available from wind speeds and power curve
     # using integer list indexing is much faster than np.searchsorted

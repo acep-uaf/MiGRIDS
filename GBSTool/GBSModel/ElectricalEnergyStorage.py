@@ -92,7 +92,7 @@ class ElectricalEnergyStorage:
         self.eesQOutMax = float(eesSoup.QOutMaxPa.get('value'))  # max discharging power reactive
         self.eesQInMax = float(eesSoup.QInMaxPa.get('value'))  # max charging power reactive
         # FUTUREFEATURE: add the effect of charge/discharge rate on capacity. Possibly add something similar to the LossMap
-        self.eesEMax = float(eesSoup.energyCapacity.get('value')) # the maximum energy capacity of the EES in kWs
+        self.eesEMax = float(eesSoup.ratedDuration.get('value'))*self.eesPOutMax # the maximum energy capacity of the EES in kWs
         # check if EMax is zero, this is likely because it is a zero EES condition. Set it to 1 kWs in order not to crash the
         # SOC calculations
         if self.eesEMax == 0:

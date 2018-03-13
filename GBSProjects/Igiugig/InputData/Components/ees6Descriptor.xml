@@ -72,7 +72,7 @@
       to avoid overuse of the ESS. -->
  <eesCost unit="kg/kWh" value="0"/>
  <type value="sink-source"/>
- <energyCapacity unit="kWs" value="1200000">
+ <energyCapacity unit="kWs" value="6000">
   <!-- 'energyCapacity' is the energy capacity of the energy storage system. Units are kWs. Default is 0.  -->
  </energyCapacity>
  <useLossMap value="FALSE">
