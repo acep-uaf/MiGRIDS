@@ -1,11 +1,10 @@
-from matplotlib import pyplot as plt
-import matplotlib.dates as md
 import datetime
-import pandas as pd
+
+import matplotlib.dates as md
 import netCDF4
 import numpy as np
-from scipy import stats, integrate
-import seaborn as sns
+import pandas as pd
+from matplotlib import pyplot as plt
 
 '''Some helper routines to fix data'''
 
@@ -163,23 +162,29 @@ mpTimeStamps = md.date2num(stmTimeStamps)
 gen1PMax = 499 #Cummins QSX15G9
 gen2PMax = 611 #Caterpillar 3508
 gen3PMax = 908 #Caterpillar 3512
-MOL = 0.15 # NOTE THE FILE SUPPLIED BY AVEC STATES 0% (!!!)
+MOL = 0#.15 # NOTE THE FILE SUPPLIED BY AVEC STATES 0% (!!!)
 print('Assuming: ', 100*MOL, '% MOL')
 # Minimum spinning reserve kept in the system
 # NOTE: this is a brute force approach, but with data available better estimates are not possible.
-srcP = 0#.15*np.nanmean(totLoadP)
+srcPMin = 0.15*totLoadP
+srcP = np.zeros(np.shape(wtgP)) + srcPMin
 
-print('Assuming SRC : ', srcP, 'kW')
+
+#print('Assuming base SRC : ', srcPMin, 'kW')
 
 # isolate the data where there is more wind power than demand.
 curtailedP = np.copy(genP)
 curtailedP[genP > MOL * gen1PMax] = np.nan
 curtailedP = -(curtailedP - MOL * gen1PMax)
 
+# Adjust SRC calculation to either be base SRC or actual wind power contribution to total load, which ever is greater.
+srcP[srcP < (wtgP - curtailedP)] = wtgP[srcP < (wtgP - curtailedP)] - curtailedP[srcP < (wtgP - curtailedP)]
+srcP = srcP*0
+
 # Curtailment condition
 genP[genP < MOL*gen1PMax] = MOL*gen1PMax # Normal approach with MOL
-
-
+print('Max SRC : ', np.max(srcP), ' kW')
+print('Min SRC : ', np.min(srcP), ' kW')
 # Find which generator is online based on generator loading
 def dieselSchedule(genP, MOL, srcP, gen1PMax, gen2PMax, gen3PMax):
     genPAvail = np.zeros(np.shape(genP))
@@ -187,20 +192,33 @@ def dieselSchedule(genP, MOL, srcP, gen1PMax, gen2PMax, gen3PMax):
     runHours = 0
 
     for i, p in enumerate(genP):
-        if p <= MOL*gen1PMax:
+        if p <= MOL*gen1PMax and srcP[i] == 0:
             genPAvail[i] = 0
-        elif p < (gen1PMax - srcP):
+        elif p < (gen1PMax - srcP[i]):
             genPAvail[i] = gen1PMax
             runHours = runHours + 15/60
-        elif p < (gen2PMax - srcP):
+        elif p < (gen2PMax - srcP[i]):
             genPAvail[i] = gen2PMax
             runHours = runHours + 15/60
-        elif p < (gen3PMax - srcP):
+        elif p < (gen3PMax - srcP[i]):
             genPAvail[i] = gen3PMax
             runHours = runHours + 15/60
-        elif p < (gen1PMax + gen2PMax - srcP):
+        elif p < (gen1PMax + gen2PMax - srcP[i]):
+            #print('Required: ', p + srcP[i], ' Available : ', gen1PMax + gen2PMax)
             genPAvail[i] = gen1PMax + gen2PMax
             runHours = runHours + 2*15/60
+        elif p < (gen1PMax + gen3PMax - srcP[i]):
+            #print('1 and 3, Load: ', p, ' SRC: ', srcP[i], 'wtgP : ', wtgP[i])
+            genPAvail[i] = gen1PMax + gen3PMax
+            runHours = runHours + 2*15/60
+        elif p < (gen2PMax + gen3PMax - srcP[i]):
+            print('2 and 3, Load: ', p, ' SRC: ', srcP[i])
+            genPAvail[i] = gen2PMax + gen3PMax
+            runHours = runHours + 2*15/60
+        elif p < (gen1PMax + gen2PMax + gen3PMax - srcP[i]):
+            print('Load: ', p, ' SRC: ', srcP[i])
+            genPAvail[i] = gen1PMax + gen2PMax + gen3PMax
+            runHours = runHours + 3*15/60
         else:
             genPAvail[i] = -100
 
@@ -232,7 +250,8 @@ print('Diesel kWh total: ', np.nansum(genP)/4)
 print('Wind power curtailed :', np.nansum(curtailedP)/4, ' kWh')
 print('Wind power available :', np.nansum(wtgP)/4, ' kWh')
 
-essEMaxRng = [1, 10, 20, 50, 75, 100, 125, 150, 175, 200, 250, 300, 400, 500, 750, 1000, 1500, 2000, 2500, 3500, 5000]#, 10000, 15000, 17500, 20000, 25000, 35000, 50000, 75000, 100000]
+
+essEMaxRng = [ 20, 50, 75, 100, 125, 150, 175, 200, 250, 300, 400, 500, 750, 1000, 1500, 2000, 2500, 3500, 5000]#, 10000, 15000, 17500, 20000, 25000, 35000, 50000, 75000, 100000]
 wpRec = np.zeros(np.shape(essEMaxRng))
 essPMax = 5000
 runHoursArray = np.zeros(np.shape(essEMaxRng))
@@ -345,7 +364,7 @@ for j, essEMax in enumerate(essEMaxRng):
     print('Max. ESS P: ', np.nanmax(np.abs(essP)))
     essPMaxAct[j] = np.nanmax(np.abs(essP))
     #print('Net power balance :', np.nansum(totLoadP - wtgP - essP - genPReduced))
-    
+
 
 
 
@@ -384,11 +403,11 @@ sns.distplot(curtailedPD)'''
 
 # sns.distplot(dt)
 
-#plt.subplots_adjust(bottom=0.2)
-#plt.xticks(rotation=25)
-#ax = plt.gca()
-#xfmt = md.DateFormatter('%Y-%m-%d')
-#ax.xaxis.set_major_formatter(xfmt)
+plt.subplots_adjust(bottom=0.2)
+plt.xticks(rotation=25)
+ax = plt.gca()
+xfmt = md.DateFormatter('%Y-%m-%d')
+ax.xaxis.set_major_formatter(xfmt)
 #plt.plot(mpTimeStamps, mtvLoadP)
 #plt.plot(mpTimeStamps, stmLoadP)
 #plt.plot(mpTimeStamps, totLoadP)
@@ -399,16 +418,23 @@ sns.distplot(curtailedPD)'''
 #plt.plot(mpTimeStamps, genP, label='GenP')
 #plt.plot(mpTimeStamps, curtailedP, label= 'CurtailedP')
 #plt.legend(loc='upper right')
-plt.xlabel('GBS Energy Capacity [kWh]')
-plt.ylabel('Total diesel fleet configuration changes [#/yr]')
+#plt.xlabel('GBS Energy Capacity [kWh]')
+#plt.ylabel('Total diesel fleet configuration changes [#/yr]')
 
-plt.plot(essEMaxRng, wpRec)
+# SRC Figure
+plt.xlabel('Time')
+plt.ylabel('Spinning reserve capacity required [kW]')
+plt.plot(mpTimeStamps, srcP + genP)
+#plt.plot(mpTimeStamps, totLoadP)
+plt.plot(mpTimeStamps, genPAvail)
+
+
 #plt.semilogx(essEMaxRng, wpRec/1000)
 '''
 vals, base = np.histogram(genDP, bins=150)
 cumDist = np.cumsum(vals)
 plt.plot(base[:-1], cumDist/genP.size)'''
-#plt.savefig('dieselConfigChanges_VSD.eps', format = 'eps')
+#plt.savefig('baselineSRC.eps', format = 'eps')
 plt.show()
 
 '''

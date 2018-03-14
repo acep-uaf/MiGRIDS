@@ -51,6 +51,8 @@ def getFuelUse(genAllP, fuelCurveDataPoints):
 
         # If there's bad data [exceeding index in fc.fuelCurve] it needs to be tossed.
         retrieveIdx[retrieveIdx > len(fc.fuelCurve)-1] = len(fc.fuelCurve)-1
+
+        # PERFORMANCE: the following line costs a ton of time. Consider better options. Note that itemgetter did not work.
         genFuel = [fc.fuelCurve[ridx][1] for ridx in retrieveIdx]
         genFuel = genFuel * dt
         fleetSum = fleetSum + genFuel

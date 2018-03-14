@@ -5,7 +5,10 @@
 
 import netCDF4
 import pandas as pd
+
+from GBSAnalyzer.DataRetrievers.readNCFile import readNCFile
 from GBSController.GBSExceptions.TimeStampVectorError import TimeStampVectorError
+
 
 def getDataChannels(projectPath, dataPath, channelList):
     """
@@ -27,7 +30,7 @@ def getDataChannels(projectPath, dataPath, channelList):
 
         # Load time stamps once
         if not timeLoaded:
-            dataPackage = pd.DataFrame(time.values, time.index)
+            dataPackage = pd.DataFrame(time.values, time.index, ['time'])
             timeLoaded = True
 
         # Load the data, if it is the same length as the initial time vector
@@ -38,7 +41,7 @@ def getDataChannels(projectPath, dataPath, channelList):
 
     return dataPackage
 
-
+    ncf = readNCFile
 def loadData(filePath):
     """
     Helper function to load a netCDF data file.

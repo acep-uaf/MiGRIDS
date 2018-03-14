@@ -12,16 +12,15 @@
 # GETTOTALGROSSLOAD
 # LOADDATA
 
-from bs4 import BeautifulSoup as bs
 import datetime
+import itertools
+
 import netCDF4
 import numpy as np
 import pandas as pd
-from GBSAnalyzer.PerformanceAnalyzers.getFuelUse import getFuelUse
-import matplotlib.pyplot as plt
-import matplotlib.dates as md
+from bs4 import BeautifulSoup as bs
+
 from GBSController.GBSExceptions.TimeStampVectorError import TimeStampVectorError
-import itertools
 
 
 def getTotalGrossLoad(projectPath, projectName):
