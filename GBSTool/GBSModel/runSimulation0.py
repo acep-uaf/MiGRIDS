@@ -35,9 +35,17 @@ def runSimulation(projectSetDir = '', runTimeSteps = 'all'):
         root.withdraw()
         projectSetDir = filedialog.askdirectory()
 
+    # get set number
+    dir_path = os.path.basename(projectSetDir)
+    setNum = int(dir_path[3:])
+    # get the project name
+    os.chdir(projectSetDir)
+    os.chdir('../..')
+    projectDir = os.getcwd()
+    projectName = os.path.basename(projectDir)
+
     # get project name, from the directory name
-    projectName = os.path.basename(projectSetDir)
-    projectSetupFile = os.path.join(projectSetDir,'InputData','Setup',projectName+'Setup.xml')
+    projectSetupFile = os.path.join(projectSetDir,'Setup',projectName+'Set'+str(setNum)'Setup.xml')
     userInputDir = projectSetDir + '/InputData/Setup/UserInput/'
     componentDir = projectSetDir + '/InputData/Components/'
     timeSeriesDir = projectSetDir + '/InputData/TimeSeriesData/ProcessedData/'
