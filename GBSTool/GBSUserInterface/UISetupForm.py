@@ -1,9 +1,10 @@
 
-from PyQt5 import QtCore, QtGui, QtWidgets 
+from PyQt5 import QtCore, QtGui, QtWidgets
+import ComponentTableModel as T
 from gridLayoutSetup import setupGrid
 
 
-class UISetup(QtWidgets.QDialog):
+class SetupForm(QtWidgets.QDialog):
     
     def __init__(self):
         super().__init__()
@@ -13,41 +14,56 @@ class UISetup(QtWidgets.QDialog):
         
     def initUI(self):
         self.setObjectName("setupDialog")
-        self.resize(1754, 1250)
+        self.resize(1754, 1200)
         
 
         #the main layout is oriented vertically
         windowLayout = QtWidgets.QVBoxLayout()
         self.createButtonBlock()
-        #the top block is the setup xml portion
-        
-        windowLayout.addWidget(self.ButtonBlock)
+        #the top block is buttons to load setup xml and data files
+        windowLayout.addWidget(self.ButtonBlock,1)
+        #create some space between the buttons and xml setup block
         windowLayout.addStretch(1)
-        #add the horizontal block to the vertical layout
+
+        #add the setup block
         self.createTopBlock()
-        windowLayout.addWidget(self.horizontalGroupBox)
+        windowLayout.addWidget(self.horizontalGroupBox,1)
+        #more space between component block
         windowLayout.addStretch(2)
-        #windowLayout.addLayout(self.createBottomBlock())
-        #make the vertical layout the main layout of the dialogwindow
+
+        self.createBottomBlock()
+        windowLayout.addWidget(self.bottomBlock)
+
+        #set the main layout as the layout for the window
         self.layoutWidget = QtWidgets.QWidget(self)
         self.layoutWidget.setLayout(windowLayout)
-        
+        #title is setup
         self.setWindowTitle('Setup')    
-        
-        QtCore.QMetaObject.connectSlotsByName(self)
+
+        #connect slots so we can do something with these data
+        #QtCore.QMetaObject.connectSlotsByName(self)
         #show the form
         self.show()
-        
+
+    #SetupForm -> QWidgets.QHBoxLayout
+    #creates a horizontal button layout to insert in SetupForm
     def createButtonBlock(self):
         self.ButtonBlock = QtWidgets.QGroupBox()
         hlayout = QtWidgets.QHBoxLayout()
-        hlayout.addWidget(QtWidgets.QPushButton('Load setup XML', self))
-        
+        #layout object name
         hlayout.setObjectName('buttonLayout')
+        #add the button to load a setup xml
+
+        hlayout.addWidget(QtWidgets.QPushButton('Load setup XML', self))
+        #add a button to load the time series data
         hlayout.addWidget(QtWidgets.QPushButton('Load TimeSeries', self))
-        hlayout.addStretch(3)
+        #force the buttons to the left side of the layout
+        hlayout.addStretch(1)
         self.ButtonBlock.setLayout(hlayout)
+        self.ButtonBlock.setSizePolicy(QtWidgets.QSizePolicy.Expanding,QtWidgets.QSizePolicy.Expanding)
         return hlayout
+    #SetupForm -> SetupForm
+    #creates a horizontal layout containing gridlayouts for data input
     def createTopBlock(self):
          #create a horizontal grouping to contain the top setup xml portion of the form
         self.horizontalGroupBox = QtWidgets.QGroupBox('Setup XML')
@@ -60,6 +76,7 @@ class UISetup(QtWidgets.QDialog):
         #add the setup grids
         g1 = {'headers':['Attribute','Field','Format'],
                           'rowNames':['Date','Time','Load'],
+                          'columnWidths': [1, 1, 1],
                           'Date':{'Field':{'widget':'combo','items':['Date','Time','Wtg1']},
                                            'Format':{'widget':'combo','items':['ordinal']}},
                           'Time':{'Field':{'widget':'combo','items':['Date','Time','Wtg1']},
@@ -72,6 +89,7 @@ class UISetup(QtWidgets.QDialog):
         #add the second grid
         g2 = {'headers':['TimeStep','Value','Units'],
                           'rowNames':['Input','Output'],
+                          'columnWidths': [1, 1, 1],
                           'Input':{'Value':{'widget':'txt'},
                                            'Units':{'widget':'combo','items':['Seconds','Minutes','Hours']}},
                           'Output':{'Value':{'widget':'txt'},
@@ -79,20 +97,44 @@ class UISetup(QtWidgets.QDialog):
                           }
         grid = setupGrid(g2)
         hlayout.addLayout(grid)
-        
+
+        #add another stretch to keep the grids away from the right edge
+        hlayout.addStretch(1)
         
         self.horizontalGroupBox.setLayout(hlayout)
-        
-        
+        self.horizontalGroupBox.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+    #returns a table view within a horizontal layout
     def createBottomBlock(self):
-        #returns a grid layout
-        g1 = {'headers':['Attribute','Field','Format'],
-                          'rowNames':['Date','Time','Load'],
-                          'Date':{'Field':{'widget':'combo','items':['Date','Time','Wtg1']},
-                                           'Format':{'widget':'combo','items':['ordinal']}},
-                          'Time':{'Field':{'widget':'combo','items':['Date','Time','Wtg1']},
-                                           'Format':{'widget':'combo','items':['excel']}},
-                          'Load':{'Field':{'widget':'combo','items':['Date','Wtg1']},
-                                           'Format':{'widget':'combo','items':['KW','W','MW']}}}
-        grid = setupGrid(g1)
-        return grid
+        self.bottomBlock = QtWidgets.QGroupBox('Descriptor XML')
+        tableGroup = QtWidgets.QHBoxLayout()
+        tv = T.ComponentTableView(self)
+
+        m = T.ComponentTableModel(self)
+
+        tv.setModel(m)
+
+        for row in range(0,m.rowCount()):
+            tv.openPersistentEditor(m.index(row,3))
+            tv.openPersistentEditor(m.index(row,8))
+            tv.openPersistentEditor(m.index(row,5))
+            tv.openPersistentEditor(m.index(row,1))
+            tv.openPersistentEditor(m.index(row,2))
+            tv.openPersistentEditor(m.index(row,0))
+
+            # for c in range(0,4):
+            #     tv.openPersistentEditor(m.index(row,c))
+            # for c in range(5,14):
+            #     tv.openPersistentEditor(m.index(row, c))
+
+        tableGroup.addWidget(tv,1)
+        self.bottomBlock.setLayout(tableGroup)
+        self.bottomBlock.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+        return tv
+        
+
+
+
+
+
+
+
