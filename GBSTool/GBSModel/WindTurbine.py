@@ -17,6 +17,7 @@ from GBSAnalyzer.DataWriters.writeNCFile import writeNCFile
 from getIntListIndex import getIntListIndex
 from getSeriesIndices import getSeriesIndices
 import numpy as np
+from scipy.interpolate import interp1d
 
 class WindTurbine:
     """
@@ -127,14 +128,13 @@ class WindTurbine:
         if os.path.isfile(os.path.join(windSpeedDir,'wtg'+str(self.wtgID)+'WP.nc')):
             # if there is, then read it
             NCF = readNCFile(os.path.join(windSpeedDir,'wtg'+str(self.wtgID)+'WP.nc'))
-            self.windPower = np.array(NCF.value)*NCF.scale + NCF.offset
-            # get the indices of the timesteps to simulate
-            indRun = getSeriesIndices(self.runTimeSteps, len(self.windPower))
-            self.windPower = self.windPower[indRun]
+            windPower = np.array(NCF.value)*NCF.scale + NCF.offset
+            windTime = NCF.time
         else:
             # read wind speed file
             NCF = readNCFile(windSpeedFile)
             windSpeed = np.array(NCF.value) * NCF.scale + NCF.offset
+            windTime = NCF.time
             # check if any nan values
             if any(np.isnan(NCF.time)) or any(np.isnan(NCF.value)):
                 raise ValueError(
@@ -148,17 +148,21 @@ class WindTurbine:
                 #    raise ValueError(
                 #       'The difference in the time stamps is more than the 10% different than the time step defined for '
                 #       'this simulation ({} s). The timestamps should be in epoch format.'.format(timeStep))
-
             # generate possible wind power time series
             # get the generator fuel consumption at this loading for this combination
             PCws, PCpower = zip(*self.wtgPowerCurve)  # separate out the windspeed and power
             # get wind power
-            self.windPower = self.getWP(PCpower,PCws,windSpeed, wtgPC.wsScale)
+            windPower = self.getWP(PCpower,PCws,windSpeed, wtgPC.wsScale)
             # save nc file to avoid having to calculate for future simulations
-            writeNCFile(NCF.time[:], self.windPower, 1, 0, 'kW', os.path.join(windSpeedDir,'wtg'+str(self.wtgID)+'WP.nc'))
-            # get the indices of the timesteps to simulate
-            indRun = getSeriesIndices(self.runTimeSteps, len(self.windPower))
-            self.windPower = self.windPower[indRun]
+            writeNCFile(NCF.time[:], windPower, 1, 0, 'kW', os.path.join(windSpeedDir,'wtg'+str(self.wtgID)+'WP.nc'))
+        # interpolate wind power according to the desired timestep
+        f = interp1d(windTime,windPower)
+        num = int(len(windTime) / self.timeStep)
+        windTimeNew = np.linspace(windTime[0], windTime[-1], num)
+        windPowerNew = f(windTimeNew)
+        # get the indices of the timesteps to simulate
+        indRun = getSeriesIndices(self.runTimeSteps, len(windPowerNew))
+        self.windPower = windPowerNew[indRun]
 
     # get wind power available from wind speeds and power curve
     # using integer list indexing is much faster than np.searchsorted

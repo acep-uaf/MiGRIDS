@@ -51,8 +51,12 @@ def generateRuns(projectSetDir):
 
     # create dataframe and save as SQL
     df = pd.DataFrame(data = runValues, columns = heading)
+    # add a column to indicate whether the simulation run has started. This is useful for when multiple processors are
+    # running runs to avoid rerunning simulations. The column is called 'started'. 0 indicate not started and 1
+    # indicates started
+    df = df.assign(started=[0]*len(runValues))
     conn = sqlite3.connect('set' + str(setNum) + 'ComponentAttributes.db') # create sql database
-    df.to_sql('compAttributes', conn, if_exists="replace") # write to table compAttributes in db
+    df.to_sql('compAttributes', conn, if_exists="replace",index=False) # write to table compAttributes in db
     conn.close()
 
     # get the setup information for this set of simulations
