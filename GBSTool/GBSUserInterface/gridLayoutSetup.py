@@ -9,6 +9,8 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 
 
 def setupGrid(inputDictionary):
+    #String, integer, integer, QtGridLayout
+    #returns a QtWidget at a specified row, column within a gridlayout
     def getColumn(objectName, row, c, gridLayout):
         o = gridLayout.itemAtPosition(0, c)
         if c > gridLayout.columnCount():
@@ -20,6 +22,8 @@ def setupGrid(inputDictionary):
                 return o
         return getColumn(objectName, row, c + 1, gridLayout)
 
+    #String ->QtWidget
+    #returns a QtWidget based on a text input
     def getWidget(stringType):
         # TODO add multiline to choices
         choices = {'combo': QtWidgets.QComboBox(), 'txt': QtWidgets.QLineEdit(),
@@ -50,6 +54,7 @@ def setupGrid(inputDictionary):
         grid.lbl.setObjectName('lbl' + str(headers[i]))
         grid.lbl.setProperty('wscale', inputDictionary['columnWidths'][i])
         grid.lbl.setProperty('xpos', xpos)
+
         grid.addWidget(grid.lbl, 0, xpos, 1, inputDictionary['columnWidths'][i])
         if type(headers[i]) == str:
             grid.lbl.setText(headers[i])
@@ -63,7 +68,7 @@ def setupGrid(inputDictionary):
         grid.lbl = QtWidgets.QLabel()
         grid.lbl.setFont(font)
         grid.lbl.setObjectName('lbl' + str(rowNames[i]))
-        grid.addWidget(grid.lbl, i + 1, 0, 1, 1)
+        grid.addWidget(grid.lbl, i + 1, 1, 1, 1)
         if type(rowNames[i]) == str:
             grid.lbl.setText(rowNames[i])
 
@@ -90,6 +95,8 @@ def setupGrid(inputDictionary):
 
             if 'items' in r[h].keys():
                 for item in r[h]['items']:
+                    #TODO add space around text
                     grid.wid.addItem(item)
+
 
     return grid
