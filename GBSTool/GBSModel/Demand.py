@@ -7,6 +7,7 @@
 # imports
 from getSeriesIndices import getSeriesIndices
 import numpy as np
+from scipy.interpolate import interp1d
 
 
 from GBSAnalyzer.DataRetrievers.readNCFile import readNCFile
@@ -60,10 +61,14 @@ class Demand:
         else:
             ncFile = readNCFile(loadFiles)
             time, load = self.checkNCFile(ncFile)
-
+        # interpolate wind power according to the desired timestep
+        f = interp1d(time, load)
+        num = int(len(time) / self.timeStep)
+        timeNew = np.linspace(time[0], time[-1], num)
+        loadNew = f(timeNew)
         # get the indices of the timesteps to simulate
-        indRun = getSeriesIndices(self.runTimeSteps, len(load))
-        return time[indRun], load[indRun]
+        indRun = getSeriesIndices(self.runTimeSteps, len(loadNew))
+        return timeNew[indRun], loadNew[indRun]
 
     def checkNCFile(self,ncFile, isReal = True):
         time = ncFile.time

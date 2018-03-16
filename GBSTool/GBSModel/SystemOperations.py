@@ -119,6 +119,8 @@ class SystemOperations:
         self.wtgPTot = []
         self.srcMin = []
         self.eesDis = []
+        self.eessP = []
+        self.eesPLoss = []
         self.genP = []
         self.genPAvail = []
         self.eessSrc = []
@@ -159,6 +161,10 @@ class SystemOperations:
             self.WF.wtgDispatch(wtgPimport + wtgPch, 0)
             # dispatch the eess
             self.EESS.runEesDispatch(eessDis - wtgPch, 0, eessSrcRequested)
+            # read what eess managed to do
+            eessP = sum(self.EESS.eesP[:])
+            # recalculate generator power
+            genP = P - wtgPimport - max([eessP,0])
             # dispatch the generators
             self.PH.genDispatch(genP, 0)
 
@@ -170,6 +176,8 @@ class SystemOperations:
             self.wtgPTot.append(wtgPch+wtgPimport)
             self.srcMin.append(srcMin)
             self.eesDis.append(eessDis)
+            self.eessP.append(eessP)
+            self.eesPLoss.append(self.EESS.eesPloss[:])
             self.genP.append(genP)
             self.genPAvail.append(sum(self.PH.genPAvail))
             self.eessSrc.append(self.EESS.eesSRC[:])
