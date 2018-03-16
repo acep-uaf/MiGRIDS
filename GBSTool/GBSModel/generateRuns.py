@@ -95,10 +95,10 @@ def generateRuns(projectSetDir):
             for cpt in components: # for each component
                 # copy from main input data
                 copyfile(os.path.join(projectDir, 'InputData', 'Components', cpt + 'Descriptor.xml'),
-                         os.path.join(compDir, cpt + 'Descriptor.xml'))
+                         os.path.join(compDir, cpt + 'Set' + str(setNum) + 'Run' + str(run) + 'Descriptor.xml'))
             # make changes
             for idx, value in enumerate(val):
-                compFile = os.path.join(compDir, compName[idx] + 'Descriptor.xml')
+                compFile = os.path.join(compDir, compName[idx] + 'Set' + str(setNum) + 'Run' + str(run) + 'Descriptor.xml')
                 tag = compTag[idx].split('.')
                 attr = compAttr[idx]
                 # check if value is a tag in the xml document

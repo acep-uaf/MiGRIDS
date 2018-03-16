@@ -154,9 +154,9 @@ class SystemOperations:
             # discharge the eess to cover the difference between load and generation
             eessDis = min([max([P - wtgPimport - sum(self.PH.genPAvail),0]),sum(self.EESS.eesPoutAvail)])
             # get the diesel power output, the difference between demand and supply
-            genP = P - wtgPimport - eessDis
+            phP = P - wtgPimport - eessDis
             # find the remaining ability of the EESS to supply SRC not supplied by the diesel generators
-            eessSrcRequested = max([srcMin - sum(self.PH.genPAvail) + genP, 0])
+            eessSrcRequested = max([srcMin - sum(self.PH.genPAvail) + phP, 0])
             # dispatch the wind turbines
             self.WF.wtgDispatch(wtgPimport + wtgPch, 0)
             # dispatch the eess
@@ -164,9 +164,9 @@ class SystemOperations:
             # read what eess managed to do
             eessP = sum(self.EESS.eesP[:])
             # recalculate generator power
-            genP = P - wtgPimport - max([eessP,0])
+            phP = P - wtgPimport - max([eessP,0])
             # dispatch the generators
-            self.PH.genDispatch(genP, 0)
+            self.PH.genDispatch(phP, 0)
 
             # record values
             self.rePlimit.append(rePlimit)
@@ -178,7 +178,8 @@ class SystemOperations:
             self.eesDis.append(eessDis)
             self.eessP.append(eessP)
             self.eesPLoss.append(self.EESS.eesPloss[:])
-            self.genP.append(genP)
+            self.powerhouseP.append(phP)
+            self.genP.append(self.PH.genP)
             self.genPAvail.append(sum(self.PH.genPAvail))
             self.eessSrc.append(self.EESS.eesSRC[:])
             self.eessSoc.append(self.EESS.eesSOC[:])
