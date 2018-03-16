@@ -2,9 +2,9 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 import ComponentTableModel as T
 from gridLayoutSetup import setupGrid
+from SetupWizard import SetupWizard
 
-
-class SetupForm(QtWidgets.QDialog):
+class SetupForm(QtWidgets.QWidget):
     
     def __init__(self):
         super().__init__()
@@ -22,15 +22,15 @@ class SetupForm(QtWidgets.QDialog):
         self.createButtonBlock()
         #the top block is buttons to load setup xml and data files
         #TODO each added widget needs to be set to max extent
-        windowLayout.addWidget(self.ButtonBlock,1)
+        windowLayout.addWidget(self.ButtonBlock,2)
         #create some space between the buttons and xml setup block
         windowLayout.addStretch(1)
 
         #add the setup block
         self.createTopBlock()
-        windowLayout.addWidget(self.horizontalGroupBox,1)
+        windowLayout.addWidget(self.horizontalGroupBox)
         #more space between component block
-        windowLayout.addStretch(2)
+        windowLayout.addStretch(1)
 
         self.createBottomBlock()
         windowLayout.addWidget(self.bottomBlock)
@@ -91,10 +91,10 @@ class SetupForm(QtWidgets.QDialog):
     #SetupForm ->
     #method to modify SetupForm layout
     def functionForButton(self):
-        print("I Clicked!!!")
-        #self.horizontalGroupBox.setMinimumHeight(24)
+        wiz = SetupWizard({0:{'title':'Something Important', 'prompt':'enter something'},
+                           1: {'title': 'Something Important1', 'prompt': 'enter something1'}})
         self.horizontalGroupBox.setVisible(False)
-        self.showWindow()
+
 
         #set up the signal and slot (make it do what it needs to do)
     def showWindow(self):
