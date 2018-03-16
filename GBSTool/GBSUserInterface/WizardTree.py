@@ -1,11 +1,11 @@
 class WizardTree:
     #WizardTree, integer, dictionary, WizardTree, WizardTree -> WizardTree
-    def __init__(self, key, value, ltree, rtree, parent):
+    def __init__(self, key, value, ltree, rtree):
         self.key = key
         self.value = value
         self.ltree = ltree
         self.rtree = rtree
-        self.parent = parent
+
         return
 
     def getRecord(self, key):
@@ -35,5 +35,11 @@ class WizardTree:
                 return self
             else:
                 return self.insert(self.rtree, node)
+
+    def getNext(self):
+        return self.rtree.key
+
+    def getPrevious(self):
+        return self.ltree.key
 
 

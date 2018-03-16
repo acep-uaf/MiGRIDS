@@ -3,6 +3,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 import ComponentTableModel as T
 from gridLayoutSetup import setupGrid
 from SetupWizard import SetupWizard
+from WizardTree import WizardTree
 
 class SetupForm(QtWidgets.QWidget):
     
@@ -28,7 +29,7 @@ class SetupForm(QtWidgets.QWidget):
 
         #add the setup block
         self.createTopBlock()
-        windowLayout.addWidget(self.horizontalGroupBox)
+        windowLayout.addWidget(self.topBlock)
         #more space between component block
         windowLayout.addStretch(1)
 
@@ -91,9 +92,14 @@ class SetupForm(QtWidgets.QWidget):
     #SetupForm ->
     #method to modify SetupForm layout
     def functionForButton(self):
-        wiz = SetupWizard({0:{'title':'Something Important', 'prompt':'enter something'},
-                           1: {'title': 'Something Important1', 'prompt': 'enter something1'}})
-        self.horizontalGroupBox.setVisible(False)
+        wt= WizardTree(10,{'title':'Project Name', 'prompt':'Enter the name of your project'}, None, None)
+        dlist = {15: {'title': 'Data Format', 'prompt': 'Select the format your timeseries data is in'},
+                           20: {'title': 'Data Folder', 'prompt': 'Select the folder that contains your data.'}}
+        for d in dlist.keys():
+            wt.insert(wt, WizardTree(d,dlist[d], None, None))
+
+        wiz = SetupWizard(wt)
+        self.topBlock.setVisible(False)
 
 
         #set up the signal and slot (make it do what it needs to do)
@@ -106,9 +112,7 @@ class SetupForm(QtWidgets.QWidget):
     #creates a horizontal layout containing gridlayouts for data input
     def createTopBlock(self):
          #create a horizontal grouping to contain the top setup xml portion of the form
-        self.horizontalGroupBox = QtWidgets.QGroupBox('Setup XML')
-        
-        #horizontalGroupBox = QtWidgets.QGroupBox('Setup XML')
+        self.topBlock = QtWidgets.QGroupBox('Setup XML')
         hlayout = QtWidgets.QHBoxLayout()
         
         hlayout.setObjectName("layout1")
@@ -141,9 +145,9 @@ class SetupForm(QtWidgets.QWidget):
         #add another stretch to keep the grids away from the right edge
         hlayout.addStretch(1)
         
-        self.horizontalGroupBox.setLayout(hlayout)
-        self.horizontalGroupBox.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
-        self.horizontalGroupBox.sizePolicy().retainSizeWhenHidden()
+        self.topBlock.setLayout(hlayout)
+        self.topBlock.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+        self.topBlock.sizePolicy().retainSizeWhenHidden()
 
     #returns a table view within a horizontal layout
     def createBottomBlock(self):
@@ -173,8 +177,10 @@ class SetupForm(QtWidgets.QWidget):
         self.bottomBlock.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         return tv
         
+bt = WizardTree(5, 'five', None, None)
 
-
+print(bt.key)
+print(bt.value)
 
 
 

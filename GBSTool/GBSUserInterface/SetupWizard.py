@@ -1,7 +1,7 @@
 from PyQt5 import QtWidgets, QtGui, QtCore
 
 class SetupWizard:
-    #dialog sequence is a dictionary containing info to be used when making dialog inputs
+    #dialog sequence is a WizardTree containing info to be used when making dialog inputs
     def __init__(self, dialogSequence):
         self.dialogSequence = dialogSequence
         self.position = 0
@@ -10,15 +10,15 @@ class SetupWizard:
     #advances the wizard to the next dialog frame
     def nextDialog(self):
         self.currentDialog.close()
-        self.position +=1
-        self.makeDialog(self.dialogSequence[self.position])
+        self.position= self.dialogSequence.getNext()
+        self.makeDialog(self.dialogSequence.getRecord(self.position))
         print('next')
         #return n
     #returns to the previous dialog frame
     def previousDialog(self):
         self.currentDialog.close()
-        self.position -=1
-        self.makeDialog(self.dialogSequence[self.position])
+        self.position = self.dialogSequence.getPrevious()
+        self.makeDialog(self.dialogSequence.get(self.position))
         print('previous')
         #return p
 
