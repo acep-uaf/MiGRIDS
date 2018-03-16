@@ -4,9 +4,9 @@ from ComponentSQLiteHandler import SQLiteHandler
 class ComponentTableView(QtWidgets.QTableView):
     def __init__(self, *args, **kwargs):
         QtWidgets.QTableView.__init__(self, *args, **kwargs)
-        #self.setSizePolicy(QtWidgets.QSizePolicy.Expanding,QtWidgets.QSizePolicy.Expanding)
-        #self.resizeColumnsToContents()
-        self.resize(1000,1000)
+        self.setSizePolicy(QtWidgets.QSizePolicy.Expanding,QtWidgets.QSizePolicy.Expanding)
+        self.resizeColumnsToContents()
+
         #attributes are column 8
         attributes = ['P', 'WS', 'HS']
         self.setItemDelegateForColumn(8, ComboDelegate(self,attributes))
@@ -57,8 +57,8 @@ class ButtonDelegate(QtWidgets.QItemDelegate):
 
 class ComboDelegate(QtWidgets.QItemDelegate):
     def __init__(self,parent,values):
-            QtWidgets.QItemDelegate.__init__(self,parent)
-            self.values = values
+        QtWidgets.QItemDelegate.__init__(self,parent)
+        self.values = values
 
     def createEditor(self,parent, option, index):
         combo = QtWidgets.QComboBox(parent)

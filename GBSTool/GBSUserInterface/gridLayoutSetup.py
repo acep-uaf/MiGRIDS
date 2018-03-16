@@ -32,7 +32,7 @@ def setupGrid(inputDictionary):
         return result
 
     font = QtGui.QFont()
-    font.setPointSize(26)
+    #font.setPointSize(26)
     # grid block layout
     grid = QtWidgets.QGridLayout()
     grid.setContentsMargins(0, 0, 0, 0)

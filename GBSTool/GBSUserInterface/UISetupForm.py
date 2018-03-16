@@ -21,6 +21,7 @@ class SetupForm(QtWidgets.QDialog):
         windowLayout = QtWidgets.QVBoxLayout()
         self.createButtonBlock()
         #the top block is buttons to load setup xml and data files
+        #TODO each added widget needs to be set to max extent
         windowLayout.addWidget(self.ButtonBlock,1)
         #create some space between the buttons and xml setup block
         windowLayout.addStretch(1)
@@ -38,12 +39,10 @@ class SetupForm(QtWidgets.QDialog):
         self.layoutWidget = QtWidgets.QWidget(self)
         self.layoutWidget.setLayout(windowLayout)
         #title is setup
-        self.setWindowTitle('Setup')    
+        self.setWindowTitle('Setup')
 
-        #connect slots so we can do something with these data
-        #QtCore.QMetaObject.connectSlotsByName(self)
         #show the form
-        self.show()
+        self.showMaximized()
 
     #SetupForm -> QWidgets.QHBoxLayout
     #creates a horizontal button layout to insert in SetupForm
@@ -55,13 +54,54 @@ class SetupForm(QtWidgets.QDialog):
         #add the button to load a setup xml
 
         hlayout.addWidget(QtWidgets.QPushButton('Load setup XML', self))
+
         #add a button to load the time series data
-        hlayout.addWidget(QtWidgets.QPushButton('Load TimeSeries', self))
+        hlayout.addWidget(QtWidgets.QPushButton('Create setup XML', self))
         #force the buttons to the left side of the layout
         hlayout.addStretch(1)
+        hlayout.addWidget(QtWidgets.QPushButton("Load existing project",self))
+        hlayout.addWidget(self.makeBlockButton(self.functionForButton,'hello',None,'You need help with this button'))
+        hlayout.addStretch(1)
         self.ButtonBlock.setLayout(hlayout)
+
         self.ButtonBlock.setSizePolicy(QtWidgets.QSizePolicy.Expanding,QtWidgets.QSizePolicy.Expanding)
+
+        self.ButtonBlock.setMinimumSize(self.size().width(),self.minimumSize().height())
         return hlayout
+
+    #SetupForm, method, String, String, String -> QtQidget.QPushButton
+    #returns a button with specified text, icon, hint and connection to the specified function
+    def makeBlockButton(self, buttonFunction, text = None, icon = None, hint = None):
+        if text is not None:
+            button = QtWidgets.QPushButton(text,self)
+        else:
+            button = QtWidgets.QPushButton(icon, self)
+        if hint is not None:
+            button.setToolTip(hint)
+            button.setToolTipDuration(2000)
+        button.clicked.connect(lambda: self.onClick(buttonFunction))
+
+        return button
+    #SetupForm, method
+    #calls the specified function connected to a button onClick event
+    @QtCore.pyqtSlot()
+    def onClick(self,buttonFunction):
+        buttonFunction()
+
+    #SetupForm ->
+    #method to modify SetupForm layout
+    def functionForButton(self):
+        print("I Clicked!!!")
+        #self.horizontalGroupBox.setMinimumHeight(24)
+        self.horizontalGroupBox.setVisible(False)
+        self.showWindow()
+
+        #set up the signal and slot (make it do what it needs to do)
+    def showWindow(self):
+        print('showing')
+        self.hide()
+        self.show()
+
     #SetupForm -> SetupForm
     #creates a horizontal layout containing gridlayouts for data input
     def createTopBlock(self):
@@ -103,6 +143,8 @@ class SetupForm(QtWidgets.QDialog):
         
         self.horizontalGroupBox.setLayout(hlayout)
         self.horizontalGroupBox.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+        self.horizontalGroupBox.sizePolicy().retainSizeWhenHidden()
+
     #returns a table view within a horizontal layout
     def createBottomBlock(self):
         self.bottomBlock = QtWidgets.QGroupBox('Descriptor XML')
