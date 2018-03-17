@@ -47,8 +47,10 @@ class WizardTree:
         if key == self.key:
             return self.value
         #otherwise search for the correct node in the baseTree
-        c = self.children.__iter__()
-        return self.findDialog(c,key)
+        if self.children is not None:
+            c = self.children.__iter__()
+            return self.findDialog(c,key)
+        return None
 
 
 
@@ -61,11 +63,7 @@ class WizardTree:
              if self.parent.getDialog(key) == key:
                 return self.parent
         return c.__next__().getDialog(key)
-
-
-
-
-
+#TODO not used
     #self is the parent
     def insertDialog(self, position, node, children):
         if self is None:
@@ -76,16 +74,15 @@ class WizardTree:
     #if there are not any children move up a node and through the rest of those children
     def getNext(self):
         #has children
-        print(self.parent.key)
         if self.children is not None:
             #go to first child
             return self.children[0]
         #has no older siblings
-        elif self.position > len(self.getDialog(self.parent).children):
+        elif self.position > len(self.parent.children):
             #move to parents siblings
-            return self.getNext(self.getDialog(self.parent.key))
+            return self.getNext(self.parent.key)
         #otherwise get the next oldest sibling
-        return self.getDialog(self.parent).children[self.position +1]
+        return self.parent.children[self.position +1]
 
     #move to previous list item
     #if list is empty move up a node
