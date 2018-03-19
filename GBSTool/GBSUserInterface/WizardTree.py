@@ -87,11 +87,12 @@ class WizardTree:
     #move to previous list item
     #if list is empty move up a node
     def getPrevious(self):
-        if self is None:
-            return None
         #up to parent
-        #position + 1
-        return
+        try:
+            return self.parent.children[self.position -1]
+        except IndexError:
+            return self.parent
+
 
 
     # def fn_for_dialog(self):
