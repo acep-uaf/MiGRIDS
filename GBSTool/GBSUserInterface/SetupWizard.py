@@ -5,7 +5,7 @@ class SetupWizard:
     def __init__(self, dialogSequence):
         self.dialogSequence = dialogSequence
         self.position = 0
-        self.makeDialog(dialogSequence[self.position])
+        self.makeDialog(dialogSequence.getDialog('Project Name'))
 
     #advances the wizard to the next dialog frame
     def nextDialog(self):

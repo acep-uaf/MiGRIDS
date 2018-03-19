@@ -1,7 +1,7 @@
 class WizardTree:
     #WizardTree, dictionary, string, integer, ListOfWizardTree -> WizardTree
     def __init__(self, value, parentKey, siblingPosition, lstWizardTree):
-        self.key = value['dialog_name']
+        self.key = value['title']
         self.value = value
         self.position = siblingPosition
         self.children = lstWizardTree
@@ -12,8 +12,6 @@ class WizardTree:
             self.provideParent(l)
         self.parent = None
         #TODO add findparent
-
-
         return
 
     #if the child parentkey matches the WizardTree's key then that WizardTree becomes its parent.
@@ -63,12 +61,10 @@ class WizardTree:
              if self.parent.getDialog(key) == key:
                 return self.parent
         return c.__next__().getDialog(key)
-#TODO not used
+
     #self is the parent
     def insertDialog(self, position, node, children):
-        if self is None:
-            return WizardTree(node, self, children)
-        return self.children.insert(position, WizardTree(node, self, children))
+        self.children.append(WizardTree(node,self.key,position,children))
 
     #if there are children move through them
     #if there are not any children move up a node and through the rest of those children
@@ -95,16 +91,5 @@ class WizardTree:
 
 
 
-    # def fn_for_dialog(self):
-    #     (...(self.key,
-    #      self.value))
-    #     (fn_for_lod(self.children))
-    #
-    # def fn_for_lod(self):
-    #     if self.children is None:
-    #         return None
-    #     else:
-    #         return (d.append(fn_for_dialog(self.children[0])),
-    #          (fn_for_lod(self.children[1:]))
-    #
+
 
