@@ -92,7 +92,8 @@ class SetupForm(QtWidgets.QWidget):
     #SetupForm ->
     #method to modify SetupForm layout
     def functionForButton(self):
-        wt= WizardTree(10,{'title':'Project Name', 'prompt':'Enter the name of your project'}, None, None)
+        wt= WizardTree({'title':'Project Name', 'prompt':'Enter the name of your project'}, None, None)
+        ({'title': 'Project Name','prompt':'Enter the name of your project'}, None, 0, [])
         dlist = {15: {'title': 'Data Format', 'prompt': 'Select the format your timeseries data is in'},
                            20: {'title': 'Data Folder', 'prompt': 'Select the folder that contains your data.'}}
         for d in dlist.keys():
