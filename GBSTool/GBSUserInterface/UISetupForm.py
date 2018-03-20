@@ -2,9 +2,10 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 import ComponentTableModel as T
 from gridLayoutSetup import setupGrid
+from SetupWizard import SetupWizard
+from WizardTree import WizardTree
 
-
-class SetupForm(QtWidgets.QDialog):
+class SetupForm(QtWidgets.QWidget):
     
     def __init__(self):
         super().__init__()
@@ -22,16 +23,33 @@ class SetupForm(QtWidgets.QDialog):
         self.createButtonBlock()
         #the top block is buttons to load setup xml and data files
         #TODO each added widget needs to be set to max extent
-        windowLayout.addWidget(self.ButtonBlock,1)
+        windowLayout.addWidget(self.ButtonBlock,2)
         #create some space between the buttons and xml setup block
         windowLayout.addStretch(1)
 
         #add the setup block
         self.createTopBlock()
-        windowLayout.addWidget(self.horizontalGroupBox,1)
+        windowLayout.addWidget(self.topBlock)
         #more space between component block
-        windowLayout.addStretch(2)
+        windowLayout.addStretch(1)
+        dlist = [
+            [{'title': 'Time Series Date Format', 'prompt': 'Select the date format for the time series.',
+              'sqltable': None,
+              'sqlfield': None, 'reftable': None}, 'Raw Time Series', 0, None],
+            [{'title': 'Raw Time Series', 'prompt': 'Select the folder that contains time series data.',
+              'sqltable': None,
+              'sqlfield': None, 'reftable': None}, 'Data Input Format', 2, [0]],
+            [{'title': 'Load Hydro Data', 'prompt': 'Select the folder that contains hydro speed data.',
+              'sqltable': None,
+              'sqlfield': None, 'reftable': None}, 'Data Input Format', 1, None],
+            [{'title': 'Load Wind Data', 'prompt': 'Select the folder that contains wind speed data.', 'sqltable': None,
+              'sqlfield': None, 'reftable': None}, 'Data Input Format', 0, None],
+            [{'title': 'Data Input Format', 'prompt': 'Select the format your data is in.', 'sqltable': None,
+              'sqlfield': None, 'reftable': None}, 'Project Name', 0, [1, 2, 3]],
+            [{'title': 'Project Name', 'prompt': 'Enter the name of your project'}, None, 0, [4]]
 
+        ]
+        self.WizardTree = self.buildWizardTree(None,dlist,0)
         self.createBottomBlock()
         windowLayout.addWidget(self.bottomBlock)
 
@@ -91,14 +109,27 @@ class SetupForm(QtWidgets.QDialog):
     #SetupForm ->
     #method to modify SetupForm layout
     def functionForButton(self):
-        print("I Clicked!!!")
-        #self.horizontalGroupBox.setMinimumHeight(24)
-        self.horizontalGroupBox.setVisible(False)
-        self.showWindow()
+        s = SetupWizard(self.WizardTree)
+        self.topBlock.setVisible(False)
 
-        #set up the signal and slot (make it do what it needs to do)
+    def buildWizardTree(self, wt, dlist, i ):
+        if i >= len(dlist):
+            return wt
+        else:
+            if dlist[i][3] is not None:
+                childlist = []
+                for c in dlist[i][3]:
+                    childlist.append(dlist[c])
+            else:
+                childlist = []
+
+            if wt is None:
+                return WizardTree(dlist[i][0], dlist[i][1], dlist[i][2], self.buildWizardTree(wt, childlist, i))
+            else:
+
+                return wt.insertDialog(WizardTree(dlist[i][0], dlist[i][1], dlist[i][2], self.buildWizardTree(wt, childlist, i)))
+
     def showWindow(self):
-        print('showing')
         self.hide()
         self.show()
 
@@ -106,9 +137,7 @@ class SetupForm(QtWidgets.QDialog):
     #creates a horizontal layout containing gridlayouts for data input
     def createTopBlock(self):
          #create a horizontal grouping to contain the top setup xml portion of the form
-        self.horizontalGroupBox = QtWidgets.QGroupBox('Setup XML')
-        
-        #horizontalGroupBox = QtWidgets.QGroupBox('Setup XML')
+        self.topBlock = QtWidgets.QGroupBox('Setup XML')
         hlayout = QtWidgets.QHBoxLayout()
         
         hlayout.setObjectName("layout1")
@@ -141,9 +170,9 @@ class SetupForm(QtWidgets.QDialog):
         #add another stretch to keep the grids away from the right edge
         hlayout.addStretch(1)
         
-        self.horizontalGroupBox.setLayout(hlayout)
-        self.horizontalGroupBox.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
-        self.horizontalGroupBox.sizePolicy().retainSizeWhenHidden()
+        self.topBlock.setLayout(hlayout)
+        self.topBlock.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+        self.topBlock.sizePolicy().retainSizeWhenHidden()
 
     #returns a table view within a horizontal layout
     def createBottomBlock(self):
@@ -173,10 +202,6 @@ class SetupForm(QtWidgets.QDialog):
         self.bottomBlock.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         return tv
         
-
-
-
-
 
 
 
