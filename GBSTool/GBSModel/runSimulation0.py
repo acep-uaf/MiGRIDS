@@ -177,11 +177,11 @@ def runSimulation(projectSetDir = ''):
         writeNCFile(SO.DM.realTime, SO.underSRC, 1, 0, 'kW', 'underSRCSet' + str(setNum) + 'Run' + str(runNum) + '.nc')  # underSRC
         writeNCFile(SO.DM.realTime, SO.outOfNormalBounds, 1, 0, 'kW', 'outOfNormalBoundsSet' + str(setNum) + 'Run' + str(runNum) + '.nc')  # outOfNormalBounds
 
-        # start times for each generators
+        # power each generators
         for idx, genP in enumerate(zip(*SO.genP)):  # for each generator in the powerhouse
             writeNCFile(SO.DM.realTime, genP, 1, 0, 's',
                         'gen' + str(SO.PH.genIDS[idx]) + 'PSet' + str(setNum) + 'Run' + str(
-                            runNum) + '.nc')  # eessSoc
+                            runNum) + '.nc')
 
         # start times for each generators
         for idx, genST in enumerate(zip(*SO.genStartTime)): # for each generator in the powerhouse

@@ -8,8 +8,8 @@ import pandas as pd
 
 from GBSAnalyzer.CurveAssemblers.genFuelCurveAssembler import GenFuelCurve
 
-
-def getFuelUse(genAllP, fuelCurveDataPoints):
+# TODO; incorporated interpolationMethod
+def getFuelUse(genAllP, fuelCurveDataPoints, interpolationMethod = 'linear'):
     '''
     Calculates fuel consumption for each generator and time step given.
 
@@ -18,6 +18,9 @@ def getFuelUse(genAllP, fuelCurveDataPoints):
     :param genAllP: [DataFrame] individual genXP channels and time channel, index is integers numbering samples
     :param fuelCurveDataPoints: [DataFrame] index is generator names, columns are 'fuelCurve_pPu' and
         'fuelCurve_massFlow', 'POutMaxPa'
+    :param interpolationMethod: the inerpolation method used for the fuel curve is indicated here. 'linear', 'cubic'
+    or 'none' are valid inputs. 'none' indicates no interpolation is needed, the input fuel curve will be used to
+    calculate fuel consumption. Default value is 'linear'.
     :return genAllFuelUsed: [DataFrame] contains individual genX fuel used [kg] and time channel, index is integers
     :return fuelStats: [DataFrame] fuel stats for each gen and totals
     '''
