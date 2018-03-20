@@ -126,6 +126,10 @@ def plotProjectSet(projectSetDir=''):
         plt.show()
         plt.savefig('genOutputVs'+ col +'.png')
 
+        # save a csv file
+        dfAttrRes = pd.concat([dfAttr,dfRes],join_axes=1)
+        dfAttrRes.to_csv('Set' + str(setNum) + 'AttributesResults.csv')
+
     input('Press enter to close figures. ')
 
 

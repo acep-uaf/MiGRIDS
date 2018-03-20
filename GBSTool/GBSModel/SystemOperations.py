@@ -121,6 +121,7 @@ class SystemOperations:
         self.eesDis = []
         self.eessP = []
         self.eesPLoss = []
+        self.powerhouseP = []
         self.genP = []
         self.genPAvail = []
         self.eessSrc = []
@@ -179,7 +180,7 @@ class SystemOperations:
             self.eessP.append(eessP)
             self.eesPLoss.append(self.EESS.eesPloss[:])
             self.powerhouseP.append(phP)
-            self.genP.append(self.PH.genP)
+            self.genP.append(self.PH.genP[:])
             self.genPAvail.append(sum(self.PH.genPAvail))
             self.eessSrc.append(self.EESS.eesSRC[:])
             self.eessSoc.append(self.EESS.eesSOC[:])

@@ -123,17 +123,17 @@ def runSimulation(projectSetDir = ''):
         for cpt in componentNames:  # for each component
             # check if component is a generator
             if 'gen' in cpt.lower():
-                genDescriptors += [os.path.join(runCompDir, cpt.lower() + 'Set' + str(setNum) + str(runNum) + 'Descriptor.xml')]
+                genDescriptors += [os.path.join(runCompDir, cpt.lower() + 'Set' + str(setNum) + 'Run' + str(runNum) + 'Descriptor.xml')]
                 genIDs += [cpt[3:]]
                 genStates += [2]
             elif 'ees' in cpt.lower():  # or if energy storage
-                eesDescriptors += [os.path.join(runCompDir, cpt.lower() + 'Set' + str(setNum) + str(runNum) + 'Descriptor.xml')]
+                eesDescriptors += [os.path.join(runCompDir, cpt.lower() + 'Set' + str(setNum) + 'Run' + str(runNum) + 'Descriptor.xml')]
                 eesIDs += [cpt[3:]]
                 eesStates += [2]
                 eesSRC += [0]
                 eesSOC += [0]
             elif 'wtg' in cpt.lower():  # or if wind turbine
-                wtgDescriptors += [os.path.join(runCompDir, cpt.lower() + 'Set' + str(setNum) + str(runNum) + 'Descriptor.xml')]
+                wtgDescriptors += [os.path.join(runCompDir, cpt.lower() + 'Set' + str(setNum) + 'Run' + str(runNum) + 'Descriptor.xml')]
                 wtgIDs += [cpt[3:]]
                 wtgStates += [2]
                 windSpeed += [os.path.join(timeSeriesDir, cpt.lower() + 'WS.nc')]

@@ -1,3 +1,4 @@
 from generateRuns import generateRuns
-
-generateRuns('C:\\Users\jbvandermeer\Documents\ACEP\GBS\GBSTools_0\GBSProjects\Igiugig0\OutputData\Set1')
+import os
+here = os.path.dirname(os.path.realpath(__file__))
+generateRuns(os.path.join(here,"../../GBSProjects/Igiugig0/OutptData/Set1"))

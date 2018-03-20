@@ -289,6 +289,7 @@ class Powerhouse:
             self.switchGenComb(genSwOn[indSort[0]], genSwOff[indSort[0]])  # switch generators
             # update online generator combination
             self.onlineCombinationID = self.combinationsID[indInBounds[indSort[0]]]
+            self.switchGenComb(genSwOn[indSort[0]], genSwOff[indSort[0]])  # switch generators
         # otherwise, start or continue warming up generators for most efficient combination
         else:
             self.startGenComb(genSwOn[indSort[0]])

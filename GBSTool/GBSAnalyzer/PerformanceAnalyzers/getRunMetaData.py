@@ -28,9 +28,9 @@ def getRunMetaData(projectSetDir,runs):
         os.chdir(os.path.join(projectRunDir, 'OutputData'))
 
         # load the total powerhouse output
-        genPStats, genP, ts = loadResults('genPRun'+str(runNum)+'.nc')
+        genPStats, genP, ts = loadResults('powerhousePSet'+str(setNum)+'Run'+str(runNum)+'.nc')
         # get generator power available stats
-        genPAvailStats, genPAvail, ts = loadResults('genPAvailRun' + str(runNum) + '.nc')
+        genPAvailStats, genPAvail, ts = loadResults('genPAvailSet'+str(setNum)+'Run' + str(runNum) + '.nc')
 
         # calculate the average loading while online
         idxOnline = [idx for idx, x in enumerate(genPAvail) if x >0] # the indices of when online
@@ -48,9 +48,9 @@ def getRunMetaData(projectSetDir,runs):
         genSw = np.count_nonzero(np.diff(genPAvail))
 
         # load the wind data
-        wtgPImportStats, wtgPImport, ts = loadResults('wtgPImportRun' + str(runNum) + '.nc')
-        wtgPAvailStats, wtgPAvail, ts = loadResults('wtgPAvailRun' + str(runNum) + '.nc')
-        wtgPchStats, wtgPch, ts = loadResults('wtgPchRun' + str(runNum) + '.nc')
+        wtgPImportStats, wtgPImport, ts = loadResults('wtgPImportSet'+str(setNum)+'Run' + str(runNum) + '.nc')
+        wtgPAvailStats, wtgPAvail, ts = loadResults('wtgPAvailSet'+str(setNum)+'Run' + str(runNum) + '.nc')
+        wtgPchStats, wtgPch, ts = loadResults('wtgPchSet'+str(setNum)+'Run' + str(runNum) + '.nc')
 
         # spilled wind power in kWh
         wtgPspillTot = (wtgPAvailStats[4] - wtgPImportStats[4] - wtgPchStats[4])/3600
@@ -63,7 +63,7 @@ def getRunMetaData(projectSetDir,runs):
 
         # eess
         # get eess power
-        eessPStats, eessP, ts = loadResults('eessPRun' + str(runNum) + '.nc')
+        eessPStats, eessP, ts = loadResults('eessPSet'+str(setNum)+'Run' + str(runNum) + '.nc')
         # get the charging power
         eessPch = [x for x in eessP if x < 0]
         eessPchTot = -sum(eessPch)*ts/3600 # total kWh chargning of eess
