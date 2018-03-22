@@ -19,5 +19,12 @@ def getDataSubsets(dataframe, method):
     databins = []
 
     # TODO: implement
+    if method == 'RE-load-one-week':
+        # Get rolling one week load averages. We assume that time units are seconds here.
+        time = dataframe['time']
+
+
+    else: #if no valid method for data subset retrieval was selected, raise an exception and exit
+        raise ValueError('Method specified for data subset calculation is unknown.')
 
     return datasubsets, databins
