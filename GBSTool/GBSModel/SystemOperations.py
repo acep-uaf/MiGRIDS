@@ -204,7 +204,7 @@ class SystemOperations:
                 futureLoad = self.predictLoad.futureLoad
 
                 # predict what the wind will be
-                self.predictWind.predictWind(self.wtgPTot, self.DM.realTime[idx])
+                self.predictWind.predictWind(self.wtgPAvail, self.DM.realTime[idx])
                 futureWind = self.predictWind.futureWind
 
                 # TODO: add other RE
