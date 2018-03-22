@@ -28,6 +28,17 @@
         <compValue value = ""/>
     </compAttributeValues>
 
+    <setupAttributeValues>
+        <!-- 'setupAttributeValues' describes the values of each component that have been varied from the base case . -->
+        <!-- 'setupTag' is the tag to change. For example 'componentNames' If more than one level of tags is required enter as
+        a string seperated by periods '.'.   -->
+        <!-- 'setupAttr' is the attribute to change. For example 'value'.  -->
+        <!-- 'setupValue' value to place in the attribute. If a list is needs to be placed, enter as a string of values,
+        seperated by commas and no spaces .  -->
+        <setupTag value = ""/>
+        <setupAttr value = ""/>
+        <setupValue value = ""/>
+    </setupAttributeValues>
 
 </project>
 <!-- EOF -->
