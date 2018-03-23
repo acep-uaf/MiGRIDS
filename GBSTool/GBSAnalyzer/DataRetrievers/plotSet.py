@@ -31,7 +31,7 @@ def plotProjectSet(projectSetDir=''):
         root.withdraw()
         projectSetDir = filedialog.askdirectory()
 
-    # get the run number
+    # get the set number
     dirName = os.path.basename(projectSetDir)
     try:
         setNum = int(dirName[3:])
@@ -110,18 +110,15 @@ def plotProjectSet(projectSetDir=''):
         for idx, combIdx in enumerate(possibleCombIndicesIntersection):
             xIdx = list(combIdx) # the indicies for x
             yIdx = [y.index[i] for i in combIdx]
-            xPlot = x.loc[combIdx]
-            yPlot = y.loc[combIdx]
+            xPlot = pd.to_numeric(x.loc[combIdx])
+            yPlot = pd.to_numeric(y.loc[combIdx])
             idxSort = np.argsort(xPlot).tolist()
-            # the indicies for y
-            # sort x
-            idxSort =  np.argsort(x[xIdx]).tolist()
             plt.plot(xPlot.iloc[idxSort], yPlot.iloc[idxSort], '-*')
 
         plt.ylabel('kWh')
         plt.title('Diesel geneator output')
         #TODO: grab x label values from component descriptor, or..?
-        plt.xlabel('')
+        plt.xlabel(col)
         plt.legend(legendText)
         plt.show()
         plt.savefig('genOutputVs'+ col +'.png')
