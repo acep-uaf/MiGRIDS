@@ -83,7 +83,7 @@
 
     <!-- 'loadProfileFile' is the filename of the load profile that is saved in
     ProjectDirectory/InputData/TimeSeries/Processed. The default value is 'load0.nc'. -->
-    <loadProfileFile value="load0.nc" />
+    <loadProfileFile value="load0P.nc" />
 
     <!-- 'predictLoad' refers to the function that is used to predict the load. If a user defines their own load
     predicting function, it is the path and filename of the function used to predict short term (several hours) future
