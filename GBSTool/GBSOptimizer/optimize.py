@@ -5,9 +5,14 @@
 
 # Contains the main flow of the optimization as it is to be called from the GBSController.
 
+import os
+from distutils.util import strtobool
+
 import pandas as pd
+from bs4 import BeautifulSoup as soup
 
 from GBSAnalyzer.DataRetrievers.getDataSubsets import getDataSubsets
+from GBSAnalyzer.DataRetrievers.readNCFile import readNCFile
 
 
 class optimize:
@@ -33,13 +38,15 @@ class optimize:
         '''
 
         # Setup key parameters
+        self.thisPath = os.path.dirname(os.path.realpath(__file__))
         self.projectName = projectName
+        self.rootProjectPath = self.thisPath + '/../../GBSProjects/' + self.projectName # root path to project files relative to this file location
         self.searchMethod = searchArgs[0]
         self.optimizationObjective = searchArgs[1]
         self.dataReductionMethod = searchArgs[2]  # should be 'RE-load-one-week'
         self.boundaryMethod = searchArgs[3]     # should be 'variableSRC'
 
-        # Retrieve data from base case
+        # Retrieve data from base case (Input files)
         # TODO: implement retrieving data from base case, or dispatch base case calculation if it doesn't exist, or use input files as base case
         self.time, self.firmLoadP, self.varLoadP, self.firmGenP, self.varGenP = self.getBasecase()
 
@@ -67,7 +74,7 @@ class optimize:
 
 
 
-    def getBasecase(self):
+    def getBasecase(self, projectName, rootProjectPath):
         '''
         Retrieve base case data and meta data required for initial estimate.
         :return time: [Series] time vector
@@ -77,15 +84,51 @@ class optimize:
         :return varGenP: [Series] variable generation vector
         '''
         # Empty bins
-        time = []
-        firmLoadP = []
         varLoadP = []
         firmGenP = []
         varGenP = []
         
         # Read project meta data to get (a) all loads, (b) all generation, and their firm and variable subsets.
+        setupMetaHandle = open(os.path.join(rootProjectPath, 'InputData/Setup/' + projectName + 'Setup.xml'), 'r')
+        setupMetaData = setupMetaHandle.read()
+        setupMetaHandle.close()
+        setupMetaSoup = soup(setupMetaData, 'xml')
 
-        # Retrieve data channels
+        # Retrieve the time and firm load vectors
+        firmLoadPFileName = setupMetaSoup.loadProfileFile.get('value')
+        firmLoadPFile = readNCFile(os.path.join(rootProjectPath, 'InputData/TimeSeriesData/ProcessedData/' + firmLoadPFileName))
+        time = pd.Series(firmLoadPFile.time)
+        firmLoadP = pd.Series((firmLoadPFile.value + firmLoadPFile.offset)*firmLoadPFile.scale)
+
+        # Setup other data channels
+        firmGenP = pd.Series(firmLoadP.copy()*0)
+        varGenP = pd.Series(firmLoadP.copy()*0)
+
+        # Get list if all components
+        components = setupMetaData.componentNames.get('value').split()
+        # Step through the given list of components and assign them to the correct data channel if appropriate
+        for cpt in components:
+            # load meta data for the component
+            cptMetaHandle = open(os.path.join(rootProjectPath, 'InputData/Components/' + cpt +'Descriptor.xml'), 'r')
+            cptMetaData = cptMetaHandle.read()
+            cptMetaHandle.close()
+            cptMetaSoup = soup(cptMetaData, 'xml')
+
+            # Read the type, if it is a source it is going into one of the generation channels
+            if cptMetaSoup.type.get('value') == 'source':
+                # Load associated time series
+                chName = cptMetaSoup.component.get('name') + 'P.nc'
+                fgPHandle = readNCFile(
+                    os.path.join(rootProjectPath, 'InputData/TimeSeriesData/ProcessedData/' + chName))
+                # Check if it can load follow, if true add it to the firmGenP channel
+                if strtobool(cptMetaSoup.isLoadFollowing.get('value')):
+                    firmGenP = firmGenP + pd.Series((fgPHandle.value + fgPHandle.offset) * fgPHandle.scale)
+                # If it cannot load follow, it is a variable generator
+                else: # not strtobool(cptMetaSoup.isLoadFollowing.get('value'))
+                    varGenP = varGenP + pd.Series((fgPHandle.value + fgPHandle.offset) * fgPHandle.scale)
+
+            # TODO - handle varLoadP
+
 
         return time, firmLoadP, varLoadP, firmGenP, varGenP
 
