@@ -5,6 +5,7 @@
 
 import os
 import sys
+
 # General imports
 from bs4 import BeautifulSoup as Soup
 
@@ -13,11 +14,11 @@ sys.path.append(os.path.join(here, '../'))
 from GBSAnalyzer.CurveAssemblers.wtgPowerCurveAssembler import WindPowerCurve
 from bisect import bisect_left
 from GBSAnalyzer.DataRetrievers.readNCFile import readNCFile
-from GBSAnalyzer.DataWriters.writeNCFile import writeNCFile
 from getIntListIndex import getIntListIndex
 from getSeriesIndices import getSeriesIndices
 import numpy as np
 from scipy.interpolate import interp1d
+from distutils.util import strtobool
 
 class WindTurbine:
     """
@@ -90,6 +91,8 @@ class WindTurbine:
         :return:
         """
 
+        print(wtgDescriptor)
+
         # read xml file
         wtgDescriptorFile = open(wtgDescriptor, "r")
         wtgDescriptorXml = wtgDescriptorFile.read()
@@ -104,30 +107,32 @@ class WindTurbine:
         self.wtgCheckWindTime = float(wtgSoup.checkWindTime.get('value'))  # time to check spilled wind power over
         self.wtgSpilledWindLimit = float(
             wtgSoup.spilledWindLimit.get('value'))  # time to check spilled wind power over
-        self.wtgRecalculateWtgPAvail = float(
+        self.wtgRecalculateWtgPAvail = strtobool(
             wtgSoup.recalculateWtgPAvail.get('value'))  # bool whether to recalculate wind power from wind speeds
 
         # Handle the fuel curve interpolation
-        powerCurvePPuInpt = wtgSoup.powerCurveDataPoints.pPu.get('value').split()
-        powerCurveWsInpt = wtgSoup.powerCurveDataPoints.ws.get('value').split()
-        if len(powerCurvePPuInpt) != len(powerCurveWsInpt):  # check that both input lists are of the same length
-            raise ValueError('Power curve calculation error: Power and wind speed lists are not of same length.')
+        if self.wtgRecalculateWtgPAvail:
+            powerCurvePPuInpt = wtgSoup.powerCurveDataPoints.pPu.get('value').split()
+            powerCurveWsInpt = wtgSoup.powerCurveDataPoints.ws.get('value').split()
+            if len(powerCurvePPuInpt) != len(powerCurveWsInpt):  # check that both input lists are of the same length
+                raise ValueError('Power curve calculation error: Power and wind speed lists are not of same length.')
 
-        powerCurveData = []
-        for idx, item in enumerate(powerCurvePPuInpt):
-            powerCurveData.append((float(powerCurveWsInpt[idx]), self.wtgPMax * float(powerCurvePPuInpt[idx])))
-        wtgPC = WindPowerCurve()
-        wtgPC.powerCurveDataPoints = powerCurveData
-        wtgPC.cutInWindSpeed = float(wtgSoup.cutInWindSpeed.get('value')) # Cut-in wind speed, float, m/s
-        wtgPC.cutOutWindSpeedMin = float(wtgSoup.cutOutWindSpeedMin.get('value')) # Cut-out wind speed min, float, m/s
-        wtgPC.cutOutWindSpeedMax = float(wtgSoup.cutOutWindSpeedMax.get('value')) # Cut-out wind speed max, float, m/s
-        wtgPC.POutMaxPa = self.wtgPMax # Nameplate power, float, kW
-        wtgPC.cubicSplineCurveEstimator()
-        self.wtgPowerCurve = wtgPC.powerCurveInt
+            powerCurveData = []
+            for idx, item in enumerate(powerCurvePPuInpt):
+                powerCurveData.append((float(powerCurveWsInpt[idx]), self.wtgPMax * float(powerCurvePPuInpt[idx])))
+            wtgPC = WindPowerCurve()
+            wtgPC.powerCurveDataPoints = powerCurveData
+            wtgPC.cutInWindSpeed = float(wtgSoup.cutInWindSpeed.get('value')) # Cut-in wind speed, float, m/s
+            wtgPC.cutOutWindSpeedMin = float(wtgSoup.cutOutWindSpeedMin.get('value')) # Cut-out wind speed min, float, m/s
+            wtgPC.cutOutWindSpeedMax = float(wtgSoup.cutOutWindSpeedMax.get('value')) # Cut-out wind speed max, float, m/s
+            wtgPC.POutMaxPa = self.wtgPMax # Nameplate power, float, kW
+            wtgPC.cubicSplineCurveEstimator()
+            self.wtgPowerCurve = wtgPC.powerCurveInt
 
         # check if there are wind power files in the wind speed directory
         windSpeedFile = os.path.join(windSpeedDir,'wtg'+str(self.wtgID)+'WS.nc')
-        windPowerFile = os.path.join(windSpeedDir,'wtg'+str(self.wtgID)+'PAvail.nc')
+        windPowerFile = os.path.join(windSpeedDir[:-9],'wtg'+str(self.wtgID)+'PAvail.nc')
+        print(windSpeedDir[:-9])
         if os.path.isfile(windPowerFile) and not self.wtgRecalculateWtgPAvail:
             # if there is, then read it
             NCF = readNCFile(windPowerFile)
