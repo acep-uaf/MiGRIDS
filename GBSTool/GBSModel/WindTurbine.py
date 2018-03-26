@@ -48,7 +48,7 @@ class WindTurbine:
 
 
     # Constructor
-    def __init__(self, wtgID, windSpeedFile, wtgState, timeStep, wtgDescriptor, runTimeSteps = 'all'):
+    def __init__(self, wtgID, windSpeedDir, wtgState, timeStep, wtgDescriptor, runTimeSteps = 'all'):
         """
         Constructor used for the initialization of an object within windfarm list of wind turbines.
 
@@ -63,7 +63,7 @@ class WindTurbine:
         self.timeStep = timeStep
         self.runTimeSteps = runTimeSteps # the input to calculate which timesteps to run in the simulation
         # grab data from descriptor file
-        self.wtgDescriptorParser(windSpeedFile,wtgDescriptor)
+        self.wtgDescriptorParser(windSpeedDir,wtgDescriptor)
 
         self.wtgPAvail = 0  # the available power from the wind [kW]
         self.wtgQAvail = 0  # the available power form the wind [kar]
@@ -80,7 +80,7 @@ class WindTurbine:
         # initiate runtime values
         self.checkOperatingConditions()
 
-    def wtgDescriptorParser(self, windSpeedFile, wtgDescriptor):
+    def wtgDescriptorParser(self, windSpeedDir, wtgDescriptor):
         """
         wtgDescriptorParser: parses the necessary data from the wtgDescriptor.xml file provided.
 
@@ -104,6 +104,8 @@ class WindTurbine:
         self.wtgCheckWindTime = float(wtgSoup.checkWindTime.get('value'))  # time to check spilled wind power over
         self.wtgSpilledWindLimit = float(
             wtgSoup.spilledWindLimit.get('value'))  # time to check spilled wind power over
+        self.wtgRecalculateWtgPAvail = float(
+            wtgSoup.recalculateWtgPAvail.get('value'))  # bool whether to recalculate wind power from wind speeds
 
         # Handle the fuel curve interpolation
         powerCurvePPuInpt = wtgSoup.powerCurveDataPoints.pPu.get('value').split()
@@ -124,13 +126,14 @@ class WindTurbine:
         self.wtgPowerCurve = wtgPC.powerCurveInt
 
         # check if there are wind power files in the wind speed directory
-        windSpeedDir = os.path.dirname(windSpeedFile)
-        if os.path.isfile(os.path.join(windSpeedDir,'wtg'+str(self.wtgID)+'WP.nc')):
+        windSpeedFile = os.path.join(windSpeedDir,'wtg'+str(self.wtgID)+'WS.nc')
+        windPowerFile = os.path.join(windSpeedDir,'wtg'+str(self.wtgID)+'PAvail.nc')
+        if os.path.isfile(windPowerFile) and not self.wtgRecalculateWtgPAvail:
             # if there is, then read it
-            NCF = readNCFile(os.path.join(windSpeedDir,'wtg'+str(self.wtgID)+'WP.nc'))
+            NCF = readNCFile(windPowerFile)
             windPower = np.array(NCF.value)*NCF.scale + NCF.offset
             windTime = NCF.time
-        else:
+        elif os.path.isfile(windSpeedFile):
             # read wind speed file
             NCF = readNCFile(windSpeedFile)
             windSpeed = np.array(NCF.value) * NCF.scale + NCF.offset
@@ -154,7 +157,10 @@ class WindTurbine:
             # get wind power
             windPower = self.getWP(PCpower,PCws,windSpeed, wtgPC.wsScale)
             # save nc file to avoid having to calculate for future simulations
-            writeNCFile(NCF.time[:], windPower, 1, 0, 'kW', os.path.join(windSpeedDir,'wtg'+str(self.wtgID)+'WP.nc'))
+            #writeNCFile(NCF.time[:], windPower, 1, 0, 'kW', os.path.join(windSpeedDir,'wtg'+str(self.wtgID)+'WP.nc'))
+        else:
+            raise ValueError('There is no wind speed file in the specified directory.')
+
         # interpolate wind power according to the desired timestep
         f = interp1d(windTime,windPower)
         num = int(len(windTime) / self.timeStep)

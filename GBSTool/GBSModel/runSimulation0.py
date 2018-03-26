@@ -206,3 +206,12 @@ def runSimulation(projectSetDir = ''):
         for idx, eesLoss in enumerate(zip(*SO.eesPLoss)):  # for each generator in the powerhouse
             writeNCFile(SO.DM.realTime, eesLoss, 1, 0, 'kW',
                         'ees' + str(SO.EESS.eesIDs[idx]) + 'LossSet' + str(setNum) + 'Run' + str(runNum) + '.nc')
+
+        # set the value in the 'finished' for this run to 1 to indicate it is finished.
+        conn = sqlite3.connect(
+            os.path.join(projectSetDir, 'set' + str(setNum) + 'ComponentAttributes.db'))  # create sql database
+        df = pd.read_sql_query('select * from compAttributes', conn)
+        # set finished value to 1 to indicate this run is finshed
+        df['finished'][runNum] = 1
+        df.to_sql('compAttributes', conn, if_exists="replace", index=False)  # write to table compAttributes in db
+        conn.close()
