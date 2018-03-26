@@ -131,8 +131,7 @@ class WindTurbine:
 
         # check if there are wind power files in the wind speed directory
         windSpeedFile = os.path.join(windSpeedDir,'wtg'+str(self.wtgID)+'WS.nc')
-        windPowerFile = os.path.join(windSpeedDir[:-9],'wtg'+str(self.wtgID)+'PAvail.nc')
-        print(windSpeedDir[:-9])
+        windPowerFile = os.path.join(windSpeedDir,'wtg'+str(self.wtgID)+'PAvail.nc')
         if os.path.isfile(windPowerFile) and not self.wtgRecalculateWtgPAvail:
             # if there is, then read it
             NCF = readNCFile(windPowerFile)
@@ -184,7 +183,7 @@ class WindTurbine:
         windPower = []
         for WS in windSpeed:
             # get the index of the wind speed
-            idx = getIntListIndex(WS,PCws)
+            idx = getIntListIndex(WS*wsScale,PCws)
             # append the corresponding wind power
             windPower.append(PCpower[idx])
         return windPower

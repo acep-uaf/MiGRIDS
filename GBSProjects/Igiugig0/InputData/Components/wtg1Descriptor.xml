@@ -125,5 +125,7 @@
   <pt unit="kW" value="0 0"/>
   <temp unit="K" value="298 298"/>
  </heatRecovery>
+ <!-- 'recalculateWtgPAvail' specifies whether to recalculate the available windpower from the base case. Default is False. -->
+  <recalculateWtgPAvail value="False" />
 </component>
 <!-- EOF -->
