@@ -108,10 +108,10 @@ class WindTurbine:
         self.wtgSpilledWindLimit = float(
             wtgSoup.spilledWindLimit.get('value'))  # time to check spilled wind power over
         self.wtgRecalculateWtgPAvail = strtobool(
-            wtgSoup.recalculateWtgPAvail.get('value'))  # bool whether to recalculate wind power from wind speeds
+            wtgSoup.recalculateWtgPAvail.get('value'))  # bool whether to recalculate wind power from wind speeds; fix for converting to bool -> 'strtobool'.
 
         # Handle the fuel curve interpolation
-        if self.wtgRecalculateWtgPAvail:
+        if self.wtgRecalculateWtgPAvail: # this avoids running the power curve assembler when it is not required to be run. Also avoids issues with sparse data regarding the wind power curve.
             powerCurvePPuInpt = wtgSoup.powerCurveDataPoints.pPu.get('value').split()
             powerCurveWsInpt = wtgSoup.powerCurveDataPoints.ws.get('value').split()
             if len(powerCurvePPuInpt) != len(powerCurveWsInpt):  # check that both input lists are of the same length
@@ -131,8 +131,8 @@ class WindTurbine:
 
         # check if there are wind power files in the wind speed directory
         windSpeedFile = os.path.join(windSpeedDir,'wtg'+str(self.wtgID)+'WS.nc')
-        windPowerFile = os.path.join(windSpeedDir[:-9],'wtg'+str(self.wtgID)+'PAvail.nc')
-        print(windSpeedDir[:-9])
+        windPowerFile = os.path.join(windSpeedDir[:-9],'wtg'+str(self.wtgID)+'PAvail.nc') # '[:-9]' is temporary fix to issue coming from runSimulation0.py
+
         if os.path.isfile(windPowerFile) and not self.wtgRecalculateWtgPAvail:
             # if there is, then read it
             NCF = readNCFile(windPowerFile)
