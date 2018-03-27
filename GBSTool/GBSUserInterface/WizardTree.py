@@ -81,19 +81,17 @@ class WizardTree:
             return
         #otherwise get the next oldest sibling
         return self.getDialog(key)[0].parent.children[self.getDialog(key)[0].position +1]
-    # def getNext(self, key):
-    #     print(self.key)
-    #     print(self.getDialog(key)[0].key)
 
     #move to previous list item
     #if list is empty move up a node
-    def getPrevious(self):
-        #up to parent
-        try:
-            return self.parent.children[self.position -1]
-        except IndexError:
-            return self.parent
-
+    def getPrevious(self, key):
+        #TODO change to include sibling navigation
+        #is there a younger sibling
+        # if self.getDialog(key)[0].position > 1:
+        #     return self.getDialog(key)[0].parent.children[self.getDialog(key)[0].position -1]
+        # else:
+        #     return self.getDialog(key)[0].parent
+        return self.getDialog(key)[0].parent
     def getTitle(self):
         return self.getTitleList(self.children.__iter__()) + [self.key]
 
@@ -117,7 +115,7 @@ class WizardTree:
             return False
         if self.parent == None:
             return True
-        if self.position == len(self.parent.children):
+        if self.position == len(self.parent.children) -1:
             return True
 
         return False
