@@ -39,46 +39,51 @@ class WizardTree:
         else:
             return self.children[position]
 
-    #returns the value portion of a dialog node
+    #returns dialog based on the key
     def getDialog(self, key):
         #if the node provided is the correct one return its value
         if key == self.key:
-            return self.value
-        #otherwise search for the correct node in the baseTree
-        if self.children is not None:
-            c = self.children.__iter__()
-            return self.findDialog(c,key)
-        return None
+            return [self] + self.findDialog(self.children.__iter__(),key)
+
+        return self.findDialog(self.children.__iter__(), key)
 
 
+    def findDialog(self, lod,key):
+        #key doesn't exist
+        if lod.__length_hint__() ==0:
+            return []
 
-    def findDialog(self, c, key):
-
-        if self is None:
-            #key doesn't exist
-            return None
-        elif self.parent is not None:
-             if self.parent.getDialog(key) == key:
-                return self.parent
-        return c.__next__().getDialog(key)
+        return lod.__next__().getDialog(key) + self.findDialog(lod, key)
+    # def getTitle(self):
+    #     return self.getTitleList(self.children.__iter__()) + [self.key]
+    #
+    # def getTitleList(self, lod):
+    #     if lod.__length_hint__() ==0:
+    #         return []
+    #     return lod.__next__().getTitle() + self.getTitleList(lod)
 
     #self is the parent
     def insertDialog(self, position, node, children):
         self.children.append(WizardTree(node,self.key,position,children))
 
+
+
     #if there are children move through them
     #if there are not any children move up a node and through the rest of those children
-    def getNext(self):
-        #has children
-        if self.children is not None:
-            #go to first child
-            return self.children[0]
-        #has no older siblings
-        elif self.position > len(self.parent.children):
-            #move to parents siblings
-            return self.getNext(self.parent.key)
-        #otherwise get the next oldest sibling
-        return self.parent.children[self.position +1]
+        def getNext(self,key):
+            #current dialog has children
+            if len(self.getDialog(key).children) > 0:
+                #go to first child
+                return self.getDialog(key).children[0]
+            #has no older siblings
+            elif self.getDialog(key).position >= len(self.getDialog(key).parent.children):
+
+                return None
+            #otherwise get the next oldest sibling
+            return self.getDialog(key).parent.children[self.getDialog(key).position +1]
+    def getNext(self, key):
+        print(self.key)
+        print(self.getDialog(key).key)
 
     #move to previous list item
     #if list is empty move up a node
@@ -89,7 +94,30 @@ class WizardTree:
         except IndexError:
             return self.parent
 
+    def getTitle(self):
+        return self.getTitleList(self.children.__iter__()) + [self.key]
 
+    def getTitleList(self, lod):
+        if lod.__length_hint__() ==0:
+            return []
+        return lod.__next__().getTitle() + self.getTitleList(lod)
 
+    def getStart(self):
+        if self.isStart():
+            return self
+        return self.parent.getStart()
 
+    def isStart(self):
+        if self.parent:
+            return False
+        return True
 
+    def isLast(self):
+        if self.children:
+            return False
+        if self.parent == None:
+            return True
+        if self.position == len(self.parent.children):
+            return True
+
+        return False
