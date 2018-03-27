@@ -17,7 +17,8 @@ def readDataFile(inputSpecification,fileLocation='',fileType='csv',columnNames=N
     import os
     import importlib.util
     import numpy as np
-    from readAvecCsv import readAvecCsv
+    from readAllAvecTimeSeries import readAllAvecTimeSeries
+    from readWindData import readWindData
     from readXmlTag import readXmlTag
 
     ###### go to directory with time series data is located #######
@@ -39,23 +40,19 @@ def readDataFile(inputSpecification,fileLocation='',fileType='csv',columnNames=N
     df = pd.DataFrame()
     ####### Parse the time series data files ############
     # depending on input specification, different procedure
-    if inputSpecification=='AVEC':
-    # In the case of AVEC, data files are broken into months. Append them.
-        for i in range(len(fileNames)): # for each data file
-            if i == 0: # read data file into a new dataframe if first iteration
-                df = readAvecCsv(fileNames[i],fileLocation,columnNames,useNames,componentUnits)
-            else: # otherwise append
-                df2 = readAvecCsv(fileNames[i],fileLocation,columnNames,useNames,componentUnits) # the new file
-                # get intersection of columns,
-                df2Col = df2.columns
-                dfCol = df.columns
-                #TODO: this does not maintain the order. It needs to be modified to maintain order of columns
-                #dfNewCol = list(set(df2Col).intersection(dfCol))
-                dfNewCol = [val for val in dfCol if val in df2Col]
-                # resize dataframes to only contain columns contained in both dataframes
-                df = df[dfNewCol]
-                df2 = df2[dfNewCol]
-                df = df.append(df2) # append
+    if inputSpecification[0:4] =='AVEC':
+       df = readAllAvecTimeSeries(fileNames,fileLocation,columnNames,useNames,componentUnits)
+    if inputSpecification == 'AVECMulti':
+        #read the wind data from a seperate file
+        windfolder = os.path.join(fileLocation,'../../RawWindData')
+        #winddf is a dataset at 1 second intervals
+        winddf = readWindData(windfolder)
+        #check if years match
+        if winddf.date.year != df.date.year:
+            ps = pd.Series(pd.to_datetime(winddf['time']))
+            ps = ps.apply(lambda dt: dt.replace(year=df.year))
+        #merge wind values with timeseries?? or generate wind file seperately?
+        df = df.join(winddf)
         
     # try to convert to numeric
     df = df.apply(pd.to_numeric,errors='ignore')
