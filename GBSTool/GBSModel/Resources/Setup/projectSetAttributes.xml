@@ -11,9 +11,6 @@
     <!-- Declaration of inheritance. This has no parents.   -->
     <childOf>self</childOf>
 
-    <!-- 'setNumber' is the number of the set of simulations that this information refers to. -->
-    <setNumber value="" />
-
     <compAttributeValues>
         <!-- 'compAttributeValues' describes the values of each component that have been varied from the base case . -->
         <!-- 'compName' is the component name, eg 'ees0'.  -->

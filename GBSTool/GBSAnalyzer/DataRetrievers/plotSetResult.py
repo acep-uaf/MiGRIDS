@@ -8,13 +8,13 @@ import pandas as pd
 import itertools
 import matplotlib.pyplot as plt
 
-def plotSetResult(plotRes,plotAttr, projectSetDir = '', otherAttr = '',otherAttrVal = ''):
+def plotSetResult(plotRes,plotAttr, projectSetDir = '', otherAttr = [],otherAttrVal = []):
     '''
     plot a single result for a set of simulations
     :param plotRes: the database column header of the variable to plot.
     :param plotAttr: The simulation attribute to be plotted against. This is the column header in the database as well as the tag and attribute from the component or setup xml file.
     :param otherAttr: The other component or setup attributes to have fixed values in the plot. If not specified, all values for the attribute will be plotted as multiple lines.
-    :param otherAttrVal: The values of the 'otherAttr' to plot.
+    :param otherAttrVal: The values of the 'otherAttr' to plot. It should be given as a list of lists, corresponding to otherAttr.
     :return: Nothing
     '''
     if projectSetDir == '':
@@ -60,8 +60,8 @@ def plotSetResult(plotRes,plotAttr, projectSetDir = '', otherAttr = '',otherAttr
 
     # remove values from otherAttr not to be plotted
     for idx, attr in enumerate(otherAttr):  # for set of values to plot for this attribute
-        values = otherAttrVal[idx].split(',')
-        # convert to numeric
+        values = otherAttrVal[idx]
+        # convert to numeric, if not already
         values = [float(x) for x in values]
         # go through each value for this attribute, check if it is in the list of values to plot, if not, remove row
         # from both dfAttr and dfRes
@@ -86,22 +86,63 @@ def plotSetResult(plotRes,plotAttr, projectSetDir = '', otherAttr = '',otherAttr
     legendValues = []
     legendNames = []
     legendIndices = []
-    for otherCol in otherColumns:
+    # for plotting. use numpy array to allow indexing with a list of intergers
+    markers = np.array(['*','o','v','^','<','>','x','.','8','s','D','d'])
+    lineStyles = np.array([':','-.','--','-'])
+    colors = np.array(['b','g','r','c','m','y','k'])
+    indMarker = 0 # keeps track of which markers have been assigned to a value already
+    indLineStyle = 0
+    legendMarkers = []
+    legendLineStyles = []
+    for idx, otherCol in enumerate(otherColumns):
         if any(dfAttr[otherCol] != dfAttr[plotAttr]) and otherCol.lower() != 'started':  # make sure not identical (this is an option when setting values of 2 different attributes
             legendNames.append(otherCol)  # add col name to legend names
             uniqueValues = np.unique(dfAttr[otherCol])  # unique values of this column
+            # check if it can be converted to a float
+            try:
+                # convert to float and sort uniqueValues
+                uniqueValues = np.sort([float(x) for x in uniqueValues])
+            except ValueError:
+                # do nothing
+                uniqueValues = uniqueValues
             legendValues.append(list(uniqueValues))  # add the value that correspond to the legend name
+            # linestyles
             # get indices of unique values
             indVal = []
+            # check if uniqueValues are float. If so, convert attribute values to float to compare
+            if isinstance(uniqueValues[0],float):
+                attrVal = [float(x) for x in dfAttr[otherCol]]
+            else:
+                attrVal = dfAttr[otherCol]
+
             for uniqueVal in uniqueValues:
-                indVal.append(dfAttr.index[dfAttr[otherCol] == uniqueVal].tolist())
+                indVal.append(dfAttr.index[attrVal == uniqueVal].tolist())
             legendIndices.append(indVal)
-
-
+            # append linestyles and marker styles
+            if idx%2 != 0: # odd numbers, markers
+                # get marker indices that wrap around when they reach the end of the list of markers
+                indMarker0 = []
+                for idxM in range(len(uniqueValues)):
+                    indMarker0.append(indMarker + (idxM % len(markers)))
+                legendMarkers.append(markers[indMarker0])
+                indMarker = indMarker + 1 % len(markers)
+                # append empty list for line styles, indicates does not control which kind of style
+                legendLineStyles.append(['']*len(uniqueValues))
+            else: # even numbers, line styles
+                # get line indices that wrap around when they reach the end of the list of lineStyles
+                indLineStyle0 = []
+                for idxL in range(len(uniqueValues)):
+                    indLineStyle0.append(indLineStyle + (idxL % len(lineStyles)))
+                legendLineStyles.append(lineStyles[indLineStyle0])
+                indLineStyle = indLineStyle + 1 % len(lineStyles)
+                # append empty list for markers, indicates does not control which kind of marker
+                legendMarkers.append(['']*len(uniqueValues))
 
     # find common indices for each combination of other columm values
     possibleCombValues = list(itertools.product(*legendValues))
     possibleCombIndices = list(itertools.product(*legendIndices))
+    possibleCombMarkers = list(itertools.product(*legendMarkers))
+    possibleCombLineStyles = list(itertools.product(*legendLineStyles))
 
     # get the intersection of indices for each legend grouping
     possibleCombIndicesIntersection = []
@@ -110,7 +151,10 @@ def plotSetResult(plotRes,plotAttr, projectSetDir = '', otherAttr = '',otherAttr
         possibleCombIndicesIntersection.append(set.intersection(*map(set, indComb)))
         legStr = ''
         for idx0, name in enumerate(legendNames):
-            legStr = legStr + name + ': ' + str(possibleCombValues[idx][idx0]) + ' '
+            if idx0 != 0: # add a coma in between legend entries
+                legStr = legStr + ', '
+
+            legStr = legStr + name + ': ' + str(possibleCombValues[idx][idx0])
 
         legendText.append(legStr)
 
@@ -122,13 +166,25 @@ def plotSetResult(plotRes,plotAttr, projectSetDir = '', otherAttr = '',otherAttr
         xPlot = pd.to_numeric(x.loc[combIdx])
         yPlot = pd.to_numeric(y.loc[combIdx])
         idxSort = np.argsort(xPlot).tolist()
-        plt.plot(xPlot.iloc[idxSort], yPlot.iloc[idxSort], '-*')
+        # marker and linestyles
+        marker = possibleCombMarkers[idx][0]
+        lineStyle = possibleCombLineStyles[idx][1]
+        plt.plot(xPlot.iloc[idxSort], yPlot.iloc[idxSort], marker = marker, linestyle = lineStyle )
 
     plt.ylabel(plotRes)
     # TODO: grab x label values from component descriptor, or..?
     plt.xlabel(plotAttr)
     plt.legend(legendText)
-    plt.show()
-    plt.savefig(plotRes + 'Vs' + plotAttr + '.png')
+    #plt.show()
+    otherAttrText = ''
+    for idx, attr in enumerate(otherAttr):
+        # convert values to a string
+        oavText = ''
+        for idx, oav in enumerate(otherAttrVal[idx]):
+            if idx != 0:
+                oavText = oavText + '_'
+            oavText = oavText + str(oav)
+        otherAttrText = otherAttrText + attr + '_' + oavText + ' '
+    plt.savefig(plotRes + ' vs ' + plotAttr + ' for ' + otherAttrText + '.png')
 
 
