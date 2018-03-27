@@ -3,7 +3,6 @@
 # Date: February 22, 2018
 # License: MIT License (see LICENSE file of this package for more information)
 
-import netCDF4
 import pandas as pd
 
 from GBSAnalyzer.DataRetrievers.readNCFile import readNCFile
@@ -23,10 +22,15 @@ def getDataChannels(projectPath, dataPath, channelList):
     # Flag to ensure that only one time channel is loaded.
     timeLoaded = False
 
+    # if channelList is only one item, we need to turn it into a list first
+    if isinstance(channelList, str):
+        channelList = list([channelList])
+
     for channelName in channelList:
         filePath = projectPath + dataPath + channelName + '.nc'
-
-        value, time = loadData(filePath)
+        ncHandle = readNCFile(filePath)
+        value = (pd.Series(ncHandle.value[:]) + float(ncHandle.offset)) * float(ncHandle.scale)
+        time = pd.Series(ncHandle.time[:])
 
         # Load time stamps once
         if not timeLoaded:
@@ -41,18 +45,4 @@ def getDataChannels(projectPath, dataPath, channelList):
 
     return dataPackage
 
-    ncf = readNCFile
-def loadData(filePath):
-    """
-    Helper function to load a netCDF data file.
-    :param filePath:
-    :return value: [Series] the series of values from the netCDF file
-    :return time: [Series] the series of time stamps in UNIX epoch from the netCDF file
-    """
-    nc = netCDF4.Dataset(filePath)
-    value = pd.Series(nc.variables['value'][:])
-    time = pd.Series(nc.variables['time'][:])
 
-    nc.close()
-
-    return value, time
