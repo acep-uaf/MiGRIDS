@@ -40,6 +40,8 @@
       scheduling new diesel and energy storage units. Units are in PU of nameplate capacity times seconds. It is measured
       over the period of time indicated by checkWindTime. Default is 60 PU. -->
     <spilledWindLimit value="60" unit="PU"/>
+    <!-- 'recalculateWtgPAvail' specifies whether to recalculate the available windpower from the base case. Default is False. -->
+    <recalculateWtgPAvail value="False" />
 
 </component>
 <!-- EOF -->

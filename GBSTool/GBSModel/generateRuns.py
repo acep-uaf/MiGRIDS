@@ -36,8 +36,9 @@ def generateRuns(projectSetDir):
     compAttr = readXmlTag(projectName + 'Set' + str(setNum) + 'Attributes.xml', ['compAttributeValues', 'compAttr'], 'value')
     compValue = readXmlTag(projectName + 'Set' + str(setNum) + 'Attributes.xml', ['compAttributeValues', 'compValue'], 'value')
 
-    # get unique list of components
-    compNameUnique = np.unique(compName)
+    # check if wind turbine values were varied from base case. If so, will set the 'recalculateWtgPAvail' tag to 1
+    # for each wind turbine
+    isWtg = any(['wtg' in x for x in compName])
 
     valSplit = [] # list of lists of attribute values
     for val in compValue: # iterate through all comonent attributes
@@ -88,6 +89,8 @@ def generateRuns(projectSetDir):
                 # copy from main input data
                 copyfile(os.path.join(projectDir, 'InputData', 'Components', cpt + 'Descriptor.xml'),
                          os.path.join(compDir, cpt + 'Set' + str(setNum) + 'Run' + str(run) + 'Descriptor.xml'))
+
+
             # make changes
             for idx, value in enumerate(val):
                 compFile = os.path.join(compDir, compName[idx] + 'Set' + str(setNum) + 'Run' + str(run) + 'Descriptor.xml')
@@ -111,13 +114,21 @@ def generateRuns(projectSetDir):
 
                 writeXmlTag(compFile, tag, attr, value)
 
+                # if this is a wind turbine, then its values are being altered and the wind power time series will need
+                # to be recalculated
+                if 'wtg' in compName[idx]:
+                    writeXmlTag(compFile, 'recalculateWtgPAvail', 'value', 'True')
+
+
+
 
     # create dataframe and save as SQL
     df = pd.DataFrame(data=runValuesUpdated, columns=heading)
-    # add a column to indicate whether the simulation run has started. This is useful for when multiple processors are
-    # running runs to avoid rerunning simulations. The column is called 'started'. 0 indicate not started and 1
-    # indicates started
+    # add columns to indicate whether the simulation run has started or finished. This is useful for when multiple processors are
+    # running runs to avoid rerunning simulations. The columns are called 'started' and 'finished'. 0 indicate not
+    # started (finished) and 1 indicates started (finished)
     df = df.assign(started=[0] * len(runValues))
+    df = df.assign(finished=[0] * len(runValues))
     conn = sqlite3.connect('set' + str(setNum) + 'ComponentAttributes.db')  # create sql database
     df.to_sql('compAttributes', conn, if_exists="fail", index=False)  # write to table compAttributes in db
     conn.close()

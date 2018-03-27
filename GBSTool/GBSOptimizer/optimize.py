@@ -5,7 +5,10 @@
 
 # Contains the main flow of the optimization as it is to be called from the GBSController.
 
+import pandas as pd
+
 from GBSAnalyzer.DataRetrievers.getDataSubsets import getDataSubsets
+
 
 class optimize:
     '''
@@ -23,24 +26,31 @@ class optimize:
             searchArgs[0]: searchMethod used to determine which search algorithm to dispatch. Currently implemented is
             'simulatedAnnealing'.
             searchArgs[1]: optimizationObjective TODO define this. It should allow blending of objectives.
+            searchArgs[2]: dataReductionMethod: the method used to find shorter characteristic input time-series,
+                currently only 'RE-load-one-week' is supported as input.
+            searchArgs[3]: boundaryMethod: defines the method with which the optimization boundaries are determined.
+                Currently, only 'variableSRC' is supported.
         '''
 
         # Setup key parameters
         self.projectName = projectName
         self.searchMethod = searchArgs[0]
+        self.optimizationObjective = searchArgs[1]
+        self.dataReductionMethod = searchArgs[2]  # should be 'RE-load-one-week'
+        self.boundaryMethod = searchArgs[3]     # should be 'variableSRC'
 
         # Retrieve data from base case
-        # TODO: implement retrieving data from base case
+        # TODO: implement retrieving data from base case, or dispatch base case calculation if it doesn't exist, or use input files as base case
         self.time, self.firmLoadP, self.varLoadP, self.firmGenP, self.varGenP = self.getBasecase()
 
         # Calculate boundaries for optimization search
         self.minESSPPa, self.maxESSPPa, self.minESSEPa, self.maxESSEPa = \
-            self.getOptimizationBoundaries('variableSRC', self.time, self.firmLoadP, self.varLoadP, self.firmGenP, self.varGenP, otherConstraints=None)
+            self.getOptimizationBoundaries(self.boundaryMethod, self.time, self.firmLoadP, self.varLoadP, self.firmGenP, self.varGenP, otherConstraints=None)
 
         # Get the short test time-series
-        # assemble input dataframe
-        df = []
-        self.abbrevDatasets, self.abbrevDatasetWeights = getDataSubsets(df, method=[])
+        # TODO assemble input dataframe
+        reductionInput = pd.DataFrame([self.time, self.firmLoadP, self.varGenP], self.time, ['time', 'firmLoadP', 'varGenP'])
+        self.abbrevDatasets, self.abbrevDatasetWeights = getDataSubsets(df, self.dataReductionMethod)
 
         # Setup optimization runs
         # Branch based on input from 'searchArgs'

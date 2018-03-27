@@ -107,6 +107,7 @@ def runSimulation(projectSetDir = ''):
         outputDataDir = os.path.join(runDir, 'OutputData')
         if not os.path.exists(outputDataDir): # if doesnt exist, create
             os.mkdir(outputDataDir)
+
         eesIDs = []
         eesSOC = []
         eesStates = []
@@ -115,7 +116,6 @@ def runSimulation(projectSetDir = ''):
         wtgIDs = []
         wtgStates = []
         wtgDescriptors = []
-        windSpeed = []
         genIDs = []
         genStates = []
         genDescriptors = []
@@ -136,7 +136,6 @@ def runSimulation(projectSetDir = ''):
                 wtgDescriptors += [os.path.join(runCompDir, cpt.lower() + 'Set' + str(setNum) + 'Run' + str(runNum) + 'Descriptor.xml')]
                 wtgIDs += [cpt[3:]]
                 wtgStates += [2]
-                windSpeed += [os.path.join(timeSeriesDir, cpt.lower() + 'WS.nc')]
 
         # initiate the system operations
         # code profiler
@@ -145,7 +144,7 @@ def runSimulation(projectSetDir = ''):
         SO = SystemOperations(timeStep = timeStep, runTimeSteps = runTimeSteps, loadRealFiles = loadProfileFile, loadReactiveFiles = [],
                               predictLoad = predictLoad, predictWind = predictWind, getMinSrcFile = getMinSrcFile,
                          genIDs = genIDs, genStates = genStates, genDescriptors = genDescriptors, genDispatch = genDispatch,
-                         wtgIDs = wtgIDs, wtgStates = wtgStates, wtgDescriptors = wtgDescriptors, wtgSpeedFiles = windSpeed, wtgDispatch = wtgDispatch,
+                         wtgIDs = wtgIDs, wtgStates = wtgStates, wtgDescriptors = wtgDescriptors, wtgSpeedFiles = timeSeriesDir, wtgDispatch = wtgDispatch,
                          eesIDs = eesIDs, eesStates = eesStates, eesSOCs = eesSOC, eesDescriptors = eesDescriptors, eesDispatch = eesDispatch)
         # stop profiler
         pr0.disable()
@@ -206,3 +205,12 @@ def runSimulation(projectSetDir = ''):
         for idx, eesLoss in enumerate(zip(*SO.eesPLoss)):  # for each generator in the powerhouse
             writeNCFile(SO.DM.realTime, eesLoss, 1, 0, 'kW',
                         'ees' + str(SO.EESS.eesIDs[idx]) + 'LossSet' + str(setNum) + 'Run' + str(runNum) + '.nc')
+
+        # set the value in the 'finished' for this run to 1 to indicate it is finished.
+        conn = sqlite3.connect(
+            os.path.join(projectSetDir, 'set' + str(setNum) + 'ComponentAttributes.db'))  # create sql database
+        df = pd.read_sql_query('select * from compAttributes', conn)
+        # set finished value to 1 to indicate this run is finshed
+        df['finished'][runNum] = 1
+        df.to_sql('compAttributes', conn, if_exists="replace", index=False)  # write to table compAttributes in db
+        conn.close()
