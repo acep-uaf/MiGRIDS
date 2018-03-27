@@ -22,7 +22,10 @@ setupDir = os.path.dirname(fileName)
 from readXmlTag import readXmlTag
 Village = readXmlTag(fileName,'project','name')[0]
 # input specification
+#input specification can be for multiple input files or a single file in AVEC format.
 inputSpecification = readXmlTag(fileName,'inputFileFormat','value')[0]
+#filelocation is the raw timeseries file.
+#if multiple files specified look for raw_wind directory
 # input a list of subdirectories under the GBSProjects directory
 fileLocation = readXmlTag(fileName,'inputFileDir','value')
 fileLocation = os.path.join(*fileLocation)
@@ -36,7 +39,7 @@ inputInterval = readXmlTag(fileName,'inputTimeStep','value')[0] + readXmlTag(fil
 from getUnits import getUnits
 headerNames, componentUnits, componentAttributes, componentNames, newHeaderNames = getUnits(Village,setupDir)
 
-# read time series data
+# read time series data, combine with wind data if files are seperate.
 from readDataFile import readDataFile
 df, listOfComponents= readDataFile(inputSpecification,fileLocation,fileType,headerNames,newHeaderNames,componentUnits,componentAttributes) # dataframe with time series information. replace header names with column names
 
