@@ -14,10 +14,11 @@ class SetupWizard:
         #get the next dialog from the wizardtree
         print(self.currentDialog.key)
         d = self.dialogSequence.getNext(self.currentDialog.key)
-        print(d.key)
+        #print(d.key)
         self.makeDialog(d)
         print('next')
-        #return n
+
+
     #returns to the previous dialog frame
     def previousDialog(self):
         self.currentDialogWindow.close()
@@ -52,7 +53,7 @@ class SetupWizard:
     def posButton(self):
         #if we are at the last dialog then the positive button becomes a done button
         #otherwise it is the ok button
-        if self.dialogSequence.isLast():
+        if self.currentDialog.isLast():
             b = QtWidgets.QPushButton('Done', self.currentDialogWindow)
             b.clicked.connect(self.wizardComplete)
         else:
@@ -64,7 +65,7 @@ class SetupWizard:
     def negButton(self):
         # if we are at the first dialog then the positive button becomes a cancel button
         # otherwise it is the previous button
-        if self.dialogSequence.isStart():
+        if self.currentDialog.isStart():
             b = QtWidgets.QPushButton('cancel', self.currentDialogWindow)
             b.clicked.connect(self.wizardComplete)
         else:
