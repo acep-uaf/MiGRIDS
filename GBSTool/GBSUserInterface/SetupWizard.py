@@ -4,32 +4,37 @@ class SetupWizard:
     #dialog sequence is a WizardTree containing info to be used when making dialog inputs
     def __init__(self, dialogSequence):
         self.dialogSequence = dialogSequence
-        self.position = 0
-        self.makeDialog(dialogSequence.getDialog('Project Name'))
+        #currentDialog the current node. It starts with the parent node for the entire sequence
+        self.currentDialog = dialogSequence.getStart()
+        self.makeDialog(self.currentDialog)
 
     #advances the wizard to the next dialog frame
     def nextDialog(self):
-        self.currentDialog.close()
-        self.position= self.dialogSequence.getNext()
-        self.makeDialog(self.dialogSequence.getRecord(self.position))
+        self.currentDialogWindow.close()
+        #get the next dialog from the wizardtree
+        print(self.currentDialog.key)
+        d = self.dialogSequence.getNext(self.currentDialog.key)
+        print(d.key)
+        self.makeDialog(d)
         print('next')
         #return n
     #returns to the previous dialog frame
     def previousDialog(self):
-        self.currentDialog.close()
-        self.position = self.dialogSequence.getPrevious()
-        self.makeDialog(self.dialogSequence.get(self.position))
+        self.currentDialogWindow.close()
+        d = self.dialogSequence.getPrevious(self.currentDialog.key)
+        self.makeDialog(d)
         print('previous')
         #return p
 
     #makes a dialog box containing relevant information
-    def makeDialog(self,d):
-
-        self.currentDialog = QtWidgets.QDialog()
-        self.currentDialog.setWindowModality(QtCore.Qt.ApplicationModal)
-        self.currentDialog.setWindowTitle(d['title'])
+    def makeDialog(self,dialog):
+        d = dialog.value
+        self.currentDialog = dialog
+        self.currentDialogWindow = QtWidgets.QDialog()
+        self.currentDialogWindow.setWindowModality(QtCore.Qt.ApplicationModal)
+        self.currentDialogWindow.setWindowTitle(d['title'])
         vl = QtWidgets.QVBoxLayout()
-        p =QtWidgets.QLabel(d['prompt'],self.currentDialog)
+        p =QtWidgets.QLabel(d['prompt'],self.currentDialogWindow)
         vl.addWidget(p)
         vl.addStretch(2)
         hl = QtWidgets.QHBoxLayout()
@@ -41,32 +46,32 @@ class SetupWizard:
         hl.addStretch(2)
         hl.addWidget(negButton)
         vl.addLayout(hl)
-        self.currentDialog.setLayout(vl)
-        self.currentDialog.exec()
+        self.currentDialogWindow.setLayout(vl)
+        self.currentDialogWindow.exec()
 
     def posButton(self):
         #if we are at the last dialog then the positive button becomes a done button
         #otherwise it is the ok button
-        try:
-            self.dialogSequence[self.position + 1]
-            b = QtWidgets.QPushButton('next', self.currentDialog)
-            b.clicked.connect(self.nextDialog)
-        except KeyError:
-            b = QtWidgets.QPushButton('Done', self.currentDialog)
+        if self.dialogSequence.isLast():
+            b = QtWidgets.QPushButton('Done', self.currentDialogWindow)
             b.clicked.connect(self.wizardComplete)
+        else:
+            b = QtWidgets.QPushButton('next', self.currentDialogWindow)
+            b.clicked.connect(self.nextDialog)
+
         return b
 
     def negButton(self):
         # if we are at the first dialog then the positive button becomes a cancel button
         # otherwise it is the previous button
-        try:
-            self.dialogSequence[self.position - 1]
-            b = QtWidgets.QPushButton('previous', self.currentDialog)
-            b.clicked.connect(self.previousDialog)
-        except KeyError:
-            b = QtWidgets.QPushButton('cancel', self.currentDialog)
+        if self.dialogSequence.isStart():
+            b = QtWidgets.QPushButton('cancel', self.currentDialogWindow)
             b.clicked.connect(self.wizardComplete)
+        else:
+
+            b = QtWidgets.QPushButton('previous', self.currentDialogWindow)
+            b.clicked.connect(self.previousDialog)
         return b
 
     def wizardComplete(self):
-        self.currentDialog.close()
+        self.currentDialogWindow.close()
