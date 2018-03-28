@@ -35,19 +35,19 @@ class SetupForm(QtWidgets.QWidget):
         dlist = [
             [{'title': 'Time Series Date Format', 'prompt': 'Select the date format for the time series.',
               'sqltable': None,
-              'sqlfield': None, 'reftable': 'ref_datetime_format'}, 'Raw Time Series', 0, []],
+              'sqlfield': None, 'reftable': 'ref_datetime_format', 'folder':False}, 'Raw Time Series', 0, []],
             [{'title': 'Raw Time Series', 'prompt': 'Select the folder that contains time series data.',
               'sqltable': None,
-              'sqlfield': None, 'reftable': None}, 'Data Input Format', 2, [0]],
+              'sqlfield': None, 'reftable': None, 'folder':True}, 'Data Input Format', 2, [0]],
             [{'title': 'Load Hydro Data', 'prompt': 'Select the folder that contains hydro speed data.',
               'sqltable': None,
-              'sqlfield': None, 'reftable': None}, 'Data Input Format', 1, []],
+              'sqlfield': None, 'reftable': None, 'folder':True}, 'Data Input Format', 1, []],
             [{'title': 'Load Wind Data', 'prompt': 'Select the folder that contains wind speed data.', 'sqltable': None,
-              'sqlfield': None, 'reftable': None}, 'Data Input Format', 0, []],
+              'sqlfield': None, 'reftable': None, 'folder':True}, 'Data Input Format', 0, []],
             [{'title': 'Data Input Format', 'prompt': 'Select the format your data is in.', 'sqltable': None,
-              'sqlfield': None, 'reftable': 'ref_data_format'}, 'Project Name', 0, [1, 2, 3]],
+              'sqlfield': None, 'reftable': 'ref_data_format', 'folder':False}, 'Project Name', 0, [1, 2, 3]],
             [{'title': 'Project Name', 'prompt': 'Enter the name of your project', 'sqltable': None,
-              'sqlfield': None, 'reftable': None}, None, 0, [4]]
+              'sqlfield': None, 'reftable': None, 'folder':False}, None, 0, [4]]
 
         ]
         self.WizardTree = self.buildWizardTree(dlist)
