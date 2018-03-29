@@ -4,7 +4,7 @@
 # License: MIT License (see LICENSE file of this package for more information)
 
 # fill in information about the project into the descriptor and setup xml files
-def fillProjectData(projectDir = ''):
+def fillProjectData(projectDir = '',setupInfo = None):
     # general imports
     # add to sys path
     import sys
@@ -17,7 +17,7 @@ def fillProjectData(projectDir = ''):
     from writeXmlTag import writeXmlTag
     from buildComponentDescriptor import buildComponentDescriptor
     from buildProjectSetup import buildProjectSetup
-    import numpy as np
+    from SetupInformation import SetupInformation
 
     # TODO: some sore of GUI to get data from user
     # for now get data from csv files
@@ -33,16 +33,19 @@ def fillProjectData(projectDir = ''):
     userInputDir = projectDir + '/InputData/Setup/UserInput/'
 
     os.chdir(userInputDir)
-    df = pd.read_csv('generalTagInformation.csv')  # read as a data frame
-    df = df.fillna('')  # remplace nan values with empty
-    # grab data from csv to be used in writing other csv files
-    projectName = df['Value'][df['Tag1']=='project'].values[0]
-    projectSetup = projectName + 'Setup.xml'
+    #TODO read from UI
 
-    # get the directory to save the project setup xml file
-    setupDir = projectDir + '/InputData/Setup/'
-    generalSetupInfo = df.as_matrix() # this is written to the projectSetup.xml file below, after it is initialized
-    generalSetupInfoDf = df
+    if setupInfo is None:
+        df = pd.read_csv('generalTagInformation.csv')  # read as a data frame
+        df = df.fillna('')  # remplace nan values with empty
+        # grab data from csv to be used in writing other csv files
+        projectName = df['Value'][df['Tag1']=='project'].values[0]
+        projectSetup = projectName + 'Setup.xml'
+
+        # get the directory to save the project setup xml file
+        setupDir = projectDir + '/InputData/Setup/'
+        generalSetupInfo = df.as_matrix() # this is written to the projectSetup.xml file below, after it is initialized
+        generalSetupInfoDf = df
 
     # next, get component information
     os.chdir(userInputDir)
@@ -76,8 +79,8 @@ def fillProjectData(projectDir = ''):
                 attr = dfComponentTag['Attribute'][row]
                 value = dfComponentTag['Value'][row]
                 writeXmlTag(componentDesctiptor, tag, attr, value, componentDir)
-
-    # initialize project setup xml file
+    #this happens regardless of how the data comes in
+    # initialize project setup xml file - basically empty but contains component names
     buildProjectSetup(projectName,setupDir,componentNames)
     # fill in the data from the general setup information csv file above
     for row in range(generalSetupInfo.shape[0]):  # for each component

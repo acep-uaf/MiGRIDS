@@ -12,6 +12,7 @@ def buildComponentDescriptor(componentNames,saveDir):
     # General Imports
     from bs4 import BeautifulSoup
     import os
+    import distutils.dir_util
 
     # cd to where component descriptors are located
     here = os.path.dirname(os.path.realpath(__file__))
@@ -62,6 +63,8 @@ def buildComponentDescriptor(componentNames,saveDir):
 
 
             # write combined xml file
+            if not os.path.exists(saveDir):
+                os.makedirs(saveDir)
             os.chdir(saveDir)
             saveName = componentNames[i]+'Descriptor.xml'
             f = open(saveName, "w")

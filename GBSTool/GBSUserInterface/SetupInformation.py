@@ -2,6 +2,7 @@
 The information is written to an XML file using the writeXML method. '''
 
 class SetupInformation:
+
     def __init__(self):
         #dictionary of dialog card names and their corresponding assignment functions
         #TODO make dynamic based on WizardTree names
@@ -14,9 +15,15 @@ class SetupInformation:
                                    'Input Interval':self.assignInputInterval,
                                    'Output Interval':self.assignOutputInterval
                                    }
+        self.componentNames = ['wtg1P']
     #TODO currently each assignment just assigns a parameter, but this will likely change to perform some actions during parameter assigment. That is why each parameter has its own fuction
     def assignProjectName(self, name):
+        import os
         self.projectName = name
+        fileDir = os.getcwd()
+
+        self.setupFolder = os.path.join(fileDir,'../../GBSProjects',self.projectName)
+        print(self.setupFolder)
 
     def assignDataFormat(self, name):
         self.dataFormat = name
@@ -43,8 +50,16 @@ class SetupInformation:
     def assign(self, dialog, value):
         method = self.functionDictionary[dialog]
         method(value)
+    #edit a tag attribute in the setup xml file
+    def editXML(self):
+        #edit
+        #find the tags
+        #edit the values
 
-
-    def writeXML(self):
-        #write the information to a setup xml
+        return True
+    #write a new setup xml file for this project
+    def writeNewXML(self):
+        from userInputToHandler import userInputToHandler
+        #tell controller to tell InputHandler package to write input xmls
+        userInputToHandler(self)
         return True
