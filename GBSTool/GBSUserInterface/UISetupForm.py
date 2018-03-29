@@ -4,6 +4,7 @@ import ComponentTableModel as T
 from gridLayoutSetup import setupGrid
 from SetupWizard import SetupWizard
 from WizardTree import WizardTree
+from ConsoleDisplay import ConsoleDisplay
 
 class SetupForm(QtWidgets.QWidget):
     
@@ -54,6 +55,9 @@ class SetupForm(QtWidgets.QWidget):
         self.createBottomBlock()
         windowLayout.addWidget(self.bottomBlock)
 
+        #add a console window
+        #self.addConsole()
+        #windowLayout.addWidget(self.console)
         #set the main layout as the layout for the window
         self.layoutWidget = QtWidgets.QWidget(self)
         self.layoutWidget.setLayout(windowLayout)
@@ -62,7 +66,9 @@ class SetupForm(QtWidgets.QWidget):
 
         #show the form
         self.showMaximized()
-
+    def addConsole(self):
+        c = ConsoleDisplay()
+        self.console = c
     #SetupForm -> QWidgets.QHBoxLayout
     #creates a horizontal button layout to insert in SetupForm
     def createButtonBlock(self):
