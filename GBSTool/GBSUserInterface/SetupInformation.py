@@ -17,13 +17,29 @@ class SetupInformation:
                                    }
         self.componentNames = ['wtg1P']
         self.headerNames = []
+        self.dateChannel = ''
+        self.dateFormat = ''
+        self.timeChannel = ''
+        self.timeFormat = ''
+        self.realLoadChannel = ''
+        self.realLoadUnits = ''
+        self.fileFormat = ''
+        self.fileType = ''
+        self.inputTimestep = ''
+        self.inputTimestepUnits = ''
+        self.outputTimestep = ''
+        self.outputTimestepUnits = ''
+        self.inputDir = ''
+        self.attributes = []
+        self.units = []
+
     #TODO currently each assignment just assigns a parameter, but this will likely change to perform some actions during parameter assigment. That is why each parameter has its own fuction
     def assignProjectName(self, name):
         import os
         self.projectName = name
         fileDir = os.getcwd()
 
-        self.setupFolder = os.path.join(fileDir,'../../GBSProjects',self.projectName)
+        self.setupFolder = os.path.join(fileDir,'../../GBSProjects',self.projectName, 'InputData/Setup')
         print(self.setupFolder)
     def assignHeaderNames(self,name):
         self.headerNames = name
@@ -61,8 +77,9 @@ class SetupInformation:
 
     #->dictionary
     def getSetupTags(self):
-        d = {}
-
+        keys = ['dateChannel', 'timeChannel', 'realLoadChannel', 'inputFileFormat', 'inputFileType', 'inputTimeStep', 'outputTimeStep','inputFileDir' ]
+        d = {k: {} for k in keys}
+#TODO all these need to be in the setup.xml template
         d['dateChannel']['value'] = self.dateChannel
         d['dateChannel']['format'] = self.dateFormat
         d['timeChannel']['value'] = self.timeChannel
@@ -71,12 +88,11 @@ class SetupInformation:
         d['realLoadChannel']['units'] = self.realLoadUnits
         d['inputFileFormat']['value'] = self.fileFormat
         d['inputFileType']['value'] = self.fileType
-        d['inputTimestep']['value'] = self.inputTimestep
-        d['inputTimestep']['units'] = self.inputTimestepUnits
-        d['outputTimestep']['value'] = self.outputTimestep
-        d['outputTimestep']['units'] = self.outputTimestepUnits
+        d['inputTimeStep']['value'] = self.inputTimestep
+        d['inputTimeStep']['units'] = self.inputTimestepUnits
+        d['outputTimeStep']['value'] = self.outputTimestep
+        d['outputTimeStep']['units'] = self.outputTimestepUnits
         d['inputFileDir']['value'] = self.inputDir
-
 
         return d
 
