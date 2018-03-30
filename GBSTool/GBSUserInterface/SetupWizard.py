@@ -28,10 +28,12 @@ class SetupWizard:
 
     #advances the wizard to the next dialog window
     def nextDialog(self):
-
+        response = 0
         # if we are at the last dialog then the positive button becomes a done button
         if type(self.inputWidget) is QtWidgets.QComboBox:
             self.input = self.parseCombo(self.inputWidget.currentText())
+            response = self.inputWidget.currentIndex()
+
         elif type(self.inputWidget) is QtWidgets.QGroupBox:
             #get the value from the text box
             self.input = self.inputWidget.findChild(QtWidgets.QLineEdit,'folder').text()
@@ -40,10 +42,8 @@ class SetupWizard:
         self.model.assign(self.currentDialogWindow.objectName(), self.input)
         self.currentDialogWindow.close()
         #get the next dialog from the wizardtree
-        d = self.dialogSequence.getNext(self.currentDialog.key)
+        d = self.dialogSequence.getNext(self.currentDialog.key, response)
         self.makeDialog(d)
-
-
 
     #returns to the previous dialog frame
     #data in the current dialog does not get written to the model

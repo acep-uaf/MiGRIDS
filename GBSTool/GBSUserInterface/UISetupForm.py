@@ -58,8 +58,10 @@ class SetupForm(QtWidgets.QWidget):
         windowLayout.addWidget(self.bottomBlock)
 
         #add a console window
-        #self.addConsole()
-        #windowLayout.addWidget(self.console)
+        self.addConsole()
+        windowLayout.addWidget(self.console)
+        #TODO get rid of test message
+        self.console.showMessage("I am a console message")
         #set the main layout as the layout for the window
         self.layoutWidget = QtWidgets.QWidget(self)
         self.layoutWidget.setLayout(windowLayout)
