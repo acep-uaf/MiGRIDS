@@ -75,7 +75,7 @@
 
     <!-- 'timeStep' is the desired timestep to be used in the simulation. The data will be resampled to this value.
      Default is 1 second. -->
-    <timeStep value="1" unit="s"/>
+    <outputTimeStep value="1" unit="s"/>
 
     <!-- 'runTimeSteps' is the timesteps to run. This can be 'all', an integer that the simulation runs up till, a list
         of two values of the start and stop indecies, or a list of indecies of length greater than 2 to use directly. -->
