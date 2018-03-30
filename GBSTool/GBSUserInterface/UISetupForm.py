@@ -5,9 +5,11 @@ from gridLayoutSetup import setupGrid
 from SetupWizard import SetupWizard
 from WizardTree import WizardTree
 from ConsoleDisplay import ConsoleDisplay
+from SetupInformation import SetupInformation
 
 class SetupForm(QtWidgets.QWidget):
-    
+    global model
+    model = SetupInformation()
     def __init__(self):
         super().__init__()
         
@@ -78,15 +80,17 @@ class SetupForm(QtWidgets.QWidget):
         hlayout.setObjectName('buttonLayout')
         #add the button to load a setup xml
 
-        hlayout.addWidget(QtWidgets.QPushButton('Load setup XML', self))
+        hlayout.addWidget(self.makeBlockButton(self.functionForLoadButton,
+                                 'Load setup XML', None, 'Load a previously created setup xml file.'))
 
         #add button to launch the setup wizard for setting up the setup xml file
         hlayout.addWidget(
-            self.makeBlockButton(self.functionForButton,
+            self.makeBlockButton(self.functionForCreateButton,
                                  'Create setup XML', None, 'Start the setup wizard to create a new setup file'))
         #force the buttons to the left side of the layout
         hlayout.addStretch(1)
-        hlayout.addWidget(QtWidgets.QPushButton("Load existing project",self))
+        hlayout.addWidget(self.makeBlockButton(self.functionForExistingButton,
+                                 'Load Existing Project', None, 'Work with an existing project folder containing setup files.'))
         #hlayout.addWidget(self.makeBlockButton(self.functionForButton,'hello',None,'You need help with this button'))
         hlayout.addStretch(1)
         self.ButtonBlock.setLayout(hlayout)
@@ -114,14 +118,23 @@ class SetupForm(QtWidgets.QWidget):
     @QtCore.pyqtSlot()
     def onClick(self,buttonFunction):
         buttonFunction()
-
+    def feedSetup(self):
+        #get setupinfo
+        global model
     #SetupForm ->
     #method to modify SetupForm layout
-    def functionForButton(self):
+    def functionForCreateButton(self):
         #s is the 1st dialog box for the setup wizard
-        s = SetupWizard(self.WizardTree)
+        s = SetupWizard(self.WizardTree, model)
         self.topBlock.setVisible(False)
 
+    def functionForLoadButton(self):
+        self.get
+
+    def functionForExistingButton(self):
+        # s is the 1st dialog box for the setup wizard
+        s = SetupWizard(self.WizardTree)
+        self.topBlock.setVisible(False)
     #TODO make dynamic from list input
     def buildWizardTree(self, dlist):
         w1 = WizardTree(dlist[0][0], dlist[0][1], dlist[0][2], [])

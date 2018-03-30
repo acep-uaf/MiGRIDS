@@ -5,20 +5,18 @@ import pandas as pd
 from PyQt5 import QtWidgets, QtGui, QtCore
 
 from ComponentSQLiteHandler import SQLiteHandler
-from SetupInformation import SetupInformation
-
-
 
 class SetupWizard:
-    global model
-    model = SetupInformation()
+
     #dialog sequence is a WizardTree containing info to be used when making dialog widgets
-    def __init__(self, dialogSequence):
+    def __init__(self, dialogSequence, model):
         self.dialogSequence = dialogSequence
         #Starts with the parent node for the entire sequence of dialogs
         self.currentDialog = dialogSequence.getStart()
+        self.model = model
         self.makeDialog(self.currentDialog)
         self.input = None
+
 
     #connect to the sqlite database containing reference tables
     def connect(self):
@@ -30,7 +28,7 @@ class SetupWizard:
 
     #advances the wizard to the next dialog window
     def nextDialog(self):
-        global model
+
         # if we are at the last dialog then the positive button becomes a done button
         if type(self.inputWidget) is QtWidgets.QComboBox:
             self.input = self.parseCombo(self.inputWidget.currentText())
@@ -39,7 +37,7 @@ class SetupWizard:
             self.input = self.inputWidget.findChild(QtWidgets.QLineEdit,'folder').text()
         else:
             self.input = self.inputWidget.text()
-        model.assign(self.currentDialogWindow.objectName(), self.input)
+        self.model.assign(self.currentDialogWindow.objectName(), self.input)
         self.currentDialogWindow.close()
         #get the next dialog from the wizardtree
         d = self.dialogSequence.getNext(self.currentDialog.key)
@@ -190,7 +188,7 @@ class SetupWizard:
     def wizardComplete(self, finished = False):
         self.currentDialogWindow.close()
         if finished:
-            model.writeNewXML()
-        #TODO
-        self.feedSetupInfo()
+            self.model.writeNewXML()
+        #TODO feed the info back into the user interface display
+        #self.feedSetupInfo()
         #display the information in the UISetupForm
