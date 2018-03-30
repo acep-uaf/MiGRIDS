@@ -66,15 +66,13 @@ class WizardTree:
     def insertDialog(self, position, node, children):
         self.children.append(WizardTree(node,self.key,position,children))
 
-
-
     #if there are children move through them
     #if there are not any children move up a node and through the rest of those children
-    def getNext(self,key):
+    def getNext(self,key, response = 0):
         #current dialog has children
         if len(self.getDialog(key)[0].children) > 0:
-            #go to first child
-            return self.getDialog(key)[0].children[0]
+            #go to first non-ignored child
+            return self.getDialog(key)[0].children[response]
         #has no older siblings
         elif self.getDialog(key)[0].position >= len(self.getDialog(key)[0].parent.children):
 
@@ -86,11 +84,7 @@ class WizardTree:
     #if list is empty move up a node
     def getPrevious(self, key):
         #TODO change to include sibling navigation
-        #is there a younger sibling
-        # if self.getDialog(key)[0].position > 1:
-        #     return self.getDialog(key)[0].parent.children[self.getDialog(key)[0].position -1]
-        # else:
-        #     return self.getDialog(key)[0].parent
+
         return self.getDialog(key)[0].parent
     def getTitle(self):
         return self.getTitleList(self.children.__iter__()) + [self.key]
