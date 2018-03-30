@@ -16,6 +16,7 @@ class SetupInformation:
                                    'Output Interval':self.assignOutputInterval
                                    }
         self.componentNames = ['wtg1P']
+        self.headerNames = []
     #TODO currently each assignment just assigns a parameter, but this will likely change to perform some actions during parameter assigment. That is why each parameter has its own fuction
     def assignProjectName(self, name):
         import os
@@ -24,6 +25,8 @@ class SetupInformation:
 
         self.setupFolder = os.path.join(fileDir,'../../GBSProjects',self.projectName)
         print(self.setupFolder)
+    def assignHeaderNames(self,name):
+        self.headerNames = name
 
     def assignDataFormat(self, name):
         self.dataFormat = name
@@ -46,10 +49,37 @@ class SetupInformation:
     def assignDateFormat(self, name):
         self.DateFormat= name
 
+    def assignAttributes(self, name):
+        self.attributes = name
+    def assignUnits(self,name):
+        self.units = name
 
     def assign(self, dialog, value):
         method = self.functionDictionary[dialog]
         method(value)
+    #creates a dictionary designed to feed into fillProjectData
+
+    #->dictionary
+    def getSetupTags(self):
+        d = {}
+
+        d['dateChannel']['value'] = self.dateChannel
+        d['dateChannel']['format'] = self.dateFormat
+        d['timeChannel']['value'] = self.timeChannel
+        d['timeChannel']['format'] = self.timeFormat
+        d['realLoadChannel']['value'] = self.realLoadChannel
+        d['realLoadChannel']['units'] = self.realLoadUnits
+        d['inputFileFormat']['value'] = self.fileFormat
+        d['inputFileType']['value'] = self.fileType
+        d['inputTimestep']['value'] = self.inputTimestep
+        d['inputTimestep']['units'] = self.inputTimestepUnits
+        d['outputTimestep']['value'] = self.outputTimestep
+        d['outputTimestep']['units'] = self.outputTimestepUnits
+        d['inputFileDir']['value'] = self.inputDir
+
+
+        return d
+
     #edit a tag attribute in the setup xml file
     def editXML(self):
         #edit

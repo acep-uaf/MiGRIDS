@@ -1,3 +1,6 @@
+#class to navigate through the user setup wizard tree
+#responses get recorded in the SetupInformation class and written to xml in the project folder
+
 import pandas as pd
 from PyQt5 import QtWidgets, QtGui, QtCore
 
@@ -16,6 +19,7 @@ class SetupWizard:
         self.currentDialog = dialogSequence.getStart()
         self.makeDialog(self.currentDialog)
         self.input = None
+
     #connect to the sqlite database containing reference tables
     def connect(self):
         self.database = SQLiteHandler('component_manager')
@@ -24,7 +28,7 @@ class SetupWizard:
     def disconnect(self):
         self.database.closeDatabase()
 
-    #advances the wizard to the next dialog frame
+    #advances the wizard to the next dialog window
     def nextDialog(self):
         global model
         # if we are at the last dialog then the positive button becomes a done button
@@ -41,9 +45,11 @@ class SetupWizard:
         d = self.dialogSequence.getNext(self.currentDialog.key)
         self.makeDialog(d)
 
+
+
     #returns to the previous dialog frame
+    #data in the current dialog does not get written to the model
     def previousDialog(self):
-        #TODO get the input value and write it to the data model
         self.currentDialogWindow.close()
         d = self.dialogSequence.getPrevious(self.currentDialog.key)
         self.makeDialog(d)
@@ -101,22 +107,31 @@ class SetupWizard:
 
         self.currentDialogWindow.setLayout(vl)
         self.currentDialogWindow.exec()
+
     #String -> String
+    #parses a string - string formatted item into its first string component (code)
     def parseCombo(self,inputString):
         s = inputString.split(" - ")[0]
         return s
-    def posButton(self):
 
+    #create a button to reside in the positive response position.
+    #if its the last dialog then it calls the WizardComplete function with the finished argument = True
+    #otherwise it calls the nextDialog function
+    #->QPushButton
+    def posButton(self):
         #otherwise it is the ok button
         if self.currentDialog.isLast():
             b = QtWidgets.QPushButton('done', self.currentDialogWindow)
-            b.clicked.connect(self.wizardComplete)
+            b.clicked.connect(lambda: self.wizardComplete(True))
         else:
             b = QtWidgets.QPushButton('next', self.currentDialogWindow)
             b.clicked.connect(self.nextDialog)
-        #TODO save responses to SetupInformation
-        return b
 
+        return b
+    #->QPushButton
+    #creates a negative button
+    #if the current dialog window is the last window the button will initiate the wizardComplete function
+    #otherwise it will initiate the next dialog window
     def negButton(self):
         # if we are at the first dialog then the positive button becomes a cancel button
         # otherwise it is the previous button
@@ -127,16 +142,19 @@ class SetupWizard:
 
             b = QtWidgets.QPushButton('previous', self.currentDialogWindow)
             b.clicked.connect(self.previousDialog)
-        #TODO save responses
         return b
 
+    #creates a text box input widget
     def makeTextInput(self):
         txt = QtWidgets.QLineEdit()
         txt.inputMethodHints()
         return txt
 
+    #None->QGroupBox
+    #creates the QGroupBox containing a text input and button that launches the folder finder dialog
+    #folder finder dialog results are returned to the text box in the parent dialog
     def makeFolderSelectorInput(self):
-        ButtonBlock = QtWidgets.QGroupBox()
+        inputBlock = QtWidgets.QGroupBox()
         layout = QtWidgets.QHBoxLayout()
         txt = QtWidgets.QLineEdit()
         txt.setObjectName('folder')
@@ -144,17 +162,21 @@ class SetupWizard:
         layout.addWidget(txt)
         btn = QtWidgets.QPushButton()
         btn.setIcon(btn.style().standardIcon(getattr(QtWidgets.QStyle, 'SP_DialogOpenButton')))
-        btn.clicked.connect(lambda: self.launchFinder(ButtonBlock))
+        btn.clicked.connect(lambda: self.launchFinder(inputBlock))
         layout.addWidget(btn)
 
-        ButtonBlock.setLayout(layout)
-        return ButtonBlock
+        inputBlock.setLayout(layout)
+        return inputBlock
 
+    #creates a combo box with specified items
+    #listOfStrings ->QComboBox
     def makeComboInput(self, values):
         cmb = QtWidgets.QComboBox()
         cmb.addItems(values)
         return cmb
-    #finder is a directory search dialog that returns information to its parent dialog.
+
+    #finder is a directory search dialog that returns a path string to its parent dialog.
+    #Widget -> String
     def launchFinder(self, parent):
         import os
         folderDialog = QtWidgets.QFileDialog.getExistingDirectory(None, 'Select a directory.',os.getcwd())
@@ -163,10 +185,12 @@ class SetupWizard:
         textBlock.setText(folderDialog)
         return dir
 
-    def wizardComplete(self):
+    #Boolean ->
+    #closes the dialog wizard and writes the results to the project folder if the setup process was completed
+    def wizardComplete(self, finished = False):
         self.currentDialogWindow.close()
+        if finished:
+            model.writeNewXML()
         #TODO
-        #write the setup information to an xml
-        global model
-        model.writeXML()
+        self.feedSetupInfo()
         #display the information in the UISetupForm

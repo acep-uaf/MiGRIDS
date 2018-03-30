@@ -6,9 +6,10 @@ class ComponentTableView(QtWidgets.QTableView):
         QtWidgets.QTableView.__init__(self, *args, **kwargs)
         self.setSizePolicy(QtWidgets.QSizePolicy.Expanding,QtWidgets.QSizePolicy.Expanding)
         self.resizeColumnsToContents()
-
+        #TODO pull drop down information from sql database
+        myHandler = SQLiteHandler('component_manager')
         #attributes are column 8
-        attributes = ['P', 'WS', 'HS']
+        attributes = 'P', 'WS', 'HS'
         self.setItemDelegateForColumn(8, ComboDelegate(self,attributes))
         #types are column 3
         type_list = ['windturbine', 'windspeed', 'diesel generator', 'hydrokinetic generator','water speed']
@@ -102,6 +103,7 @@ class ComponentTableModel(QtCore.QAbstractTableModel):
         headers = ['Field',' ',' ','Type','Component Name','Units','Scale',
                    'Offset','Attribute','P in max pa','Q in max pa','Q out max pa','Voltage Source','Tags']
         return headers
+
     def headerData(self, section: int, orientation, role):
         if orientation == QtCore.Qt.Horizontal and role == QtCore.Qt.DisplayRole:
             return QtCore.QVariant(self.header[section])
