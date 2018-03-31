@@ -8,7 +8,7 @@ import numpy as np
 
 # calculate the minimum required src
 
-def getMinSrc(wtgPimport, prevLoad, timeStep):
+def getMinSrc(wtgPimport, wtgMinSrcCover, prevLoad, timeStep):
     # Take the average load of this hour last week 24.5hr * 3600 s/hr = 617400s , 23.5hr * 3600 = 592200
     # try with and without, compare the difference in performance.
     #meanLastWeek = np.mean(prevLoad[int(-617400/timeStep):int(-592200/timeStep)])
@@ -17,4 +17,10 @@ def getMinSrc(wtgPimport, prevLoad, timeStep):
         meanLastTenMin = np.mean(prevLoad[int(-600/timeStep):])
     else:
         meanLastTenMin = prevLoad
-    return meanLastTenMin*0.25 + wtgPimport*.75
+
+    # the minimum src required.
+    minSrcToStay = meanLastTenMin*0.25 + sum([a*b for a,b in zip(wtgPimport,wtgMinSrcCover)])
+    # when scheduling new units online, use a higher SRC in order to avoid having just enough power to cover SRC required
+    # and then have the requirement increase
+    minSrcToSwitch = minSrcToStay*1.25
+    return [minSrcToStay,minSrcToSwitch]

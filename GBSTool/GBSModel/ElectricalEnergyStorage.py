@@ -134,6 +134,8 @@ class ElectricalEnergyStorage:
         self.lossMapPstep = float(eesSoup.lossMapPstep.get('value'))
         # 'useLossMap' is a bool value that indicates whether or not use the lossMap in the simulation.
         self.useLossMap = eesSoup.useLossMap.get('value').lower() in ['true','1']
+        # used to increase the requirement to schedule the ess for SRC
+        self.proRateSrcSched = eesSoup.proRateSrcSched.get('value')
 
         if self.useLossMap:
             # handle the loss map interpolation

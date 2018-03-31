@@ -8,13 +8,15 @@ import pandas as pd
 import itertools
 import matplotlib.pyplot as plt
 
-def plotSetResult(plotRes,plotAttr, projectSetDir = '', otherAttr = [],otherAttrVal = []):
+def plotSetResult(plotRes,plotAttr, projectSetDir = '', otherAttr = [],otherAttrVal = [], baseSet = '', baseRun = '', subtractFromBase = True):
     '''
     plot a single result for a set of simulations
     :param plotRes: the database column header of the variable to plot.
     :param plotAttr: The simulation attribute to be plotted against. This is the column header in the database as well as the tag and attribute from the component or setup xml file.
     :param otherAttr: The other component or setup attributes to have fixed values in the plot. If not specified, all values for the attribute will be plotted as multiple lines.
     :param otherAttrVal: The values of the 'otherAttr' to plot. It should be given as a list of lists, corresponding to otherAttr.
+    :param baseCaseRunDir: the run directory of the base case scenario.
+    :param subtractFromBase: This is True if results are to be subtracted from the basecase. False for the reverse.
     :return: Nothing
     '''
     if projectSetDir == '':
@@ -30,6 +32,30 @@ def plotSetResult(plotRes,plotAttr, projectSetDir = '', otherAttr = [],otherAttr
     except ValueError:
         print(
             'The directory name for the simulation set results does not have the correct format. It needs to be \'Setx\' where x is the run number.')
+
+    # get the base case value, if set
+    if baseSet != '' and baseRun != '':
+        baseDir = os.path.join(projectSetDir,'..', 'Set'+str(baseSet))
+        try:
+            os.chdir(baseDir) # go to directory
+        except:
+            print('The base case set and run could not be found for this project')
+        else:
+            conn = sqlite3.connect('set' + str(baseSet) + 'Results.db')
+            # check if Results table exists, tableName will be empty if not
+            tableName = pd.read_sql_query("SELECT name FROM sqlite_master WHERE type='table' AND name='Results';", conn)
+            # if not initialized
+            if tableName.empty:
+                print('No results have been calculated for the base case set yet.')
+                return  # exit function
+            else:
+                dfBase = pd.read_sql_query('select * from Results', conn)
+
+            conn.close()
+            yBase = dfBase[plotRes].loc[baseRun]
+    else: # if no base case set
+        yBase = 0
+
 
     # load the results dataframe
     os.chdir(projectSetDir)
@@ -80,6 +106,7 @@ def plotSetResult(plotRes,plotAttr, projectSetDir = '', otherAttr = [],otherAttr
 
     x = dfAttr[plotAttr]
     y = dfRes[plotRes]
+
     # group according to other columns
     otherColumns = columns.copy()
     otherColumns.remove(plotAttr)
@@ -164,14 +191,26 @@ def plotSetResult(plotRes,plotAttr, projectSetDir = '', otherAttr = [],otherAttr
         #xIdx = list(combIdx)  # the indicies for x
         #yIdx = [y.index[i] for i in combIdx]
         xPlot = pd.to_numeric(x.loc[combIdx])
-        yPlot = pd.to_numeric(y.loc[combIdx])
+
+        # check if need to subtract from base value, or not.
+        if subtractFromBase:
+            yPlot = yBase - pd.to_numeric(y.loc[combIdx])
+        else:
+            yPlot = pd.to_numeric(y.loc[combIdx]) - yBase
+
         idxSort = np.argsort(xPlot).tolist()
         # marker and linestyles
         marker = possibleCombMarkers[idx][0]
         lineStyle = possibleCombLineStyles[idx][1]
         plt.plot(xPlot.iloc[idxSort], yPlot.iloc[idxSort], marker = marker, linestyle = lineStyle )
 
-    plt.ylabel(plotRes)
+    if baseSet != '' and baseRun != '': # if base case was used
+        if subtractFromBase:
+            plt.ylabel('Reduction in ' + plotRes)
+        else:
+            plt.ylabel('Increase in ' + plotRes)
+    else:
+        plt.ylabel(plotRes)
     # TODO: grab x label values from component descriptor, or..?
     plt.xlabel(plotAttr)
     plt.legend(legendText)
@@ -185,6 +224,13 @@ def plotSetResult(plotRes,plotAttr, projectSetDir = '', otherAttr = [],otherAttr
                 oavText = oavText + '_'
             oavText = oavText + str(oav)
         otherAttrText = otherAttrText + attr + '_' + oavText + ' '
-    plt.savefig(plotRes + ' vs ' + plotAttr + ' for ' + otherAttrText + '.png')
 
+
+    if baseSet != '' and baseRun != '': # if base case was used, different file name
+        if subtractFromBase:
+            plt.savefig('Reduction in ' + plotRes + ' vs ' + plotAttr + ' for ' + otherAttrText + '.png')
+        else:
+            plt.savefig('Increase in ' + plotRes + ' vs ' + plotAttr + ' for ' + otherAttrText + '.png')
+    else:
+        plt.savefig(plotRes + ' vs ' + plotAttr + ' for ' + otherAttrText + '.png')
 

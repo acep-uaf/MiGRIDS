@@ -13,5 +13,12 @@ class predictWind:
         self.futureWind = 0
 
     def predictWind(self, prevWindProfile,time):
+        # prevWindProfile is a list of lists of previous wind power profiles, or a list of estimates of previous wind power
         # simple calculation, return the mean of the last 5 min load
-        self.futureWind = np.mean(prevWindProfile[-300:])
+        futureWind = []
+        for wp in prevWindProfile:
+            if isinstance(wp,(list,tuple,np.ndarray)):
+                futureWind += np.mean(wp[-300:])
+            else:
+                futureWind += [wp]
+        self.futureWind = futureWind

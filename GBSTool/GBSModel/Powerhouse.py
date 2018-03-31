@@ -206,15 +206,15 @@ class Powerhouse:
     # self - self reference
     # scheduledLoad - the load that the generators will be expected to supply, this is predicted based on previous loading
     # scheduledSRC -  the minimum spinning reserve that the generators will be expected to supply
-    def genSchedule(self, scheduledLoad, scheduledSRC, powerAvailToSwitch, powerAvailToStay):
+    def genSchedule(self, scheduledLoad, scheduledSRCSwitch, scheduledSRCStay, powerAvailToSwitch, powerAvailToStay):
         ## first find all generator combinations that can supply the load within their operating bounds
         # find all with capacity over the load and the required SRC
         indCap = np.array([idx for idx, x in enumerate(self.genCombinationsUpperNormalLoading) if x >= scheduledLoad -
-                           powerAvailToSwitch + scheduledSRC])
+                           powerAvailToSwitch + scheduledSRCSwitch])
         # check if the current online combination is capable of supplying the projected load minus the power available to
         # help the current generator combination stay online
         if self.onlineCombinationID not in indCap and \
-                        self.genCombinationsUpperNormalLoading[self.onlineCombinationID] >= scheduledLoad + scheduledSRC - powerAvailToStay:
+                        self.genCombinationsUpperNormalLoading[self.onlineCombinationID] >= scheduledLoad + scheduledSRCStay - powerAvailToStay:
             indCap = np.append(indCap,self.onlineCombinationID)
         # if there are no gen combinations large enough to supply, automatically add largest (last combination)
         if len(indCap) == 0:

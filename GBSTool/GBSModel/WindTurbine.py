@@ -109,6 +109,7 @@ class WindTurbine:
             wtgSoup.spilledWindLimit.get('value'))  # time to check spilled wind power over
         self.wtgRecalculateWtgPAvail = strtobool(
             wtgSoup.recalculateWtgPAvail.get('value'))  # bool whether to recalculate wind power from wind speeds
+        self.wtgMinSrcCover = float(wtgSoup.minSrcCover.get('value'))  # the minimum SRC required as PU of current import
 
         # Handle the fuel curve interpolation
         if self.wtgRecalculateWtgPAvail:

@@ -117,7 +117,8 @@ def generateRuns(projectSetDir):
                 # if this is a wind turbine, then its values are being altered and the wind power time series will need
                 # to be recalculated
                 if 'wtg' in compName[idx]:
-                    writeXmlTag(compFile, 'recalculateWtgPAvail', 'value', 'True')
+                    if tag == 'powerCurveDataPoints' or tag == 'cutInWindSpeed' or tag == 'cutOutWindSpeedMax' or tag == 'cutOutWindSpeedMin' or tag == 'POutMaxPa':
+                        writeXmlTag(compFile, 'recalculateWtgPAvail', 'value', 'True')
 
 
 

@@ -42,6 +42,9 @@
     <spilledWindLimit value="60" unit="PU"/>
     <!-- 'recalculateWtgPAvail' specifies whether to recalculate the available windpower from the base case. Default is False. -->
     <recalculateWtgPAvail value="False" />
+    <!-- 'minSrcCover' indicates the minimum precentage of wind power that needs to be covered by SRC. Units are in
+     PU of instantaneous grid import. Defualt value is 0.75. -->
+    <minSrcCover value="0.75" unit ="PU" />
 
 </component>
 <!-- EOF -->
