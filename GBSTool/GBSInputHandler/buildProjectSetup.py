@@ -26,6 +26,9 @@ def buildProjectSetup(projectName,saveDir,componentNames):
     soup.project.attrs['name'] = projectName
     soup.project.componentNames['value'] = componentNames
     # save
+    #if the specified directory doesn't exist create it.
+    if not os.path.exists(saveDir):
+        os.makedirs(saveDir)
     os.chdir(saveDir)
     saveName = projectName + 'Setup.xml'
     f = open(saveName, "w")

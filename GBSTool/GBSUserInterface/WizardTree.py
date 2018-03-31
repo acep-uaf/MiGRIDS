@@ -70,30 +70,28 @@ class WizardTree:
 
     #if there are children move through them
     #if there are not any children move up a node and through the rest of those children
-        def getNext(self,key):
-            #current dialog has children
-            if len(self.getDialog(key).children) > 0:
-                #go to first child
-                return self.getDialog(key).children[0]
-            #has no older siblings
-            elif self.getDialog(key).position >= len(self.getDialog(key).parent.children):
+    def getNext(self,key):
+        #current dialog has children
+        if len(self.getDialog(key)[0].children) > 0:
+            #go to first child
+            return self.getDialog(key)[0].children[0]
+        #has no older siblings
+        elif self.getDialog(key)[0].position >= len(self.getDialog(key)[0].parent.children):
 
-                return None
-            #otherwise get the next oldest sibling
-            return self.getDialog(key).parent.children[self.getDialog(key).position +1]
-    def getNext(self, key):
-        print(self.key)
-        print(self.getDialog(key).key)
+            return
+        #otherwise get the next oldest sibling
+        return self.getDialog(key)[0].parent.children[self.getDialog(key)[0].position +1]
 
     #move to previous list item
     #if list is empty move up a node
-    def getPrevious(self):
-        #up to parent
-        try:
-            return self.parent.children[self.position -1]
-        except IndexError:
-            return self.parent
-
+    def getPrevious(self, key):
+        #TODO change to include sibling navigation
+        #is there a younger sibling
+        # if self.getDialog(key)[0].position > 1:
+        #     return self.getDialog(key)[0].parent.children[self.getDialog(key)[0].position -1]
+        # else:
+        #     return self.getDialog(key)[0].parent
+        return self.getDialog(key)[0].parent
     def getTitle(self):
         return self.getTitleList(self.children.__iter__()) + [self.key]
 
@@ -117,7 +115,7 @@ class WizardTree:
             return False
         if self.parent == None:
             return True
-        if self.position == len(self.parent.children):
+        if self.position == len(self.parent.children) -1:
             return True
 
         return False
