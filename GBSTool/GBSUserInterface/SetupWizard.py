@@ -30,20 +30,22 @@ class SetupWizard:
     def nextDialog(self):
         response = 0
         # if we are at the last dialog then the positive button becomes a done button
+        self.recordValue()
+        self.currentDialogWindow.close()
+        #get the next dialog from the wizardtree
+        d = self.dialogSequence.getNext(self.currentDialog.key, response)
+        self.makeDialog(d)
+    def recordValue(self):
         if type(self.inputWidget) is QtWidgets.QComboBox:
             self.input = self.parseCombo(self.inputWidget.currentText())
             response = self.inputWidget.currentIndex()
 
         elif type(self.inputWidget) is QtWidgets.QGroupBox:
-            #get the value from the text box
-            self.input = self.inputWidget.findChild(QtWidgets.QLineEdit,'folder').text()
+            # get the value from the text box
+            self.input = self.inputWidget.findChild(QtWidgets.QLineEdit, 'folder').text()
         else:
             self.input = self.inputWidget.text()
         self.model.assign(self.currentDialogWindow.objectName(), self.input)
-        self.currentDialogWindow.close()
-        #get the next dialog from the wizardtree
-        d = self.dialogSequence.getNext(self.currentDialog.key, response)
-        self.makeDialog(d)
 
     #returns to the previous dialog frame
     #data in the current dialog does not get written to the model
@@ -187,6 +189,7 @@ class SetupWizard:
     #closes the dialog wizard and writes the results to the project folder if the setup process was completed
     def wizardComplete(self, finished = False):
         self.currentDialogWindow.close()
+        self.recordValue()
         if finished:
             self.model.writeNewXML()
         #TODO feed the info back into the user interface display
