@@ -6,6 +6,6 @@ def userInputToHandler(setupInfo):
 
     # write the information to a setup xml
     # create a mostly blank xml setup file and individual component xml files
-    initiateProject(setupInfo.projectName, setupInfo.componentNames, setupInfo.setupFolder, setupInfo.setupFolder)
+    initiateProject(setupInfo.project, setupInfo.componentNames, setupInfo.setupFolder, setupInfo.setupFolder)
     #fill in project data
     fillProjectData(setupInfo.setupFolder, setupInfo)

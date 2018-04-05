@@ -52,14 +52,19 @@ class SQLiteHandler:
             'ref_datetime_format',
             'ref_data_format',
             'ref_load_units',
-            'ref_attributes'
+            'ref_attributes',
+            'ref_time_units'
         ]
         for r in refTables:
             self.createRefTable(r)
+
+
+        self.addRefValues('ref_time_units',[('S','Seconds'),('m','Minutes')])
         self.addRefValues('ref_datetime_format',[('Ordinal','Ordinal'),('Excel','Excel')])
 
-        self.addRefValues('ref_data_format',[('AVEC CSV', 'All data is within a single CSV file'),
-                            ('CSV + wind', 'Load information is in a csv, wind data is in a tab delimmited text file')])
+        self.addRefValues('ref_data_format',[('CSV + wind', 'Load information is in a csv, wind data is in a tab delimmited text file'),
+                                             ('AVEC CSV', 'All data is within a single CSV file')
+                            ])
 
         self.addRefValues('ref_component_type' ,[('wtg', 'windturbine'),
         ('ws', 'windspeed'), ('gen', 'diesel generator'), ('hyg','hydrokinetic generator'), ('hs', 'waterspeed')])

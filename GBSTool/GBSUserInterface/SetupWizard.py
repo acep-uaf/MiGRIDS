@@ -9,14 +9,14 @@ from ComponentSQLiteHandler import SQLiteHandler
 class SetupWizard:
 
     #dialog sequence is a WizardTree containing info to be used when making dialog widgets
-    def __init__(self, dialogSequence, model):
+    def __init__(self, dialogSequence, model,parentWindow):
         self.dialogSequence = dialogSequence
         #Starts with the parent node for the entire sequence of dialogs
         self.currentDialog = dialogSequence.getStart()
         self.model = model
         self.makeDialog(self.currentDialog)
         self.input = None
-
+        self.parentWindow = parentWindow
 
     #connect to the sqlite database containing reference tables
     def connect(self):
@@ -28,14 +28,17 @@ class SetupWizard:
 
     #advances the wizard to the next dialog window
     def nextDialog(self):
-        response = 0
-        # if we are at the last dialog then the positive button becomes a done button
-        self.recordValue()
+        response = self.recordValue()
         self.currentDialogWindow.close()
         #get the next dialog from the wizardtree
+        print(self.currentDialog.key)
+
         d = self.dialogSequence.getNext(self.currentDialog.key, response)
+        print(d.key)
         self.makeDialog(d)
+
     def recordValue(self):
+        response = 0
         if type(self.inputWidget) is QtWidgets.QComboBox:
             self.input = self.parseCombo(self.inputWidget.currentText())
             response = self.inputWidget.currentIndex()
@@ -46,7 +49,7 @@ class SetupWizard:
         else:
             self.input = self.inputWidget.text()
         self.model.assign(self.currentDialogWindow.objectName(), self.input)
-
+        return response
     #returns to the previous dialog frame
     #data in the current dialog does not get written to the model
     def previousDialog(self):
@@ -83,7 +86,7 @@ class SetupWizard:
         self.currentDialogWindow = QtWidgets.QDialog()
         self.currentDialogWindow.setWindowModality(QtCore.Qt.ApplicationModal)
         self.currentDialogWindow.setWindowTitle(d['title'])
-        self.currentDialogWindow.setObjectName(d['title'])
+        self.currentDialogWindow.setObjectName(d['name'])
         vl = QtWidgets.QVBoxLayout()
         p =QtWidgets.QLabel(d['prompt'],self.currentDialogWindow)
         vl.addWidget(p)
@@ -120,7 +123,7 @@ class SetupWizard:
     #->QPushButton
     def posButton(self):
         #otherwise it is the ok button
-        if self.currentDialog.isLast():
+        if self.dialogSequence.getNext(self.currentDialog.key) is None:
             b = QtWidgets.QPushButton('done', self.currentDialogWindow)
             b.clicked.connect(lambda: self.wizardComplete(True))
         else:
@@ -193,5 +196,6 @@ class SetupWizard:
         if finished:
             self.model.writeNewXML()
         #TODO feed the info back into the user interface display
-        #self.feedSetupInfo()
+            #self.model.feedSetupInfo()
+            #self.parentWindow.fillData(self.model)
         #display the information in the UISetupForm

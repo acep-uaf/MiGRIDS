@@ -88,8 +88,11 @@ def setupGrid(inputDictionary):
             # if there is an icon set it
             if 'icon' in r[h].keys():
                 grid.wid.setIcon(grid.wid.style().standardIcon(getattr(QtWidgets.QStyle, r[h]['icon'])))
+
             grid.wid.setFont(font)
-            grid.wid.setObjectName('inp'.join(str(r)).join(str(h)))
+            #the name matches the name and attribute in the xml file
+            grid.wid.setObjectName(r[h]['name'])
+            #grid.wid.setObjectName('inp'.join(str(r)).join(str(h)))
 
             grid.addWidget(grid.wid, i + 1, xpos, 1, pscale)
 

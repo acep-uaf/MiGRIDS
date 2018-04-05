@@ -54,13 +54,6 @@ class WizardTree:
             return []
 
         return lod.__next__().getDialog(key) + self.findDialog(lod, key)
-    # def getTitle(self):
-    #     return self.getTitleList(self.children.__iter__()) + [self.key]
-    #
-    # def getTitleList(self, lod):
-    #     if lod.__length_hint__() ==0:
-    #         return []
-    #     return lod.__next__().getTitle() + self.getTitleList(lod)
 
     #self is the parent
     def insertDialog(self, position, node, children):
@@ -74,10 +67,22 @@ class WizardTree:
             #go to first non-ignored child
             return self.getDialog(key)[0].children[response]
         #has no older siblings
-        elif self.getDialog(key)[0].position >= len(self.getDialog(key)[0].parent.children):
+        elif self.getDialog(key)[0].position >= len(self.getDialog(key)[0].parent.children)-1:
+            #check if parent has older siblings
+            #TODO make recursive so we can get to great-grandparents
+            favoriteChild = self.getDialog(key)[0]
+            parent = favoriteChild.parent
+            grandparent = parent.parent
+            sibPos = parent.position
+            if parent.position < len(grandparent.children) -1:
+                #get the parents sibling
 
-            return
+                return grandparent.children[sibPos + 1]
+            else:
+                return
         #otherwise get the next oldest sibling
+        #print(self.getDialog(key)[0].parent.key)
+
         return self.getDialog(key)[0].parent.children[self.getDialog(key)[0].position +1]
 
     #move to previous list item
@@ -104,12 +109,4 @@ class WizardTree:
             return False
         return True
 
-    def isLast(self):
-        if self.children:
-            return False
-        if self.parent == None:
-            return True
-        if self.position == len(self.parent.children) -1:
-            return True
 
-        return False

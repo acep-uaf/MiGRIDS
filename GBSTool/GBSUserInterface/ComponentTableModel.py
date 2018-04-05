@@ -108,9 +108,11 @@ class ComponentTableModel(QtCore.QAbstractTableModel):
         if orientation == QtCore.Qt.Horizontal and role == QtCore.Qt.DisplayRole:
             return QtCore.QVariant(self.header[section])
         return QtCore.QVariant()
+
     def setData(self, index, value, role=QtCore.Qt.DisplayRole):
         print("setData", index.row(), index.column(), value)
         return str(value)
+
     def flags(self, index):
         if (index.column() == 0):
             return QtCore.Qt.ItemIsEditable | QtCore.Qt.ItemIsEnabled

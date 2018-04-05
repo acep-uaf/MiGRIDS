@@ -17,8 +17,8 @@ def fillProjectDataFromUI(projectDir, setupInfo):
     if not os.path.exists(userInputDir):
         os.makedirs(userInputDir)
 
-    projectName = setupInfo.projectName
-    projectSetup = projectName + 'Setup.xml'
+
+    projectSetup = setupInfo.project + 'Setup.xml'
 
     # get the directory to save the project setup xml file
     setupDir = projectDir
@@ -66,13 +66,7 @@ def fillProjectDataFromUI(projectDir, setupInfo):
         for v in generalSetupInfo[k].keys():
             attr = v
             value = generalSetupInfo[k][v]
-            print(setupDir)
-            print(projectSetup)
-            print(tag)
-            print(value)
-            print(attr)
-            if v is not None:
-                writeXmlTag(projectSetup, tag, attr, value, setupDir)
+            writeXmlTag(projectSetup, tag, attr, value, setupDir)
 
     # get component timeseries  information
     os.chdir(userInputDir)
