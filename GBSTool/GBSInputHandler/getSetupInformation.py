@@ -22,6 +22,6 @@ def getSetupInformation(setupXML, setupInfo):
             for k in children[i].attrs.keys():
 
                 setupInfo.assign(children[i].name + k, children[i][k])
-    setupInfo.getSetupTags()
+
     infile.close()
 
