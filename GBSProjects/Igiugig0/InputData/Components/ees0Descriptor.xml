@@ -188,5 +188,9 @@
   <pt unit="kW" value="0 0"/>
   <temp unit="K" value="298 298"/>
  </heatRecovery>
+ <!-- 'proRateSrcSched' is used to prorate the SRC required by from the SRC when sheduling it. This avoids the ees
+       being just able to supply the SRC and then being scheduled to do so, when it will just have to switch back again. -->
+    <proRateSrcSched value="1.4" unit="PU"/>
 </component>
+
 <!-- EOF -->

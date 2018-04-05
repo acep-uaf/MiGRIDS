@@ -74,6 +74,9 @@
      discharging the ESS including maintenance and lifetime costs. Units are kg/kWh. Default is 0. This should be updated
       to avoid overuse of the ESS. -->
     <eesCost value="0" unit="kg/kWh"/>
+    <!-- 'proRateSrcSched' is used to prorate the SRC required by from the SRC when sheduling it. This avoids the ees
+       being just able to supply the SRC and then being scheduled to do so, when it will just have to switch back again. -->
+    <proRateSrcSched value="1.4" unit="PU"/>
 
 </component>
 <!-- EOF -->

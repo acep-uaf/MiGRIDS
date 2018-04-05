@@ -164,17 +164,21 @@ def runSimulation(projectSetDir = ''):
         os.chdir(outputDataDir)
         writeNCFile(SO.DM.realTime,SO.powerhouseP,1,0,'kW','powerhousePSet' + str(setNum) + 'Run'+str(runNum)+'.nc') # gen P
         writeNCFile(SO.DM.realTime, SO.rePlimit, 1, 0, 'kW', 'rePlimitSet' + str(setNum) + 'Run' + str(runNum) + '.nc')  # rePlimit
-        writeNCFile(SO.DM.realTime, SO.wtgPAvail, 1, 0, 'kW', 'wtgPAvailSet' + str(setNum) + 'Run' + str(runNum) + '.nc')  # wtgPAvail
-        writeNCFile(SO.DM.realTime, SO.wtgPImport, 1, 0, 'kW', 'wtgPImportSet' + str(setNum) + 'Run' + str(runNum) + '.nc')  # wtgPImport
-        writeNCFile(SO.DM.realTime, SO.wtgPch, 1, 0, 'kW', 'wtgPchSet' + str(setNum) + 'Run' + str(runNum) + '.nc')  # wtgPch
-        writeNCFile(SO.DM.realTime, SO.wtgPTot, 1, 0, 'kW', 'wtgPTotSet' + str(setNum) + 'Run' + str(runNum) + '.nc')  # wtgPTot
+        writeNCFile(SO.DM.realTime, SO.wfPAvail, 1, 0, 'kW', 'wtgPAvailSet' + str(setNum) + 'Run' + str(runNum) + '.nc')  # wfPAvail
+        writeNCFile(SO.DM.realTime, SO.wfPImport, 1, 0, 'kW', 'wtgPImportSet' + str(setNum) + 'Run' + str(runNum) + '.nc')  # wtgPImport
+        writeNCFile(SO.DM.realTime, SO.wfPch, 1, 0, 'kW', 'wtgPchSet' + str(setNum) + 'Run' + str(runNum) + '.nc')  # wtgPch
+        writeNCFile(SO.DM.realTime, SO.wfPTot, 1, 0, 'kW', 'wtgPTotSet' + str(setNum) + 'Run' + str(runNum) + '.nc')  # wtgPTot
         writeNCFile(SO.DM.realTime, SO.srcMin, 1, 0, 'kW', 'srcMinSet' + str(setNum) + 'Run' + str(runNum) + '.nc')  # srcMin
-        writeNCFile(SO.DM.realTime, SO.eesDis, 1, 0, 'kW', 'eesDisSet' + str(setNum) + 'Run' + str(runNum) + '.nc')  # eesDis
+        writeNCFile(SO.DM.realTime, SO.eessDis, 1, 0, 'kW', 'eessDisSet' + str(setNum) + 'Run' + str(runNum) + '.nc')  # eesDis
         writeNCFile(SO.DM.realTime, SO.eessP, 1, 0, 'kW', 'eessPSet' + str(setNum) + 'Run' + str(runNum) + '.nc')
         writeNCFile(SO.DM.realTime, SO.genPAvail, 1, 0, 'kW', 'genPAvailSet' + str(setNum) + 'Run' + str(runNum) + '.nc')  # genPAvail
         writeNCFile(SO.DM.realTime, SO.onlineCombinationID, 1, 0, 'NA', 'onlineCombinationIDSet' + str(setNum) + 'Run' + str(runNum) + '.nc')  # onlineCombinationID
         writeNCFile(SO.DM.realTime, SO.underSRC, 1, 0, 'kW', 'underSRCSet' + str(setNum) + 'Run' + str(runNum) + '.nc')  # underSRC
         writeNCFile(SO.DM.realTime, SO.outOfNormalBounds, 1, 0, 'kW', 'outOfNormalBoundsSet' + str(setNum) + 'Run' + str(runNum) + '.nc')  # outOfNormalBounds
+        writeNCFile(SO.DM.realTime, SO.futureLoad, 1, 0, 'kW',
+                    'futureLoad' + str(setNum) + 'Run' + str(runNum) + '.nc')  # future Load predicted
+        writeNCFile(SO.DM.realTime, SO.futureSRC, 1, 0, 'kW',
+                    'futureSRC' + str(setNum) + 'Run' + str(runNum) + '.nc')  # future SRC predicted
 
         # power each generators
         for idx, genP in enumerate(zip(*SO.genP)):  # for each generator in the powerhouse
@@ -192,19 +196,34 @@ def runSimulation(projectSetDir = ''):
                         'gen' + str(SO.PH.genIDS[idx]) + 'RunTimeSet' + str(setNum) + 'Run' + str(runNum) + '.nc')  #
 
         # SRC for each ees
-        for idx, eesSRC in enumerate(zip(*SO.eessSrc)):  # for each generator in the powerhouse
+        for idx, eesSRC in enumerate(zip(*SO.eessSrc)):  # for each eess
             writeNCFile(SO.DM.realTime, eesSRC, 1, 0, 'kW',
                         'ees' + str(SO.EESS.eesIDs[idx]) + 'SRCSet' + str(setNum) + 'Run' + str(runNum) + '.nc')  #
 
         # SOC for each ees
-        for idx, eesSOC in enumerate(zip(*SO.eessSoc)):  # for each generator in the powerhouse
+        for idx, eesSOC in enumerate(zip(*SO.eessSoc)):  # for each eess
             writeNCFile(SO.DM.realTime, eesSOC, 1, 0, 'PU',
                         'ees' + str(SO.EESS.eesIDs[idx]) + 'SOCSet' + str(setNum) + 'Run' + str(runNum) + '.nc')  # eessSoc
 
         # ees loss
-        for idx, eesLoss in enumerate(zip(*SO.eesPLoss)):  # for each generator in the powerhouse
+        for idx, eesLoss in enumerate(zip(*SO.eesPLoss)):  # for each eess
             writeNCFile(SO.DM.realTime, eesLoss, 1, 0, 'kW',
                         'ees' + str(SO.EESS.eesIDs[idx]) + 'LossSet' + str(setNum) + 'Run' + str(runNum) + '.nc')
+
+        # wtg P avail
+        for idx, wtgPAvail in enumerate(zip(*SO.wtgPAvail)):  # for wtg
+            writeNCFile(SO.DM.realTime, wtgPAvail, 1, 0, 'kW',
+                        'wtg' + str(SO.WF.wtgIDS[idx]) + 'PAvailSet' + str(setNum) + 'Run' + str(runNum) + '.nc')
+
+        # wtg P
+        for idx, wtgP in enumerate(zip(*SO.wtgP)):  # for each wtg
+            writeNCFile(SO.DM.realTime, wtgP, 1, 0, 'kW',
+                        'wtg' + str(SO.WF.wtgIDS[idx]) + 'PSet' + str(setNum) + 'Run' + str(runNum) + '.nc')
+
+        # future wind predicted
+        for idx, fw in enumerate(zip(*SO.futureWind)):  # for each wtg
+            writeNCFile(SO.DM.realTime, fw, 1, 0, 'kW',
+                        'wtg' + str(SO.WF.wtgIDS[idx]) + 'FutureWind' + str(setNum) + 'Run' + str(runNum) + '.nc')
 
         # set the value in the 'finished' for this run to 1 to indicate it is finished.
         conn = sqlite3.connect(
