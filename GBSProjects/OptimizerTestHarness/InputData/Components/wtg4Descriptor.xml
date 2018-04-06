@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Project: GBS Tool -->
+<!-- Author: Dr. Marc Mueller-Stoffels, marc.mueller.stoffels@gmail.com -->
+<!-- Date: September 25, 2017 -->
+<!-- License: MIT License (see LICENSE file of this package for more information -->
+<!-- This file describes a general wind turbine generator. Specific WTG might require further children. -->
+<!-- Root tag is 'component' -->
+<component name="wtg4">
+ <!-- Declaration of inheritance. Parent of this generic wind turbine descriptor should be the interface itself.  -->
+ <childOf>
+  componentDescriptorInterface
+ </childOf>
+ <!-- 'type' is 'source'. Note that this does not preclude wind turbines to consume some power. -->
+ <type value="source"/>
+ <!-- NOTICE: NON-MODIFIED PARENT TAGS ARE NOT SHOWN, THEY SHOULD BE INHERITED FROM THE PARENT -->
+ <!-- WTG specific parameters -->
+ <!-- 'powerCurve' describes the power curve of the wind turbine as a set of tuples of 'ws' and 'p' tags. -->
+ <!-- Wind speed has units of m/s. power should be presented as P.U. of the nameplate real power capacity. -->
+ <!-- Default is to have a data point at 0 m/s and at nameplate power. DEFAULT VALUES REQUIRE CHANGING for this to -->
+ <!-- be sensible. -->
+ <powerCurveDataPoints>
+  <ws unit="m/s" value="0 0"/>
+  <pPu unit="pu" value="0 0"/>
+ </powerCurveDataPoints>
+ <!-- 'cutInWindSpeed' describes the minimum wind speed at which the turbine will begin producing power from a -->
+ <!-- previous complete stop. The default value is 0, which NEVER makes sense. Units are m/s. -->
+ <cutInWindSpeed unit="m/s" value="0"/>
+ <!-- 'cutOutWindSpeedMax' describes the maximum wind speed at which a turbine still produces power. Default value -->
+ <!-- is 0, which NEVER makes sense. Units are m/s. -->
+ <cutOutWindSpeedMax unit="m/s" value="0"/>
+ <!-- 'cutOutWindSpeedMin' describes the minimum wind speed at which a turbine stops producing power due to lack of -->
+ <!-- wind power. Default value is 0, which NEVER makes sense. Units are m/s. -->
+ <cutOutWindSpeedMin unit="m/s" value="0"/>
+ <!-- 'checkWindTime' is the amount of time that windSpillLimit is measured over. Units are s. Default is 300.  -->
+ <checkWindTime value="300" unit="s"/>
+    <!-- 'spilledWindLimit' is the amount of spilled wind power that is the limit before a flag is set to initiate
+      scheduling new diesel and energy storage units. Units are in PU of nameplate capacity times seconds. It is measured
+      over the period of time indicated by checkWindTime. Default is 60 PU. -->
+ <spilledWindLimit value="60" unit="PU"/>
+ <!-- 'recalculateWtgPAvail' specifies whether to recalculate the available windpower from the base case. Default is False. -->
+    <recalculateWtgPAvail value="False" />
+
+ <PInMaxPa unit="kW" value="0">
+  <!-- 'PInMaxPa' is the maximum real power the unit can receive from the grid, should be 0 if source. Units: kW -->
+ </PInMaxPa>
+ <QInMaxPa unit="kvar" value="45">
+  <!-- 'QInMax' is the maximum reactive power the unit can receive from the grid, should be 0 if source. Units. kvar -->
+ </QInMaxPa>
+ <POutMaxPa unit="kW" value="100">
+  <!-- 'POutMaxPa' is the maximum real power the unit can deliver to the grid. Should be 0 if sink. Units: kW -->
+ </POutMaxPa>
+ <QOutMaxPa unit="kvar" value="45.0">
+  <!-- 'QOutMaxPa' is the maximum reactive power the unit can deliver to the grid. Should be 0 if sink. Units: kvar -->
+ </QOutMaxPa>
+ <isVoltageSource value="0">
+  <!-- 'isVoltageSource' describes the capability of the component to regulate vars. -->
+ </isVoltageSource>
+ <isFrequencyReference value="FALSE">
+  <!-- 'isFrequencyReference' describes the units capability to be the frequency reference of the the grid. -->
+ </isFrequencyReference>
+ <isLoadFollowing value="FALSE">
+  <!-- 'isLoadFollowing' describes the capability of a unit to ramp up or down to mitigate demand or non-load following -->
+  <!-- production induced frequency or voltage issues -->
+ </isLoadFollowing>
+ <isCurtailable value="FALSE">
+  <!-- 'isCurtailable' describes if the unit can reduce and clamp power output below available resource based on -->
+  <!-- a control signal -->
+ </isCurtailable>
+ <isThreePhase value="TRUE">
+  <!-- 'isThreePhase' is TRUE if the unit is a three or four-wire three-phase unit. Default value is TRUE. -->
+ </isThreePhase>
+ <isDelta value="TRUE">
+  <!-- 'isDelta' defines if the unit is Delta of Wye connected. Default is TRUE. -->
+ </isDelta>
+ <acConnectionType unit="NONE" value="0">
+  <!-- 'acConnectionType' value defines how the unit is connected to the grid, i.e., on which phases, if the neutral -->
+  <!-- is present, is the neutral grounded, etc. See the documentation for available values. Default value is 0. -->
+  <!-- Units attribute ALWAYS is NONE, it is here for consistency only. -->
+ </acConnectionType>
+ <dcConnectionType unit="NONE" value="0">
+  <!-- `dcConnectionType` describes the type of DC connection used, if any. Default is 0, which means no DC connection. -->
+  <!-- Units are NONE, as this is just a key (see Wiki for more info). -->
+ </dcConnectionType>
+ <VAcNom unit="V" value="480">
+  <!-- `VAcNom` describes the nominal connection voltage to the grid. Default is 480 VAC. Units are V. -->
+ </VAcNom>
+ <faultCurrent>
+  <!-- 'faultCurrent' Is the ammount of fault current that can be supplied  per ms.
+    Fault current units are in P.U. of nameplate current and are described by the tuple 'iPu'.
+    Fault current values are defined for the number of ms they can be sustained, described by the tuple 'ms'
+    (16.7 ms per 60 Hz cycle). -->
+  <!-- Default is 1 PU at 5 cycles (84 ms), ie no fault current capability. -->
+  <ms unit="ms" value="84"/>
+  <iPu unit="pu" value="1"/>
+ </faultCurrent>
+ <overLoad>
+  <!-- 'overLoad' Is the amount of over load that can be supplied per hour.
+    Over load units are in P.U. of nameplate power and are specified by the number of hours they can
+    operate at. It is described by the tuples 'hr' (time with units hours) and 'pPu' (P.U. of nameplate capacity). -->
+  <!-- Default is 1 PU for 1 second, ie no over load capability. -->
+  <hr unit="hr" value="1"/>
+  <pPu unit="pu" value="1"/>
+ </overLoad>
+ <maxMeanLoad24HrPu unit="pu" value="1">
+  <!-- 'maxMeanLoad24HrPu' Is the the maximum average loading the component is rated for in a 24 hour period.
+    For example, for diesel generators, this rating is different for Prime, Standby and Continuous rated engines and
+    between manufacturers. The ISO-8528-1 specification for a Prime generator is 0.7.-->
+  <!-- Units: P.U.. Default is 1, i.e. it can operate at 100% capacity constantly.  -->
+ </maxMeanLoad24HrPu>
+ <heatingPowerRequirement>
+  <!-- 'heatingPowerRequirement' is the thermal power required to keep the component warm, if required. For example
+    diesel generators in hot standby need to be heated. It is described by three tuples: 'tempAmb' is the ambient (outdoor)
+    temperature in Kelvin. 'tempHeatingMin' is the minimum temperature required for the heating fluid used to heat the
+    component. 'pt' is the thermal power consumption in kW. This will be supplied by whatever excess heat is
+    available -->
+  <!-- Default is one data point at 298 degree K of 0 kW.   -->
+  <tempAmb unit="K" value="298"/>
+  <tempHeatingMin unit="K" value="298"/>
+  <pt unit="kW" value="0"/>
+ </heatingPowerRequirement>
+ <heatRecovery>
+  <!-- 'heatRecovery' describes the usable heat that comes off of the component per power output.  -->
+  <!-- It is described by the tuples 'pPu' (power), 'pt' (thermal power) and 'temp' (the temperature of the heat exchange
+    fluid) Units for power are P.U. of nameplate power capacity, for heat output are thermal kW (not electric) and for
+    temperature are Kelvin. Default is to have a data point at 0 and 1 P.U. power output of no heat recovery and at room
+    temperature. -->
+  <pPu unit="pu" value="0 1"/>
+  <pt unit="kW" value="0 0"/>
+  <temp unit="K" value="298 298"/>
+ </heatRecovery>
+</component>
+<!-- EOF -->

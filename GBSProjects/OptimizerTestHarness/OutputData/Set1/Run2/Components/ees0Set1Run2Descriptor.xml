@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Project: GBS Tool -->
+<!-- Author: Jeremy VanderMeer, jbvandermeer@alaska.edu -->
+<!-- Date: September 27, 2017 -->
+<!-- License: MIT License (see LICENSE file of this package for more information -->
+<!-- This file describes a general electric energy storage (EES). Specific EES might require further children. -->
+<!-- Root tag is 'component' -->
+<component name="ees0">
+ <!-- Declaration of inheritance. Parent of this generic EES descriptor should be the interface itself.  -->
+ <childOf>
+  esDescriptor
+ </childOf>
+ <!-- NOTICE: NON-MODIFIED PARENT TAGS ARE NOT SHOWN, THEY SHOULD BE INHERITED FROM THE PARENT -->
+ <!-- `isDCBus' describes if the particular storage system is packaged with a DC bus. Generally, this will be TRUE, -->
+ <!-- but some kinetic energy storage systems may also have a fixed or variable AC bus. -->
+ <isDCBus value="TRUE"/>
+ <!-- 'buildingBlockVNom' describes the nominal voltage of a smallest practical building block of the unit. This is -->
+ <!-- used instead of cell voltage as single cells will rarely make sense. Default value is 500 V. If this is AC or -->
+ <!-- DC has to be ascertained from 'isDCBus' -->
+ <buildingBlockVNom unit="V" value="500"/>
+ <!-- 'buildingBlockVMax' describes the maximum voltage that the unit can be operated at. Default is 500. Units are V. -->
+ <buildingBlockVMax unit="V" value="500"/>
+ <!-- `buildingBlockVMinOp' is the minimum voltage at which the unit is considered operational, i.e. able to deliver -->
+ <!-- any power at all. Default is 500. Units are V. -->
+ <buildingBlockVMinOp unit="V" value="500"/>
+ <!-- `buildingBlockVMin' is the lowest voltage to which the unit can be discharged without destruction. This is -->
+ <!-- relevant in the specification of potentially necessary precharge circuits in the inverter package. -->
+ <buildingBlockVMin unit="V" value="500"/>
+ <!-- 'buildingBlockIMax' describes the maximum current available from the unit at nominal voltage. Default is 0. Units are A. -->
+ <buildingBlockIMax unit="A" value="0"/>
+ <!-- 'isSerializeable' describes if the building blocks can be configured in series. Default is TRUE-->
+ <isSerializable value="TRUE"/>
+ <!-- `seriesUnitsMax' describes how many units could be put in series at the most. Default is 5. -->
+ <seriesUnitsMax value="5"/>
+ <!-- `seriesUnitsAct' is the actual number of units in series for this particular configuration. Default is 1, i.e., -->
+ <!-- no series configuration. -->
+ <seriesUnitsAct value="1"/>
+ <!-- `isParallelizable' desribes is building block may be configured in parallel. -->
+ <isParallelizable value="TRUE"/>
+ <!-- 'parallelUnitsMax' describes the maximum number of units that may be parallelized. Default is 5. -->
+ <parallelUnitsMax value="5"/>
+ <!-- `parallelUnitsAct' describes the actual number of units in parallel. Defaults is 1. -->
+ <parallelUnitsAct value="1"/>
+ <!-- Dispatch Control parameters -->
+ <!-- 'eesSrcTime' is the minimum amount of time that the ess must be able to discharge for at the current level of
+      SRC that it is supplying. Units are in seconds. Default is 120 s.  -->
+ <eesSrcTime unit="s" value="120"/>
+ <!-- 'eesDispatchTime' is the minimum amount of time that the ESS must be able to supply the load for in order to
+    be considered as an active discharge option in the diesel schedule. Units are in seconds. Default is 1800 s (0.5 hours).   -->
+ <eesDispatchTime unit="s" value="10800"/>
+ <!-- 'eesDispatchMinSoc' is the minimum SOC of the ESS in order to be considered as an active discharge option in
+    the diesel schedule. Units are in pu of full energy capacity. Default is 0.9.   -->
+ <eesDispatchMinSoc unit="pu" value="0.9"/>
+ <!-- 'eesPinAvail_1_time' is used to find the maximum power that the EES can charge for 'eesPinAvail_1_time'
+    amount of time before being fully charged.  Units are in seconds. Default is 300 s (5 min).   -->
+ <eesPinAvail_1_time unit="s" value="300"/>
+ <!-- 'eesPoutAvail_1_time' is used to find the maximum power that the EES can discharge for 'eesPoutAvail_1_time'
+    amount of time before going below the required SRC SOC.  Units are in seconds. Default is 300 s (5 min).   -->
+ <eesPoutAvail_1_time unit="s" value="300"/>
+ <!-- In order to use the consider the equivalent fuel efficiency of dishcarging the ESS to allow running a smaller
+     diesel generator, an equivalent fuel consumption of the ESS must be calculated in L/kWh. This is done by calculating
+     how much diesel fuel went into charging the ESS to it'c current level. Divide the number of liters by the  state of
+     charge to get the fuel consumption of using the energy storage. -->
+ <!-- 'prevEesTime' is how far back that is used to assess what percentage of the current ESS charge came from
+    the diesel generator. This is used in the dispatch schedule to determine the cost of discharging the ESS to supply
+     the load for peak shaving or load leveling purposes. Units are seconds. Default is 86400 s (24 hr). -->
+ <prevEesTime unit="s" value="86400"/>
+ <!-- 'eesCost' is the cost of discharging the ESS that is above the fuel cost that went into charging it. It is
+    stated as a fuel consumption per kWh, kg/kWh. It is added to the effective fuel consumption of discharging the
+     ESS resulting from chargning it with the diesel generators. The cost is used to account for non-fuel costs of
+     discharging the ESS including maintenance and lifetime costs. Units are kg/kWh. Default is 0. This should be updated
+      to avoid overuse of the ESS. -->
+ <eesCost unit="kg/kWh" value="0"/>
+ <type value="sink-source"/>
+ <ratedDuration unit="s" value="0">
+  <!-- 'ratedDuration' is the amount of time the es is rated to discharge for at the rated POutMaxPa. Units are s. Default is 0.  -->
+ </ratedDuration>
+ <useLossMap value="FALSE">
+  <!-- 'useLossMap' is a bool value that indicates whether or not use the lossMap in the simulation. Default is FALSE  -->
+ </useLossMap>
+ <lossMap>
+  <!-- 'lossMap' describes the loss experienced by the energy storage system for each state of power and energy.
+    they are described by the tuples 'pPu' for power, 'ePu' for the state of charge, 'tempAmb' for the ambient
+    (outside) temperature and 'lossRate' for the loss. Units for power are P.U. of nameplate power capacity. Positive values
+    of power are used for discharging and negative values for charging. Units for 'ePu' are P.U. nameplate energy
+    capacity. It should be between 0 and 1. 'loss' should include all losses including secondary systems. Units for
+    'loss' are in pu of pPu (the fraction of power that is lost). Default values are data points at -1, 0 and 1 pu power, -->
+  <!-- 0 and 1 pu SoC and 0 loss. -->
+  <pPu unit="pu" value="-1 -1 -1 0 0 1 1 1"/>
+  <ePu unit="pu" value="0 0.5 1 0 1 0 0.5 1"/>
+  <loss unit="pu of ch/dis power" value="0.05 0.125 0.2 0.01 0.01 0.2 0.125 0.05"/>
+  <tempAmb unit="K" value="298 298 298 298 298 298 298 298"/>
+ </lossMap>
+ <lossMapEstep unit="kWs" value="3600">
+  <!-- 'lossMapEstep' is the step interval that ePu will be interpolated along. Units are in kWs. Default is every
+          1 kWh (3600 kWs). -->
+ </lossMapEstep>
+ <lossMapPstep unit="kW" value="1">
+  <!-- 'lossMapPstep' is the step interval that pPu will be interpolated along. Units are in kW. Default is
+          1 kW. -->
+ </lossMapPstep>
+ <chargeRate unit="NONE" value="0.1"/>
+ <PInMaxPa unit="kW" value="100">
+  <!-- 'PInMaxPa' is the maximum real power the unit can receive from the grid, should be 0 if source. Units: kW -->
+ </PInMaxPa>
+ <QInMaxPa unit="kvar" value="150">
+  <!-- 'QInMax' is the maximum reactive power the unit can receive from the grid, should be 0 if source. Units. kvar -->
+ </QInMaxPa>
+ <POutMaxPa unit="kW" value="100">
+  <!-- 'POutMaxPa' is the maximum real power the unit can deliver to the grid. Should be 0 if sink. Units: kW -->
+ </POutMaxPa>
+ <QOutMaxPa unit="kvar" value="150.0">
+  <!-- 'QOutMaxPa' is the maximum reactive power the unit can deliver to the grid. Should be 0 if sink. Units: kvar -->
+ </QOutMaxPa>
+ <isVoltageSource value="1">
+  <!-- 'isVoltageSource' describes the capability of the component to regulate vars. -->
+ </isVoltageSource>
+ <isFrequencyReference value="FALSE">
+  <!-- 'isFrequencyReference' describes the units capability to be the frequency reference of the the grid. -->
+ </isFrequencyReference>
+ <isLoadFollowing value="FALSE">
+  <!-- 'isLoadFollowing' describes the capability of a unit to ramp up or down to mitigate demand or non-load following -->
+  <!-- production induced frequency or voltage issues -->
+ </isLoadFollowing>
+ <isCurtailable value="FALSE">
+  <!-- 'isCurtailable' describes if the unit can reduce and clamp power output below available resource based on -->
+  <!-- a control signal -->
+ </isCurtailable>
+ <isThreePhase value="TRUE">
+  <!-- 'isThreePhase' is TRUE if the unit is a three or four-wire three-phase unit. Default value is TRUE. -->
+ </isThreePhase>
+ <isDelta value="TRUE">
+  <!-- 'isDelta' defines if the unit is Delta of Wye connected. Default is TRUE. -->
+ </isDelta>
+ <acConnectionType unit="NONE" value="0">
+  <!-- 'acConnectionType' value defines how the unit is connected to the grid, i.e., on which phases, if the neutral -->
+  <!-- is present, is the neutral grounded, etc. See the documentation for available values. Default value is 0. -->
+  <!-- Units attribute ALWAYS is NONE, it is here for consistency only. -->
+ </acConnectionType>
+ <dcConnectionType unit="NONE" value="0">
+  <!-- `dcConnectionType` describes the type of DC connection used, if any. Default is 0, which means no DC connection. -->
+  <!-- Units are NONE, as this is just a key (see Wiki for more info). -->
+ </dcConnectionType>
+ <VAcNom unit="V" value="480">
+  <!-- `VAcNom` describes the nominal connection voltage to the grid. Default is 480 VAC. Units are V. -->
+ </VAcNom>
+ <faultCurrent>
+  <!-- 'faultCurrent' Is the ammount of fault current that can be supplied  per ms.
+    Fault current units are in P.U. of nameplate current and are described by the tuple 'iPu'.
+    Fault current values are defined for the number of ms they can be sustained, described by the tuple 'ms'
+    (16.7 ms per 60 Hz cycle). -->
+  <!-- Default is 1 PU at 5 cycles (84 ms), ie no fault current capability. -->
+  <ms unit="ms" value="84"/>
+  <iPu unit="pu" value="1"/>
+ </faultCurrent>
+ <overLoad>
+  <!-- 'overLoad' Is the amount of over load that can be supplied per hour.
+    Over load units are in P.U. of nameplate power and are specified by the number of hours they can
+    operate at. It is described by the tuples 'hr' (time with units hours) and 'pPu' (P.U. of nameplate capacity). -->
+  <!-- Default is 1 PU for 1 second, ie no over load capability. -->
+  <hr unit="hr" value="1"/>
+  <pPu unit="pu" value="1"/>
+ </overLoad>
+ <maxMeanLoad24HrPu unit="pu" value="1">
+  <!-- 'maxMeanLoad24HrPu' Is the the maximum average loading the component is rated for in a 24 hour period.
+    For example, for diesel generators, this rating is different for Prime, Standby and Continuous rated engines and
+    between manufacturers. The ISO-8528-1 specification for a Prime generator is 0.7.-->
+  <!-- Units: P.U.. Default is 1, i.e. it can operate at 100% capacity constantly.  -->
+ </maxMeanLoad24HrPu>
+ <heatingPowerRequirement>
+  <!-- 'heatingPowerRequirement' is the thermal power required to keep the component warm, if required. For example
+    diesel generators in hot standby need to be heated. It is described by three tuples: 'tempAmb' is the ambient (outdoor)
+    temperature in Kelvin. 'tempHeatingMin' is the minimum temperature required for the heating fluid used to heat the
+    component. 'pt' is the thermal power consumption in kW. This will be supplied by whatever excess heat is
+    available -->
+  <!-- Default is one data point at 298 degree K of 0 kW.   -->
+  <tempAmb unit="K" value="298"/>
+  <tempHeatingMin unit="K" value="298"/>
+  <pt unit="kW" value="0"/>
+ </heatingPowerRequirement>
+ <heatRecovery>
+  <!-- 'heatRecovery' describes the usable heat that comes off of the component per power output.  -->
+  <!-- It is described by the tuples 'pPu' (power), 'pt' (thermal power) and 'temp' (the temperature of the heat exchange
+    fluid) Units for power are P.U. of nameplate power capacity, for heat output are thermal kW (not electric) and for
+    temperature are Kelvin. Default is to have a data point at 0 and 1 P.U. power output of no heat recovery and at room
+    temperature. -->
+  <pPu unit="pu" value="0 1"/>
+  <pt unit="kW" value="0 0"/>
+  <temp unit="K" value="298 298"/>
+ </heatRecovery>
+</component>
+<!-- EOF -->
