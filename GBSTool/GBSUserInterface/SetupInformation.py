@@ -27,7 +27,7 @@ class SetupTag:
 
 
 class SetupInformation:
-
+    from Component import Component
     def __init__(self):
         #dictionary of dialog card names and their corresponding assignment functions
         #TODO make dynamic based on WizardTree names
@@ -64,6 +64,10 @@ class SetupInformation:
         self.inputTimeStep = SetupTag('inputTimeStep')
         self.outputTimeStep = SetupTag('outputTimeStep')
         self.inputFileDir = SetupTag('inputFileDir')
+
+        #components is a list of component class objects
+        #the type of class determines how the information will be written to an xml
+        self.components = []
 
 
     #TODO currently each assignment just assigns a parameter, but this will likely change to perform some actions during parameter assigment. That is why each parameter has its own fuction
@@ -133,6 +137,18 @@ class SetupInformation:
 
         print(d)
         return d
+    #make a new component and add it to the component list
+    def makeNewComponent(self,component,originalHeading,units,attribute,componentType):
+        # start a component with basic info or original header name, component name and type and attribute
+        newComponent = Component(component=component,originalHeading = originalHeading, units=units,attribute=attribute,
+                                 componentType=componentType)
+        self.addComponent(newComponent)
+    #delete a component from a component list
+    def removeComponent(self,component):
+        self.components = [x for x in self.components if x != component]
+    #add a component to the component list
+    def addComponent(self, newComponent):
+        self.component.append(newComponent)
 
     #read setup xml and assign values to the model parameters
     def feedSetupInfo(self):

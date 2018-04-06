@@ -63,8 +63,7 @@ def setupGrid(inputDictionary):
     # TODO combo boxes need padding
 
     for i in range(len(rowNames)):
-        print(rowNames[i])
-        print(i)
+
         grid.lbl = QtWidgets.QLabel()
         grid.lbl.setFont(font)
         grid.lbl.setObjectName('lbl' + str(rowNames[i]))

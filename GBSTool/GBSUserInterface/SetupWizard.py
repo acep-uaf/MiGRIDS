@@ -103,9 +103,9 @@ class SetupWizard:
         posButton = self.posButton()
         negButton = self.negButton()
 
-        hl.addWidget(posButton)
-        hl.addStretch(2)
         hl.addWidget(negButton)
+        hl.addStretch(2)
+        hl.addWidget(posButton)
         vl.addLayout(hl)
 
         self.currentDialogWindow.setLayout(vl)

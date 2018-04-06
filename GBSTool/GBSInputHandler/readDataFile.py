@@ -20,6 +20,7 @@ def readDataFile(inputSpecification,fileLocation='',fileType='csv',columnNames=N
     from readAllAvecTimeSeries import readAllAvecTimeSeries
     from readWindData import readWindData
     from readXmlTag import readXmlTag
+    from Component import Component
 
     ###### go to directory with time series data is located #######
     here = os.getcwd()
@@ -94,35 +95,9 @@ def readDataFile(inputSpecification,fileLocation='',fileType='csv',columnNames=N
                 # get the desired data type and convert
                 datatype = readXmlTag('internalUnitDefault.xml', ['unitDefaults', componentAttributes[i]], 'datatype',
                                       unitConventionDir)
-                listOfComponents.append(Component(useNames[i],units,scale,offset,datatype))
+                listOfComponents.append(Component(component=useNames[i],units=units,scale=scale,offset=offset,datetype=datatype))
 
     # return to original directory
     os.chdir(here)
     return df, listOfComponents
 
-#Component class consisting of component name, units and attribute
-class Component:
-    """A class with access to characteristics of a component."""
-    def __init__(self, component, units, scale, offset, datatype):
-        self.name = component
-        self.units = units
-        self.offset = offset
-        self.datatype = datatype
-        self.scale = scale
-        
-
-    def setDatatype(self,df):
-         if self.datatype[0][0:3] == 'int':
-             df[self.name] = round(df[self.name].astype('float'), 0)
-         else:
-             df[self.name] = df[self.name].astype(self.datatype[0])
-         return df
-    #Component, dictionary -> dictionary
-    def toDictionary(self, d):
-        d[self.name]= {
-             'units':self.units,
-             'offset':self.offset,
-             'datatype':self.datatype,
-             'scale':self.scale}
-
-        return d

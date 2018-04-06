@@ -5,9 +5,9 @@
 
 # initiates a project folder
 def initiateProject(projectName,componentNames,componentDir,setupDir):
-    from buildComponentDescriptor import buildComponentDescriptor
+    from buildAllComponentDescriptor import buildComponentDescriptor
     # initiate the component descriptor files and return a list of the names that correspond to an actual component
-    componentNamesGood = buildComponentDescriptor(componentNames,componentDir)
+    componentNamesGood = buildComponentDescriptor(componentNames, componentDir)
     # initiate the setup file with the good component names
     from buildProjectSetup import buildProjectSetup
     buildProjectSetup(projectName,setupDir,componentNamesGood)

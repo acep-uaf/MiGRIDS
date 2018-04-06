@@ -1,6 +1,6 @@
 #build an empty descriptor file for a single component
 #Component, string -> None
-def buildComponentDescriptor(component,saveDir):
+def createComponentDescriptor(component, saveDir):
     # componentNames is a list of all components to be included in the simulation
     # saveDir is where the generated component descriptor files will be saved
 

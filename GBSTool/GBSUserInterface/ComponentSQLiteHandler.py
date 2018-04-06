@@ -5,9 +5,7 @@ class SQLiteHandler:
         import sqlite3 as lite
         self.connection = lite.connect(database)
         self.cursor = self.connection.cursor()
-        #TODO move to another location
 
-        self.makeDatabase()
 
     def getComponentTableCount(self):
 

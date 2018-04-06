@@ -88,11 +88,10 @@ class ComponentTableModel(QtCore.QAbstractTableModel):
 
     #index, string, DisplayRole -> string
     def setData(self, index, value, role=QtCore.Qt.DisplayRole):
-
         #atleast the first column, the third column and the 4 column must be set to write the component
-        print('index column %s' %index.column())
+
         if index.column() in [0,3]:
-            print('Required')
+            print('Required Data entered')
             check1 = self.index(index.row(),0)
             check2 = self.index(index.row(),3)
             if self.missingData(check1) | self.missingData(check2):
@@ -102,9 +101,7 @@ class ComponentTableModel(QtCore.QAbstractTableModel):
         #write that parameter to the corresponding component
         return str(value)
     def missingData(self,index):
-        print('data is %s' %str(self.data(index)))
         if (self.data(index) == 0) | (self.data(index) == ''):
-            print('missing')
             return True
         return False
 

@@ -9,6 +9,7 @@ class ComboReference():
 
     def getValues(self):
         values = self.db.getRefInput(self.table)
+        values.insert(0,'Select - Select')
         return values
     def getCodes(self):
         return [self.parseCombo(x) for x in self.values]

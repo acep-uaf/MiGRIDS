@@ -19,6 +19,7 @@ def fillProjectData(projectDir = '',setupInfo = None):
     from tkinter import filedialog
     from fillProjectDataFromCSV import fillProjectDataFromCSV
     from fillProjectDataFromUI  import fillProjectDataFromUI
+    from fillProjectComponentData import fillProjectComponentData
 
 
 
@@ -38,3 +39,6 @@ def fillProjectData(projectDir = '',setupInfo = None):
 
     else:
         fillProjectDataFromUI(projectDir,setupInfo)
+        # get possible headers
+        if setupInfo.possibleHeaders is not None:
+            fillProjectComponentData(projectDir, setupInfo)

@@ -110,11 +110,11 @@ class SetupForm(QtWidgets.QWidget):
 
         self.WizardTree = self.buildWizardTree(dlist)
         self.createEnvironmentBlock()
-        self.environmentBlock.setEnabled(False)
+        #self.environmentBlock.setEnabled(False)
         windowLayout.addWidget(self.environmentBlock)
         self.createBottomBlock()
         #the bottom block is disabled until a setup file is created or loaded
-        self.bottomBlock.setEnabled(False)
+        #self.bottomBlock.setEnabled(False)
         windowLayout.addWidget(self.bottomBlock)
         windowLayout.addStretch(2)
         #add a console window
@@ -192,9 +192,13 @@ class SetupForm(QtWidgets.QWidget):
         #s is the 1st dialog box for the setup wizard
         s = SetupWizard(self.WizardTree, model, self)
         #display collected data
-        model.feedSetupInfo()
+        hasSetup = model.feedSetupInfo()
         self.fillData(model)
-        self.topBlock.setVisible(True)
+
+        if hasSetup:
+            self.topBlock.setVisible(True)
+            self.environmentBlock.isEnabled(True)
+            self.bottomBlock.isEnabled(True)
 
     def functionForLoadButton(self):
         import os
@@ -202,9 +206,9 @@ class SetupForm(QtWidgets.QWidget):
         setupFile = QtWidgets.QFileDialog.getOpenFileName(self,"Select your setup file", None, "*xml" )
 
         model.setupFolder = os.path.dirname(setupFile[0])
-        print(model.setupFolder)
+
         model.project = os.path.basename(setupFile[0][:-9])
-        print(model.project)
+
         #assign information to data model
         model.feedSetupInfo()
         #display data
@@ -304,12 +308,9 @@ class SetupForm(QtWidgets.QWidget):
         tv.setModel(m)
 
         for row in range(0, m.rowCount()):
-            tv.openPersistentEditor(m.index(row, 3))
-            tv.openPersistentEditor(m.index(row, 8))
-            tv.openPersistentEditor(m.index(row, 5))
-            tv.openPersistentEditor(m.index(row, 1))
-            tv.openPersistentEditor(m.index(row, 2))
-            tv.openPersistentEditor(m.index(row, 0))
+            for c in range(0,m.columnCount()):
+                tv.openPersistentEditor(m.index(row, c))
+            tv.closePersistentEditor(m.index(row,4))
 
         tableGroup.addWidget(tv, 1)
         self.environmentBlock.setLayout(tableGroup)
@@ -325,13 +326,10 @@ class SetupForm(QtWidgets.QWidget):
 
         tv.setModel(m)
 
-        for row in range(0,m.rowCount()):
-            tv.openPersistentEditor(m.index(row,3))
-            tv.openPersistentEditor(m.index(row,8))
-            tv.openPersistentEditor(m.index(row,5))
-            tv.openPersistentEditor(m.index(row,1))
-            tv.openPersistentEditor(m.index(row,2))
-            tv.openPersistentEditor(m.index(row,0))
+        for row in range(0, m.rowCount()):
+            for c in range(0,m.columnCount()):
+                tv.openPersistentEditor(m.index(row, c))
+            tv.closePersistentEditor(m.index(row,4))
 
             # for c in range(0,4):
             #     tv.openPersistentEditor(m.index(row,c))
