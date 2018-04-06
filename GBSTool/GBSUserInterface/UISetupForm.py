@@ -259,7 +259,7 @@ class SetupForm(QtWidgets.QWidget):
                                  'Format':{'widget':'combo','items':['excel'],'name':'timeChannelformat'}
                                   },
                           'Load':{'Field':{'widget':'txt','name':'realLoadChannelvalue'},
-                                           'Format':{'widget':'combo','items':['KW','W','MW'],'name':'realLoadChannelunit'}}}
+                                 'Format':{'widget':'combo','items':['KW','W','MW'],'name':'realLoadChannelunit'}}}
         grid = setupGrid(g1)
         hlayout.addLayout(grid)
         hlayout.addStretch(1)    

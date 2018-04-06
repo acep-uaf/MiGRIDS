@@ -3,7 +3,7 @@
 #setupXM is the path and filename of the setup.xml file
 from getSetupInformation import getSetupInformation
 import os
-def imputHandlerToUI(setupFolder, setupInfo):
+def inputHandlerToUI(setupFolder, setupInfo):
     #assign tag values in the setupxml to the setupInfo model
     getSetupInformation(os.path.join(setupFolder, setupInfo.project + 'Setup.xml'), setupInfo)
     return

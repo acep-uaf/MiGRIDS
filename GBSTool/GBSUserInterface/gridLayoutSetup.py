@@ -59,7 +59,7 @@ def setupGrid(inputDictionary):
         if type(headers[i]) == str:
             grid.lbl.setText(headers[i])
     rowNames = inputDictionary['rowNames']
-    print(rowNames)
+
     # TODO combo boxes need padding
 
     for i in range(len(rowNames)):

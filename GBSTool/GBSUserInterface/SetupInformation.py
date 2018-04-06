@@ -42,6 +42,11 @@ class SetupInformation:
                                    'outputTimeStepvalue':[self.assignOutputTimeStep,SetupTag.assignValue],
                                    'inputTimeStepunit':[self.assignInputTimeStep,SetupTag.assignUnits],
                                    'outputTimeStepunit': [self.assignOutputTimeStep, SetupTag.assignUnits],
+                                   'realLoadChannelvalue':[self.assignLoadChannel,SetupTag.assignValue],
+                                   'realLoadChannelunit': [self.assignLoadChannel, SetupTag.assignUnits],
+                                   'timeChannelformat': [self.assignTimeChannel, SetupTag.assignFormat],
+                                   'timeChannelvalue': [self.assignTimeChannel, SetupTag.assignValue],
+
                                    }
 
 
@@ -69,6 +74,8 @@ class SetupInformation:
 
         self.setupFolder = os.path.join(fileDir,'../../GBSProjects',self.project, 'InputData/Setup')
 
+    def assignLoadChannel(self,m,v):
+        self.realLoadChannel.assign(m,v)
 
     def assignHeaderNames(self,name):
         self.headerNames = name
@@ -129,13 +136,12 @@ class SetupInformation:
 
     #read setup xml and assign values to the model parameters
     def feedSetupInfo(self):
-        import os
-        from inputHandlerToUI import imputHandlerToUI
+        from inputHandlerToUI import inputHandlerToUI
 
         fileDir = self.setupFolder
 
         # tell the controller to tell the InputHandler to read the xml and set the model values
-        imputHandlerToUI(fileDir, self)
+        inputHandlerToUI(fileDir, self)
 
         return True
     #write a new setup xml file for this project
