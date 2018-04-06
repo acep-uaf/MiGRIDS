@@ -1,11 +1,13 @@
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 import ComponentTableModel as T
+import EnvironmentTableModel as E
 from gridLayoutSetup import setupGrid
 from SetupWizard import SetupWizard
 from WizardTree import WizardTree
 from ConsoleDisplay import ConsoleDisplay
 from SetupInformation import SetupInformation
+from ComponentSQLiteHandler import SQLiteHandler
 
 class SetupForm(QtWidgets.QWidget):
     global model
@@ -35,6 +37,7 @@ class SetupForm(QtWidgets.QWidget):
         windowLayout.addWidget(self.topBlock)
         #more space between component block
         windowLayout.addStretch(1)
+        #TODO move to seperate file
         dlist = [
             [{'title': 'Time Unit', 'prompt': 'Select the units for the output time interval',
               'sqltable': None,
@@ -60,7 +63,7 @@ class SetupForm(QtWidgets.QWidget):
               'sqltable': None,
               'sqlfield': None, 'reftable': 'ref_load_units', 'name': 'realLoadChannelunit', 'folder': False},
              'Load Profile'],
-            [{'title': 'Load Profile', 'prompt': 'Enter the name of the field load Profile values.',
+            [{'title': 'Real Load', 'prompt': 'Enter the name of the field real load values.',
               'sqltable': None,
               'sqlfield': None, 'reftable': None, 'name': 'realLoadChannelvalue', 'folder': False},
              'Raw Time Series'],
@@ -106,6 +109,9 @@ class SetupForm(QtWidgets.QWidget):
         ]
 
         self.WizardTree = self.buildWizardTree(dlist)
+        self.createEnvironmentBlock()
+        self.environmentBlock.setEnabled(False)
+        windowLayout.addWidget(self.environmentBlock)
         self.createBottomBlock()
         #the bottom block is disabled until a setup file is created or loaded
         self.bottomBlock.setEnabled(False)
@@ -179,6 +185,10 @@ class SetupForm(QtWidgets.QWidget):
     #SetupForm ->
     #method to modify SetupForm layout
     def functionForCreateButton(self):
+        #make a database
+        handler = SQLiteHandler('component_manager')
+        handler.makeDatabase()
+        handler.closeDatabase()
         #s is the 1st dialog box for the setup wizard
         s = SetupWizard(self.WizardTree, model, self)
         #display collected data
@@ -282,8 +292,30 @@ class SetupForm(QtWidgets.QWidget):
         self.topBlock.setLayout(hlayout)
         self.topBlock.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         self.topBlock.sizePolicy().retainSizeWhenHidden()
-
+    #environment data is similar in layout to component descriptors but the info does not get written to descriptor files
+    def createEnvironmentBlock(self):
     #returns a table view within a horizontal layout
+        self.environmentBlock = QtWidgets.QGroupBox('Environmental Inputs')
+        tableGroup = QtWidgets.QHBoxLayout()
+        tv = E.EnvironmentTableView(self)
+
+        m = E.EnvironmentTableModel(self)
+
+        tv.setModel(m)
+
+        for row in range(0, m.rowCount()):
+            tv.openPersistentEditor(m.index(row, 3))
+            tv.openPersistentEditor(m.index(row, 8))
+            tv.openPersistentEditor(m.index(row, 5))
+            tv.openPersistentEditor(m.index(row, 1))
+            tv.openPersistentEditor(m.index(row, 2))
+            tv.openPersistentEditor(m.index(row, 0))
+
+        tableGroup.addWidget(tv, 1)
+        self.environmentBlock.setLayout(tableGroup)
+        self.environmentBlock.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+        return tv
+
     def createBottomBlock(self):
         self.bottomBlock = QtWidgets.QGroupBox('Descriptor XML')
         tableGroup = QtWidgets.QHBoxLayout()
@@ -315,7 +347,7 @@ class SetupForm(QtWidgets.QWidget):
     def fillData(self,model):
         d = model.getSetupTags()
 
-        #for every key in d find the corresponding textbox
+        #for every key in d find the corresponding textbox or combo box
         for k in d.keys():
 
             for a in d[k]:

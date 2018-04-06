@@ -1,9 +1,8 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 from ComponentSQLiteHandler import SQLiteHandler
 from Delegates import *
-
 #subclass of QTableView for displaying component information
-class ComponentTableView(QtWidgets.QTableView):
+class EnvironmentTableView(QtWidgets.QTableView):
     def __init__(self, *args, **kwargs):
         QtWidgets.QTableView.__init__(self, *args, **kwargs)
         self.setSizePolicy(QtWidgets.QSizePolicy.Expanding,QtWidgets.QSizePolicy.Expanding)
@@ -30,7 +29,7 @@ class ComponentTableView(QtWidgets.QTableView):
 
 
 #Tabel model to be displayed in component tableview
-class ComponentTableModel(QtCore.QAbstractTableModel):
+class EnvironmentTableModel(QtCore.QAbstractTableModel):
     def __init__(self,parent):
         QtCore.QAbstractTableModel.__init__(self, parent)
         self.db = SQLiteHandler("component_manager")
