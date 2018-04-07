@@ -9,7 +9,7 @@ class SQLiteHandler:
 
     def getComponentTableCount(self):
 
-        component_count = len(self.cursor.execute("SELECT component_name FROM components").fetchall())
+        component_count = len(self.cursor.execute("SELECT * FROM components").fetchall())
         # return component_count
         return component_count
 
@@ -37,7 +37,7 @@ class SQLiteHandler:
                 if value is not None:
                     return value
 
-        return 0
+        return
 
     def createRefTable(self, tablename):
         self.cursor.execute("DROP TABLE  If EXISTS " + tablename)
@@ -72,17 +72,18 @@ class SQLiteHandler:
             'ref_voltage_units',
             'ref_current_units',
             'ref_irradiation_units',
-            'ref_temperature_units'
+            'ref_temperature_units',
             'ref_universal_units',
             'ref_true_false',
-            'ref_env_attributes'
+            'ref_env_attributes',
+            'ref_frequency_units'
         ]
         for r in refTables:
             self.createRefTable(r)
         self.addRefValues('ref_current_units',[(0,'A','amps'),(1,'kA','kiloamps')])
         self.addRefValues('ref_frequency_units',[(0, 'Hz','hertz')])
         self.addRefValues('ref_temperature_units',[(0,'C','Celcius'),(1,'F','Farhenheit'),(2,'K','Kelvin')])
-        self.addRefValues('ref_irratiation_units',[0,'W/m2','Watts per square meter'])
+        self.addRefValues('ref_irradiation_units',[(0,'W/m2','Watts per square meter')])
         self.addRefValues('ref_flow_units',[(0,'m3/s', 'cubic meter per second'),(1, 'L/s', 'liters per second'),
                                             (2, 'cfm', 'cubic feet per meter'),(3,'gal/min','gallon per minute')])
         self.addRefValues('ref_voltage_units',[(0,'V','volts'),(1, 'kV','kilovolts')])
@@ -97,11 +98,11 @@ class SQLiteHandler:
                             ])
 
         self.addRefValues('ref_component_type' ,[(0,'wtg', 'windturbine'),
-        (1,'ws', 'windspeed'), (2,'gen', 'diesel generator'), (3,'hyg','hydrokinetic generator'), (4,'hs', 'waterspeed')])
+        (1,'gen', 'diesel generator'), (2,'inv','inverter'),(3,'tes','thermal energy storage'),(4, 'ees','energy storage')])
 
         self.addRefValues('ref_power_units',[(0,'W', 'watts'), (1,'kW', 'Kilowatts'),(2,'MW','Megawatts'),
                                              (3, 'var', 'vars'),(4,'kvar','kilovars'),(5,'Mvar','Megavars'),
-                                             (6, 'VA','volt-ampere'),(7,'kVA','kilovolt-ampere'),(8,'MVA','Megavolt-ampere')])
+                                             (6, 'VA','volt-ampere'),(7,'kVA','kilovolt-ampere'),(8,'MVA','megavolt-ampere')])
 
         self.addRefValues('ref_env_attributes', [(0,'WS', 'Windspeed'), (1,'IR', 'Solar Irradiation'),
                                                  (2,'WF','Waterflow'),(3,'Tamb','Ambient Temperature')])
@@ -133,16 +134,21 @@ class SQLiteHandler:
          FOREIGN KEY (attribute) REFERENCES ref_attributes(code),
          FOREIGN KEY (is_voltage_source) REFERENCES ref_true_false(code)
          );""")
+        #TODO remove test components
+        self.cursor.executemany("INSERT INTO components (original_field_name, component_type, component_name, scale) values (?,?,?,?)",
+                                [('Hank', 'wtg','wtg1P',1),('gen1','gen','gen1P',3)])
 
-        self.cursor.executemany("INSERT INTO components (original_field_name, component_type, component_name) values (?,?,?)",
-                                [('Hank', 'wtg','wtg1P'),('gen1','gen','gen1P')])
-    def getRefInput(self, table):
+        self.connection.commit()
+    def getRefInput(self, tables):
+        #table is a list of tables
         import pandas as pd
         # create list of values for a combo box
-        values = pd.read_sql_query("SELECT code, description FROM " + table + " ORDER By sort_order", self.connection)
         valueStrings = []
-        for v in range(len(values)):
-            valueStrings.append(values.loc[v, 'code'] + ' - ' + values.loc[v, 'description'])
+        for t in tables:
+            values = pd.read_sql_query("SELECT code, description FROM " + t + " ORDER By sort_order", self.connection)
+
+            for v in range(len(values)):
+                valueStrings.append(values.loc[v, 'code'] + ' - ' + values.loc[v, 'description'])
         return valueStrings
 
     def getHeaders(self,table):

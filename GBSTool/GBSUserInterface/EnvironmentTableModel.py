@@ -10,19 +10,25 @@ class EnvironmentTableView(QtWidgets.QTableView):
 
         myHandler = SQLiteHandler('component_manager')
         #attributes are column 8
-        self.attributes = ComboReference('component_attributes','ref_attributes',myHandler)
-        self.setItemDelegateForColumn(8, ComboDelegate(self,self.attributes.values))
+        self.attributes = ComboReference('component_attributes',['ref_env_attributes'],myHandler)
+
+
         #types are column 3
-        self.component_type = ComboReference('component_type','ref_component_type',myHandler)
-        self.setItemDelegateForColumn(3,ComboDelegate(self,self.component_type.values))
-        self.units = ComboReference('load_units','ref_load_units',myHandler)
+
+        self.setItemDelegateForColumn(3,ComboDelegate(self,self.attributes.values))
+        self.units = ComboReference('env_units',['ref_speed_units','ref_irradiation_units',
+            'ref_temperature_units','ref_flow_units'],myHandler)
 
         self.setItemDelegateForColumn(5, ComboDelegate(self, self.units.values))
         #button to navigate to descriptor xml file is in column 0
         self.setItemDelegateForColumn(1,ButtonDelegate(self, 'SP_DialogOpenButton'))
         #button to delete a component is in column 2
         self.setItemDelegateForColumn(2, ButtonDelegate(self, 'SP_TrashIcon'))
-        self.setItemDelegateForColumn(0, TextDelegate(self))
+        t_boxes = [0,6,7,9]
+        for i in t_boxes:
+            self.setItemDelegateForColumn(i,TextDelegate(self))
+
+
         #combos is the list of attributes that associated with combo boxes
         self.combos = [x for x in self.__dict__.keys() if type(self.__getattribute__(x)) == ComboReference]
         myHandler.closeDatabase()
@@ -45,7 +51,7 @@ class EnvironmentTableModel(QtCore.QAbstractTableModel):
     # QModelIndex -> integer
     #returns the number of columns to display
     def columnCount(self, parent = QtCore.QModelIndex()):
-        return 14
+        return 8
 
     # index, Qt.DisplayRole -> String
     def data(self, index, role=QtCore.Qt.DisplayRole):
@@ -66,18 +72,18 @@ class EnvironmentTableModel(QtCore.QAbstractTableModel):
                 v = v[0]
             else:
                 v = 0
-            print(v)
+
         return v
 
     #SQLitedatbase connection -> listOfStrings
     def getHeader(self,db):
 
-        #columnNames = db.getHeaders("components")
 
-        headers = ['Field',' ',' ','Type','Component Name','Units','Scale',
-                   'Offset','Attribute','P in max pa','Q in max pa','Q out max pa','Voltage Source','Tags']
-        columnNames = ['original_field_name','','','component_type', 'component_name', 'units', 'scale',
-                       'offset', 'attribute', 'p_in_maxpa', 'q_in_maxpa', 'q_out_maxpa', 'is_voltage_source', 'tags']
+
+        headers = ['Field',' ',' ','Attribute','Component Name','Units','Scale',
+                   'Offset','Tags']
+        columnNames = ['original_field_name','','','attribute', 'component_name', 'units', 'scale',
+                       'offset', 'tags']
         return headers, columnNames
 
     def headerData(self, section: int, orientation, role):
@@ -88,7 +94,8 @@ class EnvironmentTableModel(QtCore.QAbstractTableModel):
     #index, string, DisplayRole -> string
     def setData(self, index, value, role=QtCore.Qt.DisplayRole):
         print("setData", index.row(), index.column(), value)
-        return str(value)
+        return value
+
 
     #index -> ItemEnabled
     def flags(self, index):

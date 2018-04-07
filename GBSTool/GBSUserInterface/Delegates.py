@@ -36,7 +36,15 @@ class TextDelegate(QtWidgets.QItemDelegate):
         txt.inputMethodHints()
         txt.textChanged.connect(self.currentIndexChanged)
         return txt
+
+    def setEditorData(self, editor, index):
+        editor.blockSignals(True)
+        editor.setText(str(index.model().data(index)))
+
+        editor.blockSignals(False)
     def setModelData(self, editor, model, index):
+        print('index is: %s' %index.column())
+        print('editor text: %s' % editor.text())
         model.setData(index, editor.text())
 
     @QtCore.pyqtSlot()

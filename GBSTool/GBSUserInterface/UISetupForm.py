@@ -20,6 +20,9 @@ class SetupForm(QtWidgets.QWidget):
     def initUI(self):
         self.setObjectName("setupDialog")
         self.resize(1754, 3000)
+        handler = SQLiteHandler('component_manager')
+        handler.makeDatabase()
+        handler.closeDatabase()
 
         #the main layout is oriented vertically
         windowLayout = QtWidgets.QVBoxLayout()
@@ -186,9 +189,7 @@ class SetupForm(QtWidgets.QWidget):
     #method to modify SetupForm layout
     def functionForCreateButton(self):
         #make a database
-        handler = SQLiteHandler('component_manager')
-        handler.makeDatabase()
-        handler.closeDatabase()
+
         #s is the 1st dialog box for the setup wizard
         s = SetupWizard(self.WizardTree, model, self)
         #display collected data
@@ -310,6 +311,7 @@ class SetupForm(QtWidgets.QWidget):
         for row in range(0, m.rowCount()):
             for c in range(0,m.columnCount()):
                 tv.openPersistentEditor(m.index(row, c))
+
             tv.closePersistentEditor(m.index(row,4))
 
         tableGroup.addWidget(tv, 1)
@@ -318,7 +320,7 @@ class SetupForm(QtWidgets.QWidget):
         return tv
 
     def createBottomBlock(self):
-        self.bottomBlock = QtWidgets.QGroupBox('Descriptor XML')
+        self.bottomBlock = QtWidgets.QGroupBox('Components')
         tableGroup = QtWidgets.QHBoxLayout()
         tv = T.ComponentTableView(self)
 
@@ -329,12 +331,9 @@ class SetupForm(QtWidgets.QWidget):
         for row in range(0, m.rowCount()):
             for c in range(0,m.columnCount()):
                 tv.openPersistentEditor(m.index(row, c))
-            tv.closePersistentEditor(m.index(row,4))
+            # tv.closePersistentEditor(m.index(row,4))
+            # tv.closePersistentEditor(m.index(row, 0))
 
-            # for c in range(0,4):
-            #     tv.openPersistentEditor(m.index(row,c))
-            # for c in range(5,14):
-            #     tv.openPersistentEditor(m.index(row, c))
 
         tableGroup.addWidget(tv,1)
         self.bottomBlock.setLayout(tableGroup)
