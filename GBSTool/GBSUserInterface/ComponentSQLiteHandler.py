@@ -64,17 +64,31 @@ class SQLiteHandler:
             'ref_component_type',
             'ref_datetime_format',
             'ref_data_format',
-            'ref_load_units',
+            'ref_power_units',
             'ref_attributes',
             'ref_time_units',
+            'ref_speed_units',
+            'ref_flow_units',
+            'ref_voltage_units',
+            'ref_current_units',
+            'ref_irradiation_units',
+            'ref_temperature_units'
             'ref_universal_units',
-            'ref_true_false'
+            'ref_true_false',
+            'ref_env_attributes'
         ]
         for r in refTables:
             self.createRefTable(r)
+        self.addRefValues('ref_current_units',[(0,'A','amps'),(1,'kA','kiloamps')])
+        self.addRefValues('ref_frequency_units',[(0, 'Hz','hertz')])
+        self.addRefValues('ref_temperature_units',[(0,'C','Celcius'),(1,'F','Farhenheit'),(2,'K','Kelvin')])
+        self.addRefValues('ref_irratiation_units',[0,'W/m2','Watts per square meter'])
+        self.addRefValues('ref_flow_units',[(0,'m3/s', 'cubic meter per second'),(1, 'L/s', 'liters per second'),
+                                            (2, 'cfm', 'cubic feet per meter'),(3,'gal/min','gallon per minute')])
+        self.addRefValues('ref_voltage_units',[(0,'V','volts'),(1, 'kV','kilovolts')])
         self.addRefValues('ref_true_false',[(0,'T','True'),(1,'F','False')])
-        self.addRefValues('ref_universal_units', [(0, 'W', 'Watts'), (1, 'kW', 'kilowatts'),(2, 'MW', 'megawatts'),
-                                                  (3, 'm/s','meters per second'),(4,'kn','knots')])
+        self.addRefValues('ref_speed_units', [(0, 'm/s','meters per second'),(1,'ft/s','feet per second'),
+                                              (2,'km/hr','kilometers per hour'),(3,'mi/hr','miles per hour')])
         self.addRefValues('ref_time_units',[(0,'S','Seconds'),(1,'m','Minutes')])
         self.addRefValues('ref_datetime_format',[(0,'Ordinal','Ordinal'),(1,'Excel','Excel')])
 
@@ -85,9 +99,18 @@ class SQLiteHandler:
         self.addRefValues('ref_component_type' ,[(0,'wtg', 'windturbine'),
         (1,'ws', 'windspeed'), (2,'gen', 'diesel generator'), (3,'hyg','hydrokinetic generator'), (4,'hs', 'waterspeed')])
 
-        self.addRefValues('ref_load_units',[(0,'W', 'watts'), (1,'kW', 'Kilowatts'),(2,'MW','Megawatts')])
+        self.addRefValues('ref_power_units',[(0,'W', 'watts'), (1,'kW', 'Kilowatts'),(2,'MW','Megawatts'),
+                                             (3, 'var', 'vars'),(4,'kvar','kilovars'),(5,'Mvar','Megavars'),
+                                             (6, 'VA','volt-ampere'),(7,'kVA','kilovolt-ampere'),(8,'MVA','Megavolt-ampere')])
 
-        self.addRefValues('ref_attributes' ,[(0,'P', 'power'), (1,'WS', 'windspeed'),(2,'HS','hydrospeed')])
+        self.addRefValues('ref_env_attributes', [(0,'WS', 'Windspeed'), (1,'IR', 'Solar Irradiation'),
+                                                 (2,'WF','Waterflow'),(3,'Tamb','Ambient Temperature')])
+        self.addRefValues('ref_attributes' ,[(0,'P', 'Real Power'), (1,'Q','Reactive Power'),(2,'S','Apparent Power'),
+                                             (3,'PF','Power Factor'),(4,'V','Voltage'),(5, 'I', 'Current'),
+                                             (6, 'f', 'Frequency'), (7,'TStorage','Internal Temperature Thermal Storage'),
+                                             (8,'PAvail','Available Real Power'), (9,'QAvail','Available Reactive Power'),
+                                             (10,'SAvail','Available Apparent Power')])
+
         #TODO stop deleting components
 
         self.cursor.execute("DROP TABLE IF EXISTS components")
