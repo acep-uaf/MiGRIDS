@@ -19,7 +19,7 @@ class SetupForm(QtWidgets.QWidget):
 
     def initUI(self):
         self.setObjectName("setupDialog")
-        self.resize(1754, 3000)
+        #self.resize(1754, 3000)
         self.model = model
         handler = SQLiteHandler('component_manager')
         handler.makeDatabase()
@@ -173,7 +173,9 @@ class SetupForm(QtWidgets.QWidget):
         if text is not None:
             button = QtWidgets.QPushButton(text,self)
         else:
-            button = QtWidgets.QPushButton(icon, self)
+            print('has an icon')
+            button = QtWidgets.QPushButton(self)
+            button.setIcon(button.style().standardIcon(getattr(QtWidgets.QStyle, icon)))
         if hint is not None:
             button.setToolTip(hint)
             button.setToolTipDuration(2000)
@@ -322,21 +324,44 @@ class SetupForm(QtWidgets.QWidget):
         self.environmentBlock.setLayout(tableGroup)
         self.environmentBlock.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         return tv
+    def functionForLoadDescriptor(self):
+        print('load descriptor from xml')
+    def functionForNewDescriptor(self):
+        print('New descriptor')
 
+    def functionForDeleteDescriptor(self):
+        print('Delete descriptor')
+    #string -> QGroupbox
+    def dataButtons(self,table):
+        buttonBox = QtWidgets.QGroupBox()
+        buttonRow = QtWidgets.QHBoxLayout()
+        buttonRow.addWidget(self.makeBlockButton(self.functionForLoadDescriptor,
+                                               None, 'SP_DialogOpenButton', 'Load a previously created component xml file.'))
+
+        buttonRow.addWidget(self.makeBlockButton(self.functionForNewDescriptor,
+                                             None, 'SP_ArrowUp',
+                                             'Add a component'))
+        buttonRow.addWidget(self.makeBlockButton(self.functionForDeleteDescriptor,
+                                             None, 'SP_TrashIcon',
+                                             'Delete a component'))
+        buttonRow.addStretch(3)
+        buttonBox.setLayout(buttonRow)
+        return buttonBox
     def createBottomBlock(self):
         self.bottomBlock = QtWidgets.QGroupBox('Components')
-        tableGroup = QtWidgets.QHBoxLayout()
+
+
+        tableGroup = QtWidgets.QVBoxLayout()
+        tableGroup.addWidget(self.dataButtons('components'))
         tv = T.ComponentTableView(self)
 
         m = T.ComponentTableModel(self)
 
         tv.setModel(m)
 
-        # for row in range(0, m.rowCount()):
-        #     for c in range(0,m.columnCount()):
-        #         tv.openPersistentEditor(m.index(row, c))
-        #     # tv.closePersistentEditor(m.index(row,4))
-        #     # tv.closePersistentEditor(m.index(row, 0))
+        for row in range(0, m.rowCount()):
+            for c in range(0,m.columnCount()):
+                tv.openPersistentEditor(m.index(row, c))
 
 
         tableGroup.addWidget(tv,1)
