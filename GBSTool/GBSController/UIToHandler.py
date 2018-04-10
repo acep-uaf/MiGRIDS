@@ -1,10 +1,10 @@
 #Is called from the GBSUserInterface package to initiate xml file generation through the GBSInputHandler functions
 #SetupInformation ->
 
-class UItoHandler():
+class UIToHandler():
 
 
-    def userInputSetup(self, setupInfo):
+    def makeSetup(self, setupInfo):
 
         from fillProjectData import fillProjectData
         from buildProjectSetup import buildProjectSetup
@@ -18,7 +18,7 @@ class UItoHandler():
 
     #string, dictionary -> None
     #calls the InputHandler functions required to write component descriptor xml files
-    def userInputComponentDescriptor(self, componentDict):
+    def makeComponentDescriptor(self, componentDict):
         from createComponentDescriptor import createComponentDescriptor
         from writeXmlTag import writeXmlTag
         componentDir = componentDict['filepath']
@@ -26,9 +26,18 @@ class UItoHandler():
         componentDescriptor = createComponentDescriptor(componentDict['name'], componentDir)
 
         for tag in componentDict.keys(): # for each tag (skip component name column)
-            if tag not in ['name','filepath']:
+            if tag not in ['component_name','filepath']:
                 attr = 'value'
                 value = componentDict[tag]
                 writeXmlTag(componentDescriptor,tag,attr,value,componentDir)
 
+        return
+
+    #fill a single tag for an existing component descriptor file
+    #dictionary, string -> None
+    def fillComponentDiscriptor(self, componentDict, tag):
+        from writeXmlTag import writeXmlTag
+        attr = 'value'
+        value = componentDict[tag]
+        writeXmlTag(componentDict['component_name'] + 'Descriptor.xml', tag, attr, value, componentDict['filepath'])
         return

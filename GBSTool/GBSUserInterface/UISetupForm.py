@@ -1,5 +1,5 @@
 
-from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5 import QtCore, QtGui, QtWidgets, QtSql
 import ComponentTableModel as T
 import EnvironmentTableModel as E
 from gridLayoutSetup import setupGrid
@@ -113,13 +113,15 @@ class SetupForm(QtWidgets.QWidget):
         ]
 
         self.WizardTree = self.buildWizardTree(dlist)
-        #self.createEnvironmentBlock()
-        #self.environmentBlock.setEnabled(False)
-        #windowLayout.addWidget(self.environmentBlock)
-        self.createBottomBlock()
-        #the bottom block is disabled until a setup file is created or loaded
-        self.bottomBlock.setEnabled(False)
-        windowLayout.addWidget(self.bottomBlock)
+        # the bottom block is disabled until a setup file is created or loaded
+        self.createTableBlock('Environment Data','environment',self.assignEnvironementBlock)
+        self.environmentBlock.setEnabled(False)
+        windowLayout.addWidget(self.environmentBlock)
+
+
+        self.createTableBlock('Components', 'components', self.assignComponentBlock)
+        self.componentBlock.setEnabled(False)
+        windowLayout.addWidget(self.componentBlock)
         windowLayout.addStretch(2)
         #add a console window
         self.addConsole()
@@ -135,6 +137,14 @@ class SetupForm(QtWidgets.QWidget):
 
         #show the form
         self.showMaximized()
+
+    # string, string ->
+    def assignEnvironementBlock(self, value):
+        self.environmentBlock = value
+    def assignComponentBlock(self,value):
+        self.componentBlock = value
+
+
     def addConsole(self):
         c = ConsoleDisplay()
         self.console = c
@@ -219,9 +229,9 @@ class SetupForm(QtWidgets.QWidget):
         #display data
         self.fillData(model)
         self.topBlock.setVisible(True)
-        #self.environmentBlock.setEnabled(True)
+        self.environmentBlock.setEnabled(True)
 
-        self.bottomBlock.setEnabled(True)
+        self.componentBlock.setEnabled(True)
     def functionForExistingButton(self):
         import os
         #launch folderdialog
@@ -303,72 +313,72 @@ class SetupForm(QtWidgets.QWidget):
         self.topBlock.setLayout(hlayout)
         self.topBlock.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         self.topBlock.sizePolicy().retainSizeWhenHidden()
-    #environment data is similar in layout to component descriptors but the info does not get written to descriptor files
-    def createEnvironmentBlock(self):
-    #returns a table view within a horizontal layout
-        self.environmentBlock = QtWidgets.QGroupBox('Environmental Inputs')
-        tableGroup = QtWidgets.QHBoxLayout()
-        tv = E.EnvironmentTableView(self)
+    #layout for tables
+    def createTableBlock(self, title, table, fn):
 
-        m = E.EnvironmentTableModel(self)
+        gb = QtWidgets.QGroupBox(title)
 
+        tableGroup = QtWidgets.QVBoxLayout()
+        tableGroup.addWidget(self.dataButtons(table))
+        if table =='components':
+            tv = T.ComponentTableView(self)
+            tv.setObjectName('components')
+            m = T.ComponentTableModel(self)
+
+        else:
+            tv = E.EnvironmentTableView(self)
+            tv.setObjectName('environment')
+            m = E.EnvironmentTableModel(self)
         tv.setModel(m)
 
         for row in range(0, m.rowCount()):
-            for c in range(0,m.columnCount()):
+            for c in range(1, m.columnCount()):
                 tv.openPersistentEditor(m.index(row, c))
 
-            tv.closePersistentEditor(m.index(row,4))
 
         tableGroup.addWidget(tv, 1)
-        self.environmentBlock.setLayout(tableGroup)
-        self.environmentBlock.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+        gb.setLayout(tableGroup)
+        gb.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+        fn(gb)
         return tv
+
+
     def functionForLoadDescriptor(self):
         print('load descriptor from xml')
-    def functionForNewDescriptor(self):
-        print('New descriptor')
+    def functionForNewRecord(self, table):
+        #add an empty record to the table
 
-    def functionForDeleteDescriptor(self):
-        print('Delete descriptor')
+        #get the model
+        tableView= self.findChild((QtWidgets.QTableView), table)
+        model = tableView.model()
+        #insert an empty row as the last record
+        print("i'm trying to insert a row in %s" %table)
+        model.insertRows(model.rowCount(),1)
+
+    def functionForDeleteRecord(self, table):
+        #TODO delete records
+        print('Deleting records is not allowed at this time')
+        #rename components in the table
+
     #string -> QGroupbox
     def dataButtons(self,table):
         buttonBox = QtWidgets.QGroupBox()
         buttonRow = QtWidgets.QHBoxLayout()
-        buttonRow.addWidget(self.makeBlockButton(self.functionForLoadDescriptor,
+
+        if table == 'components':
+
+            buttonRow.addWidget(self.makeBlockButton(self.functionForLoadDescriptor,
                                                None, 'SP_DialogOpenButton', 'Load a previously created component xml file.'))
 
-        buttonRow.addWidget(self.makeBlockButton(self.functionForNewDescriptor,
+        buttonRow.addWidget(self.makeBlockButton(lambda:self.functionForNewRecord(table),
                                              None, 'SP_ArrowUp',
                                              'Add a component'))
-        buttonRow.addWidget(self.makeBlockButton(self.functionForDeleteDescriptor,
+        buttonRow.addWidget(self.makeBlockButton(lambda:self.functionForDeleteRecord(table),
                                              None, 'SP_TrashIcon',
                                              'Delete a component'))
         buttonRow.addStretch(3)
         buttonBox.setLayout(buttonRow)
         return buttonBox
-    def createBottomBlock(self):
-        self.bottomBlock = QtWidgets.QGroupBox('Components')
-
-
-        tableGroup = QtWidgets.QVBoxLayout()
-        tableGroup.addWidget(self.dataButtons('components'))
-        tv = T.ComponentTableView(self)
-
-        m = T.ComponentTableModel(self)
-
-        tv.setModel(m)
-
-        for row in range(0, m.rowCount()):
-            for c in range(0,m.columnCount()):
-                tv.openPersistentEditor(m.index(row, c))
-
-
-        tableGroup.addWidget(tv,1)
-        self.bottomBlock.setLayout(tableGroup)
-        self.bottomBlock.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
-        return tv
-        
 
     def fillData(self,model):
         d = model.getSetupTags()

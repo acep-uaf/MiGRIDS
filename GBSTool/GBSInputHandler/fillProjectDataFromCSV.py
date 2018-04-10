@@ -12,7 +12,7 @@ def fillProjectDataFromCSV(projectDir):
     sys.path.append(here)
     import pandas as pd
     from writeXmlTag import writeXmlTag
-    from buildComponentDescriptor import buildComponentDescriptor
+    from buildAllComponentDescriptor import buildComponentDescriptor
     from buildProjectSetup import buildProjectSetup
 
 

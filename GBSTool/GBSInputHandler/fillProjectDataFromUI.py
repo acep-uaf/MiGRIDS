@@ -52,12 +52,13 @@ def fillProjectDataFromUI(projectDir, setupInfo):
     componentDir = os.path.join(setupDir, '../Components')
 
 
-    for component in setupInfo.componentNames: # for each component
-         componentDescriptor = component + 'Descriptor.xml'
-         file = os.path.join(componentDir,componentDescriptor)
-         #don't do anything if the file exists.
-         if not file.is_file():
-             #otherwise create the file
-             buildComponentDescriptor(componentDescriptor, componentDir)
+    # for component in setupInfo.componentNames: # for each component
+    #      componentDescriptor = component + 'Descriptor.xml'
+    #      file = os.path.join(componentDir,componentDescriptor)
+    #
+    #      #don't do anything if the file exists.
+    #      if not os.path.isfile(file):
+    #          #otherwise create the file
+    #          buildAllComponentDescriptor(componentDescriptor, componentDir)
 
 

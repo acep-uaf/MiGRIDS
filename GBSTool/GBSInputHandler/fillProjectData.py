@@ -39,6 +39,6 @@ def fillProjectData(projectDir = '',setupInfo = None):
 
     else:
         fillProjectDataFromUI(projectDir,setupInfo)
-        # get possible headers
-        if setupInfo.possibleHeaders is not None:
-            fillProjectComponentData(projectDir, setupInfo)
+        # TODO get possible headers by reading in timeseries
+        # if setupInfo.possibleHeaders is not None:
+        #     fillProjectComponentData(projectDir, setupInfo)

@@ -1,5 +1,6 @@
 '''SetupInformation is a data model for storing setup information collected through the SetupWizard or UISetupForm.
 The information is written to an XML file using the writeXML method. '''
+from Component import Component
 
 
 class SetupTag:
@@ -162,7 +163,8 @@ class SetupInformation:
         return True
     #write a new setup xml file for this project
     def writeNewXML(self):
-        from userInputToHandler import userInputToHandler
+        from UIToHandler import UIToHandler
         #tell controller to tell InputHandler package to write input xmls
-        userInputToHandler(self)
+        handler = UIToHandler()
+        handler.makeSetup(self)
         return True

@@ -10,4 +10,4 @@ def initiateProject(projectName,componentNames,componentDir,setupDir):
     componentNamesGood = buildComponentDescriptor(componentNames, componentDir)
     # initiate the setup file with the good component names
     from buildProjectSetup import buildProjectSetup
-    buildProjectSetup(projectName,setupDir,componentNamesGood)
+    buildProjectSetup(projectName,setupDir, None)

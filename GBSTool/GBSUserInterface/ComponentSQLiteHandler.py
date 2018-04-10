@@ -124,19 +124,40 @@ class SQLiteHandler:
          scale numeric,
          offset numeric,
          attribute text,
-         p_in_maxpa numeric,
-         q_in_maxpa numeric, 
-         q_out_maxpa numeric,
-         is_voltage_source text,
+         pinmaxpa numeric,
+         qinmaxpa numeric, 
+         qoutmaxpa numeric,
+         isvoltagesource text,
          tags text,
          FOREIGN KEY (component_type) REFERENCES ref_component_type(code),
          FOREIGN KEY (units) REFERENCES ref_universal_units(code),
          FOREIGN KEY (attribute) REFERENCES ref_attributes(code),
-         FOREIGN KEY (is_voltage_source) REFERENCES ref_true_false(code)
+         FOREIGN KEY (isvoltagesource) REFERENCES ref_true_false(code)
          );""")
         #TODO remove test components
-        self.cursor.executemany("INSERT INTO components (original_field_name, component_type, component_name, scale) values (?,?,?,?)",
-                                [('Hank', 'wtg','wtg1P',1),('gen1','gen','gen1P',3)])
+        self.cursor.executemany("INSERT INTO components (original_field_name, component_type, component_name, scale, units, attribute, isvoltagesource) values (?,?,?,?,?,?,?)",
+                                [('Hank', 'wtg','wtg1P',1,'kW','P','T'),('gen1','gen','gen1P',3,'kW','P','T')])
+
+        self.cursor.execute("DROP TABLE IF EXISTS environment")
+        self.cursor.executescript("""CREATE TABLE environment
+                 (_id integer primary key,
+                 original_field_name text,
+                 component_name text,
+                 units text,
+                 scale numeric,
+                 offset numeric,
+                 attribute text,
+                 
+                 tags text,
+                 
+                 FOREIGN KEY (units) REFERENCES ref_universal_units(code),
+                 FOREIGN KEY (attribute) REFERENCES ref_env_attributes(code)
+                 
+                 );""")
+        # TODO remove test environment components
+        self.cursor.executemany(
+            "INSERT INTO environment (original_field_name, component_name, scale, attribute,units) values (?,?,?,?,?)",
+            [('WIND', 'ws1', 1,'WS','m/s')])
 
         self.connection.commit()
     def getRefInput(self, tables):
@@ -150,6 +171,18 @@ class SQLiteHandler:
             for v in range(len(values)):
                 valueStrings.append(values.loc[v, 'code'] + ' - ' + values.loc[v, 'description'])
         return valueStrings
+
+    def getTypeCount(self,componentType):
+        import re
+        #tuple of existing component names ordered smallest number to highest
+        nameTuple = self.cursor.execute("select component_name from components where component_type = ? order by component_name",componentType).fetchall()
+        #get the last value in the tuple and find its number
+        finalName = nameTuple[len(nameTuple) -1]
+        count = re.findall(r'\d+', finalName)
+        if len(count) > 0:
+            count = int(count[0])
+            return count
+        return 0
 
     def getHeaders(self,table):
         #Todo read from database
@@ -174,7 +207,24 @@ class SQLiteHandler:
         table = table.strip()
 
         return table
-
+    def updateComponent(self, dict):
+        for k in dict.keys():
+            try:
+                self.cursor.execute("UPDATE components SET " + k + " = ? WHERE component_name = ?", [dict[k],dict['component_name']])
+            except:
+                print('%s column was not found in the data table' %k)
+        self.connection.commit()
+    #determines if a componente record needs to be created or updated and implements the correct function
+    #returns true if the record is a new record and was added to the table
+    #dictionary -> Boolean
+    def writeComponent(self,componentDict):
+        if len(self.cursor.execute("SELECT * FROM components where component_name = ?", [componentDict['component_name']]).fetchall()) > 0:
+            self.updateComponent(componentDict)
+        else:
+            self.cursor.execute('INSERT INTO components (component_name) VALUES (?)', [componentDict['component_name']])
+            self.updateComponent(componentDict)
+            return True
+        return False
     def getCodes(self,table):
 
         import pandas as pd
