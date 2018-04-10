@@ -20,6 +20,7 @@ class SetupForm(QtWidgets.QWidget):
     def initUI(self):
         self.setObjectName("setupDialog")
         self.resize(1754, 3000)
+        self.model = model
         handler = SQLiteHandler('component_manager')
         handler.makeDatabase()
         handler.closeDatabase()
@@ -62,10 +63,10 @@ class SetupForm(QtWidgets.QWidget):
               'sqlfield': None, 'reftable': None, 'name': 'inputTimeStepvalue', 'folder': False},
              'Raw Time Series'],
 
-            [{'title': 'Load Profile Units', 'prompt': 'Select the units for the load profile values.',
+            [{'title': 'Real Load Units', 'prompt': 'Select the units for the real load values.',
               'sqltable': None,
               'sqlfield': None, 'reftable': 'ref_load_units', 'name': 'realLoadChannelunit', 'folder': False},
-             'Load Profile'],
+             'Real Load'],
             [{'title': 'Real Load', 'prompt': 'Enter the name of the field real load values.',
               'sqltable': None,
               'sqlfield': None, 'reftable': None, 'name': 'realLoadChannelvalue', 'folder': False},
@@ -104,20 +105,20 @@ class SetupForm(QtWidgets.QWidget):
 
             [{'title': 'Data Input Format', 'prompt': 'Select the format your data is in.', 'sqltable': None,
               'sqlfield': None, 'reftable': 'ref_data_format', 'name': 'inputFileFormat', 'folder': False},
-             'Project Name'],
+             'Project'],
 
-            [{'title': 'Project Name', 'prompt': 'Enter the name of your project', 'sqltable': None,
+            [{'title': 'Project', 'prompt': 'Enter the name of your project', 'sqltable': None,
               'sqlfield': None, 'reftable': None, 'name': 'project', 'folder': False}, None, ]
 
         ]
 
         self.WizardTree = self.buildWizardTree(dlist)
-        self.createEnvironmentBlock()
+        #self.createEnvironmentBlock()
         #self.environmentBlock.setEnabled(False)
-        windowLayout.addWidget(self.environmentBlock)
+        #windowLayout.addWidget(self.environmentBlock)
         self.createBottomBlock()
         #the bottom block is disabled until a setup file is created or loaded
-        #self.bottomBlock.setEnabled(False)
+        self.bottomBlock.setEnabled(False)
         windowLayout.addWidget(self.bottomBlock)
         windowLayout.addStretch(2)
         #add a console window
@@ -198,24 +199,27 @@ class SetupForm(QtWidgets.QWidget):
 
         if hasSetup:
             self.topBlock.setVisible(True)
-            self.environmentBlock.isEnabled(True)
-            self.bottomBlock.isEnabled(True)
+            self.environmentBlock.setEnabled(True)
+            self.bottomBlock.setEnabled(True)
 
     def functionForLoadButton(self):
         import os
         #launch file navigator
         setupFile = QtWidgets.QFileDialog.getOpenFileName(self,"Select your setup file", None, "*xml" )
-
+        if (setupFile == ('','')) | (setupFile is None):
+            return
         model.setupFolder = os.path.dirname(setupFile[0])
 
         model.project = os.path.basename(setupFile[0][:-9])
-
+        print(model.project)
         #assign information to data model
         model.feedSetupInfo()
         #display data
         self.fillData(model)
         self.topBlock.setVisible(True)
+        #self.environmentBlock.setEnabled(True)
 
+        self.bottomBlock.setEnabled(True)
     def functionForExistingButton(self):
         import os
         #launch folderdialog
@@ -328,11 +332,11 @@ class SetupForm(QtWidgets.QWidget):
 
         tv.setModel(m)
 
-        for row in range(0, m.rowCount()):
-            for c in range(0,m.columnCount()):
-                tv.openPersistentEditor(m.index(row, c))
-            # tv.closePersistentEditor(m.index(row,4))
-            # tv.closePersistentEditor(m.index(row, 0))
+        # for row in range(0, m.rowCount()):
+        #     for c in range(0,m.columnCount()):
+        #         tv.openPersistentEditor(m.index(row, c))
+        #     # tv.closePersistentEditor(m.index(row,4))
+        #     # tv.closePersistentEditor(m.index(row, 0))
 
 
         tableGroup.addWidget(tv,1)
