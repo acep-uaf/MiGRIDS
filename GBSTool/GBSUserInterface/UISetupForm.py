@@ -21,9 +21,9 @@ class SetupForm(QtWidgets.QWidget):
         self.setObjectName("setupDialog")
         #self.resize(1754, 3000)
         self.model = model
-        handler = SQLiteHandler('component_manager')
-        handler.makeDatabase()
-        handler.closeDatabase()
+        # handler = SQLiteHandler('component_manager')
+        # handler.makeDatabase()
+        # handler.closeDatabase()
 
         #the main layout is oriented vertically
         windowLayout = QtWidgets.QVBoxLayout()
@@ -37,7 +37,7 @@ class SetupForm(QtWidgets.QWidget):
         #add the setup block
         self.createTopBlock()
         #the topBlock is hidden until we load or create a setup xml
-        self.topBlock.setVisible(False)
+        self.topBlock.setEnabled(False)
         windowLayout.addWidget(self.topBlock)
         #more space between component block
         windowLayout.addStretch(1)
@@ -210,7 +210,7 @@ class SetupForm(QtWidgets.QWidget):
         self.fillData(model)
 
         if hasSetup:
-            self.topBlock.setVisible(True)
+            self.topBlock.setEnabled(True)
             self.environmentBlock.setEnabled(True)
             self.bottomBlock.setEnabled(True)
 
@@ -228,7 +228,7 @@ class SetupForm(QtWidgets.QWidget):
         model.feedSetupInfo()
         #display data
         self.fillData(model)
-        self.topBlock.setVisible(True)
+        self.topBlock.setEnabled(True)
         self.environmentBlock.setEnabled(True)
 
         self.componentBlock.setEnabled(True)
@@ -331,9 +331,9 @@ class SetupForm(QtWidgets.QWidget):
             m = E.EnvironmentTableModel(self)
         tv.setModel(m)
 
-        for row in range(0, m.rowCount()):
-            for c in range(1, m.columnCount()):
-                tv.openPersistentEditor(m.index(row, c))
+        # for row in range(0, m.rowCount()):
+        #     for c in range(1, m.columnCount()):
+        #         tv.openPersistentEditor(m.index(row, c))
 
 
         tableGroup.addWidget(tv, 1)
@@ -354,6 +354,7 @@ class SetupForm(QtWidgets.QWidget):
         #insert an empty row as the last record
         print("i'm trying to insert a row in %s" %table)
         model.insertRows(model.rowCount(),1)
+        model.submitAll()
 
     def functionForDeleteRecord(self, table):
         #TODO delete records
