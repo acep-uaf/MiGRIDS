@@ -58,7 +58,7 @@ class SQLiteHandler:
         self.connection.commit()
 
     def makeDatabase(self):
-
+        print('making database')
         refTables = [
             'ref_component_attribute',
             'ref_component_type',
@@ -137,6 +137,23 @@ class SQLiteHandler:
         #TODO remove test components
         self.cursor.executemany("INSERT INTO components (original_field_name, component_type, component_name, scale, units, attribute, isvoltagesource) values (?,?,?,?,?,?,?)",
                                 [('Hank', 'wtg','wtg1P',1,'kW','P','T'),('gen1','gen','gen1P',3,'kW','P','T')])
+        #create a sql function to access the getTypeCount function
+        self.connection.create_function("componentName",1,self.getTypeCount)
+        self.connection.commit()
+        #create a trigger so that when component is updated the component name is filled in
+        #TODO this doesn't work through table interactions, temporary solution below
+        # self.cursor.execute("""CREATE TRIGGER component_name_trigger
+        # AFTER UPDATE ON components WHEN old.component_type <> new.component_type
+        # BEGIN UPDATE components set component_name = component_type || componentName((SELECT max(component_name) from components where component_type = component_type));
+        # END;
+        #
+        # """)
+        #
+        self.cursor.execute("""CREATE TRIGGER component_name_trigger
+        AFTER UPDATE ON components WHEN old.component_type <> new.component_type
+        BEGIN UPDATE components set component_name = component_type || _id || attribute;
+        END;
+        """)
 
         self.cursor.execute("DROP TABLE IF EXISTS environment")
         self.cursor.executescript("""CREATE TABLE environment
@@ -172,16 +189,13 @@ class SQLiteHandler:
                 valueStrings.append(values.loc[v, 'code'] + ' - ' + values.loc[v, 'description'])
         return valueStrings
 
-    def getTypeCount(self,componentType):
+    def getTypeCount(self,finalName):
         import re
-        #tuple of existing component names ordered smallest number to highest
-        nameTuple = self.cursor.execute("select component_name from components where component_type = ? order by component_name",componentType).fetchall()
-        #get the last value in the tuple and find its number
-        finalName = nameTuple[len(nameTuple) -1]
+        print('type count called for %s' %finalName)
         count = re.findall(r'\d+', finalName)
         if len(count) > 0:
             count = int(count[0])
-            return count
+            return count +1
         return 0
 
     def getHeaders(self,table):
@@ -233,3 +247,6 @@ class SQLiteHandler:
         codes = (codes['code']).tolist()
 
         return codes
+    def hello(self,x):
+        print(x)
+        return x

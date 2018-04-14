@@ -1,4 +1,4 @@
-from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5 import QtCore, QtGui, QtWidgets, QtSql
 class ComboReference():
     def __init__(self,cmb,table,db):
         self.cmb = cmb
@@ -50,50 +50,40 @@ class TextDelegate(QtWidgets.QItemDelegate):
     def currentIndexChanged(self):
         self.commitData.emit(self.sender())
 
-# #Button  connected to the table
-# class ButtonDelegate(QtWidgets.QItemDelegate):
-#     def __init__(self,parent,icon):
-#         QtWidgets.QItemDelegate.__init__(self,parent)
-#         self.icon = icon
-#     def createEditor(self,parent, option, index):
-#         button = QtWidgets.QPushButton(parent)
-#         button.setIcon(button.style().standardIcon(getattr(QtWidgets.QStyle, self.icon)))
-#         button.clicked.connect(self.currentIndexChanged)
-#         return button
-#     def setModelData(self, editor, model, index):
-#         model.setData(index, editor.icon())
-#
-#     @QtCore.pyqtSlot()
-#     def currentIndexChanged(self):
-#         self.commitData.emit(self.sender())
+class RelationDelegate(QtSql.QSqlRelationalDelegate):
+    def __init__(self, parent):
+        QtSql.QSqlRelationalDelegate.__init__(self,parent)
 
-# #Button  connected to the table
-# class ComboDelegate(QtWidgets.QItemDelegate):
-#     def __init__(self,parent,values):
-#         QtWidgets.QItemDelegate.__init__(self,parent)
-#         self.values = values
-#
-#     def createEditor(self,parent, option, index):
-#         combo = QtWidgets.QComboBox(parent)
-#         combo.addItems(self.values)
-#         combo.currentIndexChanged.connect(self.currentIndexChanged)
-#         return combo
-#
-#     def setEditorData(self, editor, index):
-#         editor.blockSignals(True)
-#
-#         #set the combo to the selected index
-#         print(index.model().data(index))
-#         editor.setCurrentIndex(int(index.model().data(index)))
-#         editor.blockSignals(False)
-#
-#     #write model data
-#     def setModelData(self,editor, model, index):
-#
-#         model.setData(index, editor.itemText(editor.currentIndex()))
-#
-#
-#     @QtCore.pyqtSlot()
-#     def currentIndexChanged(self):
-#
-#         self.commitData.emit(self.sender())
+
+    def setModelData(self,editor, model, index):
+
+        model.setData(index, editor.itemText(editor.currentIndex()))
+    @QtCore.pyqtSlot()
+    def currentIndexChanged(self):
+
+        self.commitData.emit(self.sender())
+
+class ComponentFormOpenerDelegate(QtWidgets.QItemDelegate):
+    def __init__(self,parent):
+        QtWidgets.QItemDelegate.__init__(self,parent)
+
+
+    def paint(self, painter, option, index):
+        if not self.parent().indexWidget(index):
+            self.parent().setIndexWidget(
+                index, QtWidgets.QPushButton('+',self.parent(), clicked=lambda:self.cellButtonClicked(index))
+            )
+
+    @QtCore.pyqtSlot()
+    def cellButtonClicked(self, index):
+        from formFromXML import formFromXML
+        model = self.parent().model()
+        #column 0 is id, 3 is name, 2 is type
+        data = model.data(model.index(index.row(), 0))
+        #open a component form specific to this type
+        #data from the form gets saved to a soup, then written to xml
+        print ('button clicked ', data)
+        f = formFromXML()
+
+
+

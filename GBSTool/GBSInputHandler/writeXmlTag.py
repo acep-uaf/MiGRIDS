@@ -31,7 +31,8 @@ def writeXmlTag(fileName,tag,attr,value,fileDir=''):
         value = [str(e) for e in value]
     else:
         value = str(value)
-    a[attr] = value
+    if a is not None:
+        a[attr] = value
 
 
     # save again

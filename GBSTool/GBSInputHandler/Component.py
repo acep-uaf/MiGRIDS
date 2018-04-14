@@ -2,7 +2,7 @@
 class Component:
     """A class with access to the generic characteristics of a component."""
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self,  **kwargs):
         self.component_name = kwargs.get('component_name')
         self.original_field_name=kwargs.get('original_field_name')
         self.units = kwargs.get('units')
@@ -11,11 +11,12 @@ class Component:
         self.scale = kwargs.get('scale')
         #type specifies the type of component (i.e. wtg, gen)
         self.type = kwargs.get('type')
+        self.attribute =kwargs.get('attribute')
         self.filepath = kwargs.get('filepath')
-        self.pinmaxpa = kwargs.get('pinmaxpa')
-        self.qinmaxpa = kwargs.get('qinmaxpa')
-        self.qoutmaxpa = kwargs.get('qoutmaxpa')
-        self.voltagesource=kwargs.get('voltagesource')
+        self.PInMaxPa = kwargs.get('pinmaxpa')
+        self.QInMaxPa = kwargs.get('qinmaxpa')
+        self.QOutMaxPa = kwargs.get('qoutmaxpa')
+        self.isVoltageSource=kwargs.get('voltagesource')
         self.tags=kwargs.get('tags')
 
 

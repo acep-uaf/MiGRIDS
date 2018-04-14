@@ -13,6 +13,7 @@ def setupGrid(inputDictionary):
     #returns a QtWidget at a specified row, column within a gridlayout
     def getColumn(objectName, row, c, gridLayout):
         o = gridLayout.itemAtPosition(0, c)
+        print(o)
         if c > gridLayout.columnCount():
             return False
         if o is not None:
@@ -38,67 +39,85 @@ def setupGrid(inputDictionary):
     grid.setContentsMargins(0, 0, 0, 0)
     grid.setObjectName("grdSetup")
 
+    #list of top row values
+
     headers = inputDictionary['headers']
 
     def getPosition(i, widthList):
         x = sum(widthList[:i]) + 1
 
         return x
-
+    #for all the headers
     for i in range(len(headers)):
         # the x position is the sum of previous widths
         xpos = getPosition(i, inputDictionary['columnWidths'])
         grid.lbl = QtWidgets.QLabel()
         grid.lbl.setFont(font)
-
+        #All the headers are label objects with a name beginning with 'lbl'
         grid.lbl.setObjectName('lbl' + str(headers[i]))
+        print(grid.lbl.objectName())
         grid.lbl.setProperty('wscale', inputDictionary['columnWidths'][i])
         grid.lbl.setProperty('xpos', xpos)
 
         grid.addWidget(grid.lbl, 0, xpos, 1, inputDictionary['columnWidths'][i])
+
+        #if the header is a string then add text to the label
+        #if its a number don't show the number
         if type(headers[i]) == str:
             grid.lbl.setText(headers[i])
+    #A list of row names
     rowNames = inputDictionary['rowNames']
 
     # TODO combo boxes need padding
 
     for i in range(len(rowNames)):
-
+        # for every row name create a label
         grid.lbl = QtWidgets.QLabel()
         grid.lbl.setFont(font)
         grid.lbl.setObjectName('lbl' + str(rowNames[i]))
         grid.addWidget(grid.lbl, i + 1, 1, 1, 1)
+
+        #if the rowname is a string show it otherwise don't
         if type(rowNames[i]) == str:
             grid.lbl.setText(rowNames[i])
 
         # get the row of widgets
         r = inputDictionary[rowNames[i]]
+
         # fill in row values
+        print('headers: %s' %headers)
         for h in headers[1:]:
+            print(h)
+            print(r)
             # identify what kind of widget it is
-            grid.wid = getWidget(r[h]['widget'])
+            if h in r.keys():
+                grid.wid = getWidget(r[h]['widget'])
+                print(grid.wid)
+                # find the column width from the column label width
+                print('lbl' + str(h))
+                w = getColumn('lbl' + str(h), 0, h, grid)
+                print (w)
 
-            # find the column width from the column label width
+                pscale = w.property('wscale')
+                xpos = w.property('xpos')
 
-            w = getColumn('lbl' + str(h), 0, 0, grid)
-            pscale = w.property('wscale')
-            xpos = w.property('xpos')
+                # if there is an icon set it
+                if 'icon' in r[h].keys():
+                    grid.wid.setIcon(grid.wid.style().standardIcon(getattr(QtWidgets.QStyle, r[h]['icon'])))
 
-            # if there is an icon set it
-            if 'icon' in r[h].keys():
-                grid.wid.setIcon(grid.wid.style().standardIcon(getattr(QtWidgets.QStyle, r[h]['icon'])))
+                grid.wid.setFont(font)
+                #the name matches the name and attribute in the xml file
+                grid.wid.setObjectName(r[h]['name'])
+                if 'default' in r[h].keys():
+                    grid.wid.setText(r[h]['default'])
+                grid.addWidget(grid.wid, i + 1, xpos, 1, pscale)
 
-            grid.wid.setFont(font)
-            #the name matches the name and attribute in the xml file
-            grid.wid.setObjectName(r[h]['name'])
-            #grid.wid.setObjectName('inp'.join(str(r)).join(str(h)))
+                if 'items' in r[h].keys():
+                    for item in r[h]['items']:
+                        #TODO add space around text
+                        grid.wid.addItem(item)
 
-            grid.addWidget(grid.wid, i + 1, xpos, 1, pscale)
 
-            if 'items' in r[h].keys():
-                for item in r[h]['items']:
-                    #TODO add space around text
-                    grid.wid.addItem(item)
 
 
     return grid

@@ -195,7 +195,4 @@ class SetupWizard:
         self.recordValue()
         if finished:
             self.model.writeNewXML()
-        #TODO feed the info back into the user interface display
-            #self.model.feedSetupInfo()
-            #self.parentWindow.fillData(self.model)
-        #display the information in the UISetupForm
+

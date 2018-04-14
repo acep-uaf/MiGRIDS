@@ -8,6 +8,7 @@ from WizardTree import WizardTree
 from ConsoleDisplay import ConsoleDisplay
 from SetupInformation import SetupInformation
 from ComponentSQLiteHandler import SQLiteHandler
+from Component import Component
 
 class SetupForm(QtWidgets.QWidget):
     global model
@@ -127,6 +128,7 @@ class SetupForm(QtWidgets.QWidget):
         self.addConsole()
         windowLayout.addWidget(self.console)
         windowLayout.addStretch(2)
+        windowLayout.addWidget(self.makeBlockButton(self.createInputFiles,'Create input files',None,'Create input files to run models'),3)
         #TODO get rid of test message
         self.console.showMessage("I am a console message")
         #set the main layout as the layout for the window
@@ -183,7 +185,7 @@ class SetupForm(QtWidgets.QWidget):
         if text is not None:
             button = QtWidgets.QPushButton(text,self)
         else:
-            print('has an icon')
+
             button = QtWidgets.QPushButton(self)
             button.setIcon(button.style().standardIcon(getattr(QtWidgets.QStyle, icon)))
         if hint is not None:
@@ -212,7 +214,7 @@ class SetupForm(QtWidgets.QWidget):
         if hasSetup:
             self.topBlock.setEnabled(True)
             self.environmentBlock.setEnabled(True)
-            self.bottomBlock.setEnabled(True)
+            self.componentBlock.setEnabled(True)
 
     def functionForLoadButton(self):
         import os
@@ -246,22 +248,23 @@ class SetupForm(QtWidgets.QWidget):
         self.topBlock.setVisible(False)
     #TODO make dynamic from list input
     def buildWizardTree(self, dlist):
-        w1 = WizardTree(dlist[0][0], dlist[0][1], 0, [])  # output timestep unit
-        w2 = WizardTree(dlist[1][0], dlist[1][1], 4, [w1])  # output timestep value
+        # w1 = WizardTree(dlist[0][0], dlist[0][1], 0, [])  # output timestep unit
+        # w2 = WizardTree(dlist[1][0], dlist[1][1], 4, [w1])  # output timestep value
+        #
+        # w3 = WizardTree(dlist[2][0], dlist[2][1], 0, [])  # input units
+        # w4 = WizardTree(dlist[3][0], dlist[3][1], 3, [w3])  # input value
+        #
+        # w5 = WizardTree(dlist[4][0], dlist[4][1], 0, [])  # load units
+        # w6 = WizardTree(dlist[5][0], dlist[5][1], 2, [w5])  # load column
+        #
+        # w7 = WizardTree(dlist[6][0], dlist[6][1], 0, [])  # Date Format
+        # w8 = WizardTree(dlist[7][0], dlist[7][1], 1, [w7])  # Date Column
 
-        w3 = WizardTree(dlist[2][0], dlist[2][1], 0, [])  # input units
-        w4 = WizardTree(dlist[3][0], dlist[3][1], 3, [w3])  # input value
+        # w9 = WizardTree(dlist[8][0], dlist[8][1], 0, [])  # Time Format
+        # w10 = WizardTree(dlist[9][0], dlist[9][1], 0, [w9])  # Time Column
 
-        w5 = WizardTree(dlist[4][0], dlist[4][1], 0, [])  # load units
-        w6 = WizardTree(dlist[5][0], dlist[5][1], 2, [w5])  # load column
-
-        w7 = WizardTree(dlist[6][0], dlist[6][1], 0, [])  # Date Format
-        w8 = WizardTree(dlist[7][0], dlist[7][1], 1, [w7])  # Date Column
-
-        w9 = WizardTree(dlist[8][0], dlist[8][1], 0, [])  # Time Format
-        w10 = WizardTree(dlist[9][0], dlist[9][1], 0, [w9])  # Time Column
-
-        w11 = WizardTree(dlist[10][0], dlist[10][1], 2, [w10, w8, w6, w4, w2])  # Time Series
+        #w11 = WizardTree(dlist[10][0], dlist[10][1], 2, [w10, w8, w6, w4, w2])  # Time Series
+        w11 = WizardTree(dlist[10][0], dlist[10][1], 2, [])
         w12 = WizardTree(dlist[11][0], dlist[11][1], 1, [])  # hydro
         w13 = WizardTree(dlist[12][0], dlist[12][1], 0, [])  # wind
 
@@ -357,9 +360,30 @@ class SetupForm(QtWidgets.QWidget):
         model.submitAll()
 
     def functionForDeleteRecord(self, table):
-        #TODO delete records
-        print('Deleting records is not allowed at this time')
-        #rename components in the table
+
+        #get selected rows
+        tableView = self.findChild((QtWidgets.QTableView), table)
+        model = tableView.model()
+        #selected is the indices of the selected rows
+        selected = tableView.selectionModel().selection().indexes()
+        if len(selected) == 0:
+            msg = QtWidgets.QMessageBox(QtWidgets.QMessageBox.Warning,'Select Rows','Select rows before attempting to delete')
+            msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
+            msg.exec()
+        else:
+            msg = QtWidgets.QMessageBox(QtWidgets.QMessageBox.Warning,'Confirm Delete','Are you sure you want to delete the selected records?')
+            msg.setStandardButtons(QtWidgets.QMessageBox.Ok|QtWidgets.QMessageBox.Cancel)
+
+            result = msg.exec()
+
+            if result == 1024:
+                for r in selected:
+                    model.removeRows(r.row(),1)
+                    #print('Deleting records is not allowed at this time %s' %result)
+                #Delete the record from the database and refresh the tableview
+                model.submitAll()
+                model.select()
+
 
     #string -> QGroupbox
     def dataButtons(self,table):
@@ -381,6 +405,8 @@ class SetupForm(QtWidgets.QWidget):
         buttonBox.setLayout(buttonRow)
         return buttonBox
 
+    #inserts data from the data model into corresponding boxes on the screen
+    #SetupInfo -> None
     def fillData(self,model):
         d = model.getSetupTags()
 
@@ -398,3 +424,76 @@ class SetupForm(QtWidgets.QWidget):
                     edit_field.setCurrentIndex(edit_field.findText(d[k][a]))
 
         return
+    #send input data to the SetupInformation data model
+    def sendData(self):
+        #cycle through the input children in the topblock
+        for child in self.topBlock.findChildren((QtWidgets.QLineEdit,QtWidgets.QComboBox)):
+            print(child.objectName())
+            if type(child) is QtWidgets.QLineEdit:
+                value = child.text()
+                print(value)
+            else:
+                value = child.itemText(child.currentIndex())
+
+            self.model.assign(child.objectName(),value)
+        #we also need headerNames, componentNames, attributes and units from the component section
+        componentView = self.findChild((QtWidgets.QTableView),'components')
+        componentModel = componentView.model()
+        model.headerNamevalue =[]
+        model.componentNamevalue = []
+        model.componentAttributevalue = []
+        model.componentAttributeunit = []
+        model.componentNames = []
+        model.componentNamesvalue= []
+        for i in range(0,componentModel.rowCount()):
+            model.componentNamesvalue.append(componentModel.data(componentModel.index(i,3)))
+            model.headerNamevalue.append(componentModel.data(componentModel.index(i,1)))
+            model.componentNamevalue.append(componentModel.data(componentModel.index(i,3)))
+            model.componentAttributevalue.append(componentModel.data(componentModel.index(i,7)))
+            model.componentAttributeunit.append(componentModel.data(componentModel.index(i,4)))
+        #and the same data from the environment section
+        envView = self.findChild((QtWidgets.QTableView), 'environment')
+        envModel = componentView.model()
+        for i in range(0, envModel.rowCount()):
+            model.headerNamevalue.append(componentModel.data(componentModel.index(i, 1)))
+            model.componentNamevalue.append(componentModel.data(componentModel.index(i, 2)))
+            model.componentAttributevalue.append(componentModel.data(componentModel.index(i, 3)))
+            model.componentAttributeunit.append(componentModel.data(componentModel.index(i, 6)))
+    #write data to the data model and generate input xml files for setup and components
+    def createInputFiles(self):
+        self.sendData()
+        # write all the xml files
+
+        #then component descriptors
+        componentView = self.findChild((QtWidgets.QTableView), 'components')
+        componentModel = componentView.model()
+        listOfComponents = []
+
+        #every row adds a component to the list
+        for i in range(0, componentModel.rowCount()):
+            newComponent = Component(component_name=componentModel.data(componentModel.index(i, 3)),
+                                     original_field_name=componentModel.data(componentModel.index(i, 1)),
+                                     units=componentModel.data(componentModel.index(i, 4)),
+                                     offset=componentModel.data(componentModel.index(i, 6)),
+                                     type=componentModel.data(componentModel.index(i, 2)),
+                                     attribute=componentModel.data(componentModel.index(i, 7)),
+                                     scale=componentModel.data(componentModel.index(i, 5)),
+                                     pinmaxpa=componentModel.data(componentModel.index(i, 8)),
+                                     poutmaxpa=componentModel.data(componentModel.index(i, 9)),
+                                     qoutmaxpa=componentModel.data(componentModel.index(i,10)),
+                                     isvoltagesource=componentModel.data(componentModel.index(i, 11)),
+                                     tags=componentModel.data(componentModel.index(i, 12))
+                                     )
+            listOfComponents.append(newComponent)
+        print(listOfComponents)
+        self.model.components = listOfComponents
+        # start with the setupxml
+        self.model.writeNewXML()
+        # import datafiles
+        # fix bad data and generate netcdf files
+        return
+    def close(self):
+
+        #on close save the xml files
+        self.sendData()
+        self.model.writeNewXML()

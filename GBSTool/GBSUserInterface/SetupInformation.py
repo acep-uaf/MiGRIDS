@@ -12,7 +12,7 @@ class SetupTag:
         self.value = v
 
     def assignUnits(self,v):
-        self.units = v
+        self.unit = v
 
     def assignFormat(self, v):
         self.format = v
@@ -47,16 +47,21 @@ class SetupInformation:
                                    'realLoadChannelunit': [self.assignLoadChannel, SetupTag.assignUnits],
                                    'timeChannelformat': [self.assignTimeChannel, SetupTag.assignFormat],
                                    'timeChannelvalue': [self.assignTimeChannel, SetupTag.assignValue],
+                                   'componentNamesvalue':[self.assignComponentNames, SetupTag.assignValue],
+                                   'componentNamevalue': [self.assignComponentName, SetupTag.assignValue],
+                                   'headerNamevalue': [self.assignHeaderName, SetupTag.assignValue],
+                                   'componentAttributevalue': [self.assignComponentAttribute, SetupTag.assignValue],
+                                   'componentAttributeunit': [self.assignComponentAttribute, SetupTag.assignUnits]
 
                                    }
 
 
         self.componentNames = ['wtg1P']
-        self.headerNames = []
+
         self.project =''
         self.inputDir = ''
-        self.attributes = []
-        self.units = []
+
+
         self.dateChannel = SetupTag('dateChannel')
         self.timeChannel = SetupTag('timeChannel')
         self.realLoadChannel = SetupTag('realLoadChannel')
@@ -65,6 +70,10 @@ class SetupInformation:
         self.inputTimeStep = SetupTag('inputTimeStep')
         self.outputTimeStep = SetupTag('outputTimeStep')
         self.inputFileDir = SetupTag('inputFileDir')
+        self.componentNames = SetupTag('componentNames')
+        self.headerName = SetupTag('headerName')
+        self.componentName = SetupTag('componentName')
+        self.componentAttribute = SetupTag('componentAttribute')
 
         #components is a list of component class objects
         #the type of class determines how the information will be written to an xml
@@ -78,6 +87,19 @@ class SetupInformation:
         fileDir = os.getcwd()
 
         self.setupFolder = os.path.join(fileDir,'../../GBSProjects',self.project, 'InputData/Setup')
+
+    def assignComponentNames(self, m, v):
+        self.componentNames.assign(m,v)
+
+    def assignComponentName(self, m,v):
+        self.componentName.assign(m, v)
+
+    def assignHeaderName(self, m, v):
+        self.headerName.assign(m, v)
+
+    def assignComponentAttribute(self,m,v):
+        self.componentAttribute.assign(m,v)
+
 
     def assignLoadChannel(self,m,v):
         self.realLoadChannel.assign(m,v)
@@ -124,6 +146,8 @@ class SetupInformation:
             else:
                 method(value)
 
+    def getComponentData(self):
+        self.con
     #creates a dictionary designed to feed into fillProjectData
     #->dictionary
     def getSetupTags(self):
