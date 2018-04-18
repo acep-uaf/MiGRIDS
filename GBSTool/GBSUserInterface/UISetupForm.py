@@ -9,6 +9,7 @@ from ConsoleDisplay import ConsoleDisplay
 from SetupInformation import SetupInformation
 from ComponentSQLiteHandler import SQLiteHandler
 from Component import Component
+from UIToHandler import UIToHandler
 
 class SetupForm(QtWidgets.QWidget):
     global model
@@ -22,9 +23,7 @@ class SetupForm(QtWidgets.QWidget):
         self.setObjectName("setupDialog")
         #self.resize(1754, 3000)
         self.model = model
-        # handler = SQLiteHandler('component_manager')
-        # handler.makeDatabase()
-        # handler.closeDatabase()
+
 
         #the main layout is oriented vertically
         windowLayout = QtWidgets.QVBoxLayout()
@@ -114,6 +113,7 @@ class SetupForm(QtWidgets.QWidget):
         ]
 
         self.WizardTree = self.buildWizardTree(dlist)
+
         # the bottom block is disabled until a setup file is created or loaded
         self.createTableBlock('Environment Data','environment',self.assignEnvironementBlock)
         self.environmentBlock.setEnabled(False)
@@ -122,7 +122,9 @@ class SetupForm(QtWidgets.QWidget):
 
         self.createTableBlock('Components', 'components', self.assignComponentBlock)
         self.componentBlock.setEnabled(False)
+
         windowLayout.addWidget(self.componentBlock)
+
         windowLayout.addStretch(2)
         #add a console window
         self.addConsole()
@@ -160,7 +162,7 @@ class SetupForm(QtWidgets.QWidget):
         #add the button to load a setup xml
 
         hlayout.addWidget(self.makeBlockButton(self.functionForLoadButton,
-                                 'Load setup XML', None, 'Load a previously created setup xml file.'))
+                                 'Load Existing Project', None, 'Load a previously created project files.'))
 
         #add button to launch the setup wizard for setting up the setup xml file
         hlayout.addWidget(
@@ -168,8 +170,8 @@ class SetupForm(QtWidgets.QWidget):
                                  'Create setup XML', None, 'Start the setup wizard to create a new setup file'))
         #force the buttons to the left side of the layout
         hlayout.addStretch(1)
-        hlayout.addWidget(self.makeBlockButton(self.functionForExistingButton,
-                                 'Load Existing Project', None, 'Work with an existing project folder containing setup files.'))
+        #hlayout.addWidget(self.makeBlockButton(self.functionForExistingButton,
+        #                         'Load Existing Project', None, 'Work with an existing project folder containing setup files.'))
         #hlayout.addWidget(self.makeBlockButton(self.functionForButton,'hello',None,'You need help with this button'))
         hlayout.addStretch(1)
         self.ButtonBlock.setLayout(hlayout)
@@ -203,12 +205,19 @@ class SetupForm(QtWidgets.QWidget):
     #SetupForm ->
     #method to modify SetupForm layout
     def functionForCreateButton(self):
+        import os
         #make a database
-
         #s is the 1st dialog box for the setup wizard
         s = SetupWizard(self.WizardTree, model, self)
         #display collected data
         hasSetup = model.feedSetupInfo()
+
+        #make an empty database with references
+        dbHandler = SQLiteHandler('component_manager')
+        dbHandler.makeDatabase()
+        dbHandler.closeDatabase()
+
+
         self.fillData(model)
 
         if hasSetup:
@@ -223,29 +232,23 @@ class SetupForm(QtWidgets.QWidget):
         if (setupFile == ('','')) | (setupFile is None):
             return
         model.setupFolder = os.path.dirname(setupFile[0])
+        self.model.componentFolder = os.path.join(self.model.setupFolder,'../Components' )
+        self.model.projectFolder = os.path.join(self.model.setupFolder, '../../')
+        #TODO look for a saved component manager database to replace the default one
 
         model.project = os.path.basename(setupFile[0][:-9])
-        print(model.project)
+
         #assign information to data model
         model.feedSetupInfo()
         #display data
         self.fillData(model)
+        #TODO look for descriptor files and load those too
         self.topBlock.setEnabled(True)
         self.environmentBlock.setEnabled(True)
 
         self.componentBlock.setEnabled(True)
-    def functionForExistingButton(self):
-        import os
-        #launch folderdialog
-        #set project name and read setup file
-        setupFile = QtWidgets.QFileDialog.getOpenFileName(self,"Select your setup file", None,"*xml" )
+        print('Loaded %s:' % model.project)
 
-        model.setupFolder = os.path.dirname(setupFile[0])
-        #assign information to data model
-        model.feedSetupInfo()
-        #display data
-        self.fillData(model)
-        self.topBlock.setVisible(False)
     #TODO make dynamic from list input
     def buildWizardTree(self, dlist):
         # w1 = WizardTree(dlist[0][0], dlist[0][1], 0, [])  # output timestep unit
@@ -334,10 +337,6 @@ class SetupForm(QtWidgets.QWidget):
             m = E.EnvironmentTableModel(self)
         tv.setModel(m)
 
-        # for row in range(0, m.rowCount()):
-        #     for c in range(1, m.columnCount()):
-        #         tv.openPersistentEditor(m.index(row, c))
-
 
         tableGroup.addWidget(tv, 1)
         gb.setLayout(tableGroup)
@@ -347,7 +346,31 @@ class SetupForm(QtWidgets.QWidget):
 
 
     def functionForLoadDescriptor(self):
+
         print('load descriptor from xml')
+        tableView = self.findChild((QtWidgets.QTableView), 'components')
+        model = tableView.model()
+        #identify the xml
+        descriptorFile = QtWidgets.QFileDialog.getOpenFileName(self, "Select a descriptor file", None, "*xml")
+        if (descriptorFile == ('', '')) | (descriptorFile is None):
+            return
+
+        fieldName, ok = QtWidgets.QInputDialog.getText(self, 'Field Name','Enter the name of the channel that contains data for this component.')
+        #if a field was entered add it to the table model and database
+        if ok:
+            record = model.record()
+            record.setValue('original_field_name',fieldName)
+
+            handler = UIToHandler()
+            record = handler.copyDescriptor(descriptorFile[0],self.model.componentFolder, record)
+
+            #add a row into the database
+            model.insertRowIntoTable(record)
+            # refresh the table
+            model.select()
+        return
+
+
     def functionForNewRecord(self, table):
         #add an empty record to the table
 
@@ -355,7 +378,7 @@ class SetupForm(QtWidgets.QWidget):
         tableView= self.findChild((QtWidgets.QTableView), table)
         model = tableView.model()
         #insert an empty row as the last record
-        print("i'm trying to insert a row in %s" %table)
+        print("New row added to %s" %table)
         model.insertRows(model.rowCount(),1)
         model.submitAll()
 
@@ -379,10 +402,15 @@ class SetupForm(QtWidgets.QWidget):
             if result == 1024:
                 for r in selected:
                     model.removeRows(r.row(),1)
-                    #print('Deleting records is not allowed at this time %s' %result)
+                # remove the xml files too
+                handler = UIToHandler()
+                print('deleting :%s' %model.data(model.index(r.row(),3)))
+                handler.removeDescriptor(model.data(model.index(r.row(),3)),self.model.componentFolder)
                 #Delete the record from the database and refresh the tableview
                 model.submitAll()
                 model.select()
+
+
 
 
     #string -> QGroupbox
@@ -396,7 +424,7 @@ class SetupForm(QtWidgets.QWidget):
                                                None, 'SP_DialogOpenButton', 'Load a previously created component xml file.'))
 
         buttonRow.addWidget(self.makeBlockButton(lambda:self.functionForNewRecord(table),
-                                             None, 'SP_ArrowUp',
+                                             '+', None,
                                              'Add a component'))
         buttonRow.addWidget(self.makeBlockButton(lambda:self.functionForDeleteRecord(table),
                                              None, 'SP_TrashIcon',
@@ -408,9 +436,11 @@ class SetupForm(QtWidgets.QWidget):
     #inserts data from the data model into corresponding boxes on the screen
     #SetupInfo -> None
     def fillData(self,model):
+        from ComponentSQLiteHandler import SQLiteHandler
         d = model.getSetupTags()
 
         #for every key in d find the corresponding textbox or combo box
+
         for k in d.keys():
 
             for a in d[k]:
@@ -422,16 +452,47 @@ class SetupForm(QtWidgets.QWidget):
                     edit_field.setText(d[k][a])
                 elif type(edit_field) is QtWidgets.QComboBox:
                     edit_field.setCurrentIndex(edit_field.findText(d[k][a]))
+        def getDefault(l,i):
+            try:
+                l[i]
+                return l[i]
+            except IndexError:
+                return 'NA'
+        # for headers, componentnames, componentattributes data goes into the database for table models
+        for i in range(len(model.headerName.value)):
+            print(model.headerName.value)
+            print(model.componentName.value)
+            dbHandler = SQLiteHandler('component_manager')
+            fields = ('original_field_name','component_name','attribute','units')
+            if (getDefault(model.headerName.value,i) != 'None'):
+                values = (getDefault(model.headerName.value,i), getDefault(model.componentName.value,i),
+                      getDefault(model.componentAttribute.value,i), getDefault(model.componentAttribute.unit,i))
 
+                print(values)
+                if getDefault(model.componentAttribute.value,i) in ['WS','WF','IR','Tamb','Tstorage']:
+                    #insert into environment table
+                    table = 'environment'
+                else:
+                     table = 'components'
+                dbHandler.insertRecord(table,fields,values)
+                dbHandler.closeDatabase()
+
+        #refresh the tables
+        tableView = self.findChild((QtWidgets.QTableView), 'environment')
+        tableModel= tableView.model()
+        tableModel.select()
+        tableView = self.findChild((QtWidgets.QTableView), 'components')
+        tableModel = tableView.model()
+        tableModel.select()
         return
     #send input data to the SetupInformation data model
     def sendData(self):
         #cycle through the input children in the topblock
         for child in self.topBlock.findChildren((QtWidgets.QLineEdit,QtWidgets.QComboBox)):
-            print(child.objectName())
+
             if type(child) is QtWidgets.QLineEdit:
                 value = child.text()
-                print(value)
+
             else:
                 value = child.itemText(child.currentIndex())
 
@@ -485,15 +546,36 @@ class SetupForm(QtWidgets.QWidget):
                                      tags=componentModel.data(componentModel.index(i, 12))
                                      )
             listOfComponents.append(newComponent)
-        print(listOfComponents)
+
         self.model.components = listOfComponents
         # start with the setupxml
         self.model.writeNewXML()
         # import datafiles
         # fix bad data and generate netcdf files
         return
-    def close(self):
 
-        #on close save the xml files
-        self.sendData()
-        self.model.writeNewXML()
+    def readInDescriptors(self):
+        #descriptors is a list of component soup objects used to fill the component model
+        handler = UIToHandler()
+        descriptors = handler.findDescriptors(self.model.componentFolder)
+
+        #fill the form model with data in descriptors
+        # for soup in descriptors:
+        #     populateModel(soup)
+        return len(descriptors)
+
+    def closeEvent(self, event):
+        import os
+        import shutil
+        print('Setup Form closing')
+
+        #move the default database to the project folder and save xmls
+        if 'projectFolder' in self.model.__dict__.keys():
+            # on close save the xml files
+            self.sendData()
+            self.model.writeNewXML()
+            path = os.path.dirname(__file__)
+            shutil.move(os.path.join(path, 'component_manager'), os.path.join(self.model.projectFolder, 'component_manager'))
+        else:
+            #if a project was never set then just close and remove the default database
+            os.remove('component_manager')

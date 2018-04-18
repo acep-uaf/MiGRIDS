@@ -19,7 +19,7 @@ class EnvironmentTableView(QtWidgets.QTableView):
 
         combos = [3,6]
         for c in combos:
-            self.setItemDelegateForColumn(c,QtSql.QSqlRelationalDelegate(self))
+            self.setItemDelegateForColumn(c,RelationDelegate(self))
 
 #Tabel model to be displayed in component tableview
 class EnvironmentTableModel(QtSql.QSqlRelationalTableModel):
@@ -29,6 +29,7 @@ class EnvironmentTableModel(QtSql.QSqlRelationalTableModel):
                    'Offset','Attribute','Tags']
 
         self.setTable('environment')
+        self.setJoinMode(QtSql.QSqlRelationalTableModel.LeftJoin)
         self.setRelation(6, QtSql.QSqlRelation('ref_env_attributes', 'code', 'code'))
         self.setRelation(3, QtSql.QSqlRelation('ref_speed_units', 'code', 'code'))
 

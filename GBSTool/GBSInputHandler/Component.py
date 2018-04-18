@@ -31,8 +31,6 @@ class Component:
     def toDictionary(self):
         d = {}
         d[self.component_name] = self.__dict__
-        #append tags to dictionary as keys and values
-        for t in self.tags.keys():
-            d[self.component_name][t]=self.tags[t]
+
 
         return d

@@ -17,21 +17,19 @@ class UIToHandler():
         fillProjectData(setupInfo.setupFolder, setupInfo)
 
     #string, dictionary -> None
+    #comonentDict is a dictionary containing values for a specific component.
     #calls the InputHandler functions required to write component descriptor xml files
-    def makeComponentDescriptor(self, componentDict):
+    def makeComponentDescriptor(self, component,componentDir):
+        from makeSoup import makeSoup
+        #returns either a template soup or filled soup
+        componentSoup = makeSoup(component, componentDir)
+
+        return componentSoup
+    #pass a soup object to be written to a component descriptor
+    def writeSoup(self, component, fileDir, soup):
         from createComponentDescriptor import createComponentDescriptor
-        from writeXmlTag import writeXmlTag
-        componentDir = componentDict['filepath']
-        #write the file - overwrite any existing file
-        componentDescriptor = createComponentDescriptor(componentDict['name'], componentDir)
 
-        for tag in componentDict.keys(): # for each tag (skip component name column)
-            if tag not in ['component_name','filepath']:
-                attr = 'value'
-                value = componentDict[tag]
-                writeXmlTag(componentDescriptor,tag,attr,value,componentDir)
-
-        return
+        createComponentDescriptor(component, fileDir, soup)
 
     #fill a single tag for an existing component descriptor file
     #dictionary, string -> None
@@ -41,3 +39,45 @@ class UIToHandler():
         value = componentDict[tag]
         writeXmlTag(componentDict['component_name'] + 'Descriptor.xml', tag, attr, value, componentDict['filepath'])
         return
+
+    def removeDescriptor(self,componentName, componentDir):
+        print ('component name %s will be deleted once this is implemented' %componentName)
+        return
+
+    def findDescriptors(self,componentDir):
+        import os
+        from Component import Component
+        directories = []
+        for file in os.listDir(componentDir):
+            if file.endswith('.xml'):
+                newComponent = Component(component_type=file[0:3])
+                soup = self.makeComponentDescriptor(newComponent,componentDir)
+                directories.append(soup)
+        return directories
+
+    def copyDescriptor(self,descriptorFile, componentDir, sqlRecord):
+        import os
+        import shutil
+        from Component import Component
+        fileName =os.path.basename(descriptorFile)
+        componentType = fileName[0:3]
+        componentName = fileName[:-14]
+        # copy the xml to the project folder
+        try:
+            shutil.copy2(descriptorFile, componentDir)
+        except shutil.SameFileError:
+            print('This descriptor file already exists in this project')
+        temporaryComponent = Component(component_name= componentName, type=componentType)
+        #get the soup
+        soup = self.makeComponentDescriptor(temporaryComponent,componentDir)
+        #fill the record
+        sqlRecord.setValue('component_type',soup.findChild('component')['name'][0:3])
+
+        #the name gets set with the sql trigger
+        #sqlRecord.setValue('component_name',componentName)
+        sqlRecord.setValue('pinmaxpa',soup.findChild('PInMaxPa')['value'])
+        sqlRecord.setValue('qoutmaxpa',soup.findChild('QOutMaxPa')['value'])
+        sqlRecord.setValue('qinmaxpa',soup.findChild('QInMaxPa')['value'])
+        sqlRecord.setValue('isvoltagesource',soup.findChild('isVoltageSource')['value'])
+
+        return sqlRecord

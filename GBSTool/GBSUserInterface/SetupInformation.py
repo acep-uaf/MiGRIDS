@@ -80,24 +80,46 @@ class SetupInformation:
         self.components = []
 
 
-    #TODO currently each assignment just assigns a parameter, but this will likely change to perform some actions during parameter assigment. That is why each parameter has its own fuction
+    #TODO currently each assignment just assigns a parameter,
+    # but this will likely change to perform some actions during parameter assigment.
+    # That is why each parameter has its own fuction
     def assignProject(self, name):
         import os
+        from ComponentSQLiteHandler import SQLiteHandler
         self.project = name
         fileDir = os.getcwd()
 
         self.setupFolder = os.path.join(fileDir,'../../GBSProjects',self.project, 'InputData/Setup')
+        self.componentFolder = os.path.join(fileDir,'../../GBSProjects',self.project, 'InputData/Components')
+        self.projectFolder = os.path.join(fileDir, '../../GBSProjects',self.project )
+        #if there isn't a setup folder then its a new project
+        if not os.path.exists(self.setupFolder):
+            #make the project folder
+            os.makedirs(self.setupFolder)
+        if not os.path.exists(self.componentFolder):
+            #make the project folder
+            os.makedirs(self.componentFolder)
+        handler = SQLiteHandler(os.path.join(self.projectFolder,'component_manager'))
+        handler.makeDatabase()
+        handler.closeDatabase()
 
     def assignComponentNames(self, m, v):
+
         self.componentNames.assign(m,v)
 
     def assignComponentName(self, m,v):
+        # string gets split to list
+        v = v.split()
         self.componentName.assign(m, v)
 
     def assignHeaderName(self, m, v):
+        #string gets split to list
+        v = v.split()
         self.headerName.assign(m, v)
 
     def assignComponentAttribute(self,m,v):
+        # string gets split to list
+        v = v.split()
         self.componentAttribute.assign(m,v)
 
 
@@ -177,10 +199,12 @@ class SetupInformation:
 
     #read setup xml and assign values to the model parameters
     def feedSetupInfo(self):
+        import os
         from inputHandlerToUI import inputHandlerToUI
 
         fileDir = self.setupFolder
-
+        if not os.path.exists(self.setupFolder):
+            return False
         # tell the controller to tell the InputHandler to read the xml and set the model values
         inputHandlerToUI(fileDir, self)
 

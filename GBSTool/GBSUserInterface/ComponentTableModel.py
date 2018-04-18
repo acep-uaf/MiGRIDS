@@ -25,7 +25,9 @@ class ComponentTableView(QtWidgets.QTableView):
 
 class ComponentTableModel(QtSql.QSqlRelationalTableModel):
     def __init__(self, parent):
+        import os
         QtSql.QSqlTableModel.__init__(self, parent)
+
         self.header = ['ID','Field', 'Type', 'Component Name', 'Units', 'Scale',
                     'Offset','Attribute','P in max pa','Q in max pa','Q out max pa','Voltage Source','Tags']
 
@@ -45,4 +47,4 @@ class ComponentTableModel(QtSql.QSqlRelationalTableModel):
             return QtCore.QVariant(self.header[section])
         return QtCore.QVariant()
 
-    
+

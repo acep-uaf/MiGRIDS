@@ -58,7 +58,6 @@ def fillProjectDataFromUI(projectDir, setupInfo):
     for component in setupInfo.components: # for each component
          print('file for %s' %component.component_name)
          createComponentDescriptor(component, componentDir)
-
-    fillProjectComponentData(setupDir,setupInfo)
+         fillProjectComponentData(setupDir,component)
 
 

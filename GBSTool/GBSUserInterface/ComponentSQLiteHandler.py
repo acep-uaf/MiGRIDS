@@ -3,6 +3,7 @@ class SQLiteHandler:
 
     def __init__(self, database):
         import sqlite3 as lite
+        print(database)
         self.connection = lite.connect(database)
         self.cursor = self.connection.cursor()
 
@@ -114,8 +115,8 @@ class SQLiteHandler:
 
         #TODO stop deleting components
 
-        self.cursor.execute("DROP TABLE IF EXISTS components")
-        self.cursor.executescript("""CREATE TABLE components
+
+        self.cursor.executescript("""CREATE TABLE IF NOT EXISTS components
          (_id integer primary key,
          original_field_name text,
          component_type text,
@@ -135,9 +136,9 @@ class SQLiteHandler:
          FOREIGN KEY (isvoltagesource) REFERENCES ref_true_false(code)
          );""")
         #TODO remove test components
-        self.cursor.executemany("INSERT INTO components (original_field_name, component_type, component_name, scale, units, attribute, isvoltagesource) values (?,?,?,?,?,?,?)",
-                                [('Hank', 'wtg','wtg1P',1,'kW','P','T'),('gen1','gen','gen1P',3,'kW','P','T')])
-        #create a sql function to access the getTypeCount function
+        # self.cursor.executemany("INSERT INTO components (original_field_name, component_type, component_name, scale, units, attribute, isvoltagesource) values (?,?,?,?,?,?,?)",
+        #                         [('Hank', 'wtg','wtg1P',1,'kW','P','T'),('gen1','gen','gen1P',3,'kW','P','T')])
+        # #create a sql function to access the getTypeCount function
         self.connection.create_function("componentName",1,self.getTypeCount)
         self.connection.commit()
         #create a trigger so that when component is updated the component name is filled in
@@ -149,14 +150,14 @@ class SQLiteHandler:
         #
         # """)
         #
-        self.cursor.execute("""CREATE TRIGGER component_name_trigger
+        self.cursor.execute("""CREATE TRIGGER IF NOT EXISTS component_name_trigger
         AFTER UPDATE ON components WHEN old.component_type <> new.component_type
         BEGIN UPDATE components set component_name = component_type || _id || attribute;
         END;
         """)
 
-        self.cursor.execute("DROP TABLE IF EXISTS environment")
-        self.cursor.executescript("""CREATE TABLE environment
+
+        self.cursor.executescript("""CREATE TABLE IF NOT EXISTS environment
                  (_id integer primary key,
                  original_field_name text,
                  component_name text,
@@ -172,10 +173,17 @@ class SQLiteHandler:
                  
                  );""")
         # TODO remove test environment components
-        self.cursor.executemany(
-            "INSERT INTO environment (original_field_name, component_name, scale, attribute,units) values (?,?,?,?,?)",
-            [('WIND', 'ws1', 1,'WS','m/s')])
+        # self.cursor.executemany(
+        #     "INSERT INTO environment (original_field_name, component_name, scale, attribute,units) values (?,?,?,?,?)",
+        #     [('WIND', 'ws1', 1,'WS','m/s')])
 
+        self.connection.commit()
+    def insertRecord(self, table, fields, values):
+        string_fields = ','.join(fields)
+        string_values = ','.join('?' * len(values))
+        print(string_fields)
+        print(values)
+        self.cursor.execute("INSERT INTO " + table + "(" + string_fields + ")" + "VALUES (" + string_values + ")", values)
         self.connection.commit()
     def getRefInput(self, tables):
         #table is a list of tables
@@ -247,6 +255,3 @@ class SQLiteHandler:
         codes = (codes['code']).tolist()
 
         return codes
-    def hello(self,x):
-        print(x)
-        return x

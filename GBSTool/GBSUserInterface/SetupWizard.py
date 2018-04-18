@@ -20,7 +20,8 @@ class SetupWizard:
 
     #connect to the sqlite database containing reference tables
     def connect(self):
-        self.database = SQLiteHandler('component_manager')
+        import os
+        self.database = SQLiteHandler(os.path.join(self.model.projectFolder, 'component_manager'))
 
     #dissconnect from the sqlite database containing reference tables
     def disconnect(self):
@@ -34,7 +35,7 @@ class SetupWizard:
         print(self.currentDialog.key)
 
         d = self.dialogSequence.getNext(self.currentDialog.key, response)
-        print(d.key)
+
         self.makeDialog(d)
 
     def recordValue(self):
@@ -60,13 +61,14 @@ class SetupWizard:
     #create an input widget to display on the dialog
     #widget, string -> None
     def createInput(self, reftable, folderDialog = False):
-        self.connect()
+
         if folderDialog:
             self.inputWidget = self.makeFolderSelectorInput()
         elif reftable is not None:
+            self.connect()
             #create a combo box
             values = pd.read_sql_query("select code, description from " + reftable, self.database.connection)
-
+            self.disconnect()
             valueStrings = []
             for v in range(len(values)):
 
@@ -75,7 +77,7 @@ class SetupWizard:
         else:
             #create an input box
             self.inputWidget = self.makeTextInput()
-        self.disconnect()
+
 
     #makes a dialog box containing relevant information specified by the WizardTree
     #WizardTree -> None
