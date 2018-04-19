@@ -119,7 +119,8 @@ class ProjectSQLiteHandler:
             self.cursor.execute("INSERT INTO ref_units(code, description) SELECT code, description from " + u[0] + " Where code not in (select code from ref_units)")
 
         self.connection.commit()
-        self.cursor.executescript("""CREATE TABLE IF NOT EXISTS components
+        self.cursor.execute("DROP TABLE IF EXISTS components")
+        self.cursor.executescript("""CREATE TABLE components
          (_id integer primary key,
          original_field_name text,
          component_type text,
@@ -139,7 +140,7 @@ class ProjectSQLiteHandler:
         self.connection.create_function("componentName",1,self.getTypeCount)
         self.connection.commit()
 
-
+        self.cursro.execute("DROP TABLE IF EXISTS environement")
         self.cursor.executescript("""CREATE TABLE IF NOT EXISTS environment
                  (_id integer primary key,
                  original_field_name text,
