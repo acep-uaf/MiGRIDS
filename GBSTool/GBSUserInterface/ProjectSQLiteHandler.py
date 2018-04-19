@@ -1,5 +1,5 @@
 #TODO change module name
-class SQLiteHandler:
+class ProjectSQLiteHandler:
 
     def __init__(self, database):
         import sqlite3 as lite
@@ -73,7 +73,6 @@ class SQLiteHandler:
             'ref_current_units',
             'ref_irradiation_units',
             'ref_temperature_units',
-            'ref_universal_units',
             'ref_true_false',
             'ref_env_attributes',
             'ref_frequency_units'
@@ -85,7 +84,7 @@ class SQLiteHandler:
         self.addRefValues('ref_temperature_units',[(0,'C','Celcius'),(1,'F','Farhenheit'),(2,'K','Kelvin')])
         self.addRefValues('ref_irradiation_units',[(0,'W/m2','Watts per square meter')])
         self.addRefValues('ref_flow_units',[(0,'m3/s', 'cubic meter per second'),(1, 'L/s', 'liters per second'),
-                                            (2, 'cfm', 'cubic feet per meter'),(3,'gal/min','gallon per minute')])
+                                            (2, 'cfm', 'cubic feet per meter'),(3,'gal/min','gallon per minute'),(4, 'kg/s', 'killograms per second')])
         self.addRefValues('ref_voltage_units',[(0,'V','volts'),(1, 'kV','kilovolts')])
         self.addRefValues('ref_true_false',[(0,'T','True'),(1,'F','False')])
         self.addRefValues('ref_speed_units', [(0, 'm/s','meters per second'),(1,'ft/s','feet per second'),
@@ -102,7 +101,7 @@ class SQLiteHandler:
 
         self.addRefValues('ref_power_units',[(0,'W', 'watts'), (1,'kW', 'Kilowatts'),(2,'MW','Megawatts'),
                                              (3, 'var', 'vars'),(4,'kvar','kilovars'),(5,'Mvar','Megavars'),
-                                             (6, 'VA','volt-ampere'),(7,'kVA','kilovolt-ampere'),(8,'MVA','megavolt-ampere')])
+                                             (6, 'VA','volt-ampere'),(7,'kVA','kilovolt-ampere'),(8,'MVA','megavolt-ampere'),(9, 'pu',''),(10,'PU',''),(11,'PU*s','')])
 
         self.addRefValues('ref_env_attributes', [(0,'WS', 'Windspeed'), (1,'IR', 'Solar Irradiation'),
                                                  (2,'WF','Waterflow'),(3,'Tamb','Ambient Temperature')])
@@ -112,9 +111,14 @@ class SQLiteHandler:
                                              (8,'PAvail','Available Real Power'), (9,'QAvail','Available Reactive Power'),
                                              (10,'SAvail','Available Apparent Power')])
 
-        #TODO stop deleting components
+        #merge unit reference tables
+        self.cursor.execute("DROP TABLE IF EXISTS ref_units")
+        self.cursor.executescript("CREATE TABLE ref_units (_id integer primary key, code text unique, description text)")
+        unit_tables_tuple = self.cursor.execute("select name from sqlite_master where type = 'table' and name like '%units'").fetchall()
+        for u in unit_tables_tuple:
+            self.cursor.execute("INSERT INTO ref_units(code, description) SELECT code, description from " + u[0] + " Where code not in (select code from ref_units)")
 
-
+        self.connection.commit()
         self.cursor.executescript("""CREATE TABLE IF NOT EXISTS components
          (_id integer primary key,
          original_field_name text,
