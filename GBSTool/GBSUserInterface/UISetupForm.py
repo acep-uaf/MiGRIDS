@@ -7,7 +7,7 @@ from SetupWizard import SetupWizard
 from WizardTree import WizardTree
 from ConsoleDisplay import ConsoleDisplay
 from SetupInformation import SetupInformation
-from ComponentSQLiteHandler import SQLiteHandler
+from ProjectSQLiteHandler import ProjectSQLiteHandler
 from Component import Component
 from UIToHandler import UIToHandler
 
@@ -20,10 +20,10 @@ class SetupForm(QtWidgets.QWidget):
         self.initUI()
 
     def initUI(self):
+        import os
         self.setObjectName("setupDialog")
         #self.resize(1754, 3000)
         self.model = model
-
 
         #the main layout is oriented vertically
         windowLayout = QtWidgets.QVBoxLayout()
@@ -41,6 +41,7 @@ class SetupForm(QtWidgets.QWidget):
         windowLayout.addWidget(self.topBlock)
         #more space between component block
         windowLayout.addStretch(1)
+
         #TODO move to seperate file
         dlist = [
             [{'title': 'Time Unit', 'prompt': 'Select the units for the output time interval',
@@ -205,13 +206,16 @@ class SetupForm(QtWidgets.QWidget):
     #SetupForm ->
     #method to modify SetupForm layout
     def functionForCreateButton(self):
-        import os
+
         #make a database
         #s is the 1st dialog box for the setup wizard
+
         s = SetupWizard(self.WizardTree, model, self)
+
         #display collected data
         hasSetup = model.feedSetupInfo()
 
+        self.projectDatabase = False
         self.fillData(model)
 
         if hasSetup:
@@ -225,36 +229,39 @@ class SetupForm(QtWidgets.QWidget):
         import os
 
         from replaceDefaultDatabase import replaceDefaultDatabase
-        #launch file navigator to identify setup file
-        setupFile = QtWidgets.QFileDialog.getOpenFileName(self,"Select your setup file", None, "*xml" )
-        if (setupFile == ('','')) | (setupFile is None):
-            return
-        model.assignSetupFolder(setupFile[0])
+        if (self.model.project == '') | (self.model.project is None):
+            #launch file navigator to identify setup file
+            setupFile = QtWidgets.QFileDialog.getOpenFileName(self,"Select your setup file", None, "*xml" )
+            if (setupFile == ('','')) | (setupFile is None):
+                return
+            model.assignSetupFolder(setupFile[0])
 
 
-        #Look for an existing component database and replace the default one with it
-        if os.path.exists(os.path.join(self.model.projectFolder,'project_manager')):
-            print('An existing project database was found for %s.' %self.model.project)
+            #Look for an existing component database and replace the default one with it
+            if os.path.exists(os.path.join(self.model.projectFolder,'project_manager')):
+                print('An existing project database was found for %s.' %self.model.project)
 
-            replaceDefaultDatabase(os.path.join(self.model.projectFolder, 'project_manager'))
-            self.projectDatabase = True
+                replaceDefaultDatabase(os.path.join(self.model.projectFolder, 'project_manager'))
+                self.projectDatabase = True
+            else:
+                self.projectDatabase = False
+                print('An existing project database was not found for %s.' % self.model.project)
+
+            # assign setup information to data model
+            model.feedSetupInfo()
+
+            # display data
+            self.fillData(model)
+
+    
+            #make the data blocks editable
+            self.topBlock.setEnabled(True)
+            self.environmentBlock.setEnabled(True)
+
+            self.componentBlock.setEnabled(True)
+            print('Loaded %s:' % model.project)
         else:
-            self.projectDatabase = False
-            print('An existing project database was not found for %s.' % self.model.project)
-
-        # assign setup information to data model
-        model.feedSetupInfo()
-
-        # display data
-        self.fillData(model)
-
-
-        #make the data blocks editable
-        self.topBlock.setEnabled(True)
-        self.environmentBlock.setEnabled(True)
-
-        self.componentBlock.setEnabled(True)
-        print('Loaded %s:' % model.project)
+            (QtWidgets.QMessageBox("Close project","You need to close the sofware before you load a new project")).show()
 
     #TODO make dynamic from list input
     def buildWizardTree(self, dlist):
@@ -312,10 +319,10 @@ class SetupForm(QtWidgets.QWidget):
                           'rowNames':['Input','Output'],
                           'columnWidths': [1, 1, 1],
                           'Input':{'Value':{'widget':'txt','name':'inputTimeStepvalue'},
-                                    'Units':{'widget':'combo','items':['Seconds','Minutes','Hours'],'name':'inputTimeStepunit'}
+                                    'Units':{'widget':'combo','items':['S','M','H'],'name':'inputTimeStepunit'}
                                    },
                           'Output':{'Value':{'widget':'txt','name':'outputTimeStepvalue'},
-                                    'Units':{'widget':'combo','items':['Seconds','Minutes','Hours'],'name':'outputTimeStepunit'}}
+                                    'Units':{'widget':'combo','items':['S','M','H'],'name':'outputTimeStepunit'}}
                           }
         grid = setupGrid(g2)
         hlayout.addLayout(grid)
@@ -443,7 +450,9 @@ class SetupForm(QtWidgets.QWidget):
     #inserts data from the data model into corresponding boxes on the screen
     #SetupInfo -> None
     def fillData(self,model):
-        from ComponentSQLiteHandler import SQLiteHandler
+        import os
+        from ProjectSQLiteHandler import ProjectSQLiteHandler
+        print(os.getcwd())
         d = model.getSetupTags()
 
         #for every key in d find the corresponding textbox or combo box
@@ -451,14 +460,14 @@ class SetupForm(QtWidgets.QWidget):
         for k in d.keys():
 
             for a in d[k]:
+                if d[k][a] is not None:
+                    edit_field = self.findChild((QtWidgets.QLineEdit,QtWidgets.QComboBox), k + a)
 
-                edit_field = self.findChild((QtWidgets.QLineEdit,QtWidgets.QComboBox), k + a)
+                    if type(edit_field) is QtWidgets.QLineEdit:
 
-                if type(edit_field) is QtWidgets.QLineEdit:
-
-                    edit_field.setText(d[k][a])
-                elif type(edit_field) is QtWidgets.QComboBox:
-                    edit_field.setCurrentIndex(edit_field.findText(d[k][a]))
+                        edit_field.setText(d[k][a])
+                    elif type(edit_field) is QtWidgets.QComboBox:
+                        edit_field.setCurrentIndex(edit_field.findText(d[k][a]))
 
 
         def getDefault(l,i):
@@ -470,8 +479,9 @@ class SetupForm(QtWidgets.QWidget):
         #this is what happens if there isn't already a project database.
         if not self.projectDatabase:
 
+            print(os.getcwd())
             # for headers, componentnames, componentattributes data goes into the database for table models
-            dbHandler = SQLiteHandler('project_manager')
+            dbHandler = ProjectSQLiteHandler('project_manager')
             for i in range(len(model.headerName.value)):
 
 
