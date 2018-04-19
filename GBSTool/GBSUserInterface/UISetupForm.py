@@ -131,8 +131,8 @@ class SetupForm(QtWidgets.QWidget):
         windowLayout.addWidget(self.console)
         windowLayout.addStretch(2)
         windowLayout.addWidget(self.makeBlockButton(self.createInputFiles,'Create input files',None,'Create input files to run models'),3)
-        #TODO get rid of test message
-        self.console.showMessage("I am a console message")
+
+        self.console.showMessage("This is where messages will appear")
         #set the main layout as the layout for the window
         self.layoutWidget = QtWidgets.QWidget(self)
         self.layoutWidget.setLayout(windowLayout)
@@ -223,7 +223,8 @@ class SetupForm(QtWidgets.QWidget):
         '''The load function needs to read the designated setup xml, look for descriptor xmls,
         look for an existing project database. If xml's and database don't match rely on descriptors'''
         import os
-        import pandas as pd
+
+        from replaceDefaultDatabase import replaceDefaultDatabase
         #launch file navigator to identify setup file
         setupFile = QtWidgets.QFileDialog.getOpenFileName(self,"Select your setup file", None, "*xml" )
         if (setupFile == ('','')) | (setupFile is None):
@@ -232,75 +233,17 @@ class SetupForm(QtWidgets.QWidget):
 
 
         #Look for an existing component database and replace the default one with it
-        if os.path.exists(os.path.join(self.model.projectFolder,'component_manager')):
+        if os.path.exists(os.path.join(self.model.projectFolder,'project_manager')):
             print('An existing project database was found for %s.' %self.model.project)
-            # shutil.move(os.path.join(self.model.projectFolder, 'component_manager'),
-            #             os.path.join(os.path.dirname(__file__), 'component_manager'))
-            #TODO let existing database ovewrite the default
-            # h = SQLiteHandler(os.path.join(self.model.projectFolder, 'component_manager'))
-            # c_old =pd.read_sql_query("select * from components",h.connection)
-            # h.closeDatabase()
-            # print(c_old)
-            # c_old.set_index(c_old['_id'])
-            # c_old = c_old.drop('_id',1)
-            # c_old.index.names = ['_id']
-            # h = SQLiteHandler('component_manager')
-            # c_old.to_sql('components',h.connection,if_exists='replace')
-            # h.closeDatabase()
 
+            replaceDefaultDatabase(os.path.join(self.model.projectFolder, 'project_manager'))
+            self.projectDatabase = True
         else:
+            self.projectDatabase = False
             print('An existing project database was not found for %s.' % self.model.project)
 
         # assign setup information to data model
         model.feedSetupInfo()
-        #TODO update database from existing xmls
-        # tableView = self.findChild((QtWidgets.QTableView), 'components')
-        # tablemodel = tableView.model()
-        # tablemodel.select()
-        # print(tablemodel.rowCount())
-        # # there should be a descriptor for every component
-        # uiHandler = UIToHandler()
-        #
-        # # findDescriptors
-        # descriptors = uiHandler.findDescriptors(model.componentFolder)
-        # # drop 'Descriptor.xml' from the descriptors
-        # descriptors = [d[:-14] for d in descriptors]
-        # print('Descriptor files were found for %s.' % descriptors)
-        # # update the descriptors
-        # print(model.componentNames.value)
-        # for c in list(set(model.componentNames.value) & set(descriptors)):
-        #     soup = uiHandler.makeComponentDescriptor(c, model.componentFolder)
-        #     # make a new record for the component_manager table
-        #     record = tablemodel.record()
-        #     updatedRecord = uiHandler.updateDescriptor(soup, record)
-        #
-        #     def findRow(tableModel, row, name, column):
-        #         if row > tableModel.rowCount():
-        #             return None
-        #         elif tableModel.data(tableModel.index(row, column)) == name:
-        #             return row
-        #         return findRow(tableModel, row + 1, name, column)
-        #
-        #     # insert or update depending of whether or not the record already exists
-        #     # find what row this record is in, the column is 3
-        #     r = findRow(tablemodel, 0, c, 3)
-        #     if r is not None:
-        #
-        #         # some fields can't be updated with the descriptor
-        #         updatedRecord.setValue('original_field_name', tablemodel.data(tablemodel.index(r, 1)))
-        #         updatedRecord.setValue('units', tablemodel.data(tablemodel.index(r, 4)))
-        #         updatedRecord.setValue('scale', tablemodel.data(tablemodel.index(r, 5)))
-        #         updatedRecord.setValue('offset', tablemodel.data(tablemodel.index(r, 6)))
-        #         # if exists
-        #         tablemodel.setRecord(r, updatedRecord)
-        #         print('updating record')
-        #     else:
-        #         print('inserting record at position %s' % tablemodel.rowCount())
-
-        #tablemodel.select()
-
-
-
 
         # display data
         self.fillData(model)
@@ -524,26 +467,29 @@ class SetupForm(QtWidgets.QWidget):
                 return l[i]
             except IndexError:
                 return 'NA'
-        # for headers, componentnames, componentattributes data goes into the database for table models
-        dbHandler = SQLiteHandler('component_manager')
-        for i in range(len(model.headerName.value)):
+        #this is what happens if there isn't already a project database.
+        if not self.projectDatabase:
+
+            # for headers, componentnames, componentattributes data goes into the database for table models
+            dbHandler = SQLiteHandler('project_manager')
+            for i in range(len(model.headerName.value)):
 
 
-            fields = ('original_field_name','component_name','attribute','units')
-            if (getDefault(model.headerName.value,i) != 'None'):
-                values = (getDefault(model.headerName.value,i), getDefault(model.componentName.value,i),
-                      getDefault(model.componentAttribute.value,i), getDefault(model.componentAttribute.unit,i))
+                fields = ('original_field_name','component_name','attribute','units')
+                if (getDefault(model.headerName.value,i) != 'None'):
+                    values = (getDefault(model.headerName.value,i), getDefault(model.componentName.value,i),
+                          getDefault(model.componentAttribute.value,i), getDefault(model.componentAttribute.unit,i))
 
 
-                if getDefault(model.componentAttribute.value,i) in ['WS','WF','IR','Tamb','Tstorage']:
-                    #insert into environment table
-                    table = 'environment'
-                else:
-                     table = 'components'
-                print(getDefault(model.componentName.value,i))
-                if len(dbHandler.cursor.execute("select * from " + table + " WHERE component_name = '" + getDefault(model.componentName.value,i) + "'").fetchall()) < 1:
-                     dbHandler.insertRecord(table,fields,values)
-        dbHandler.closeDatabase()
+                    if getDefault(model.componentAttribute.value,i) in ['WS','WF','IR','Tamb','Tstorage']:
+                        #insert into environment table
+                        table = 'environment'
+                    else:
+                         table = 'components'
+                    print(getDefault(model.componentName.value,i))
+                    if len(dbHandler.cursor.execute("select * from " + table + " WHERE component_name = '" + getDefault(model.componentName.value,i) + "'").fetchall()) < 1:
+                         dbHandler.insertRecord(table,fields,values)
+            dbHandler.closeDatabase()
 
         #refresh the tables
         tableView = self.findChild((QtWidgets.QTableView), 'environment')
@@ -568,28 +514,33 @@ class SetupForm(QtWidgets.QWidget):
         #we also need headerNames, componentNames, attributes and units from the component section
         componentView = self.findChild((QtWidgets.QTableView),'components')
         componentModel = componentView.model()
-        model.headerNamevalue =[]
-        model.componentNamevalue = []
-        model.componentAttributevalue = []
-        model.componentAttributeunit = []
+        headerName=[]
+        componentName = []
+        componentAttribute = []
+        componentAttributeU = []
         #list of distinct components
-        model.componentNamesvalue= []
+        componentNamesvalue= []
         for i in range(0,componentModel.rowCount()):
 
-            model.headerNamevalue.append(componentModel.data(componentModel.index(i,1)))
-            model.componentNamevalue.append(componentModel.data(componentModel.index(i,3)))
-            model.componentAttributevalue.append(componentModel.data(componentModel.index(i,7)))
-            model.componentAttributeunit.append(componentModel.data(componentModel.index(i,4)))
+            headerName.append(componentModel.data(componentModel.index(i,1)))
+            componentName.append(componentModel.data(componentModel.index(i,3)))
+            componentAttribute.append(componentModel.data(componentModel.index(i,7)))
+            componentAttributeU.append(componentModel.data(componentModel.index(i,4)))
         #make a list of distinct values
-        model.componentNamesvalue = list(set(model.componentNamevalue))
+        componentNames = list(set(componentName))
         #and the same data from the environment section
         envView = self.findChild((QtWidgets.QTableView), 'environment')
-        envModel = componentView.model()
-        for i in range(0, envModel.rowCount()):
-            model.headerNamevalue.append(componentModel.data(componentModel.index(i, 1)))
-            model.componentNamevalue.append(componentModel.data(componentModel.index(i, 2)))
-            model.componentAttributevalue.append(componentModel.data(componentModel.index(i, 3)))
-            model.componentAttributeunit.append(componentModel.data(componentModel.index(i, 6)))
+        envModel = envView.model()
+        for j in range(0, envModel.rowCount()):
+            headerName.append(envModel.data(envModel.index(j, 1)))
+            componentName.append(envModel.data(envModel.index(j, 2)))
+            componentAttribute.append(envModel.data(envModel.index(j, 6)))
+            componentAttributeU.append(envModel.data(envModel.index(j, 3)))
+        model.assign('headerNamevalue',headerName)
+        model.assign('componentNamevalue', componentName)
+        model.assign('componentAttributevalue', componentAttribute)
+        model.assign('componentAttributeunit', componentAttributeU)
+        model.assign('componentNamesvalue', componentNames)
     #write data to the data model and generate input xml files for setup and components
     def createInputFiles(self):
         self.sendSetupData()
@@ -624,15 +575,6 @@ class SetupForm(QtWidgets.QWidget):
         # fix bad data and generate netcdf files
         return
 
-    def readInDescriptors(self):
-        #descriptors is a list of component soup objects used to fill the component model
-        handler = UIToHandler()
-        descriptors = handler.findDescriptors(self.model.componentFolder)
-
-        #fill the form model with data in descriptors
-        # for soup in descriptors:
-        #     populateModel(soup)
-        return len(descriptors)
 
     def closeEvent(self, event):
         import os
@@ -646,7 +588,7 @@ class SetupForm(QtWidgets.QWidget):
             self.model.writeNewXML()
             path = os.path.dirname(__file__)
             print('Database was saved to %s' %self.model.projectFolder)
-            shutil.move(os.path.join(path, 'component_manager'), os.path.join(self.model.projectFolder, 'component_manager'))
+            shutil.move(os.path.join(path, 'project_manager'), os.path.join(self.model.projectFolder, 'project_manager'))
         else:
             #if a project was never set then just close and remove the default database
-            os.remove('component_manager')
+            os.remove('project_manager')

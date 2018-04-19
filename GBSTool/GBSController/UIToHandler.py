@@ -60,7 +60,7 @@ class UIToHandler():
 
                 directories.append(file)
         return directories
-    #copy an existing xml file to the current project director and write contents to SQLRecord to update component_manager database
+    #copy an existing xml file to the current project director and write contents to SQLRecord to update project_manager database
     #string, string, SQLRecord -> SQLRecord
     def copyDescriptor(self,descriptorFile, componentDir, sqlRecord):
         import os

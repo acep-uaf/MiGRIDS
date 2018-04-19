@@ -21,7 +21,7 @@ class SetupWizard:
     #connect to the sqlite database containing reference tables
     def connect(self):
         import os
-        self.database = SQLiteHandler(os.path.join(self.model.projectFolder, 'component_manager'))
+        self.database = SQLiteHandler(os.path.join(self.model.projectFolder, 'project_manager'))
 
     #dissconnect from the sqlite database containing reference tables
     def disconnect(self):

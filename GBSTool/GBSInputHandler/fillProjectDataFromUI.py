@@ -13,21 +13,13 @@ def fillProjectDataFromUI(projectDir, setupInfo):
     from fillProjectComponentData import fillProjectComponentData
 
 
-    # get the project directory. This is all that should be needed, since folder structure and filenames should be
-    # standardized
-    userInputDir = projectDir + '/InputData/Setup/UserInput/'
-    if not os.path.exists(userInputDir):
-        os.makedirs(userInputDir)
+
 
 
     projectSetup = setupInfo.project + 'Setup.xml'
 
-    # get the directory to save the project setup xml file
-    setupDir = projectDir
 
-        # fill in the data from the general setup information csv file above
-
-    #get a dictionary of tags
+    #get a dictionary of tags from xml
     generalSetupInfo = setupInfo.getSetupTags()
 
     for k in generalSetupInfo.keys():  # for each component
@@ -36,13 +28,11 @@ def fillProjectDataFromUI(projectDir, setupInfo):
         for v in generalSetupInfo[k].keys():
             attr = v
             value = generalSetupInfo[k][v]
-            writeXmlTag(projectSetup, tag, attr, value, setupDir)
+            writeXmlTag(projectSetup, tag, attr, value, setupInfo.setupFolder)
 
-    # get component timeseries  information
-    os.chdir(userInputDir)
 
     #look for component descriptor files for all componentName
-    componentDir = os.path.join(setupDir, '../Components')
+    componentDir = os.path.join(setupInfo.setupFolder, '../Components')
 
     #component is a string
     for component in setupInfo.componentNames.value: # for each component

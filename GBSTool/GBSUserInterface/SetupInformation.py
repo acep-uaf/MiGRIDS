@@ -105,22 +105,39 @@ class SetupInformation:
 
     def assignComponentNames(self, m, v):
         # string gets split to list
-        v = v.split()
+        if type(v) is str:
+            v = v.split()
+        elif type(v) is list:
+            #unfilled list items need to be filled with NA
+            v = [f if f != '' else 'NA' for f in v]
+
         self.componentNames.assign(m,v)
 
     def assignComponentName(self, m,v):
         # string gets split to list
-        v = v.split()
+        if type(v) is str:
+            v = v.split()
+        elif type(v) is list:
+            #unfilled list items need to be filled with NA
+            v = [f if f != '' else 'NA' for f in v]
         self.componentName.assign(m, v)
 
     def assignHeaderName(self, m, v):
         #string gets split to list
-        v = v.split()
+        if type(v) is str:
+            v = v.split()
+        elif type(v) is list:
+            # unfilled list items need to be filled with NA
+            v = [f if f != '' else 'NA' for f in v]
         self.headerName.assign(m, v)
 
     def assignComponentAttribute(self,m,v):
         # string gets split to list
-        v = v.split()
+        if type(v) is str:
+            v = v.split()
+        elif type(v) is list:
+            #unfilled list items need to be filled with NA
+            v = [f if f != '' else 'NA' for f in v]
         self.componentAttribute.assign(m,v)
 
 
