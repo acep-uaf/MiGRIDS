@@ -20,9 +20,6 @@ def fillProjectData(projectDir = '',setupInfo = None):
     from fillProjectDataFromCSV import fillProjectDataFromCSV
     from fillProjectDataFromUI  import fillProjectDataFromUI
 
-
-
-
     # get the project directory. This is all that should be needed, since folder structure and filenames should be
     # standardized
     # if project directory not specified, ask for it

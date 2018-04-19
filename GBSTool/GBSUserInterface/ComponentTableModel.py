@@ -9,7 +9,7 @@ class ComponentTableView(QtWidgets.QTableView):
         self.setSizePolicy(QtWidgets.QSizePolicy.Expanding,QtWidgets.QSizePolicy.Expanding)
         self.resizeColumnsToContents()
         #text columns
-        t_boxes = [1,5,6,8,9,10]
+        t_boxes = [1,5,6,]
         #columns to hide
         hidden = 0
 
@@ -18,10 +18,10 @@ class ComponentTableView(QtWidgets.QTableView):
 
         self.setColumnHidden(0, True)
         #combo columns
-        combos = [2,4,7,11]
+        combos = [2,4,7]
         for c in combos:
             self.setItemDelegateForColumn(c,RelationDelegate(self))
-        self.setItemDelegateForColumn(12,ComponentFormOpenerDelegate(self))
+        self.setItemDelegateForColumn(8,ComponentFormOpenerDelegate(self))
 
 class ComponentTableModel(QtSql.QSqlRelationalTableModel):
     def __init__(self, parent):
@@ -29,14 +29,14 @@ class ComponentTableModel(QtSql.QSqlRelationalTableModel):
         QtSql.QSqlTableModel.__init__(self, parent)
 
         self.header = ['ID','Field', 'Type', 'Component Name', 'Units', 'Scale',
-                    'Offset','Attribute','P in max pa','Q in max pa','Q out max pa','Voltage Source','Tags']
+                    'Offset','Attribute','Tags']
 
         self.setTable('components')
         self.setJoinMode(QtSql.QSqlRelationalTableModel.LeftJoin)
         self.setRelation(2,QtSql.QSqlRelation('ref_component_type','code','code'))
         self.setRelation(7, QtSql.QSqlRelation('ref_attributes','code','code'))
         self.setRelation(4, QtSql.QSqlRelation('ref_power_units', 'code', 'code'))
-        self.setRelation(11, QtSql.QSqlRelation('ref_true_false', 'code', 'code'))
+
         self.setEditStrategy(QtSql.QSqlTableModel.OnFieldChange)
 
         self.select()

@@ -1,14 +1,14 @@
 #build an empty descriptor file for a single component
-#Component | soup, string -> None
+#fill the descriptor file if a soup object is provided
+#String| string, Soup-> None
 def createComponentDescriptor(component, saveDir, soup = None):
     # componentNames is a list of all components to be included in the simulation
     # saveDir is where the generated component descriptor files will be saved
+    #this assumes that the first three characters in a component string is the component type
 
     # General Imports
     from bs4 import BeautifulSoup
     import os
-    from Component import Component
-
 
     #get the component descriptor template from the resource folder
     #component descriptor can have parent files that contain additional tags
@@ -17,7 +17,7 @@ def createComponentDescriptor(component, saveDir, soup = None):
 
 
     if soup is None:
-        fileName = os.path.join(componentPath, component.type + 'Descriptor.xml')
+        fileName = os.path.join(componentPath, component[0:3] + 'Descriptor.xml')
         with open(fileName, "r") as template:# open
             print('creating from template')
             contents_child = template.read()
@@ -26,7 +26,7 @@ def createComponentDescriptor(component, saveDir, soup = None):
             parent = soup.childOf.string  # find the anme of parent. if 'self', no parent file
             parent = os.path.join(componentPath, parent)
             # update the component name
-            soup.component.attrs['name'] = component.component_name
+            soup.component.attrs['name'] = component
             while parent != 'self':  # continue to iterate if there are parents
                 fileName = parent + '.xml'
                 infile_child = open(fileName, "r")
@@ -41,11 +41,11 @@ def createComponentDescriptor(component, saveDir, soup = None):
                     # from parent file
                     if soup.component.find(child.name) is None:
                         soup.component.append(child)
-        saveName = component.component_name + 'Descriptor.xml'
+        saveName = component + 'Descriptor.xml'
     else:
 
         soup = soup
-        saveName = component.component_name + 'Descriptor.xml'
+        saveName = component + 'Descriptor.xml'
     # write combined xml file
     if not os.path.exists(saveDir):
         os.makedirs(saveDir)

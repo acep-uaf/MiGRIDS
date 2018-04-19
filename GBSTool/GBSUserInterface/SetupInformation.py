@@ -87,24 +87,25 @@ class SetupInformation:
         import os
         from ComponentSQLiteHandler import SQLiteHandler
         self.project = name
-        fileDir = os.getcwd()
 
-        self.setupFolder = os.path.join(fileDir,'../../GBSProjects',self.project, 'InputData/Setup')
-        self.componentFolder = os.path.join(fileDir,'../../GBSProjects',self.project, 'InputData/Components')
-        self.projectFolder = os.path.join(fileDir, '../../GBSProjects',self.project )
+        self.componentFolder = os.path.join(self.setupFolder ,'../Components')
+        self.projectFolder = os.path.join(self.setupFolder, '../../' )
+        print('project folder set to %s' %self.projectFolder)
         #if there isn't a setup folder then its a new project
         if not os.path.exists(self.setupFolder):
             #make the project folder
             os.makedirs(self.setupFolder)
         if not os.path.exists(self.componentFolder):
-            #make the project folder
+            #make the component
             os.makedirs(self.componentFolder)
-        handler = SQLiteHandler(os.path.join(self.projectFolder,'component_manager'))
-        handler.makeDatabase()
-        handler.closeDatabase()
+    def assignSetupFolder(self, setupFile):
+        import os
+        self.setupFolder = os.path.dirname(setupFile)
+        self.assignProject(os.path.basename(setupFile[:-9]))
 
     def assignComponentNames(self, m, v):
-
+        # string gets split to list
+        v = v.split()
         self.componentNames.assign(m,v)
 
     def assignComponentName(self, m,v):

@@ -13,7 +13,7 @@ def setupGrid(inputDictionary):
     #returns a QtWidget at a specified row, column within a gridlayout
     def getColumn(objectName, row, c, gridLayout):
         o = gridLayout.itemAtPosition(0, c)
-        print(o)
+
         if c > gridLayout.columnCount():
             return False
         if o is not None:
@@ -55,7 +55,7 @@ def setupGrid(inputDictionary):
         grid.lbl.setFont(font)
         #All the headers are label objects with a name beginning with 'lbl'
         grid.lbl.setObjectName('lbl' + str(headers[i]))
-        print(grid.lbl.objectName())
+
         grid.lbl.setProperty('wscale', inputDictionary['columnWidths'][i])
         grid.lbl.setProperty('xpos', xpos)
 
@@ -68,8 +68,6 @@ def setupGrid(inputDictionary):
     #A list of row names
     rowNames = inputDictionary['rowNames']
 
-    # TODO combo boxes need padding
-
     for i in range(len(rowNames)):
         # for every row name create a label
         grid.lbl = QtWidgets.QLabel()
@@ -78,25 +76,27 @@ def setupGrid(inputDictionary):
         grid.addWidget(grid.lbl, i + 1, 1, 1, 1)
 
         #if the rowname is a string show it otherwise don't
-        if type(rowNames[i]) == str:
+
+        if not rowNames[i][len(rowNames[i])-1:].isdigit():
+
             grid.lbl.setText(rowNames[i])
 
         # get the row of widgets
         r = inputDictionary[rowNames[i]]
 
         # fill in row values
-        print('headers: %s' %headers)
         for h in headers[1:]:
-            print(h)
-            print(r)
+
             # identify what kind of widget it is
             if h in r.keys():
                 grid.wid = getWidget(r[h]['widget'])
-                print(grid.wid)
+
                 # find the column width from the column label width
-                print('lbl' + str(h))
-                w = getColumn('lbl' + str(h), 0, h, grid)
-                print (w)
+                if type(h) == int:
+                    w = getColumn('lbl' + str(h), 0, h, grid)
+                else:
+                    w = getColumn('lbl' + str(h), 0, headers.index(h), grid)
+
 
                 pscale = w.property('wscale')
                 xpos = w.property('xpos')
@@ -109,15 +109,22 @@ def setupGrid(inputDictionary):
                 #the name matches the name and attribute in the xml file
                 grid.wid.setObjectName(r[h]['name'])
                 if 'default' in r[h].keys():
-                    grid.wid.setText(r[h]['default'])
+                    #check what kind of widget it is
+                    if type(grid.wid) == QtWidgets.QComboBox:
+                        #find the position of the defualt value
+                        grid.wid.setCurrentIndex(grid.wid.findText(r[h]['default']))
+                    elif type(grid.wid) == QtWidgets.QCheckBox:
+                        if r[h]['default'] == 'TRUE':
+                            grid.wid.setChecked(True)
+                    else:
+                        grid.wid.setText(r[h]['default'])
+
                 grid.addWidget(grid.wid, i + 1, xpos, 1, pscale)
 
                 if 'items' in r[h].keys():
                     for item in r[h]['items']:
-                        #TODO add space around text
+
                         grid.wid.addItem(item)
-
-
 
 
     return grid

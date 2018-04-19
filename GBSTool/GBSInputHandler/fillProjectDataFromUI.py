@@ -41,23 +41,16 @@ def fillProjectDataFromUI(projectDir, setupInfo):
     # get component timeseries  information
     os.chdir(userInputDir)
 
-    # headerName = generalSetupInfo[headerNamevalue]
-    # componentName = generalSetupInfo.componentNamevalue # a list of component names corresponding headers in timeseries data
-    # componentAttribute_value = generalSetupInfo.componentAttributevalue
-    # componentAttribute_unit = generalSetupInfo.componentAttributeunit
-    # componentNames = generalSetupInfo.componentNamesvalue
-    # writeXmlTag(projectSetup, ['componentChannels', 'headerName'], 'value', headerName, setupDir)
-    # writeXmlTag(projectSetup, ['componentChannels', 'componentName'], 'value', componentName, setupDir)
-    # writeXmlTag(projectSetup, ['componentChannels', 'componentAttribute'], 'value', componentAttribute_value, setupDir)
-    # writeXmlTag(projectSetup, ['componentChannels', 'componentAttribute'], 'unit', componentAttribute_unit, setupDir)
-
     #look for component descriptor files for all componentName
     componentDir = os.path.join(setupDir, '../Components')
 
-    print('writing component files.')
-    for component in setupInfo.components: # for each component
-         print('file for %s' %component.component_name)
-         createComponentDescriptor(component, componentDir)
-         fillProjectComponentData(setupDir,component)
+    #component is a string
+    for component in setupInfo.componentNames.value: # for each component
+
+         #if there isn't a component descriptor file create one
+         if not os.path.exists(os.path.join(componentDir, component + 'Descriptor.xml')):
+             createComponentDescriptor(component, componentDir)
+
+
 
 

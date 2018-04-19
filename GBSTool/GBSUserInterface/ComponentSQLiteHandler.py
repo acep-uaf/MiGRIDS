@@ -3,7 +3,6 @@ class SQLiteHandler:
 
     def __init__(self, database):
         import sqlite3 as lite
-        print(database)
         self.connection = lite.connect(database)
         self.cursor = self.connection.cursor()
 
@@ -59,7 +58,7 @@ class SQLiteHandler:
         self.connection.commit()
 
     def makeDatabase(self):
-        print('making database')
+        print('Making default database')
         refTables = [
             'ref_component_attribute',
             'ref_component_type',
@@ -120,47 +119,27 @@ class SQLiteHandler:
          (_id integer primary key,
          original_field_name text,
          component_type text,
-         component_name text,
+         component_name text unique,
          units text,
          scale numeric,
          offset numeric,
          attribute text,
-         pinmaxpa numeric,
-         qinmaxpa numeric, 
-         qoutmaxpa numeric,
-         isvoltagesource text,
+        
          tags text,
          FOREIGN KEY (component_type) REFERENCES ref_component_type(code),
          FOREIGN KEY (units) REFERENCES ref_universal_units(code),
-         FOREIGN KEY (attribute) REFERENCES ref_attributes(code),
-         FOREIGN KEY (isvoltagesource) REFERENCES ref_true_false(code)
+         FOREIGN KEY (attribute) REFERENCES ref_attributes(code)
+         
          );""")
-        #TODO remove test components
-        # self.cursor.executemany("INSERT INTO components (original_field_name, component_type, component_name, scale, units, attribute, isvoltagesource) values (?,?,?,?,?,?,?)",
-        #                         [('Hank', 'wtg','wtg1P',1,'kW','P','T'),('gen1','gen','gen1P',3,'kW','P','T')])
-        # #create a sql function to access the getTypeCount function
+             # #create a sql function to access the getTypeCount function
         self.connection.create_function("componentName",1,self.getTypeCount)
         self.connection.commit()
-        #create a trigger so that when component is updated the component name is filled in
-        #TODO this doesn't work through table interactions, temporary solution below
-        # self.cursor.execute("""CREATE TRIGGER component_name_trigger
-        # AFTER UPDATE ON components WHEN old.component_type <> new.component_type
-        # BEGIN UPDATE components set component_name = component_type || componentName((SELECT max(component_name) from components where component_type = component_type));
-        # END;
-        #
-        # """)
-        #
-        self.cursor.execute("""CREATE TRIGGER IF NOT EXISTS component_name_trigger
-        AFTER UPDATE ON components WHEN old.component_type <> new.component_type
-        BEGIN UPDATE components set component_name = component_type || _id || attribute;
-        END;
-        """)
 
 
         self.cursor.executescript("""CREATE TABLE IF NOT EXISTS environment
                  (_id integer primary key,
                  original_field_name text,
-                 component_name text,
+                 component_name text unique,
                  units text,
                  scale numeric,
                  offset numeric,
@@ -172,17 +151,12 @@ class SQLiteHandler:
                  FOREIGN KEY (attribute) REFERENCES ref_env_attributes(code)
                  
                  );""")
-        # TODO remove test environment components
-        # self.cursor.executemany(
-        #     "INSERT INTO environment (original_field_name, component_name, scale, attribute,units) values (?,?,?,?,?)",
-        #     [('WIND', 'ws1', 1,'WS','m/s')])
 
         self.connection.commit()
     def insertRecord(self, table, fields, values):
         string_fields = ','.join(fields)
         string_values = ','.join('?' * len(values))
-        print(string_fields)
-        print(values)
+
         self.cursor.execute("INSERT INTO " + table + "(" + string_fields + ")" + "VALUES (" + string_values + ")", values)
         self.connection.commit()
     def getRefInput(self, tables):
@@ -199,7 +173,7 @@ class SQLiteHandler:
 
     def getTypeCount(self,finalName):
         import re
-        print('type count called for %s' %finalName)
+        print('Type count called for %s' %finalName)
         count = re.findall(r'\d+', finalName)
         if len(count) > 0:
             count = int(count[0])

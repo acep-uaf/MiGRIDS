@@ -124,5 +124,5 @@ class formFromXML(QtWidgets.QDialog):
         #update xml file
         self.update()
         handler = UIToHandler()
-        handler.writeSoup(Component(component_name= self.componentName),self.fileDir,self.soup)
+        handler.writeSoup(self.componentName,self.fileDir,self.soup)
 
