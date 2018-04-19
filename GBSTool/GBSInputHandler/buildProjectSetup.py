@@ -16,8 +16,8 @@ def buildProjectSetup(projectName,saveDir,componentNames):
     # cd to where component descriptors are located
     here = os.path.dirname(os.path.realpath(__file__))
     setupPath = os.path.join(here, '../GBSModel/Resources/Setup')
-    os.chdir(setupPath)
-    fileName = 'projectSetup.xml'  # get filename
+
+    fileName = os.path.join(setupPath,'projectSetup.xml') # get filename
     infile_child = open(fileName, "r")  # open
     contents_child = infile_child.read()
     infile_child.close()
@@ -29,8 +29,8 @@ def buildProjectSetup(projectName,saveDir,componentNames):
     #if the specified directory doesn't exist create it.
     if not os.path.exists(saveDir):
         os.makedirs(saveDir)
-    os.chdir(saveDir)
-    saveName = projectName + 'Setup.xml'
+
+    saveName = os.path.join(saveDir, projectName + 'Setup.xml')
     f = open(saveName, "w")
     f.write(soup.prettify())
     f.close()

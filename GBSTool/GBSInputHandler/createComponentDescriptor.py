@@ -41,15 +41,15 @@ def createComponentDescriptor(component, saveDir, soup = None):
                     # from parent file
                     if soup.component.find(child.name) is None:
                         soup.component.append(child)
-        saveName = component + 'Descriptor.xml'
+        saveName = os.path.join(saveDir, component + 'Descriptor.xml')
     else:
 
         soup = soup
-        saveName = component + 'Descriptor.xml'
+        saveName = os.path.join(saveDir, component + 'Descriptor.xml')
     # write combined xml file
     if not os.path.exists(saveDir):
         os.makedirs(saveDir)
-    os.chdir(saveDir)
+
 
     f = open(saveName, "w")
     f.write(soup.prettify())

@@ -9,12 +9,10 @@ def writeXmlTag(fileName,tag,attr,value,fileDir=''):
     import os
     from bs4 import BeautifulSoup
 
-    # cd to file location
-    if fileDir != '':
-        os.chdir(fileDir)
+
 
     # open file and read into soup
-    infile_child = open(fileName, "r")  # open
+    infile_child = open(os.path.join(fileDir,fileName), "r")  # open
     contents_child = infile_child.read()
     infile_child.close()
     soup = BeautifulSoup(contents_child, 'xml')  # turn into soup
@@ -36,9 +34,8 @@ def writeXmlTag(fileName,tag,attr,value,fileDir=''):
 
 
     # save again
-    if fileDir != '':
-        os.chdir(fileDir)
-    f = open(fileName, "w")
+
+    f = open(os.path.join(fileDir,fileName), "w")
     f.write(soup.prettify())
     f.close()
 
