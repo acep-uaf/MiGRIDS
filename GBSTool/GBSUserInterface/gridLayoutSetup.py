@@ -108,11 +108,17 @@ def setupGrid(inputDictionary):
                 grid.wid.setFont(font)
                 #the name matches the name and attribute in the xml file
                 grid.wid.setObjectName(r[h]['name'])
+                if 'items' in r[h].keys():
+                    for item in r[h]['items']:
+                        grid.wid.addItem(item)
+
                 if 'default' in r[h].keys():
                     #check what kind of widget it is
                     if type(grid.wid) == QtWidgets.QComboBox:
+
                         #find the position of the defualt value
                         grid.wid.setCurrentIndex(grid.wid.findText(r[h]['default']))
+
                     elif type(grid.wid) == QtWidgets.QCheckBox:
                         if r[h]['default'] == 'TRUE':
                             grid.wid.setChecked(True)
@@ -121,10 +127,7 @@ def setupGrid(inputDictionary):
 
                 grid.addWidget(grid.wid, i + 1, xpos, 1, pscale)
 
-                if 'items' in r[h].keys():
-                    for item in r[h]['items']:
 
-                        grid.wid.addItem(item)
 
 
     return grid

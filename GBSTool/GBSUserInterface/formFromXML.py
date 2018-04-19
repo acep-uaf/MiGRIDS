@@ -42,10 +42,20 @@ class formFromXML(QtWidgets.QDialog):
     #create a layout from the xml
     #BeautifulSoup -> QVBoxLayout
     def displayXML(self, soup, vlayout):
+        from ProjectSQLiteHandler import ProjectSQLiteHandler
         from gridLayoutSetup import setupGrid
         g1 = {'headers': [1,2,3,4,5],
               'rowNames': [],
               'columnWidths': [2, 1, 1, 1, 1]}
+        import os
+       
+        #this uses a generic units table
+        dbHandler = ProjectSQLiteHandler('project_manager')
+        units = dbHandler.cursor.execute("select code from ref_units").fetchall()
+        dbHandler.closeDatabase()
+
+        units = [u[0] for u in units]
+
 
         for tag in soup.find_all():
             if tag.name not in ['component','childOf','type']:
@@ -77,7 +87,7 @@ class formFromXML(QtWidgets.QDialog):
                     #if setting units attribute use a combo box
                     if a =='unit':
                         widget = 'combo'
-                        items = 'kW', 'Kvar','m/s'
+                        items = units
                     #if the value is set to true false use a checkbox
                     if inputValue in ['TRUE','FALSE']:
                         widget = 'chk'
@@ -114,8 +124,6 @@ class formFromXML(QtWidgets.QDialog):
                              tag.attrs[a] = 'TRUE'
                         else:
                             tag.attrs[a]= 'FALSE'
-
-
 
     def closeEvent(self,evnt):
         from UIToHandler import UIToHandler
