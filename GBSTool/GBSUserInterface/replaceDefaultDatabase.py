@@ -1,7 +1,7 @@
 def replaceDefaultDatabase(projectdb):
     from ProjectSQLiteHandler import ProjectSQLiteHandler
     import pandas as pd
-    tables = ['environment', 'components', 'projectTree']
+    tables = ['environment', 'components']
     for t in tables:
         h = ProjectSQLiteHandler(projectdb)
         # project data becomes a dataframe
@@ -14,7 +14,8 @@ def replaceDefaultDatabase(projectdb):
             projectTable.index.names = ['_id']
             # connect to the active database and overwrite the table
             h = ProjectSQLiteHandler('project_manager')
-            projectTable.to_sql(t, h.connection, if_exists='replace')
+            projectTable.to_sql(t, h.connection, if_exists='append')
             h.closeDatabase()
         except:
-            h.closeDatabase()
+            #TODO print some message to the console
+           h.closeDatabase()

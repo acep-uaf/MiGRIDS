@@ -4,12 +4,13 @@
 import pandas as pd
 from PyQt5 import QtWidgets, QtGui, QtCore
 
-from ComponentSQLiteHandler import SQLiteHandler
+from ProjectSQLiteHandler import ProjectSQLiteHandler
 
 class SetupWizard:
 
     #dialog sequence is a WizardTree containing info to be used when making dialog widgets
     def __init__(self, dialogSequence, model,parentWindow):
+
         self.dialogSequence = dialogSequence
         #Starts with the parent node for the entire sequence of dialogs
         self.currentDialog = dialogSequence.getStart()
@@ -18,10 +19,11 @@ class SetupWizard:
         self.input = None
         self.parentWindow = parentWindow
 
+
     #connect to the sqlite database containing reference tables
     def connect(self):
-        import os
-        self.database = SQLiteHandler(os.path.join(self.model.projectFolder, 'project_manager'))
+
+        self.database = ProjectSQLiteHandler('project_manager')
 
     #dissconnect from the sqlite database containing reference tables
     def disconnect(self):
@@ -32,13 +34,16 @@ class SetupWizard:
         response = self.recordValue()
         self.currentDialogWindow.close()
         #get the next dialog from the wizardtree
-        print(self.currentDialog.key)
 
         d = self.dialogSequence.getNext(self.currentDialog.key, response)
 
         self.makeDialog(d)
 
+    #returns the response from a dialog input
+    #->string
     def recordValue(self):
+
+
         response = 0
         if type(self.inputWidget) is QtWidgets.QComboBox:
             self.input = self.parseCombo(self.inputWidget.currentText())

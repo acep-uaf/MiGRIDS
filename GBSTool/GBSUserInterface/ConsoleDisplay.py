@@ -43,7 +43,7 @@ class ConsoleDisplay(QtWidgets.QDialog):
         self.setLayout(layout)
 
         #connect to output class actions
-        #DisplayWriter.stdout().messageWritten.connect(self._console.insertPlainText)
+        DisplayWriter.stdout().messageWritten.connect(self._console.insertPlainText)
         #TODO uncomment when not testing otherwise fatal errors won't be seen
         #DisplayWriter.stderr().messageWritten.connect(self._console.insertPlainText)
 
@@ -91,10 +91,7 @@ class ConsoleDisplay(QtWidgets.QDialog):
         txt = self.switchWords()
         self._button.setText(txt)
         self.switchDisplay()
-        #TODO remove test print statements
-        print ('This is the console. Messages will appear here.')
-        #logging messages also appear in the console
-        logger.debug('logging and error messages also appear here')
+
 
 
 

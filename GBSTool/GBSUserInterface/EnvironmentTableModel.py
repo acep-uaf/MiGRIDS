@@ -1,5 +1,5 @@
 from PyQt5 import QtCore, QtGui, QtWidgets, QtSql
-from ComponentSQLiteHandler import SQLiteHandler
+from ProjectSQLiteHandler import ProjectSQLiteHandler
 from Delegates import *
 #subclass of QTableView for displaying component information
 class EnvironmentTableView(QtWidgets.QTableView):

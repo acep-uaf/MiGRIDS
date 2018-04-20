@@ -140,7 +140,7 @@ class ProjectSQLiteHandler:
         self.connection.create_function("componentName",1,self.getTypeCount)
         self.connection.commit()
 
-        self.cursro.execute("DROP TABLE IF EXISTS environement")
+        self.cursor.execute("DROP TABLE IF EXISTS environment")
         self.cursor.executescript("""CREATE TABLE IF NOT EXISTS environment
                  (_id integer primary key,
                  original_field_name text,

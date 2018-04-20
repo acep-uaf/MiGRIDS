@@ -47,7 +47,10 @@ class UIToHandler():
     #delete a descriptor xml from the project component folder
     #String, String -> None
     def removeDescriptor(self,componentName, componentDir):
-        print ('component name %s will be deleted once this is implemented' %componentName)
+        import os
+
+        if os.path.exists(os.path.join(componentDir,componentName + 'Descriptor.xml')):
+             os.remove(os.path.join(componentDir,componentName + 'Descriptor.xml'))
         return
     #return a list of component descriptor files in a component directory
     #String -> List
@@ -67,16 +70,16 @@ class UIToHandler():
         import shutil
         from Component import Component
         fileName =os.path.basename(descriptorFile)
-        componentType = fileName[0:3]
+
         componentName = fileName[:-14]
         # copy the xml to the project folder
         try:
             shutil.copy2(descriptorFile, componentDir)
         except shutil.SameFileError:
             print('This descriptor file already exists in this project')
-        temporaryComponent = Component(component_name= componentName, type=componentType)
+
         #get the soup and write the xml
-        soup = self.makeComponentDescriptor(temporaryComponent,componentDir)
+        soup = self.makeComponentDescriptor(componentName,componentDir)
         sqlRecord = self.updateDescriptor(soup, sqlRecord)
         return sqlRecord
 

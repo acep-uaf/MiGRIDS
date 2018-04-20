@@ -49,8 +49,6 @@ def createComponentDescriptor(component, saveDir, soup = None):
     # write combined xml file
     if not os.path.exists(saveDir):
         os.makedirs(saveDir)
-
-
     f = open(saveName, "w")
     f.write(soup.prettify())
     f.close()

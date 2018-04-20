@@ -23,7 +23,8 @@ class SetupTag:
     def getDict(self):
         d = {}
         for k in self.__dict__.keys():
-            d[k] = self.__getattribute__(k)
+            if self.__getattribute__(k) is not None:
+                d[k] = self.__getattribute__(k)
         return d
 
 
@@ -33,10 +34,11 @@ class SetupInformation:
         #dictionary of dialog card names and their corresponding assignment functions
         #TODO make dynamic based on WizardTree names
         self.functionDictionary = {'project':self.assignProject,
-                                   'inputFileformat':self.assignFileFormat,
-                                   'windFileDirvalue':self.assignWindFolder,
-                                   'hydroFileDirvalue':self.assignHydroFolder,
-                                   'inputFileDirvalue':self.assignTimeseriesFolder,
+                                   'inputFileFormatvalue':[self.assignInputFileFormat,SetupTag.assignValue],
+                                   'windFileDirvalue':[self.assignWindFileDir,SetupTag.assignValue],
+                                   'hydroFileDirvalue':[self.assignHydroFileDir,SetupTag.assignValue],
+                                   'inputFileDirvalue':[self.assignInputFileDir,SetupTag.assignValue],
+                                   'inputFileTypevalue':[self.assignInputFileType, SetupTag.assignValue],
                                    'dateChannelformat':[self.assignDateChannel,SetupTag.assignFormat],
                                    'dateChannelvalue': [self.assignDateChannel, SetupTag.assignValue],
                                    'inputTimeStepvalue':[self.assignInputTimeStep,SetupTag.assignValue],
@@ -56,11 +58,14 @@ class SetupInformation:
                                    }
 
 
-        self.componentNames = ['wtg1P']
 
+        #empty values
         self.project =''
-        self.inputDir = ''
-
+        self.inputFileDir = SetupTag('inputFileDir')
+        self.windFileDir = SetupTag('windFileDir')
+        self.hydroFileDir = SetupTag('hydroFileDir')
+        self.inputFileType = SetupTag('inputFileType')
+        self.inputFileFormat= SetupTag('inputFileFormat')
 
         self.dateChannel = SetupTag('dateChannel')
         self.timeChannel = SetupTag('timeChannel')
@@ -75,20 +80,20 @@ class SetupInformation:
         self.componentName = SetupTag('componentName')
         self.componentAttribute = SetupTag('componentAttribute')
 
-        #components is a list of component class objects
-        #the type of class determines how the information will be written to an xml
-        self.components = []
 
 
-    #TODO currently each assignment just assigns a parameter,
     # but this will likely change to perform some actions during parameter assigment.
     # That is why each parameter has its own fuction
     def assignProject(self, name):
         import os
-        from ComponentSQLiteHandler import SQLiteHandler
+        
         self.project = name
 
+        if 'setupFolder' not in self.__dict__.keys():
+            path = os.path.dirname(__file__)
+            self.setupFolder = os.path.join(path, '../../GBSProjects/', self.project, 'InputData/Setup')
         self.componentFolder = os.path.join(self.setupFolder ,'../Components')
+
         self.projectFolder = os.path.join(self.setupFolder, '../../' )
         print('project folder set to %s' %self.projectFolder)
         #if there isn't a setup folder then its a new project
@@ -98,6 +103,9 @@ class SetupInformation:
         if not os.path.exists(self.componentFolder):
             #make the component
             os.makedirs(self.componentFolder)
+    def assignInputFileType(self,m,v):
+        self.inputFileType.assign(m,v)
+
     def assignSetupFolder(self, setupFile):
         import os
         self.setupFolder = os.path.dirname(setupFile)
@@ -144,11 +152,9 @@ class SetupInformation:
     def assignLoadChannel(self,m,v):
         self.realLoadChannel.assign(m,v)
 
-    def assignHeaderNames(self,name):
-        self.headerNames = name
 
-    def assignFileFormat(self, name):
-        self.dataFormat = name
+    def assignInputFileFormat(self, m,v):
+        self.inputFileFormat.assign(m,v)
 
     def assignInputTimeStep(self, m, v):
         self.inputTimeStep.assign(m, v)
@@ -156,14 +162,14 @@ class SetupInformation:
     def assignOutputTimeStep(self,m, v):
         self.outputTimeStep.assign(m, v)
 
-    def assignWindFolder(self, name):
-        self.WindFolder = name
+    def assignWindFileDir(self,m,v):
+        self.windFileDir.assign(m,v)
 
-    def assignHydroFolder(self, name):
-        self.HydroFolder = name
+    def assignHydroFileDir(self,m,v):
+        self.hydroFileDir.assign(m,v)
 
-    def assignTimeseriesFolder(self, name):
-        self.TimeSeriesFolder = name
+    def assignInputFileDir(self,m,v):
+        self.inputFileDir.assign(m,v)
 
     def assignDateChannel(self, m,v):
         self.dateChannel.assign(m,v)
@@ -171,10 +177,7 @@ class SetupInformation:
     def assignTimeChannel(self, m, v):
         self.timeChannel.assign(m, v)
 
-    def assignAttributes(self, name):
-        self.attributes = name
-    def assignUnits(self,name):
-        self.units = name
+
     #string, string ->
     def assign(self, dialog, value):
 
@@ -198,9 +201,9 @@ class SetupInformation:
 
             v = self.__getattribute__(a)
             if type(v) == SetupTag:
-                d[v.name]=v.getDict()
+                if v.getDict() is not None:
+                    d[v.name]=v.getDict()
 
-        print(d)
         return d
     #make a new component and add it to the component list
     def makeNewComponent(self,component,originalHeading,units,attribute,componentType):
@@ -224,7 +227,7 @@ class SetupInformation:
         if not os.path.exists(self.setupFolder):
             return False
         # tell the controller to tell the InputHandler to read the xml and set the model values
-        inputHandlerToUI(fileDir, self)
+        inputHandlerToUI(self.setupFolder, self)
 
         return True
     #write a new setup xml file for this project

@@ -253,7 +253,7 @@ class SetupForm(QtWidgets.QWidget):
             # display data
             self.fillData(model)
 
-    
+
             #make the data blocks editable
             self.topBlock.setEnabled(True)
             self.environmentBlock.setEnabled(True)
@@ -261,8 +261,9 @@ class SetupForm(QtWidgets.QWidget):
             self.componentBlock.setEnabled(True)
             print('Loaded %s:' % model.project)
         else:
-            (QtWidgets.QMessageBox("Close project","You need to close the sofware before you load a new project")).show()
-
+            msg = QtWidgets.QMessageBox(QtWidgets.QMessageBox.Warning, "Close project", "You need to close the sofware before you load a new project")
+            msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
+            msg.exec()
     #TODO make dynamic from list input
     def buildWizardTree(self, dlist):
         # w1 = WizardTree(dlist[0][0], dlist[0][1], 0, [])  # output timestep unit
@@ -351,17 +352,22 @@ class SetupForm(QtWidgets.QWidget):
             m = E.EnvironmentTableModel(self)
         tv.setModel(m)
 
+        tv.hideColumn(0)
 
         tableGroup.addWidget(tv, 1)
         gb.setLayout(tableGroup)
         gb.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         fn(gb)
         return tv
-
-
+    #Load an existing descriptor file and populate the component table
+    #-> None
     def functionForLoadDescriptor(self):
+        #TODO temporary message to prevent unique index error
+        msg = QtWidgets.QMessageBox(QtWidgets.QMessageBox.Warning, 'Load Descriptor',
+                                    'If the component descriptor file you are loading has the same name as an existing component it will not load')
+        msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
+        msg.exec()
 
-        print('load descriptor from xml')
         tableView = self.findChild((QtWidgets.QTableView), 'components')
         model = tableView.model()
         #identify the xml
@@ -392,7 +398,7 @@ class SetupForm(QtWidgets.QWidget):
         tableView= self.findChild((QtWidgets.QTableView), table)
         model = tableView.model()
         #insert an empty row as the last record
-        print("New row added to %s" %table)
+
         model.insertRows(model.rowCount(),1)
         model.submitAll()
 
@@ -414,12 +420,13 @@ class SetupForm(QtWidgets.QWidget):
             result = msg.exec()
 
             if result == 1024:
+                handler = UIToHandler()
                 for r in selected:
+                    handler.removeDescriptor(model.data(model.index(r.row(), 3)), self.model.componentFolder)
                     model.removeRows(r.row(),1)
                 # remove the xml files too
-                handler = UIToHandler()
-                print('deleting :%s' %model.data(model.index(r.row(),3)))
-                handler.removeDescriptor(model.data(model.index(r.row(),3)),self.model.componentFolder)
+
+
                 #Delete the record from the database and refresh the tableview
                 model.submitAll()
                 model.select()
@@ -450,9 +457,9 @@ class SetupForm(QtWidgets.QWidget):
     #inserts data from the data model into corresponding boxes on the screen
     #SetupInfo -> None
     def fillData(self,model):
-        import os
+
         from ProjectSQLiteHandler import ProjectSQLiteHandler
-        print(os.getcwd())
+
         d = model.getSetupTags()
 
         #for every key in d find the corresponding textbox or combo box
@@ -479,7 +486,6 @@ class SetupForm(QtWidgets.QWidget):
         #this is what happens if there isn't already a project database.
         if not self.projectDatabase:
 
-            print(os.getcwd())
             # for headers, componentnames, componentattributes data goes into the database for table models
             dbHandler = ProjectSQLiteHandler('project_manager')
             for i in range(len(model.headerName.value)):
@@ -496,7 +502,7 @@ class SetupForm(QtWidgets.QWidget):
                         table = 'environment'
                     else:
                          table = 'components'
-                    print(getDefault(model.componentName.value,i))
+
                     if len(dbHandler.cursor.execute("select * from " + table + " WHERE component_name = '" + getDefault(model.componentName.value,i) + "'").fetchall()) < 1:
                          dbHandler.insertRecord(table,fields,values)
             dbHandler.closeDatabase()
@@ -581,8 +587,14 @@ class SetupForm(QtWidgets.QWidget):
         self.model.components = listOfComponents
         # start with the setupxml
         self.model.writeNewXML()
+
+        #TODO import timeseries and fix bad data
         # import datafiles
         # fix bad data and generate netcdf files
+        msg = QtWidgets.QMessageBox(QtWidgets.QMessageBox.Warning, "Time Series loading",
+                                    "Time Series loading is coming soon. Check back later.")
+        msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
+        msg.exec()
         return
 
 

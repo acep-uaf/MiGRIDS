@@ -109,6 +109,7 @@ class ComponentFormOpenerDelegate(QtWidgets.QItemDelegate):
         setupInfo.setupFolder
         componentDir = os.path.join(setupInfo.setupFolder, '../Components')
 
+        #TODO check if component type has been set
         #tell the input handler to create or read a component descriptor and combine it with attributes in component
         componentSoup = handler.makeComponentDescriptor(component.component_name,componentDir)
         #data from the form gets saved to a soup, then written to xml
