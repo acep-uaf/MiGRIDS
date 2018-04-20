@@ -6,8 +6,10 @@ Created on Tue Mar 13 08:58:02 2018
 """
 
 from PyQt5 import QtCore, QtGui, QtWidgets
-
-
+#useds locations and values specified in a dictionary to create a grid layout
+#dictionary should contain atleast 'headers' and 'rowNames' keys
+#headers and rowNames can be numbers in which case they won't be displayed
+#Dictionary -> QtGridLayout
 def setupGrid(inputDictionary):
     #String, integer, integer, QtGridLayout
     #returns a QtWidget at a specified row, column within a gridlayout
@@ -108,12 +110,17 @@ def setupGrid(inputDictionary):
                 grid.wid.setFont(font)
                 #the name matches the name and attribute in the xml file
                 grid.wid.setObjectName(r[h]['name'])
+                #if it has items they get added
                 if 'items' in r[h].keys():
                     for item in r[h]['items']:
                         grid.wid.addItem(item)
+                #if there is a hint it gets set
+                if 'hint' in r[h].keys():
+                    grid.wid.setToolTip(r[h]['hint'])
+                    grid.wid.setToolTipDuration(2000)
 
                 if 'default' in r[h].keys():
-                    #check what kind of widget it is
+                    #check what kind of widget it is and set its default value
                     if type(grid.wid) == QtWidgets.QComboBox:
 
                         #find the position of the defualt value
