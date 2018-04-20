@@ -20,7 +20,7 @@ class SetupForm(QtWidgets.QWidget):
         self.initUI()
 
     def initUI(self):
-        import os
+
         self.setObjectName("setupDialog")
         #self.resize(1754, 3000)
         self.model = model
@@ -568,32 +568,39 @@ class SetupForm(QtWidgets.QWidget):
         listOfComponents = []
 
         #every row adds a component to the list
-        for i in range(0, componentModel.rowCount()):
-            newComponent = Component(component_name=componentModel.data(componentModel.index(i, 3)),
-                                     original_field_name=componentModel.data(componentModel.index(i, 1)),
-                                     units=componentModel.data(componentModel.index(i, 4)),
-                                     offset=componentModel.data(componentModel.index(i, 6)),
-                                     type=componentModel.data(componentModel.index(i, 2)),
-                                     attribute=componentModel.data(componentModel.index(i, 7)),
-                                     scale=componentModel.data(componentModel.index(i, 5)),
-                                     pinmaxpa=componentModel.data(componentModel.index(i, 8)),
-                                     poutmaxpa=componentModel.data(componentModel.index(i, 9)),
-                                     qoutmaxpa=componentModel.data(componentModel.index(i,10)),
-                                     isvoltagesource=componentModel.data(componentModel.index(i, 11)),
-                                     tags=componentModel.data(componentModel.index(i, 12))
-                                     )
-            listOfComponents.append(newComponent)
-
-        self.model.components = listOfComponents
+        # for i in range(0, componentModel.rowCount()):
+        #     newComponent = Component(component_name=componentModel.data(componentModel.index(i, 3)),
+        #                              original_field_name=componentModel.data(componentModel.index(i, 1)),
+        #                              units=componentModel.data(componentModel.index(i, 4)),
+        #                              offset=componentModel.data(componentModel.index(i, 6)),
+        #                              type=componentModel.data(componentModel.index(i, 2)),
+        #                              attribute=componentModel.data(componentModel.index(i, 7)),
+        #                              scale=componentModel.data(componentModel.index(i, 5)),
+        #                              pinmaxpa=componentModel.data(componentModel.index(i, 8)),
+        #                              poutmaxpa=componentModel.data(componentModel.index(i, 9)),
+        #                              qoutmaxpa=componentModel.data(componentModel.index(i,10)),
+        #                              isvoltagesource=componentModel.data(componentModel.index(i, 11)),
+        #                              tags=componentModel.data(componentModel.index(i, 12))
+        #                              )
+        #     listOfComponents.append(newComponent)
+        #
+        # self.model.components = listOfComponents
         # start with the setupxml
         self.model.writeNewXML()
 
         #TODO import timeseries and fix bad data
+        #make sure the necessary information is filled in
+        #required: input folder, data format, date-time fields, component max power
         # import datafiles
-        # fix bad data and generate netcdf files
-        msg = QtWidgets.QMessageBox(QtWidgets.QMessageBox.Warning, "Time Series loading",
-                                    "Time Series loading is coming soon. Check back later.")
+        handler = UIToHandler()
+        cleaned_data = handler.loadFixData()
+        #TODO generate results widgets with cleaned data
+
+        # generate netcdf files
+        msg = QtWidgets.QMessageBox(QtWidgets.QMessageBox.Warning, "Time Series loaded",
+                                    "Do you want to generate netcdf files?.")
         msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
+        #TODO if ok generate netcdf files
         msg.exec()
         return
 

@@ -83,6 +83,8 @@ class UIToHandler():
         sqlRecord = self.updateDescriptor(soup, sqlRecord)
         return sqlRecord
 
+    #updates the values in a sqlrecord with attributes in soup
+    #Beautiful Soup, SQLRecord -> SQlRecord
     def updateDescriptor(self,soup,sqlRecord):#fill the record
         sqlRecord.setValue('component_type',soup.findChild('component')['name'][0:3])
 
@@ -94,3 +96,54 @@ class UIToHandler():
         sqlRecord.setValue('isvoltagesource',soup.findChild('isVoltageSource')['value'])
 
         return sqlRecord
+
+    #use the input handler to load raw timeseries data, fix data and return fixed data
+    #String, String, String -> DataClass
+    def loadFixData(self, dataFormat, setupFile, dataFolder):
+        import os
+        from getUnits import getUnits
+        from readDataFile import readDataFile
+        from fixBadData import fixBadData
+        from readXmlTag import readXmlTag
+
+        Village = readXmlTag(setupFile, 'project', 'name')[0]
+        # input specification
+        # input specification can be for multiple input files or a single file in AVEC format.
+        inputSpecification = readXmlTag(setupFile, 'inputFileFormat', 'value')[0]
+        # filelocation is the raw timeseries file.
+        # if multiple files specified look for raw_wind directory
+        # input a list of subdirectories under the GBSProjects directory
+        fileLocation = readXmlTag(setupFile, 'inputFileDir', 'value')
+        fileLocation = os.path.join(*fileLocation)
+        fileLocation = os.path.join('../../GBSProjects', fileLocation)
+        # file type
+        fileType = readXmlTag(setupFile, 'inputFileType', 'value')[0]
+        outputInterval = readXmlTag(setupFile, 'outputTimeStep', 'value')[0] + \
+                         readXmlTag(setupFile, 'outputTimeStep', 'unit')[0]
+        inputInterval = readXmlTag(setupFile, 'inputTimeStep', 'value')[0] + \
+                        readXmlTag(setupFile, 'inputTimeStep', 'unit')[0]
+
+        # get data units and header names
+        headerNames, componentUnits, componentAttributes, componentNames, newHeaderNames = getUnits(Village, os.path.dirname(setupFile))
+
+        # read time series data, combine with wind data if files are seperate.
+
+        df, listOfComponents = readDataFile(inputSpecification, fileLocation, fileType, headerNames, newHeaderNames,
+                                            componentUnits,
+                                            componentAttributes)  # dataframe with time series information. replace header names with column names
+
+        # now fix the bad data
+
+        df_fixed = fixBadData(df, os.path.dirname(setupFile), listOfComponents, inputInterval)
+
+
+        # fix the intervals
+        from fixDataInterval import fixDataInterval
+        df_fixed_interval = fixDataInterval(df_fixed, outputInterval)
+
+        d = {}
+        for c in listOfComponents:
+            c.toDictionary(d)
+
+
+        return df_fixed_interval
