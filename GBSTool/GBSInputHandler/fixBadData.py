@@ -75,9 +75,9 @@ def fixBadData(df, setupDir, ListOfComponents, sampleInterval):
    # create a list of power columns (column names ending in p)
    powerColumns = []
    for c in ListOfComponents:
-       componentList.append(c.name)
-       if c.name.lower()[-1:] == 'p':
-           powerColumns.append(c.name)
+       componentList.append(c.component_name)
+       if c.component_name.lower()[-1:] == 'p':
+           powerColumns.append(c.component_name)
    # store the power column list in the DataClass
    data.powerComponents = powerColumns
    # data gaps are filled with NA's to be filled later
@@ -95,17 +95,17 @@ def fixBadData(df, setupDir, ListOfComponents, sampleInterval):
 
    # replace out of bounds component values before we use these data to replace missing data
    for c in ListOfComponents:
-       if c.name.lower()[-1:] == 'p':
-           descriptorxmlpath = os.path.join(setupDir, '..', 'Components', ''.join([c.name[0:4], DESCXML]))
+       if c.component_name.lower()[-1:] == 'p':
+           descriptorxmlpath = os.path.join(setupDir, '..', 'Components', ''.join([c.component_name[0:4], DESCXML]))
            try:
                descriptorxml = ET.parse(descriptorxmlpath)
 
                try:
-                   checkMinMaxPower(c.name, data.fixed, descriptorxml, data.baddata)
+                   checkMinMaxPower(c.component_name, data.fixed, descriptorxml, data.baddata)
                except KeyError:
-                   print('no column named %s' % c.name)
+                   print('no column named %s' % c.component_name)
            except FileNotFoundError:
-               print('Descriptor xml for %s not found' % c.name)
+               print('Descriptor xml for %s not found' % c.component_name)
    # recalculate total_p, data gaps will sum to 0.
    data.totalPower()
 
@@ -126,8 +126,8 @@ def fixBadData(df, setupDir, ListOfComponents, sampleInterval):
        if c is None:
            return True
 
-       if c.name.lower()[-1:] == 'p':
-           descriptorxmlpath = os.path.join(setupDir, '..', 'Components', ''.join([c.name[0:4], DESCXML]))
+       if c.component_name.lower()[-1:] == 'p':
+           descriptorxmlpath = os.path.join(setupDir, '..', 'Components', ''.join([c.component_name[0:4], DESCXML]))
            try:
                descriptorxml = ET.parse(descriptorxmlpath)
 

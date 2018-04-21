@@ -40,7 +40,8 @@ class MainForm(QtWidgets.QMainWindow):
             ('Setup', [
                 ('Format',[]),
                 ('Environment',[]),
-                ('Components',[])
+                ('Components',[]),
+                ('Load Data',[])
             ]),
             ('Data Input', [
 

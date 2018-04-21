@@ -99,7 +99,8 @@ class UIToHandler():
 
     #use the input handler to load raw timeseries data, fix data and return fixed data
     #String, String, String -> DataClass
-    def loadFixData(self, dataFormat, setupFile, dataFolder):
+    def loadFixData(self, setupFile):
+        print(setupFile)
         import os
         from getUnits import getUnits
         from readDataFile import readDataFile

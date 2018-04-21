@@ -10,6 +10,7 @@ from SetupInformation import SetupInformation
 from ProjectSQLiteHandler import ProjectSQLiteHandler
 from Component import Component
 from UIToHandler import UIToHandler
+from makeButtonBlock import makeButtonBlock
 
 class SetupForm(QtWidgets.QWidget):
     global model
@@ -131,7 +132,7 @@ class SetupForm(QtWidgets.QWidget):
         self.addConsole()
         windowLayout.addWidget(self.console)
         windowLayout.addStretch(2)
-        windowLayout.addWidget(self.makeBlockButton(self.createInputFiles,'Create input files',None,'Create input files to run models'),3)
+        windowLayout.addWidget(makeButtonBlock(self,self.createInputFiles,'Create input files',None,'Create input files to run models'),3)
 
         self.console.showMessage("This is where messages will appear")
         #set the main layout as the layout for the window
@@ -162,12 +163,12 @@ class SetupForm(QtWidgets.QWidget):
         hlayout.setObjectName('buttonLayout')
         #add the button to load a setup xml
 
-        hlayout.addWidget(self.makeBlockButton(self.functionForLoadButton,
+        hlayout.addWidget(makeButtonBlock(self, self.functionForLoadButton,
                                  'Load Existing Project', None, 'Load a previously created project files.'))
 
         #add button to launch the setup wizard for setting up the setup xml file
         hlayout.addWidget(
-            self.makeBlockButton(self.functionForCreateButton,
+            makeButtonBlock(self,self.functionForCreateButton,
                                  'Create setup XML', None, 'Start the setup wizard to create a new setup file'))
         #force the buttons to the left side of the layout
         hlayout.addStretch(1)
@@ -182,22 +183,7 @@ class SetupForm(QtWidgets.QWidget):
         self.ButtonBlock.setMinimumSize(self.size().width(),self.minimumSize().height())
         return hlayout
 
-    #SetupForm, method, String, String, String -> QtQidget.QPushButton
-    #returns a button with specified text, icon, hint and connection to the specified function
-    def makeBlockButton(self, buttonFunction, text = None, icon = None, hint = None):
-        if text is not None:
-            button = QtWidgets.QPushButton(text,self)
-        else:
-
-            button = QtWidgets.QPushButton(self)
-            button.setIcon(button.style().standardIcon(getattr(QtWidgets.QStyle, icon)))
-        if hint is not None:
-            button.setToolTip(hint)
-            button.setToolTipDuration(2000)
-        button.clicked.connect(lambda: self.onClick(buttonFunction))
-
-        return button
-    #SetupForm, method
+     #SetupForm, method
     #calls the specified function connected to a button onClick event
     @QtCore.pyqtSlot()
     def onClick(self,buttonFunction):
@@ -431,9 +417,6 @@ class SetupForm(QtWidgets.QWidget):
                 model.submitAll()
                 model.select()
 
-
-
-
     #string -> QGroupbox
     def dataButtons(self,table):
         buttonBox = QtWidgets.QGroupBox()
@@ -441,13 +424,13 @@ class SetupForm(QtWidgets.QWidget):
 
         if table == 'components':
 
-            buttonRow.addWidget(self.makeBlockButton(self.functionForLoadDescriptor,
+            buttonRow.addWidget(makeButtonBlock(self,self.functionForLoadDescriptor,
                                                None, 'SP_DialogOpenButton', 'Load a previously created component xml file.'))
 
-        buttonRow.addWidget(self.makeBlockButton(lambda:self.functionForNewRecord(table),
+        buttonRow.addWidget(makeButtonBlock(self,lambda:self.functionForNewRecord(table),
                                              '+', None,
                                              'Add a component'))
-        buttonRow.addWidget(self.makeBlockButton(lambda:self.functionForDeleteRecord(table),
+        buttonRow.addWidget(makeButtonBlock(self,lambda:self.functionForDeleteRecord(table),
                                              None, 'SP_TrashIcon',
                                              'Delete a component'))
         buttonRow.addStretch(3)
@@ -559,6 +542,7 @@ class SetupForm(QtWidgets.QWidget):
         model.assign('componentNamesvalue', componentNames)
     #write data to the data model and generate input xml files for setup and components
     def createInputFiles(self):
+        import os
         self.sendSetupData()
         # write all the xml files
 
@@ -593,7 +577,7 @@ class SetupForm(QtWidgets.QWidget):
         #required: input folder, data format, date-time fields, component max power
         # import datafiles
         handler = UIToHandler()
-        cleaned_data = handler.loadFixData()
+        cleaned_data = handler.loadFixData(os.path.join(model.setupFolder, model.project + 'Setup.xml'))
         #TODO generate results widgets with cleaned data
 
         # generate netcdf files

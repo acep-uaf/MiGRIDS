@@ -95,7 +95,7 @@ def readDataFile(inputSpecification,fileLocation='',fileType='csv',columnNames=N
                 # get the desired data type and convert
                 datatype = readXmlTag('internalUnitDefault.xml', ['unitDefaults', componentAttributes[i]], 'datatype',
                                       unitConventionDir)
-                listOfComponents.append(Component(component=useNames[i],units=units,scale=scale,offset=offset,datetype=datatype))
+                listOfComponents.append(Component(component_name=useNames[i],units=units,scale=scale,offset=offset,datetype=datatype))
 
     # return to original directory
     os.chdir(here)
