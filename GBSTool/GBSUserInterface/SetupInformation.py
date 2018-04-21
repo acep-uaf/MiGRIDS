@@ -223,7 +223,8 @@ class SetupInformation:
         import os
         from inputHandlerToUI import inputHandlerToUI
 
-        fileDir = self.setupFolder
+        if (self.project is None) | (self.project == ''):
+            return False
         if not os.path.exists(self.setupFolder):
             return False
         # tell the controller to tell the InputHandler to read the xml and set the model values
