@@ -166,8 +166,8 @@ class SetupForm(QtWidgets.QWidget):
         '''The load function needs to read the designated setup xml, look for descriptor xmls,
         look for an existing project database. If xml's and database don't match rely on descriptors'''
         import os
-
         from replaceDefaultDatabase import replaceDefaultDatabase
+
         if (self.model.project == '') | (self.model.project is None):
             #launch file navigator to identify setup file
             setupFile = QtWidgets.QFileDialog.getOpenFileName(self,"Select your setup file", None, "*xml" )
@@ -536,13 +536,8 @@ class SetupForm(QtWidgets.QWidget):
             # on close save the xml files
             self.sendSetupData()
             self.model.writeNewXML()
-            path = os.path.dirname(__file__)
-            print('Database was saved to %s' % self.model.projectFolder)
-            shutil.move(os.path.join(path, 'project_manager'),
-                        os.path.join(self.model.projectFolder, 'project_manager'))
-        else:
-            # if a project was never set then just close and remove the default database
-            os.remove('project_manager')
+
+
 
     def closeEvent(self, event):
         import os

@@ -62,61 +62,85 @@ class RelationDelegate(QtSql.QSqlRelationalDelegate):
     def currentIndexChanged(self):
 
         self.commitData.emit(self.sender())
+class ClickableLineEdit(QtWidgets.QLineEdit):
+    clicked = QtCore.pyqtSignal()
+
+    def mousePressEvent(self, event):
+        if event.button() == QtCore.Qt.LeftButton:
+            self.clicked.emit()
+        else:
+            super().mousePressEvent(event)
 
 class ComponentFormOpenerDelegate(QtWidgets.QItemDelegate):
-    def __init__(self,parent):
+
+    def __init__(self,parent,text):
         QtWidgets.QItemDelegate.__init__(self,parent)
+        self.text = text
 
 
     def paint(self, painter, option, index):
+
         if not self.parent().indexWidget(index):
-            self.parent().setIndexWidget(
-                index, QtWidgets.QPushButton('+',self.parent(), clicked=lambda:self.cellButtonClicked(index))
-            )
+            if self.text != None:
+                self.parent().setIndexWidget(
+                    index, QtWidgets.QPushButton(self.text,self.parent(), clicked=lambda:self.cellButtonClicked(index))
+                )
+            else:
+
+                displayWidget = ClickableLineEdit(self.parent())
+
+                displayWidget.clicked.connect(lambda:self.cellButtonClicked(index))
+                self.parent().setIndexWidget(index,displayWidget)
+
+
 
     @QtCore.pyqtSlot()
     def cellButtonClicked(self, index):
         from formFromXML import formFromXML
         from UIToHandler import UIToHandler
+        from ComponentSetListForm import ComponentSetListForm
         import os
         handler = UIToHandler()
         from Component import Component
+
         model = self.parent().model()
-        #there needs to be a component descriptor file written before this form can open
-        #column 0 is id, 3 is name, 2 is type
+        print(model.objectName())
+        if model.objectName() == 'component':
+            #if its from the component table do this:
+            #there needs to be a component descriptor file written before this form can open
+            #column 0 is id, 3 is name, 2 is type
 
-        #make a component object from these model data
-        component =Component(component_name=model.data(model.index(index.row(), 3)),
-                                     original_field_name=model.data(model.index(index.row(), 1)),
-                                     units=model.data(model.index(index.row(), 4)),
-                                     offset=model.data(model.index(index.row(), 6)),
-                                     type=model.data(model.index(index.row(), 2)),
-                                     attribute=model.data(model.index(index.row(), 7)),
-                                     scale=model.data(model.index(index.row(), 5)),
-                                     pinmaxpa=model.data(model.index(index.row(), 8)),
-                                     qinmaxpa=model.data(model.index(index.row(), 9)),
-                                     qoutmaxpa=model.data(model.index(index.row(),10)),
-                                     isvoltagesource=model.data(model.index(index.row(), 11))
-                             )
+            #make a component object from these model data
+            component =Component(component_name=model.data(model.index(index.row(), 3)),
+                                         original_field_name=model.data(model.index(index.row(), 1)),
+                                         units=model.data(model.index(index.row(), 4)),
+                                         offset=model.data(model.index(index.row(), 6)),
+                                         type=model.data(model.index(index.row(), 2)),
+                                         attribute=model.data(model.index(index.row(), 7)),
+                                         scale=model.data(model.index(index.row(), 5)),
 
-        componentDict = component.toDictionary()
-        print(componentDict)
-        #the project filepath is stored in the model data for the setup portion
-        #TODO fix. this works but is ugly and won't work if form changes structure
-        mainForm  = self.parent().parent().parent().parent()
+                                 )
 
-        setupInfo = mainForm.model
-        setupInfo.setupFolder
-        componentDir = os.path.join(setupInfo.setupFolder, '../Components')
+            #componentDict = component.toDictionary()
 
-        #TODO check if component type has been set
-        #tell the input handler to create or read a component descriptor and combine it with attributes in component
-        componentSoup = handler.makeComponentDescriptor(component.component_name,componentDir)
-        #data from the form gets saved to a soup, then written to xml
-        #modify the soup to reflect data in the data model
+            #the project filepath is stored in the model data for the setup portion
+            #TODO fix. this works but is ugly and won't work if form changes structure
+            mainForm  = self.parent().parent().parent().parent()
+
+            setupInfo = mainForm.model
+            setupInfo.setupFolder
+            componentDir = os.path.join(setupInfo.setupFolder, '../Components')
+
+            #TODO check if component type has been set
+            #tell the input handler to create or read a component descriptor and combine it with attributes in component
+            componentSoup = handler.makeComponentDescriptor(component.component_name,componentDir)
+            #data from the form gets saved to a soup, then written to xml
+            #modify the soup to reflect data in the data model
 
 
-        component.component_directory = componentDir
-        f = formFromXML(component, componentSoup)
-
+            component.component_directory = componentDir
+            f = formFromXML(component, componentSoup)
+        else:
+            #get the cell, and open a listbox of possible components
+            listDialog = ComponentSetListForm(['component1','component2'],[True,False])
 

@@ -139,6 +139,13 @@ class ProjectSQLiteHandler:
              # #create a sql function to access the getTypeCount function
         self.connection.create_function("componentName",1,self.getTypeCount)
         self.connection.commit()
+        self.cursor.execute("DROP TABLE IF EXISTS sets")
+        self.cursor.executescript("""
+        CREATE TABLE IF NOT EXISTS sets
+        (_id integer primary key,
+        set_id text unique, 
+        components text unique,
+        runs text);""")
 
         self.cursor.execute("DROP TABLE IF EXISTS environment")
         self.cursor.executescript("""CREATE TABLE IF NOT EXISTS environment

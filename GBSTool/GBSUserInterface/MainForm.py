@@ -38,6 +38,7 @@ class MainForm(QtWidgets.QMainWindow):
 
         data = [
             ('Setup', [
+                ('Input Files',[]),
                 ('Format',[]),
                 ('Environment',[]),
                 ('Components',[]),
@@ -47,7 +48,7 @@ class MainForm(QtWidgets.QMainWindow):
 
             ]),
             ('Model Runs', [
-                ('Base Case',[]),
+                ('Sets',[]),
                 ('Runs',[]),
                 ('Results',[])
 
@@ -96,7 +97,9 @@ class MainForm(QtWidgets.QMainWindow):
                 msg.exec()
                 menu.exec_(self.treeBlock.viewport().mapToGlobal(position))
 
-
+    def closeEvent(self,event):
+        p = self.findChild(QtWidgets.QWidget,'setupDialog')
+        p.close()
 
     #page block contains all the forms
     def createPageBlock(self):
@@ -113,10 +116,11 @@ class PageBlock(QtWidgets.QTabWidget):
 
     def initUI(self):
         from UISetupForm import SetupForm
+        from ModelRunForm import ModelRunForm
         #here is where we initilize this subclass
         self.addTab(SetupForm(),'Setup')
         self.addTab(SetupForm(),'Input Data')
-        self.addTab(SetupForm(), 'Model')
+        self.addTab(ModelRunForm(), 'Model')
         self.addTab(SetupForm(), 'Optimize')
 
         return

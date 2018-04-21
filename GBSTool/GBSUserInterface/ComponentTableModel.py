@@ -21,7 +21,7 @@ class ComponentTableView(QtWidgets.QTableView):
         combos = [2,4,7]
         for c in combos:
             self.setItemDelegateForColumn(c,RelationDelegate(self))
-        self.setItemDelegateForColumn(8,ComponentFormOpenerDelegate(self))
+        self.setItemDelegateForColumn(8,ComponentFormOpenerDelegate(self,'+'))
 
 class ComponentTableModel(QtSql.QSqlRelationalTableModel):
     def __init__(self, parent):
