@@ -124,3 +124,16 @@ class PageBlock(QtWidgets.QTabWidget):
         self.addTab(SetupForm(), 'Optimize')
 
         return
+    def closeEvent(self):
+        import os
+        import shutil
+        setupForm = self.findChild(QtWidgets.QWidget,'setupDialog')
+        # move the default database to the project folder and save xmls
+        if 'projectFolder' in setupForm.model.__dict__.keys():
+            path = os.path.dirname(__file__)
+            print('Database was saved to %s' % self.model.projectFolder)
+            shutil.move(os.path.join(path, 'project_manager'),
+                        os.path.join(self.model.projectFolder, 'project_manager'))
+        else:
+            # if a project was never set then just close and remove the default database
+            os.remove('project_manager')
