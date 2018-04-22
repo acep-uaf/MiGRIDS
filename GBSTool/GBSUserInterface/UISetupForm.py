@@ -346,10 +346,15 @@ class SetupForm(QtWidgets.QWidget):
 
             if result == 1024:
                 handler = UIToHandler()
+                removedRows = []
                 for r in selected:
-                    handler.removeDescriptor(model.data(model.index(r.row(), 3)), self.model.componentFolder)
-                    model.removeRows(r.row(),1)
-                # remove the xml files too
+                    if r.row() not in removedRows:
+                        if table == 'components':
+                            # remove the xml files too
+                            handler.removeDescriptor(model.data(model.index(r.row(), 3)), self.model.componentFolder)
+                        removedRows.append(r.row())
+                        model.removeRows(r.row(),1)
+
 
 
                 #Delete the record from the database and refresh the tableview
