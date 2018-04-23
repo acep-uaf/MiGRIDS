@@ -62,6 +62,7 @@ class RelationDelegate(QtSql.QSqlRelationalDelegate):
     def currentIndexChanged(self):
 
         self.commitData.emit(self.sender())
+
 class ClickableLineEdit(QtWidgets.QLineEdit):
     clicked = QtCore.pyqtSignal()
 
@@ -99,13 +100,14 @@ class ComponentFormOpenerDelegate(QtWidgets.QItemDelegate):
         from formFromXML import formFromXML
         from UIToHandler import UIToHandler
         from ComponentSetListForm import ComponentSetListForm
+        from ComponentTableModel import  ComponentTableModel
         import os
         handler = UIToHandler()
         from Component import Component
 
         model = self.parent().model()
-        print(model.objectName())
-        if model.objectName() == 'component':
+        #if its a component table bring up the component editing form
+        if type(model) is ComponentTableModel:
             #if its from the component table do this:
             #there needs to be a component descriptor file written before this form can open
             #column 0 is id, 3 is name, 2 is type
@@ -143,4 +145,5 @@ class ComponentFormOpenerDelegate(QtWidgets.QItemDelegate):
         else:
             #get the cell, and open a listbox of possible components
             listDialog = ComponentSetListForm(['component1','component2'],[True,False])
+            print(listDialog.checkedItems())
 

@@ -1,5 +1,5 @@
 #form for selecting what components to use in a model set
-from PyQt5 import QtWidgets, QtCore, QtGui
+from PyQt5 import QtWidgets, QtCore, QtSql
 class ComponentSetListForm(QtWidgets.QDialog):
     #initialize with a list of component names and list of boolean values for whether or not to include
     def __init__(self,components,checked):
@@ -7,27 +7,49 @@ class ComponentSetListForm(QtWidgets.QDialog):
         self.components = components
         self.checked = checked
         self.init()
-        self.setWindowTitle('Select components to include')
-
     def init(self):
         layout = QtWidgets.QVBoxLayout()
         #make the list widget
         self.listBlock = self.makeListWidget()
         layout.addWidget(self.listBlock)
         self.setLayout(layout)
-        self.show()
+        self.setWindowTitle('Select components to include')
         self.exec()
-        return
-
+   #Make a list widget with checkboxes and a list of components
+   #if checked
     def makeListWidget(self):
-       view = QtWidgets.QListWidget()
+        import pandas as pd
+        from ProjectSQLiteHandler import ProjectSQLiteHandler
+        sqlhandler = ProjectSQLiteHandler('project_manager')
+        self.components = pd.read_sql_query("select component_name from components",sqlhandler.connection)
 
-       for i in range(len(self.components)):
-           view.addItem(self.components[i])
+        self.components = list(self.components['component_name'])
 
-       for i in range(view.count()):
-           item = view.item(i)
-           item.setFlags(QtCore.Qt.ItemIsUserCheckable)
+        sqlhandler.closeDatabase()
+        listWidget = QtWidgets.QListWidget()
+        for i in range(len(self.components)):
+           item = QtWidgets.QListWidgetItem(self.components[i])
+           item.setFlags(item.flags() | QtCore.Qt.ItemIsUserCheckable)
            item.setCheckState(self.checked[i])
+           listWidget.addItem(item)
 
-       return view
+        listWidget.itemClicked.connect(self.on_listWidget_itemClicked)
+        return listWidget
+    #when an item is clicked check or uncheck it
+    def on_listWidget_itemClicked(self, item):
+        if item.listWidget().itemWidget(item) != None:
+            if item.checkState() == QtCore.Qt.Checked:
+                item.setCheckState(QtCore.Qt.Unchecked)
+            else:
+                item.setCheckState(QtCore.Qt.Checked)
+
+    #get the checked items
+    def checkedItems(self):
+        checked =[]
+
+        for i in range(self.listBlock.count()):
+            item = self.listBlock.item(i)
+            if item.checkState() == QtCore.Qt.Checked:
+               checked.append(item.text())
+
+        return checked

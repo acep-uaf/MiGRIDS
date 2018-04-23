@@ -35,6 +35,8 @@ class ModelRunForm(QtWidgets.QWidget):
         tv.setObjectName('sets')
         m = SetTableModel(self)
         tv.setModel(m)
+        #hide the id column
+        tv.hideColumn(0)
 
         tableGroup.addWidget(tv, 1)
         gb.setLayout(tableGroup)
