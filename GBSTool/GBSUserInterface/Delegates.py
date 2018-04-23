@@ -72,6 +72,55 @@ class ClickableLineEdit(QtWidgets.QLineEdit):
         else:
             super().mousePressEvent(event)
 
+class TextBoxWithClickDelegate(QtWidgets.QItemDelegate):
+    def __init__(self, parent, text):
+        QtWidgets.QItemDelegate.__init__(self, parent)
+        self.text = text
+
+    def createEditor(self,parent, option, index):
+        #label object
+        txt = ClickableLineEdit(parent)
+        txt.clicked.connect(lambda: self.cellButtonClicked(index))
+        self.parent().setIndexWidget(index, txt)
+        return txt
+
+    def setEditorData(self, editor, index):
+        editor.blockSignals(True)
+        #displayed text gets set to model text value
+        editor.setText(str(index.model().data(index)))
+
+        editor.blockSignals(False)
+
+    def setModelData(self, editor, model, index):
+
+        model.setData(index, editor.text())
+
+    @QtCore.pyqtSlot()
+    def cellButtonClicked(self, index):
+        from ComponentSetListForm import ComponentSetListForm
+        from ProjectSQLiteHandler import ProjectSQLiteHandler
+        #get the data model
+        model = self.parent().model()
+        # get the cell, and open a listbox of possible components for this project
+        checked = model.data(model.index(index.row(), 2))
+        # checked is a comma seperated string but we need a list
+        checked = checked.split(',')
+        listDialog = ComponentSetListForm(checked)
+        components = listDialog.checkedItems()
+        #format the list to be inserted into a text field in a datatable
+        str1 = ','.join(components)
+
+        model.setData(index, str1)
+        #TODO reomove temporary debug code
+        sqlhandler = ProjectSQLiteHandler('project_manager')
+        print(sqlhandler.cursor.execute("select * from sets").fetchall())
+        sqlhandler.closeDatabase()
+        #submit the model data to the database
+        model.submitAll()
+        #requery the database table
+        model.select()
+
+
 class ComponentFormOpenerDelegate(QtWidgets.QItemDelegate):
 
     def __init__(self,parent,text):
@@ -82,17 +131,10 @@ class ComponentFormOpenerDelegate(QtWidgets.QItemDelegate):
     def paint(self, painter, option, index):
 
         if not self.parent().indexWidget(index):
-            if self.text != None:
-                self.parent().setIndexWidget(
-                    index, QtWidgets.QPushButton(self.text,self.parent(), clicked=lambda:self.cellButtonClicked(index))
-                )
-            else:
 
-                displayWidget = ClickableLineEdit(self.parent())
-
-                displayWidget.clicked.connect(lambda:self.cellButtonClicked(index))
-                self.parent().setIndexWidget(index,displayWidget)
-
+            self.parent().setIndexWidget(
+                index, QtWidgets.QPushButton(self.text,self.parent(), clicked=lambda:self.cellButtonClicked(index))
+            )
 
 
     @QtCore.pyqtSlot()
@@ -143,25 +185,6 @@ class ComponentFormOpenerDelegate(QtWidgets.QItemDelegate):
 
             component.component_directory = componentDir
             f = formFromXML(component, componentSoup)
-        else:
-            #get the cell, and open a listbox of possible components for this project
-            checked = model.data(model.index(index.row(), 2))
-            #checked is a comma seperated string but we need a list
-            checked = checked.split(',')
-            listDialog = ComponentSetListForm(checked)
-            components = listDialog.checkedItems()
-            print(components)
-            record = model.record()
-            record.setValue('_id', model.data(model.index(index.row(),0)))
 
-            str1 = ''.join(components)
-            record.setValue('components',str1)
-
-            model.updateRowInTable(index.row(),record)
-            sqlhandler = ProjectSQLiteHandler('project_manager')
-            print(sqlhandler.cursor.execute("select * from sets").fetchall())
-            sqlhandler.closeDatabase()
-
-            model.select()
 
 

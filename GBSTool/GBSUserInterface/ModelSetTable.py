@@ -1,5 +1,5 @@
 from PyQt5  import QtWidgets, QtSql, QtCore
-from Delegates import ComponentFormOpenerDelegate
+from Delegates import ComponentFormOpenerDelegate, TextBoxWithClickDelegate
 #subclass of QTableView for displaying set information
 class SetTableView(QtWidgets.QTableView):
     def __init__(self, *args, **kwargs):
@@ -9,8 +9,8 @@ class SetTableView(QtWidgets.QTableView):
         #text columns
         t_boxes = [1,2,3,]
 
-        for i in t_boxes:
-            self.setItemDelegateForColumn(2, ComponentFormOpenerDelegate(self,None))
+        #for i in t_boxes:
+        self.setItemDelegateForColumn(2, TextBoxWithClickDelegate(self, None))
 
 
 class SetTableModel(QtSql.QSqlTableModel):
