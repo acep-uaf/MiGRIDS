@@ -102,6 +102,7 @@ class ComponentFormOpenerDelegate(QtWidgets.QItemDelegate):
         from ComponentSetListForm import ComponentSetListForm
         from ComponentTableModel import  ComponentTableModel
         import os
+        from ProjectSQLiteHandler import ProjectSQLiteHandler
         handler = UIToHandler()
         from Component import Component
 
@@ -143,7 +144,24 @@ class ComponentFormOpenerDelegate(QtWidgets.QItemDelegate):
             component.component_directory = componentDir
             f = formFromXML(component, componentSoup)
         else:
-            #get the cell, and open a listbox of possible components
-            listDialog = ComponentSetListForm(['component1','component2'],[True,False])
-            print(listDialog.checkedItems())
+            #get the cell, and open a listbox of possible components for this project
+            checked = model.data(model.index(index.row(), 2))
+            #checked is a comma seperated string but we need a list
+            checked = checked.split(',')
+            listDialog = ComponentSetListForm(checked)
+            components = listDialog.checkedItems()
+            print(components)
+            record = model.record()
+            record.setValue('_id', model.data(model.index(index.row(),0)))
+
+            str1 = ''.join(components)
+            record.setValue('components',str1)
+
+            model.updateRowInTable(index.row(),record)
+            sqlhandler = ProjectSQLiteHandler('project_manager')
+            print(sqlhandler.cursor.execute("select * from sets").fetchall())
+            sqlhandler.closeDatabase()
+
+            model.select()
+
 
