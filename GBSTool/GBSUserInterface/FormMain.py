@@ -22,19 +22,25 @@ class MainForm(QtWidgets.QMainWindow):
         self.pageBlock = self.createPageBlock()
         self.addDockWidget(QtCore.Qt.DockWidgetArea(1),docker,QtCore.Qt.Vertical)
 
-        #windowLayout.addWidget(self.treeBlock)
-        self.setCentralWidget(self.pageBlock)
+
         # add a console window
         self.addConsole()
-        windowLayout.addWidget(self.console)
+        docker2 = QtWidgets.QDockWidget()
+        docker2.setWidget(self.console)
+        self.addDockWidget(QtCore.Qt.DockWidgetArea(8),docker2,QtCore.Qt.Horizontal)
         self.console.showMessage("This is where messages will appear")
-
+        # windowLayout.addWidget(self.treeBlock)
+        self.setCentralWidget(self.pageBlock)
         # Main title
         self.setWindowTitle('GBS')
 
         # show the form
         self.showMaximized()
 
+    # add a console block to display messages
+    def addConsole(self):
+        c = ConsoleDisplay()
+        self.console = c
 
     #NavTree is a navigation tree for switching between pages or sections within pages
     #-> QTreeView
@@ -119,20 +125,19 @@ class PageBlock(QtWidgets.QTabWidget):
         self.initUI()
 
     def initUI(self):
-        from UISetupForm import SetupForm
-        from ModelRunForm import ModelRunForm
+        from FormSetup import SetupForm
+        from FormModelRuns import ModelRunForm
+        from FormContainer import FormContainer
+        from ResultsSetup import ResultsSetup
         #here is where we initilize this subclass
 
-        self.addTab(SetupForm(),'Setup')
+        self.addTab(FormContainer([SetupForm(),ResultsSetup()]),'Setup')
         self.addTab(SetupForm(),'Input Data')
         self.addTab(ModelRunForm(), 'Model')
         self.addTab(SetupForm(), 'Optimize')
 
         return
-    #add a console block to display messages
-    def addConsole(self):
-        c = ConsoleDisplay()
-        self.console = c
+
     def closeEvent(self):
         import os
         import shutil

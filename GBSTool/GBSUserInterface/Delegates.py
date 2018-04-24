@@ -1,4 +1,4 @@
-from PyQt5 import QtCore, QtGui, QtWidgets, QtSql
+from PyQt5 import QtCore, QtWidgets, QtSql
 class ComboReference():
     def __init__(self,cmb,table,db):
         self.cmb = cmb
@@ -78,7 +78,7 @@ class TextBoxWithClickDelegate(QtWidgets.QItemDelegate):
         self.text = text
 
     def createEditor(self,parent, option, index):
-        #label object
+        #Line Edit Object
         txt = ClickableLineEdit(parent)
         txt.clicked.connect(lambda: self.cellButtonClicked(index))
         self.parent().setIndexWidget(index, txt)
@@ -97,7 +97,7 @@ class TextBoxWithClickDelegate(QtWidgets.QItemDelegate):
 
     @QtCore.pyqtSlot()
     def cellButtonClicked(self, index):
-        from ComponentSetListForm import ComponentSetListForm
+        from DialogComponentList import ComponentSetListForm
         from ProjectSQLiteHandler import ProjectSQLiteHandler
         #get the data model
         model = self.parent().model()
@@ -141,8 +141,8 @@ class ComponentFormOpenerDelegate(QtWidgets.QItemDelegate):
     def cellButtonClicked(self, index):
         from formFromXML import formFromXML
         from UIToHandler import UIToHandler
-        from ComponentSetListForm import ComponentSetListForm
-        from ComponentTableModel import  ComponentTableModel
+        from DialogComponentList import ComponentSetListForm
+        from ModelComponentTable import  ComponentTableModel
         import os
         from ProjectSQLiteHandler import ProjectSQLiteHandler
         handler = UIToHandler()
