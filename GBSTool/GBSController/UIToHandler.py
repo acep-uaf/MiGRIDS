@@ -144,7 +144,39 @@ class UIToHandler():
 
         d = {}
         for c in listOfComponents:
-            c.toDictionary(d)
+           d[c.component_name] = c.toDictionary()
 
 
-        return df_fixed_interval
+        return df_fixed_interval, d
+
+    #dataframe of cleaned data
+    #generate netcdf files for model running
+    #dataframe, dictionary -> None
+    def createNetCDF(self, df,componentDict,varNames, setupFile):
+        from dataframe2netcdf import dataframe2netcdf
+        from readXmlTag import readXmlTag
+        import os
+        inputDirectory = readXmlTag(setupFile, 'inputFileDir', 'value')
+        inputDirectory = os.path.join(*inputDirectory)
+        outputDirectory = os.path.join(inputDirectory, '/ProcessedData')
+        #it there isn't an output directory make one
+        if not os.path.exists(outputDirectory):
+            os.makedirs(outputDirectory)
+
+        dataframe2netcdf(df.fixed, componentDict, None, outputDirectory)
+        return
+    #Object, string -> None
+    def storeData(self,df,setupFile):
+        from readXmlTag import readXmlTag
+        import os
+        import pickle
+        inputDirectory = readXmlTag(setupFile, 'inputFileDir', 'value')
+        inputDirectory = os.path.join(*inputDirectory)
+        outputDirectory = os.path.join(inputDirectory, '/ProcessedData')
+        if not os.path.exists(outputDirectory):
+            os.makedirs(outputDirectory)
+        outfile = os.path.join(outputDirectory, 'processed_input_file.pkl')
+        file = open(outfile,'wb')
+        pickle.dump(df,file)
+        file.close()
+        return

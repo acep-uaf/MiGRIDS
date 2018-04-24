@@ -3,6 +3,7 @@ from PyQt5 import QtWidgets, QtCore
 from makeButtonBlock import makeButtonBlock
 from tableHandler import tableHandler
 from ModelSetTable import SetTableModel, SetTableView
+from ModelRunTable import RunTableModel, RunTableView
 class ModelRunForm(QtWidgets.QWidget):
 
     def __init__(self):
@@ -12,14 +13,14 @@ class ModelRunForm(QtWidgets.QWidget):
 
     def initUI(self):
         self.setObjectName("modelRun")
-
+        self.currentset = 'set1'
         self.setsTable = self.createSetTable()
-        #self.runTable = createRunTable()
+        self.runTable = self.createRunTable()
         #TODO look up run table name
 
         self.layout = QtWidgets.QVBoxLayout()
         self.layout.addWidget(self.setsTable)
-
+        self.layout.addWidget(self.runTable)
         #self.layout.addWidget(self.runTable)
         self.setLayout(self.layout)
         self.showMaximized()
@@ -46,7 +47,24 @@ class ModelRunForm(QtWidgets.QWidget):
 
     #the run table shows ??
     def createRunTable(self):
-        return
+        gb = QtWidgets.QGroupBox('Runs')
+
+        tableGroup = QtWidgets.QVBoxLayout()
+        tableGroup.addWidget(self.dataButtons('runs'))
+
+        tv = RunTableView(self)
+        tv.setObjectName('runs')
+        m = RunTableModel(self)
+        tv.setModel(m)
+
+        # hide the id column
+        tv.hideColumn(0)
+
+        tableGroup.addWidget(tv, 1)
+        gb.setLayout(tableGroup)
+        gb.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+
+        return gb
 
     # string -> QGroupbox
     def dataButtons(self, table):

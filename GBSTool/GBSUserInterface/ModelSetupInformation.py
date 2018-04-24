@@ -94,7 +94,10 @@ class SetupInformation:
             self.setupFolder = os.path.join(path, '../../GBSProjects/', self.project, 'InputData/Setup')
         self.componentFolder = os.path.join(self.setupFolder ,'../Components')
 
+
         self.projectFolder = os.path.join(self.setupFolder, '../../' )
+
+        self.outputFolder = os.path.join(self.projectFolder, '/OutputData')
         print('project folder set to %s' %self.projectFolder)
         #if there isn't a setup folder then its a new project
         if not os.path.exists(self.setupFolder):

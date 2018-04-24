@@ -1,12 +1,12 @@
 
 from PyQt5 import QtCore, QtGui, QtWidgets, QtSql
-import ComponentTableModel as T
-import EnvironmentTableModel as E
+import ModelComponentTable as T
+import ModelEnvironmentTable as E
 from gridLayoutSetup import setupGrid
 from SetupWizard import SetupWizard
 from WizardTree import WizardTree
 from ConsoleDisplay import ConsoleDisplay
-from SetupInformation import SetupInformation
+from ModelSetupInformation import SetupInformation
 from ProjectSQLiteHandler import ProjectSQLiteHandler
 from Component import Component
 from UIToHandler import UIToHandler
@@ -79,14 +79,11 @@ class SetupForm(QtWidgets.QWidget):
         windowLayout.addWidget(self.componentBlock)
 
         windowLayout.addStretch(2)
-        #add a console window
-        self.addConsole()
-        windowLayout.addWidget(self.console)
+
         windowLayout.addStretch(2)
         windowLayout.addWidget(makeButtonBlock(self,self.createInputFiles,'Create input files',None,'Create input files to run models'),3)
 
-        self.console.showMessage("This is where messages will appear")
-        #set the main layout as the layout for the window
+         #set the main layout as the layout for the window
         self.layoutWidget = QtWidgets.QWidget(self)
         self.layoutWidget.setLayout(windowLayout)
         #title is setup
@@ -102,9 +99,6 @@ class SetupForm(QtWidgets.QWidget):
         self.componentBlock = value
 
 
-    def addConsole(self):
-        c = ConsoleDisplay()
-        self.console = c
     #SetupForm -> QWidgets.QHBoxLayout
     #creates a horizontal button layout to insert in SetupForm
     def createButtonBlock(self):
@@ -123,9 +117,6 @@ class SetupForm(QtWidgets.QWidget):
                                  'Create setup XML', None, 'Start the setup wizard to create a new setup file'))
         #force the buttons to the left side of the layout
         hlayout.addStretch(1)
-        #hlayout.addWidget(self.makeBlockButton(self.functionForExistingButton,
-        #                         'Load Existing Project', None, 'Work with an existing project folder containing setup files.'))
-        #hlayout.addWidget(self.makeBlockButton(self.functionForButton,'hello',None,'You need help with this button'))
         hlayout.addStretch(1)
         self.ButtonBlock.setLayout(hlayout)
 
@@ -134,7 +125,7 @@ class SetupForm(QtWidgets.QWidget):
         self.ButtonBlock.setMinimumSize(self.size().width(),self.minimumSize().height())
         return hlayout
 
-     #SetupForm, method
+    #SetupForm, method
     #calls the specified function connected to a button onClick event
     @QtCore.pyqtSlot()
     def onClick(self,buttonFunction):
@@ -487,49 +478,36 @@ class SetupForm(QtWidgets.QWidget):
     #write data to the data model and generate input xml files for setup and components
     def createInputFiles(self):
         import os
+
         self.sendSetupData()
         # write all the xml files
 
         #then component descriptors
         componentView = self.findChild((QtWidgets.QTableView), 'components')
-        componentModel = componentView.model()
-        listOfComponents = []
 
-        #every row adds a component to the list
-        # for i in range(0, componentModel.rowCount()):
-        #     newComponent = Component(component_name=componentModel.data(componentModel.index(i, 3)),
-        #                              original_field_name=componentModel.data(componentModel.index(i, 1)),
-        #                              units=componentModel.data(componentModel.index(i, 4)),
-        #                              offset=componentModel.data(componentModel.index(i, 6)),
-        #                              type=componentModel.data(componentModel.index(i, 2)),
-        #                              attribute=componentModel.data(componentModel.index(i, 7)),
-        #                              scale=componentModel.data(componentModel.index(i, 5)),
-        #                              pinmaxpa=componentModel.data(componentModel.index(i, 8)),
-        #                              poutmaxpa=componentModel.data(componentModel.index(i, 9)),
-        #                              qoutmaxpa=componentModel.data(componentModel.index(i,10)),
-        #                              isvoltagesource=componentModel.data(componentModel.index(i, 11)),
-        #                              tags=componentModel.data(componentModel.index(i, 12))
-        #                              )
-        #     listOfComponents.append(newComponent)
-        #
-        # self.model.components = listOfComponents
         # start with the setupxml
         self.model.writeNewXML()
 
-        #TODO import timeseries and fix bad data
+
         #make sure the necessary information is filled in
         #required: input folder, data format, date-time fields, component max power
         # import datafiles
         handler = UIToHandler()
-        cleaned_data = handler.loadFixData(os.path.join(model.setupFolder, model.project + 'Setup.xml'))
+        cleaned_data, componentDict = handler.loadFixData(os.path.join(model.setupFolder, model.project + 'Setup.xml'))
         #TODO generate results widgets with cleaned data
 
         # generate netcdf files
         msg = QtWidgets.QMessageBox(QtWidgets.QMessageBox.Warning, "Time Series loaded",
                                     "Do you want to generate netcdf files?.")
-        msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
-        #TODO if ok generate netcdf files
-        msg.exec()
+        msg.setStandardButtons(QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.Cancel)
+
+        result = msg.exec()
+        #if yes create the input netcdf files otherwise pickle the dataframe for later use
+        if result == 1024:
+            handler.createNetCDF(cleaned_data, componentDict, None, os.path.join(model.setupFolder, model.project + 'Setup.xml'))
+        else:
+            #pickle the data to be used later
+            handler.storeData(cleaned_data,os.path.join(model.setupFolder, model.project + 'Setup.xml') )
         return
     #event triggered when user navigates away from setup page
     def leaveEvent(self, event):
@@ -541,7 +519,6 @@ class SetupForm(QtWidgets.QWidget):
             # on close save the xml files
             self.sendSetupData()
             self.model.writeNewXML()
-
 
 
     def closeEvent(self, event):

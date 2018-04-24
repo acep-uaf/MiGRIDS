@@ -1,6 +1,7 @@
 #MainForm is the parent for for all sections of the User Interface
 #it consists of a navigation tree and pages
 from PyQt5 import QtWidgets, QtCore, QtGui
+from ConsoleDisplay import ConsoleDisplay
 
 class MainForm(QtWidgets.QMainWindow):
 
@@ -23,8 +24,11 @@ class MainForm(QtWidgets.QMainWindow):
 
         #windowLayout.addWidget(self.treeBlock)
         self.setCentralWidget(self.pageBlock)
-        #windowLayout.addWidget(self.pageBlock)
-        #self.layoutWidget.setLayout(windowLayout)
+        # add a console window
+        self.addConsole()
+        windowLayout.addWidget(self.console)
+        self.console.showMessage("This is where messages will appear")
+
         # Main title
         self.setWindowTitle('GBS')
 
@@ -118,12 +122,17 @@ class PageBlock(QtWidgets.QTabWidget):
         from UISetupForm import SetupForm
         from ModelRunForm import ModelRunForm
         #here is where we initilize this subclass
+
         self.addTab(SetupForm(),'Setup')
         self.addTab(SetupForm(),'Input Data')
         self.addTab(ModelRunForm(), 'Model')
         self.addTab(SetupForm(), 'Optimize')
 
         return
+    #add a console block to display messages
+    def addConsole(self):
+        c = ConsoleDisplay()
+        self.console = c
     def closeEvent(self):
         import os
         import shutil
@@ -132,6 +141,7 @@ class PageBlock(QtWidgets.QTabWidget):
         if 'projectFolder' in setupForm.model.__dict__.keys():
             path = os.path.dirname(__file__)
             print('Database was saved to %s' % self.model.projectFolder)
+        #TODO uncomment once testing complete
             #shutil.move(os.path.join(path, 'project_manager'),
             #            os.path.join(self.model.projectFolder, 'project_manager'))
         #else:
