@@ -2,8 +2,8 @@
 #
 import sys
 from PyQt5 import QtCore, QtGui, QtWidgets,QtSql
-from UISetupForm import SetupForm
-from MainForm import MainForm
+from FormSetup import FormSetup
+from FormMain import MainForm
 
 #This is what will be called by the controller
 sys._excepthook = sys.excepthook
@@ -24,7 +24,7 @@ if __name__ == '__main__':
     #start with an empty default database
     from ProjectSQLiteHandler import ProjectSQLiteHandler
     handler = ProjectSQLiteHandler('project_manager')
-    handler.makeDatabase()
+    #handler.makeDatabase()
 
     #make the database available to the form models
     db = QtSql.QSqlDatabase.addDatabase('QSQLITE')

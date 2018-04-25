@@ -1,25 +1,25 @@
 
-from PyQt5 import QtCore, QtGui, QtWidgets, QtSql
+from PyQt5 import QtCore, QtWidgets
 import ModelComponentTable as T
 import ModelEnvironmentTable as E
 from gridLayoutSetup import setupGrid
 from SetupWizard import SetupWizard
 from WizardTree import WizardTree
-from ConsoleDisplay import ConsoleDisplay
-from ModelSetupInformation import SetupInformation
-from ProjectSQLiteHandler import ProjectSQLiteHandler
+from ModelSetupInformation import ModelSetupInformation
 from Component import Component
 from UIToHandler import UIToHandler
 from makeButtonBlock import makeButtonBlock
+from ResultsSetup import  ResultsSetup
 
-class SetupForm(QtWidgets.QWidget):
+
+class FormSetup(QtWidgets.QWidget):
     global model
-    model = SetupInformation()
-    def __init__(self):
-        super().__init__()
+    model = ModelSetupInformation()
+    def __init__(self, parent):
+        super().__init__(parent)
         
         self.initUI()
-
+    #initialize the form
     def initUI(self):
 
         self.setObjectName("setupDialog")
@@ -92,15 +92,15 @@ class SetupForm(QtWidgets.QWidget):
         #show the form
         self.showMaximized()
 
-    # string, string ->
+    # Setters
+    #(String, number, list or Object) ->
     def assignEnvironementBlock(self, value):
         self.environmentBlock = value
     def assignComponentBlock(self,value):
         self.componentBlock = value
 
-
-    #SetupForm -> QWidgets.QHBoxLayout
-    #creates a horizontal button layout to insert in SetupForm
+    #FormSetup -> QWidgets.QHBoxLayout
+    #creates a horizontal button layout to insert in FormSetup
     def createButtonBlock(self):
         self.ButtonBlock = QtWidgets.QGroupBox()
         hlayout = QtWidgets.QHBoxLayout()
@@ -125,14 +125,14 @@ class SetupForm(QtWidgets.QWidget):
         self.ButtonBlock.setMinimumSize(self.size().width(),self.minimumSize().height())
         return hlayout
 
-    #SetupForm, method
+    #method -> None
     #calls the specified function connected to a button onClick event
     @QtCore.pyqtSlot()
     def onClick(self,buttonFunction):
         buttonFunction()
 
-    #SetupForm ->
-    #method to modify SetupForm layout
+    #FormSetup -> None
+    #method to modify FormSetup content
     def functionForCreateButton(self):
 
         #make a database
@@ -153,6 +153,7 @@ class SetupForm(QtWidgets.QWidget):
             self.environmentBlock.setEnabled(True)
             self.componentBlock.setEnabled(True)
 
+    #searches for and loads existing project data - database, setupxml,descriptors, data object
     def functionForLoadButton(self):
         '''The load function needs to read the designated setup xml, look for descriptor xmls,
         look for an existing project database. If xml's and database don't match rely on descriptors'''
@@ -182,12 +183,17 @@ class SetupForm(QtWidgets.QWidget):
 
             # display data
             self.fillData(model)
+            # look for an existing data pickle
+            handler = UIToHandler()
+            self.model.data = handler.loadInputData(os.path.join(self.model.setupFolder, self.model.project + 'Setup.xml'))
+            #refresh the plot
 
+            resultDisplay = self.parent().findChild(ResultsSetup)
 
+            resultDisplay.refreshPlot(self.model.data)
             #make the data blocks editable
             self.topBlock.setEnabled(True)
             self.environmentBlock.setEnabled(True)
-
             self.componentBlock.setEnabled(True)
             print('Loaded %s:' % model.project)
         else:
@@ -197,17 +203,14 @@ class SetupForm(QtWidgets.QWidget):
     #TODO make dynamic from list input
     def buildWizardTree(self, dlist):
 
-
         w1 = WizardTree(dlist[0][0], dlist[0][1], 2, [])
-        w2 = WizardTree(dlist[1][0], dlist[1][1], 1, [])  # hydro
+        #w2 = WizardTree(dlist[1][0], dlist[1][1], 1, [])  # hydro
         w3 = WizardTree(dlist[2][0], dlist[2][1], 0, [])  # wind
-
-        w4 = WizardTree(dlist[3][0], dlist[3][1], 0, [w2, w1, w3])  # inputFileFormat
+        w4 = WizardTree(dlist[3][0], dlist[3][1], 0, [w1, w3])  # inputFileFormat
         w5 = WizardTree(dlist[4][0], dlist[4][1], 0, [w4])
         return w5
 
-
-    #SetupForm -> SetupForm
+    #FormSetup -> FormSetup
     #creates a horizontal layout containing gridlayouts for data input
     def createTopBlock(self):
          #create a horizontal grouping to contain the top setup xml portion of the form
@@ -250,6 +253,7 @@ class SetupForm(QtWidgets.QWidget):
         self.topBlock.setLayout(hlayout)
         self.topBlock.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         self.topBlock.sizePolicy().retainSizeWhenHidden()
+
     #layout for tables
     def createTableBlock(self, title, table, fn):
 
@@ -275,6 +279,7 @@ class SetupForm(QtWidgets.QWidget):
         gb.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         fn(gb)
         return tv
+
     #Load an existing descriptor file and populate the component table
     #-> None
     def functionForLoadDescriptor(self):
@@ -306,7 +311,8 @@ class SetupForm(QtWidgets.QWidget):
             model.select()
         return
 
-
+    # Add an empty record to the specified datatable
+    # String -> None
     def functionForNewRecord(self, table):
         #add an empty record to the table
 
@@ -318,6 +324,8 @@ class SetupForm(QtWidgets.QWidget):
         model.insertRows(model.rowCount(),1)
         model.submitAll()
 
+    #delete the selected record from the specified datatable
+    #String -> None
     def functionForDeleteRecord(self, table):
 
         #get selected rows
@@ -433,7 +441,8 @@ class SetupForm(QtWidgets.QWidget):
         tableModel = tableView.model()
         tableModel.select()
         return
-    #send input data to the SetupInformation data model
+
+    #send input data to the ModelSetupInformation data model
     def sendSetupData(self):
         #cycle through the input children in the topblock
         for child in self.topBlock.findChildren((QtWidgets.QLineEdit,QtWidgets.QComboBox)):
@@ -453,13 +462,20 @@ class SetupForm(QtWidgets.QWidget):
         componentAttribute = []
         componentAttributeU = []
         #list of distinct components
-        componentNamesvalue= []
+        self.components=[]
         for i in range(0,componentModel.rowCount()):
 
             headerName.append(componentModel.data(componentModel.index(i,1)))
             componentName.append(componentModel.data(componentModel.index(i,3)))
             componentAttribute.append(componentModel.data(componentModel.index(i,7)))
             componentAttributeU.append(componentModel.data(componentModel.index(i,4)))
+            c = Component(component_Name =componentModel.data(componentModel.index(i,3)),
+                          scale=componentModel.data(componentModel.index(i,5)),
+                          units=componentModel.data(componentModel.index(i,4)),
+                        offset = componentModel.data(componentModel.index(i,6)),
+                          attribute=componentModel.data(componentModel.index(i,7)),
+                          type = componentModel.data(componentModel.index(i,2)))
+            self.components.append(c)
         #make a list of distinct values
         componentNames = list(set(componentName))
         #and the same data from the environment section
@@ -475,6 +491,7 @@ class SetupForm(QtWidgets.QWidget):
         model.assign('componentAttributevalue', componentAttribute)
         model.assign('componentAttributeunit', componentAttributeU)
         model.assign('componentNamesvalue', componentNames)
+
     #write data to the data model and generate input xml files for setup and components
     def createInputFiles(self):
         import os
@@ -509,23 +526,16 @@ class SetupForm(QtWidgets.QWidget):
             #pickle the data to be used later
             handler.storeData(cleaned_data,os.path.join(model.setupFolder, model.project + 'Setup.xml') )
         return
+
     #event triggered when user navigates away from setup page
     def leaveEvent(self, event):
-        import os
-        import shutil
-        print('Setup Form leaving')
         # move the default database to the project folder and save xmls
         if 'projectFolder' in self.model.__dict__.keys():
             # on close save the xml files
             self.sendSetupData()
             self.model.writeNewXML()
-
-
+    # close event is triggered when the form is closed
     def closeEvent(self, event):
-        import os
-        import shutil
-        print('Setup Form closing')
-
         #move the default database to the project folder and save xmls
         if 'projectFolder' in self.model.__dict__.keys():
             # on close save the xml files

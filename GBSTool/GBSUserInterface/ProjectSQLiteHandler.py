@@ -92,8 +92,8 @@ class ProjectSQLiteHandler:
         self.addRefValues('ref_time_units',[(0,'S','Seconds'),(1,'m','Minutes')])
         self.addRefValues('ref_datetime_format',[(0,'Ordinal','Ordinal'),(1,'Excel','Excel')])
 
-        self.addRefValues('ref_data_format',[(0,'CSV + wind', 'Load information is in a csv, wind data is in a tab delimmited text file'),
-                                             (1,'AVEC CSV', 'All data is within a single CSV file')
+        self.addRefValues('ref_data_format',[(0,'AVEC + wind', 'Load information is in a csv, wind data is in a tab delimmited text file'),
+                                             (1,'AVEC', 'All data is within a single CSV file')
                             ])
 
         self.addRefValues('ref_component_type' ,[(0,'wtg', 'windturbine'),
@@ -146,6 +146,16 @@ class ProjectSQLiteHandler:
         set_id text unique, 
         components text unique,
         runs text);""")
+
+        self.cursor.execute("DROP TABLE IF EXISTS runs")
+        self.cursor.executescript("""
+                CREATE TABLE IF NOT EXISTS runs
+                (_id integer primary key,
+                set_id text, 
+                run_id text,
+                field1 text,
+                field2 text);""")
+        self.cursor.execute("CREATE UNIQUE INDEX IF NOT EXISTS runs_idx ON runs (set_id,run_id);""")
 
         self.cursor.execute("DROP TABLE IF EXISTS environment")
         self.cursor.executescript("""CREATE TABLE IF NOT EXISTS environment

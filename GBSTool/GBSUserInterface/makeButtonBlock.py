@@ -13,4 +13,5 @@ def makeButtonBlock(parent, buttonFunction, text=None, icon=None, hint=None):
         button.setToolTipDuration(2000)
     button.clicked.connect(lambda: parent.onClick(buttonFunction))
 
+
     return button

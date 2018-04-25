@@ -1,5 +1,5 @@
 #String, SetupInformation ->
-#modifies the SetupInformation object based on tags in the setup xml
+#modifies the ModelSetupInformation object based on tags in the setup xml
 def getSetupInformation(setupXML, setupInfo):
 
     from bs4 import BeautifulSoup

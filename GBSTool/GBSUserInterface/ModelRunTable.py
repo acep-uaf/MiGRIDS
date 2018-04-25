@@ -9,12 +9,16 @@ class RunTableView(QtWidgets.QTableView):
 
 class RunTableModel(QtSql.QSqlTableModel):
     def __init__(self, parent):
-        import os
+
         QtSql.QSqlTableModel.__init__(self, parent)
 
-        self.header = ['ID']
+        self.header = ['ID','set',
+                'run',
+                'field1',
+                'field2']
 
-        self.setTable('runtable')
+        self.setTable('runs')
+        self.setFilter("set_id like '" + parent.currentset + "%'")
         self.setEditStrategy(QtSql.QSqlTableModel.OnFieldChange)
 
         self.select()

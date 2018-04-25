@@ -1,5 +1,5 @@
 #String, SetupInformation -> None
-#edits the SetupInformation object to contain parameters in the setup.xml file
+#edits the ModelSetupInformation object to contain parameters in the setup.xml file
 #setupXM is the path and filename of the setup.xml file
 from getSetupInformation import getSetupInformation
 import os

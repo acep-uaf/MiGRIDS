@@ -1,5 +1,5 @@
 #assumes the project has already been initialized throught the UI and empty setup and component xml files exist
-#String, SetupInformation - > None
+#String, ModelSetupInformation - > None
 def fillProjectDataFromUI(projectDir, setupInfo):
     # general imports
     import sys

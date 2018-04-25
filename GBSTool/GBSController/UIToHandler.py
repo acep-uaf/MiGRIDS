@@ -1,15 +1,19 @@
 #Is called from the GBSUserInterface package to initiate xml file generation through the GBSInputHandler functions
-#SetupInformation ->
+#ModelSetupInformation ->
+
+import os
+import pickle
+from fillProjectData import fillProjectData
+from buildProjectSetup import buildProjectSetup
+from makeSoup import makeSoup
+from readXmlTag import readXmlTag
+from writeXmlTag import writeXmlTag
 
 class UIToHandler():
-    #generates an setup xml file based on information in a SetupInformation object
-    #SetupInformation -> None
+    #generates an setup xml file based on information in a ModelSetupInformation object
+    #ModelSetupInformation -> None
     def makeSetup(self, setupInfo):
-
-        from fillProjectData import fillProjectData
-        from buildProjectSetup import buildProjectSetup
-
-        # write the information to a setup xml
+       # write the information to a setup xml
         # create a mostly blank xml setup file
         buildProjectSetup(setupInfo.project, setupInfo.setupFolder, setupInfo.componentNames)
         #fill in project data into the setup xml and create descriptor xmls if they don't exist
@@ -17,15 +21,10 @@ class UIToHandler():
         return
 
     #string, string -> Soup
-
     #calls the InputHandler functions required to write component descriptor xml files
     def makeComponentDescriptor(self, component,componentDir):
-        from makeSoup import makeSoup
-
-        #returns either a template soup or filled soup
-
+         #returns either a template soup or filled soup
         componentSoup = makeSoup(component, componentDir)
-
         return componentSoup
 
     #pass a component name, component folder and soup object to be written to a component descriptor
@@ -39,34 +38,31 @@ class UIToHandler():
     #fill a single tag for an existing component descriptor file
     #dictionary, string -> None
     def updateComponentDiscriptor(self, componentDict, tag):
-        from writeXmlTag import writeXmlTag
         attr = 'value'
         value = componentDict[tag]
         writeXmlTag(componentDict['component_name'] + 'Descriptor.xml', tag, attr, value, componentDict['filepath'])
         return
+
     #delete a descriptor xml from the project component folder
     #String, String -> None
     def removeDescriptor(self,componentName, componentDir):
-        import os
-
         if os.path.exists(os.path.join(componentDir,componentName + 'Descriptor.xml')):
              os.remove(os.path.join(componentDir,componentName + 'Descriptor.xml'))
         return
+
     #return a list of component descriptor files in a component directory
     #String -> List
     def findDescriptors(self,componentDir):
-        import os
-
         directories = []
         for file in os.listdir(componentDir):
             if file.endswith('.xml'):
 
                 directories.append(file)
         return directories
+
     #copy an existing xml file to the current project director and write contents to SQLRecord to update project_manager database
     #string, string, SQLRecord -> SQLRecord
     def copyDescriptor(self,descriptorFile, componentDir, sqlRecord):
-        import os
         import shutil
         from Component import Component
         fileName =os.path.basename(descriptorFile)
@@ -101,11 +97,10 @@ class UIToHandler():
     #String, String, String -> DataClass
     def loadFixData(self, setupFile):
         print(setupFile)
-        import os
         from getUnits import getUnits
         from readDataFile import readDataFile
         from fixBadData import fixBadData
-        from readXmlTag import readXmlTag
+        from fixDataInterval import fixDataInterval
 
         Village = readXmlTag(setupFile, 'project', 'name')[0]
         # input specification
@@ -137,9 +132,8 @@ class UIToHandler():
 
         df_fixed = fixBadData(df, os.path.dirname(setupFile), listOfComponents, inputInterval)
 
-
         # fix the intervals
-        from fixDataInterval import fixDataInterval
+
         df_fixed_interval = fixDataInterval(df_fixed, outputInterval)
 
         d = {}
@@ -154,25 +148,27 @@ class UIToHandler():
     #dataframe, dictionary -> None
     def createNetCDF(self, df,componentDict,varNames, setupFile):
         from dataframe2netcdf import dataframe2netcdf
-        from readXmlTag import readXmlTag
-        import os
         inputDirectory = readXmlTag(setupFile, 'inputFileDir', 'value')
         inputDirectory = os.path.join(*inputDirectory)
-        outputDirectory = os.path.join(inputDirectory, '/ProcessedData')
+        inputDirectory = os.path.join('../../GBSProjects', inputDirectory)
+        outputDirectory = os.path.join(inputDirectory, '../ProcessedData')
         #it there isn't an output directory make one
         if not os.path.exists(outputDirectory):
             os.makedirs(outputDirectory)
 
         dataframe2netcdf(df.fixed, componentDict, None, outputDirectory)
         return
+
+    #save the data object as a pickle in the processed data folder
     #Object, string -> None
     def storeData(self,df,setupFile):
-        from readXmlTag import readXmlTag
-        import os
-        import pickle
+
         inputDirectory = readXmlTag(setupFile, 'inputFileDir', 'value')
         inputDirectory = os.path.join(*inputDirectory)
-        outputDirectory = os.path.join(inputDirectory, '/ProcessedData')
+        inputDirectory = os.path.join('../../GBSProjects', inputDirectory)
+        print(inputDirectory)
+        outputDirectory = os.path.join(inputDirectory, '../ProcessedData')
+        print(outputDirectory)
         if not os.path.exists(outputDirectory):
             os.makedirs(outputDirectory)
         outfile = os.path.join(outputDirectory, 'processed_input_file.pkl')
@@ -180,3 +176,17 @@ class UIToHandler():
         pickle.dump(df,file)
         file.close()
         return
+
+    #read in a pickled data object
+    #string->object
+    def loadInputData(self,setupFile):
+        inputDirectory = readXmlTag(setupFile, 'inputFileDir', 'value')
+        inputDirectory = os.path.join(*inputDirectory)
+        outputDirectory = os.path.join('/', inputDirectory, '../ProcessedData')
+        if not os.path.exists(outputDirectory):
+            return None
+        outfile = os.path.join(outputDirectory, 'processed_input_file.pkl')
+        file = open(outfile, 'rb')
+        data = pickle.load(file)
+        file.close()
+        return data

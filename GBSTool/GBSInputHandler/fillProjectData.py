@@ -7,7 +7,7 @@
 #Does not interact directly with User Interface but takes object containing relevent information passed
 #from user interface through controller.
 #if setupInfo is none then csv files are assumed
-#String, SetupInformation - > None
+#String, ModelSetupInformation - > None
 def fillProjectData(projectDir = '',setupInfo = None):
     # general imports
     # add to sys path

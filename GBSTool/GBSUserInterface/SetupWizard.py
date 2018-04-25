@@ -1,5 +1,5 @@
 #class to navigate through the user setup wizard tree
-#responses get recorded in the SetupInformation class and written to xml in the project folder
+#responses get recorded in the ModelSetupInformation class and written to xml in the project folder
 
 import pandas as pd
 from PyQt5 import QtWidgets, QtGui, QtCore

@@ -28,7 +28,7 @@ class SetupTag:
         return d
 
 
-class SetupInformation:
+class ModelSetupInformation:
     from Component import Component
     def __init__(self):
         #dictionary of dialog card names and their corresponding assignment functions
@@ -61,12 +61,12 @@ class SetupInformation:
 
         #empty values
         self.project =''
+        self.data = None
         self.inputFileDir = SetupTag('inputFileDir')
         self.windFileDir = SetupTag('windFileDir')
         self.hydroFileDir = SetupTag('hydroFileDir')
         self.inputFileType = SetupTag('inputFileType')
         self.inputFileFormat= SetupTag('inputFileFormat')
-
         self.dateChannel = SetupTag('dateChannel')
         self.timeChannel = SetupTag('timeChannel')
         self.realLoadChannel = SetupTag('realLoadChannel')

@@ -29,7 +29,7 @@ class MainForm(QtWidgets.QMainWindow):
         docker2.setWidget(self.console)
         self.addDockWidget(QtCore.Qt.DockWidgetArea(8),docker2,QtCore.Qt.Horizontal)
         self.console.showMessage("This is where messages will appear")
-        # windowLayout.addWidget(self.treeBlock)
+
         self.setCentralWidget(self.pageBlock)
         # Main title
         self.setWindowTitle('GBS')
@@ -125,16 +125,16 @@ class PageBlock(QtWidgets.QTabWidget):
         self.initUI()
 
     def initUI(self):
-        from FormSetup import SetupForm
-        from FormModelRuns import ModelRunForm
+        from FormSetup import FormSetup
+        from FormModelRuns import FormModelRun
         from FormContainer import FormContainer
         from ResultsSetup import ResultsSetup
         #here is where we initilize this subclass
 
-        self.addTab(FormContainer([SetupForm(),ResultsSetup()]),'Setup')
-        self.addTab(SetupForm(),'Input Data')
-        self.addTab(ModelRunForm(), 'Model')
-        self.addTab(SetupForm(), 'Optimize')
+        self.addTab(FormContainer(self,[FormSetup(self), ResultsSetup(self)]), 'Setup')
+        self.addTab(FormSetup(self), 'Input Data')
+        self.addTab(FormModelRun(self), 'Model')
+        self.addTab(FormSetup(self), 'Optimize')
 
         return
 

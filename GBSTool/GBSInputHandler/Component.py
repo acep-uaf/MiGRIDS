@@ -22,16 +22,14 @@ class Component:
 
     def setDatatype(self, df):
 
-        if self.datatype[0][0:3] == 'int':
+        if self.datatype[0:3] == 'int':
             df[self.component_name] = round(df[self.component_name].astype('float'), 0)
         else:
-            df[self.component_name] = df[self.component_name].astype(self.datatype[0])
+            print(self.datatype)
+            df[self.component_name] = df[self.component_name].astype(self.datatype)
         return df
 
     # Component, dictionary -> dictionary
     def toDictionary(self):
-        d = {}
-        d[self.component_name] = self.__dict__
 
-
-        return d
+        return self.__dict__

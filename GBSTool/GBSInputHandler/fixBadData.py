@@ -361,7 +361,8 @@ class DataClass:
         self.powerComponents = []
         self.baddata = {}
         return
-
+    def getattribute(self, a):
+        return self.__getattribute__(a)
     # DataClass -> null
     # summarizes raw and fixed data and print resulting dataframe descriptions
     def summarize(self):

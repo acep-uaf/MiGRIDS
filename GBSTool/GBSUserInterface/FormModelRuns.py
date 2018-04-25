@@ -4,10 +4,10 @@ from makeButtonBlock import makeButtonBlock
 from tableHandler import tableHandler
 from ModelSetTable import SetTableModel, SetTableView
 from ModelRunTable import RunTableModel, RunTableView
-class ModelRunForm(QtWidgets.QWidget):
+class FormModelRun(QtWidgets.QWidget):
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, parent):
+        super().__init__(parent)
 
         self.initUI()
 

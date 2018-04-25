@@ -4,32 +4,37 @@ from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
 
 #plot widget
-class ResultPlot(FigureCanvas):
-    def __init__(self,parent):
-        FigureCanvas.__init__(self, parent)
-
-        fig  = Figure(figsize=(5,6), dpi = 100)
+class PlotResult(FigureCanvas):
+    def __init__(self,parent, data, width=5, height=6, dpi=100):
+        fig = Figure(figsize=(5, 6), dpi=100)
 
         self.axes = fig.add_subplot(111)
+        FigureCanvas.__init__(self, fig)
+        self.setParent(parent)
         self.figure = fig
         FigureCanvas.setSizePolicy(self,QtWidgets.QSizePolicy.Expanding,QtWidgets.QSizePolicy.Expanding)
-        FigureCanvas.updateGeometry()
+        #FigureCanvas.updateGeometry()
+         #make plot
+        self.makePlot(data)
 
-        #data to plot
-        self.data = {'x':[1,2,3,4,5,6,7],'y':[1,2,3,4,5,6,7]}
-        #make plot
-        self.makePlot()
     #make the plot
-    def makePlot(self):
+    #dictionary -> None
+    def makePlot(self, data):
 
-        ax = self.figure.add_Subplot(111)
+        ax = self.axes
         ax.clear()
-        ax.plot(self.data, 'r_')
+        if data is not None:
+
+            #data can have more than 1 series to display
+            for k in data.keys():
+                if (data[k]['x'] is not None) & (data[k]['x'] is not None):
+                    ax.plot(data[k]['x'],data[k]['y'], label=k)
+
         ax.set_title('data plot')
+        handles, labels = ax.get_legend_handles_labels()
+        ax.legend(handles,labels)
         #refresh the plot
         self.draw()
         return
 
-    #drop down menus for setting plot options
-    def getOptions(self):
-        return
+
