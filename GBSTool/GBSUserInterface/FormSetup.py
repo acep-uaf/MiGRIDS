@@ -190,7 +190,7 @@ class FormSetup(QtWidgets.QWidget):
 
             resultDisplay = self.parent().findChild(ResultsSetup)
 
-            resultDisplay.refreshPlot(self.model.data)
+            resultDisplay.defaultPlot(self.model.data)
             #make the data blocks editable
             self.topBlock.setEnabled(True)
             self.environmentBlock.setEnabled(True)

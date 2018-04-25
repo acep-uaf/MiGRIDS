@@ -54,11 +54,12 @@ class ResultsSetup(QtWidgets.QWidget):
 
     def updatePlotData(self, field, axis):
         if self.data is not None:
-            for s in self.displayData.keys():
-               if axis == 'xcombo':
-                    self.displayData[s]['x'] = self.data.getattribute(s)[field]
-               else:
-                   self.displayData[s]['y'] = self.data.getattribute(s)[field]
+            if 'displayData' in self.__dict__.keys():
+                for s in self.displayData.keys():
+                   if axis == 'xcombo':
+                       self.displayData[s]['x'] = self.data.getattribute(s)[field]
+                   else:
+                       self.displayData[s]['y'] = self.data.getattribute(s)[field]
 
 
     @QtCore.pyqtSlot()
@@ -88,13 +89,9 @@ class ResultsSetup(QtWidgets.QWidget):
         self.data = data
         if data is not None:
 
-            #combo boxes need to be set with field options
-            options = data.fixed.columns
 
-            self.xcombo.addItems(options)
-            self.ycombo.addItems(options)
             #set the default data to display after fill options
-            if self.displayData is None:
+            if 'dsiplayData' not in self.__dict__.keys():
                 self.displayData = self.defaultDisplay(data)
         else:
             self.displayData = None
@@ -107,6 +104,15 @@ class ResultsSetup(QtWidgets.QWidget):
                        'fixed': {'x': data.fixed.index, 'y': data.fixed.total_p}
                        }
         return displayData
+    def defaultPlot(self, data):
+        if data is not None:
+            # combo boxes need to be set with field options
+            options = list(data.fixed.columns.values)
+
+            self.xcombo.addItems(options)
+            self.ycombo.addItems(options)
+            self.displayData = self.defaultDisplay(data)
+            self.plotWidget.makePlot(self.displayData)
 
     # ->QPushButton
     def createSubmitButton(self):
