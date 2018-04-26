@@ -143,18 +143,28 @@ class ProjectSQLiteHandler:
         self.cursor.executescript("""
         CREATE TABLE IF NOT EXISTS sets
         (_id integer primary key,
-        set_id text unique, 
-        components text unique,
-        runs text);""")
+        set_name text unique, 
+        component text unique,
+        change_tag text,
+        to_value text);""")
 
         self.cursor.execute("DROP TABLE IF EXISTS runs")
         self.cursor.executescript("""
                 CREATE TABLE IF NOT EXISTS runs
                 (_id integer primary key,
-                set_id text, 
-                run_id text,
-                field1 text,
-                field2 text);""")
+                set_id text,
+                set_name text
+                run_name text);""")
+
+        self.cursor.execute("DROP TABLE IF EXISTS setup")
+        self.cursor.executescript("""
+                        CREATE TABLE IF NOT EXISTS setup
+                        (_id integer primary key,
+                        set_name unique,
+                        data_range text,
+                        timestep integer
+                        );""")
+
         self.cursor.execute("CREATE UNIQUE INDEX IF NOT EXISTS runs_idx ON runs (set_id,run_id);""")
 
         self.cursor.execute("DROP TABLE IF EXISTS environment")
@@ -173,6 +183,7 @@ class ProjectSQLiteHandler:
                  FOREIGN KEY (attribute) REFERENCES ref_env_attributes(code)
                  
                  );""")
+
 
         self.connection.commit()
     def insertRecord(self, table, fields, values):
