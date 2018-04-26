@@ -249,7 +249,7 @@ class FormSetup(QtWidgets.QWidget):
 
         #add another stretch to keep the grids away from the right edge
         hlayout.addStretch(1)
-        
+        self.topBlock.setObjectName('format')
         self.topBlock.setLayout(hlayout)
         self.topBlock.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         self.topBlock.sizePolicy().retainSizeWhenHidden()

@@ -2,6 +2,7 @@
 #it consists of a navigation tree and pages
 from PyQt5 import QtWidgets, QtCore, QtGui
 from ConsoleDisplay import ConsoleDisplay
+from FormSetup import FormSetup
 
 class MainForm(QtWidgets.QMainWindow):
 
@@ -46,16 +47,13 @@ class MainForm(QtWidgets.QMainWindow):
     #-> QTreeView
     def createNavTree(self):
 
-        data = [
+        self.data = [
             ('Setup', [
                 ('Input Files',[]),
                 ('Format',[]),
                 ('Environment',[]),
                 ('Components',[]),
                 ('Load Data',[])
-            ]),
-            ('Data Input', [
-
             ]),
             ('Model Runs', [
                 ('Sets',[]),
@@ -67,45 +65,64 @@ class MainForm(QtWidgets.QMainWindow):
 
             ])
         ]
+        self.focusObjects = {'Input Files':FormSetup.functionForCreateButton,
+                             'Format':'format'}
+
         tree = QtWidgets.QTreeView()
         tree.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
-        tree.customContextMenuRequested.connect(self.openMenu)
+        tree.clicked.connect(self.switchFocus)
         model = QtGui.QStandardItemModel()
-        self.addItems(model,data)
+        self.addItems(model,self.data)
         tree.setModel(model)
         model.setHorizontalHeaderLabels([self.tr("Navigation")])
 
         return tree
+    #add navigation items to the navigation tree
     def addItems(self, parent, elements):
         for text, children in elements:
             item = QtGui.QStandardItem(text)
+
             parent.appendRow(item)
+
             if children:
                 self.addItems(item,children)
         return
 
-    def openMenu(self, position):
+    def switchFocus(self, position):
+        #what item is selected
         indexes = self.treeBlock.selectedIndexes()
+        level = 0
+        #if a sub-tree branch was selected
         if len(indexes) > 0:
-            level = 0
+            #this is the leaf
             index = indexes[0]
-            #this gets the top level of the selected item
+            #index becomes the root node, level is the steps removed
             while index.parent().isValid():
                 index = index.parent()
                 level +=1
+        #change the active tab depending on the selection
+        self.pageBlock.setCurrentIndex(index.row())
+        # change the focus depending on the selection
+        if level == 1:
+           name = list(self.treeBlock.model().itemData(position).values())[0]
+           print(name)
 
-                menu = QtWidgets.QMenu()
-                menu.addAction(self.tr("edit"))
-                msg = QtWidgets.QMessageBox(QtWidgets.QMessageBox.Warning, "Level",
-                                                "You are on level %s" %level)
-                msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
-                msg.exec()
-                model = self.treeBlock.model()
-                msg = QtWidgets.QMessageBox(QtWidgets.QMessageBox.Warning, "Index Object",
-                                            "You are going to %s" % model.data(index))
-                msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
-                msg.exec()
-                menu.exec_(self.treeBlock.viewport().mapToGlobal(position))
+           focusObject = self.focusObjects[name]
+
+           if type(focusObject) is str:
+
+               focusWidget = self.pageBlock.currentWidget().findChild(QtWidgets.QWidget,focusObject)
+               focusWidget.setFocus(True)
+           else:
+
+               #launch the method
+               subforms = self.pageBlock.currentWidget().children()
+               for s in subforms:
+
+                   if focusObject.__name__ in dir(s):
+                       focusObject(s)
+
+        return
 
     def closeEvent(self,event):
         p = self.findChild(QtWidgets.QWidget,'setupDialog')
@@ -129,12 +146,15 @@ class PageBlock(QtWidgets.QTabWidget):
         from FormModelRuns import FormModelRun
         from FormContainer import FormContainer
         from ResultsSetup import ResultsSetup
+        from FormOptimize import FormOptimize
+        from ResultsModel import ResultsModel
+        from ResultsOptimize import ResultsOptimize
+
         #here is where we initilize this subclass
 
         self.addTab(FormContainer(self,[FormSetup(self), ResultsSetup(self)]), 'Setup')
-        self.addTab(FormSetup(self), 'Input Data')
-        self.addTab(FormModelRun(self), 'Model')
-        self.addTab(FormSetup(self), 'Optimize')
+        self.addTab(FormContainer(self,[FormModelRun(self), ResultsModel(self)]),'Model')
+        self.addTab(FormContainer(self, [FormOptimize(self), ResultsOptimize(self)]),'Optimize')
 
         return
 
