@@ -190,3 +190,16 @@ class UIToHandler():
         data = pickle.load(file)
         file.close()
         return data
+
+    def runModels(self):
+        from PyQt5 import QtWidgets
+        #generate xml's based on inputs
+        #call to run models
+        msg = QtWidgets.QMessageBox(QtWidgets.QMessageBox.Warning, "I can't do this",
+                                    "I can't run models yet")
+        msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
+        msg.exec()
+        msg = QtWidgets.QMessageBox(QtWidgets.QMessageBox.Warning, "Starting Models",
+                                    "You won't beable to edit data while models are running. /n Are you sure you want to continue?")
+        msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
+        msg.exec()

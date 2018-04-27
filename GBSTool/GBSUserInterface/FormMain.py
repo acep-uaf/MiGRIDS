@@ -52,8 +52,7 @@ class MainForm(QtWidgets.QMainWindow):
                 ('Input Files',[]),
                 ('Format',[]),
                 ('Environment',[]),
-                ('Components',[]),
-                ('Load Data',[])
+                ('Components',[])
             ]),
             ('Model Runs', [
                 ('Sets',[]),
@@ -66,7 +65,15 @@ class MainForm(QtWidgets.QMainWindow):
             ])
         ]
         self.focusObjects = {'Input Files':FormSetup.functionForCreateButton,
-                             'Format':'format'}
+                             'Format':'format',
+                             'Environemnt':'environment',
+                             'Components':'components',
+
+                             'Sets':'modelSets',
+                             'Runs':'runResults',
+                             'Results':'modelResults'
+
+        }
 
         tree = QtWidgets.QTreeView()
         tree.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
@@ -81,7 +88,7 @@ class MainForm(QtWidgets.QMainWindow):
     def addItems(self, parent, elements):
         for text, children in elements:
             item = QtGui.QStandardItem(text)
-
+            item.setEditable(False)
             parent.appendRow(item)
 
             if children:

@@ -7,21 +7,21 @@ class RunTableView(QtWidgets.QTableView):
         self.resizeColumnsToContents()
         #TODO set delegates
 
-class RunTableModel(QtSql.QSqlTableModel):
+class RunTableModel(QtSql.QSqlQueryModel):
     def __init__(self, parent):
 
-        QtSql.QSqlTableModel.__init__(self, parent)
+        QtSql.QSqlQueryModel.__init__(self, parent)
 
-        self.header = ['ID','set',
+        self.header = ['set',
                 'run',
-                'field1',
-                'field2']
+                'component',
+                'tag',
+                       'value']
+        runQuery = QtSql.QSqlQuery("""SELECT set_name, run_name, component, change_tag, to_value value FROM sets JOIN runs on sets._id = runs.set_id
 
-        self.setTable('runs')
-        self.setFilter("set_id like '" + parent.currentset + "%'")
-        self.setEditStrategy(QtSql.QSqlTableModel.OnFieldChange)
+""")
+        self.setQuery(runQuery)
 
-        self.select()
 
 
     def headerData(self, section: int, orientation, role):

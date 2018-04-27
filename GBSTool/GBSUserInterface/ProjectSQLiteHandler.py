@@ -165,7 +165,7 @@ class ProjectSQLiteHandler:
                         timestep integer
                         );""")
 
-        self.cursor.execute("CREATE UNIQUE INDEX IF NOT EXISTS runs_idx ON runs (set_id,run_id);""")
+        #self.cursor.execute("CREATE UNIQUE INDEX IF NOT EXISTS runs_idx ON runs (set_id,run_name);""")
 
         self.cursor.execute("DROP TABLE IF EXISTS environment")
         self.cursor.executescript("""CREATE TABLE IF NOT EXISTS environment

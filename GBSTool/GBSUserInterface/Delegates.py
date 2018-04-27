@@ -26,6 +26,45 @@ class ComboReference():
             d[code]=description
 
         return d
+class ComboDelegate(QtWidgets.QItemDelegate):
+    def __init__(self,parent,):
+        QtWidgets.QItemDelegate.__init__(self,parent)
+        self.values = self.makeComponentList()
+
+    def createEditor(self,parent, option, index):
+        combo = QtWidgets.QComboBox(parent)
+        combo.addItems(self.values)
+        combo.currentIndexChanged.connect(self.currentIndexChanged)
+        return combo
+
+    def setEditorData(self, editor, index):
+        editor.blockSignals(True)
+
+        #set the combo to the selected index
+
+        #editor.setCurrentIndex(int(index.model().data(index)))
+        editor.setCurrentIndex(0)
+        editor.blockSignals(False)
+
+    #write model data
+    def setModelData(self,editor, model, index):
+
+        model.setData(index, editor.itemText(editor.currentIndex()))
+
+
+    @QtCore.pyqtSlot()
+    def currentIndexChanged(self):
+
+        self.commitData.emit(self.sender())
+    def makeComponentList(self):
+        import pandas as pd
+        from ProjectSQLiteHandler import ProjectSQLiteHandler
+        sqlhandler = ProjectSQLiteHandler('project_manager')
+        components = pd.read_sql_query("select component_name from components",sqlhandler.connection)
+
+        components = list(components['component_name'])
+
+        return components
 #LineEdit textbox connected to the table
 class TextDelegate(QtWidgets.QItemDelegate):
     def __init__(self,parent):

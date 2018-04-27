@@ -1,24 +1,22 @@
 from PyQt5  import QtWidgets, QtSql, QtCore
 from Delegates import ComponentFormOpenerDelegate, TextBoxWithClickDelegate
+from Delegates import ComboDelegate
 #subclass of QTableView for displaying set information
 class SetTableView(QtWidgets.QTableView):
     def __init__(self, *args, **kwargs):
         QtWidgets.QTableView.__init__(self, *args, **kwargs)
         self.setSizePolicy(QtWidgets.QSizePolicy.Expanding,QtWidgets.QSizePolicy.Expanding)
         self.resizeColumnsToContents()
-        #text columns
-        t_boxes = [1,2,3,]
 
-        #for i in t_boxes:
-        self.setItemDelegateForColumn(2, TextBoxWithClickDelegate(self, None))
-
+        #self.setItemDelegateForColumn(2, TextBoxWithClickDelegate(self, None))
+        self.setItemDelegateForColumn(2,ComboDelegate(self))
 
 class SetTableModel(QtSql.QSqlTableModel):
     def __init__(self, parent):
 
         QtSql.QSqlTableModel.__init__(self, parent)
 
-        self.header = ['ID','Set', 'Components', 'Runs']
+        self.header = ['ID','Set', 'Component', 'Tag', 'Value']
 
         self.setTable('sets')
 
