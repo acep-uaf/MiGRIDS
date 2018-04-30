@@ -80,7 +80,8 @@ class ModelSetupInformation:
         self.componentName = SetupTag('componentName')
         self.componentAttribute = SetupTag('componentAttribute')
 
-
+    def getAttributes(self):
+        return self.__dict__.keys()
 
     # but this will likely change to perform some actions during parameter assigment.
     # That is why each parameter has its own fuction

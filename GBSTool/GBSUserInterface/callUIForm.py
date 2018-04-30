@@ -24,7 +24,7 @@ if __name__ == '__main__':
     #start with an empty default database
     from ProjectSQLiteHandler import ProjectSQLiteHandler
     handler = ProjectSQLiteHandler('project_manager')
-    #handler.makeDatabase()
+    handler.makeDatabase()
 
     #make the database available to the form models
     db = QtSql.QSqlDatabase.addDatabase('QSQLITE')

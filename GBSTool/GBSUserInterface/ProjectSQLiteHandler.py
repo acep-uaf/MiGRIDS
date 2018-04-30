@@ -143,8 +143,8 @@ class ProjectSQLiteHandler:
         self.cursor.executescript("""
         CREATE TABLE IF NOT EXISTS sets
         (_id integer primary key,
-        set_name text unique, 
-        component text unique,
+        set_name text , 
+        component text ,
         change_tag text,
         to_value text);""")
 
@@ -161,11 +161,12 @@ class ProjectSQLiteHandler:
                         CREATE TABLE IF NOT EXISTS setup
                         (_id integer primary key,
                         set_name unique,
-                        data_range text,
+                        date_start text,
+                        date_end text,
                         timestep integer
                         );""")
 
-        #self.cursor.execute("CREATE UNIQUE INDEX IF NOT EXISTS runs_idx ON runs (set_id,run_name);""")
+        self.cursor.execute("INSERT INTO setup (set_name,timestep,date_start,date_end) values('default',1,'1/1/2016','12/31/2016')")
 
         self.cursor.execute("DROP TABLE IF EXISTS environment")
         self.cursor.executescript("""CREATE TABLE IF NOT EXISTS environment

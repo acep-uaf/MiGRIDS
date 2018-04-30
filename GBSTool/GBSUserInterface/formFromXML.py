@@ -2,12 +2,14 @@
 from PyQt5 import QtWidgets, QtCore, QtGui
 
 class formFromXML(QtWidgets.QDialog):
-    def __init__(self, component, componentSoup):
+    def __init__(self, component, componentSoup, write=True):
         super().__init__()
         self.componentType = component.type
         self.componentName = component.component_name
         self.soup = componentSoup
         self.fileDir = component.component_directory
+        self.write = write
+        self.changes={}
         self.initUI()
 
     # initialize and display the form
@@ -118,15 +120,23 @@ class formFromXML(QtWidgets.QDialog):
                     widget = self.findChild((QtWidgets.QLineEdit, QtWidgets.QComboBox,QtWidgets.QCheckBox), tag.name + str(a))
 
                     if type(widget) == QtWidgets.QLineEdit:
-                        tag.attrs[a] = widget.text()
+                        if tag.attrs[a] != widget.text():
+                            self.changes['.'.join([tag.name, str(a)])]:widget.text()
+                            tag.attrs[a] = widget.text()
 
                     elif type(widget) == QtWidgets.QComboBox:
-                        tag.attrs[a]= widget.currentText()
+                        if tag.attrs[a] != widget.currentText():
+                            self.changes['.'.join([tag.name, str(a)])]=widget.currentText()
+                            tag.attrs[a]= widget.currentText()
 
                     elif type(widget) == QtWidgets.QCheckBox:
-                        if widget.isChecked():
-                             tag.attrs[a] = 'TRUE'
-                        else:
+
+
+                        if (widget.isChecked()) & (tag.attrs[a] != 'TRUE'):
+                            self.changes['.'.join([tag.name, str(a)])]= 'TRUE'
+                            tag.attrs[a] = 'TRUE'
+                        elif (not widget.isChecked()) & (tag.attrs[a] != 'FALSE'):
+                            self.changes['.'.join([tag.name, str(a)])]= 'TRUE'
                             tag.attrs[a]= 'FALSE'
 
     #when the form is closed the soup gets updated and writtent to an xml file
@@ -138,6 +148,9 @@ class formFromXML(QtWidgets.QDialog):
         #update soup
         self.update()
         #Tell the controller to tell the InputHandler to write the xml
-        handler = UIToHandler()
-        handler.writeSoup(self.componentName,self.fileDir,self.soup)
-
+        if self.write:
+            handler = UIToHandler()
+            handler.writeSoup(self.componentName,self.fileDir,self.soup)
+        else:
+            #return a list of changes
+            print(self.changes)

@@ -27,23 +27,31 @@ class ComboReference():
 
         return d
 class ComboDelegate(QtWidgets.QItemDelegate):
-    def __init__(self,parent,):
+    def __init__(self,parent,values):
         QtWidgets.QItemDelegate.__init__(self,parent)
-        self.values = self.makeComponentList()
+        self.values = values
+
 
     def createEditor(self,parent, option, index):
         combo = QtWidgets.QComboBox(parent)
-        combo.addItems(self.values)
+        combo.setObjectName('components')
+        combo.setModel(self.values)
         combo.currentIndexChanged.connect(self.currentIndexChanged)
+
         return combo
+
+    def makeList(self,box, values):
+
+        self.values = values
+        for i in range(box.count()):
+            box.removeItem(i)
+        box.addItems(self.values)
 
     def setEditorData(self, editor, index):
         editor.blockSignals(True)
 
         #set the combo to the selected index
-
-        #editor.setCurrentIndex(int(index.model().data(index)))
-        editor.setCurrentIndex(0)
+        editor.setCurrentText(index.model().data(index))
         editor.blockSignals(False)
 
     #write model data
@@ -51,20 +59,11 @@ class ComboDelegate(QtWidgets.QItemDelegate):
 
         model.setData(index, editor.itemText(editor.currentIndex()))
 
-
     @QtCore.pyqtSlot()
     def currentIndexChanged(self):
-
         self.commitData.emit(self.sender())
-    def makeComponentList(self):
-        import pandas as pd
-        from ProjectSQLiteHandler import ProjectSQLiteHandler
-        sqlhandler = ProjectSQLiteHandler('project_manager')
-        components = pd.read_sql_query("select component_name from components",sqlhandler.connection)
 
-        components = list(components['component_name'])
 
-        return components
 #LineEdit textbox connected to the table
 class TextDelegate(QtWidgets.QItemDelegate):
     def __init__(self,parent):
@@ -118,7 +117,7 @@ class ClickableLineEdit(QtWidgets.QLineEdit):
             super().mousePressEvent(event)
 
 class TextBoxWithClickDelegate(QtWidgets.QItemDelegate):
-    def __init__(self, parent, text):
+    def __init__(self, parent, text,fn):
         QtWidgets.QItemDelegate.__init__(self, parent)
         self.text = text
 
@@ -186,10 +185,11 @@ class ComponentFormOpenerDelegate(QtWidgets.QItemDelegate):
     def cellButtonClicked(self, index):
         from formFromXML import formFromXML
         from UIToHandler import UIToHandler
-        from DialogComponentList import ComponentSetListForm
+        from ModelSetTable import SetTableModel
         from ModelComponentTable import  ComponentTableModel
+        from FormSetup import FormSetup
         import os
-        from ProjectSQLiteHandler import ProjectSQLiteHandler
+
         handler = UIToHandler()
         from Component import Component
 
@@ -230,6 +230,28 @@ class ComponentFormOpenerDelegate(QtWidgets.QItemDelegate):
 
             component.component_directory = componentDir
             f = formFromXML(component, componentSoup)
+        elif type(model) is SetTableModel:
+            pageBlock = self.parent().parent().parent().parent().parent().parent().parent().parent()
+            mainForm = pageBlock.findChild(FormSetup)
 
+            setupInfo = mainForm.model
+            component_name = model.data(model.index(index.row(), 2))
+            if ('setupFolder' in setupInfo.getAttributes()) & (component_name != ''):
+                 #look for a local component file
 
+                componentDir = os.path.join(setupInfo.setupFolder, '../Components')
+                component = Component(component_name=component_name)
+
+                # tell the input handler to create or read a component descriptor and combine it with attributes in component
+                componentSoup = handler.makeComponentDescriptor(component.component_name, componentDir)
+                # data from the form gets saved to a soup, then written to xml
+                # modify the soup to reflect data in the data model
+
+                component.component_directory = componentDir
+                f = formFromXML(component, componentSoup,False)
+            else:
+                msg = QtWidgets.QMessageBox(QtWidgets.QMessageBox.Warning, "Missing Component Name",
+                                            "You need to select a component before editing attributes.")
+                msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
+                msg.exec()
 

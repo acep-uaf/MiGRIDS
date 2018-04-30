@@ -1,6 +1,6 @@
 from PyQt5 import QtWidgets
 from UIToHandler import UIToHandler
-class tableHandler():
+class TableHandler():
 
     def __init__(self, parent):
         self.parent = parent

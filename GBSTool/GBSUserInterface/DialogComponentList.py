@@ -15,8 +15,8 @@ class ComponentSetListForm(QtWidgets.QDialog):
         self.setLayout(layout)
         self.setWindowTitle('Select components to include')
         self.exec()
+
    #Make a list widget with checkboxes and a list of components
-   #if checked
     def makeListWidget(self):
         import pandas as pd
         from ProjectSQLiteHandler import ProjectSQLiteHandler

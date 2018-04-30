@@ -495,12 +495,10 @@ class FormSetup(QtWidgets.QWidget):
     #write data to the data model and generate input xml files for setup and components
     def createInputFiles(self):
         import os
-
+        from ProjectSQLiteHandler import ProjectSQLiteHandler
         self.sendSetupData()
         # write all the xml files
 
-        #then component descriptors
-        componentView = self.findChild((QtWidgets.QTableView), 'components')
 
         # start with the setupxml
         self.model.writeNewXML()
@@ -511,7 +509,14 @@ class FormSetup(QtWidgets.QWidget):
         # import datafiles
         handler = UIToHandler()
         cleaned_data, componentDict = handler.loadFixData(os.path.join(model.setupFolder, model.project + 'Setup.xml'))
-        #TODO generate results widgets with cleaned data
+        #start and end dates get set written to database as default date ranges
+        defaultStart = min(cleaned_data.fixed['datetime'])
+        defaultEnd = max(cleaned_data.fixed['datetime'])
+
+        sqlHandler = ProjectSQLiteHandler('project_manager')
+        sqlHandler.cursor.execute("UPDATE setup set start_date = ?, end_date = ? where set_name = 'default'",[defaultStart,defaultEnd])
+        sqlHandler.connection.commit()
+        sqlHandler.closeDatabase()
 
         # generate netcdf files
         msg = QtWidgets.QMessageBox(QtWidgets.QMessageBox.Warning, "Time Series loaded",
@@ -524,7 +529,7 @@ class FormSetup(QtWidgets.QWidget):
             handler.createNetCDF(cleaned_data, componentDict, None, os.path.join(model.setupFolder, model.project + 'Setup.xml'))
         else:
             #pickle the data to be used later
-            handler.storeData(cleaned_data,os.path.join(model.setupFolder, model.project + 'Setup.xml') )
+            handler.storeData(cleaned_data,os.path.join(model.setupFolder, model.project + 'Setup.xml'))
         return
 
     #event triggered when user navigates away from setup page
