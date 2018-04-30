@@ -69,6 +69,8 @@ class ComboDelegate(QtWidgets.QItemDelegate):
 class TextDelegate(QtWidgets.QItemDelegate):
     def __init__(self,parent):
         QtWidgets.QItemDelegate.__init__(self,parent)
+        if 'column1' in parent.__dict__.keys():
+            self.autotext1 = parent.column1
 
     def createEditor(self,parent, option, index):
         txt = QtWidgets.QLineEdit(parent)
@@ -78,9 +80,13 @@ class TextDelegate(QtWidgets.QItemDelegate):
 
     def setEditorData(self, editor, index):
         editor.blockSignals(True)
-        editor.setText(str(index.model().data(index)))
+        if 'autotext1' in self.__dict__.keys():
+            editor.setText(self.autotext1)
+        else:
+            editor.setText(str(index.model().data(index)))
 
         editor.blockSignals(False)
+
     def setModelData(self, editor, model, index):
 
         model.setData(index, editor.text())
