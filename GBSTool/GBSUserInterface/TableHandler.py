@@ -15,6 +15,9 @@ class TableHandler():
 
         model.insertRows(model.rowCount(), 1)
         model.submitAll()
+        #TODO change the persistent editor column to come as a parameter that is table specific
+        #this is only for set table
+        tableView.openPersistentEditor(model.index(model.rowCount()-1, 1))
 
 
     def functionForDeleteRecord(self, table):

@@ -122,7 +122,7 @@ class SetsTable(QtWidgets.QGroupBox):
             item = m.index(r,1)
             item.flags(~QtCore.Qt.ItemIsEditable)
             m.setItemData(QtCore.QModelIndex(r,1),item)
-            #TODO set persistent editor?
+
         #hide the id column
         tv.hideColumn(0)
         tableGroup.addWidget(tv, 1)
@@ -144,9 +144,15 @@ class SetsTable(QtWidgets.QGroupBox):
         if end == None:
             end = handler.cursor.execute("select date_end from setup where set_name = 'default'").fetchone()
         handler.closeDatabase()
+        print(start)
+        print(end)
         #format the tuples from database output to datetime objects
-        start = datetime.datetime.strptime(start[0], '%m/%d/%Y')
-        end = datetime.datetime.strptime(end[0], '%m/%d/%Y')
+        if type(start)== str:
+            start = datetime.datetime.strptime(start, '%Y-%m-%d')
+            end = datetime.datetime.strptime(end, '%Y-%m-%d')
+        else:
+            start = datetime.datetime.strptime(start[0], '%Y-%m-%d')
+            end = datetime.datetime.strptime(end[0], '%Y-%m-%d')
         self.startDate = start
         self.endDate = end
         return
@@ -195,9 +201,9 @@ class SetsTable(QtWidgets.QGroupBox):
         self.getDefaultDates(start=start,end=end)
 
         #find the widgets to update
-        self.setDateSelectorProperties(self.findChildren(QtWidgets.QDateEdit, 'startDate'))
-        self.setDateSelectorProperties(self.findChildren(QtWidgets.QDateEdit, 'endDate'))
-        self.findChildren(QtWidgets.QLineEdit,'componentNames').setText(self.componentDefault)
+        self.setDateSelectorProperties(self.findChild(QtWidgets.QDateEdit, 'startDate'))
+        self.setDateSelectorProperties(self.findChild(QtWidgets.QDateEdit, 'endDate',False))
+        self.findChild(QtWidgets.QLineEdit,'componentNames').setText(self.componentDefault)
 
     @QtCore.pyqtSlot()
     def componentCellClicked(self):

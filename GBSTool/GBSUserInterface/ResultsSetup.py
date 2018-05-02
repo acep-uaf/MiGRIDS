@@ -23,18 +23,15 @@ class ResultsSetup(QtWidgets.QWidget):
         self.data = self.parent().findChild(QtWidgets.QWidget,'setupDialog').model.data
         #self.displayData = {'fixed': {'x': None, 'y': None}, 'raw': {'x': None, 'y': None}}
         if self.data is not None:
-            self.xcombo = self.createCombo(self.data.fixed.columns, True)
-            self.ycombo = self.createCombo(self.data.fixed.columns, False)
+            self.xcombo = self.createCombo((self.data.fixed.columns).append('index'), True)
+            self.ycombo = self.createCombo((self.data.fixed.columns).append('index'), False)
         else:
             self.xcombo = self.createCombo([], True)
             self.ycombo = self.createCombo([], False)
 
         self.plotWidget = self.createPlotArea(self.data)
         self.layout.addWidget(self.plotWidget, 1, 0, 5, 5)
-
         self.layout.addWidget(self.refreshButton, 0,0,1,2)
-
-
         self.layout.addWidget(self.xcombo,7,2,1,1)
         self.layout.addWidget(self.ycombo,3,6,1,1)
         self.layout.addWidget(self.submitButton, 8,2,1,2)
@@ -53,13 +50,20 @@ class ResultsSetup(QtWidgets.QWidget):
         return combo
 
     def updatePlotData(self, field, axis):
+        #data is the data object
         if self.data is not None:
             if 'displayData' in self.__dict__.keys():
                 for s in self.displayData.keys():
                    if axis == 'xcombo':
-                       self.displayData[s]['x'] = self.data.getattribute(s)[field]
+                       if field != 'index':
+                           self.displayData[s]['x'] = self.data.getattribute(s)[field]
+                       else:
+                           self.displayData[s]['x'] = self.data.index
                    else:
-                       self.displayData[s]['y'] = self.data.getattribute(s)[field]
+                       if field != 'index':
+                            self.displayData[s]['y'] = self.data.getattribute(s)[field]
+                       else:
+                           self.displayData[s]['y'] = self.data.index
 
 
     @QtCore.pyqtSlot()

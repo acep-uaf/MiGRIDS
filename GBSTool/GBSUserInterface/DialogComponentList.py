@@ -30,7 +30,10 @@ class ComponentSetListForm(QtWidgets.QDialog):
         for i in range(len(self.components)):
            item = QtWidgets.QListWidgetItem(self.components[i])
            item.setFlags(item.flags() | QtCore.Qt.ItemIsUserCheckable)
-           item.setCheckState(checked[i])
+           if checked[i]:
+               item.setCheckState(QtCore.Qt.Checked)
+           else:
+               item.setCheckState(QtCore.Qt.unchecked)
            listWidget.addItem(item)
 
         listWidget.itemClicked.connect(self.on_listWidget_itemClicked)

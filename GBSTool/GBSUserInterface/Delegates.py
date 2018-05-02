@@ -38,8 +38,8 @@ class ComboDelegate(QtWidgets.QItemDelegate):
         combo = QtWidgets.QComboBox(parent)
         combo.setObjectName(self.name)
         combo.setModel(self.values)
-        combo.currentIndexChanged.connect(self.currentIndexChanged)
-
+        #combo.currentIndexChanged.connect(self.currentIndexChanged)
+        combo.activated.connect(self.currentIndexChanged)
         return combo
 
     def makeList(self,box, values):

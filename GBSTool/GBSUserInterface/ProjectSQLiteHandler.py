@@ -167,7 +167,7 @@ class ProjectSQLiteHandler:
                         component_names text
                         );""")
 
-        self.cursor.execute("INSERT INTO setup (set_name,timestep,date_start,date_end) values('default',1,'1/1/2016','12/31/2016')")
+        self.cursor.execute("INSERT INTO setup (set_name,timestep,date_start,date_end) values('default',1,'2016-01-01','2016-12-31')")
 
         self.cursor.execute("DROP TABLE IF EXISTS environment")
         self.cursor.executescript("""CREATE TABLE IF NOT EXISTS environment

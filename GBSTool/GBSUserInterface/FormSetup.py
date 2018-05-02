@@ -10,7 +10,8 @@ from Component import Component
 from UIToHandler import UIToHandler
 from makeButtonBlock import makeButtonBlock
 from ResultsSetup import  ResultsSetup
-from FormModelRuns import FormModelRun
+from FormModelRuns import SetsTable
+from ProjectSQLiteHandler import ProjectSQLiteHandler
 
 
 class FormSetup(QtWidgets.QWidget):
@@ -156,8 +157,8 @@ class FormSetup(QtWidgets.QWidget):
 
     #searches for and loads existing project data - database, setupxml,descriptors, data object
     def functionForLoadButton(self):
-        '''The load function needs to read the designated setup xml, look for descriptor xmls,
-        look for an existing project database. If xml's and database don't match rely on descriptors'''
+        '''The load function reads the designated setup xml, looks for descriptor xmls,
+        looks for an existing project database and a pickled data object.'''
         import os
         from replaceDefaultDatabase import replaceDefaultDatabase
 
@@ -184,23 +185,28 @@ class FormSetup(QtWidgets.QWidget):
 
             # display data
             self.fillData(model)
+
             # look for an existing data pickle
             handler = UIToHandler()
             self.model.data = handler.loadInputData(os.path.join(self.model.setupFolder, self.model.project + 'Setup.xml'))
-            #refresh the plot
+            if self.model.data is not None:
+                self.updateModelPage(self.model.data)
 
-            resultDisplay = self.parent().findChild(ResultsSetup)
+                #refresh the plot
+                resultDisplay = self.parent().findChild(ResultsSetup)
+                resultDisplay.defaultPlot(self.model.data)
 
-            resultDisplay.defaultPlot(self.model.data)
             #make the data blocks editable
             self.topBlock.setEnabled(True)
             self.environmentBlock.setEnabled(True)
             self.componentBlock.setEnabled(True)
             print('Loaded %s:' % model.project)
         else:
+            #TODO allow new projects to be loaded with out closing window
             msg = QtWidgets.QMessageBox(QtWidgets.QMessageBox.Warning, "Close project", "You need to close the sofware before you load a new project")
             msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
             msg.exec()
+
     #TODO make dynamic from list input
     def buildWizardTree(self, dlist):
 
@@ -508,19 +514,7 @@ class FormSetup(QtWidgets.QWidget):
         # import datafiles
         handler = UIToHandler()
         cleaned_data, componentDict = handler.loadFixData(os.path.join(model.setupFolder, model.project + 'Setup.xml'))
-        #start and end dates get set written to database as default date ranges
-        defaultStart = min(cleaned_data.fixed['datetime'])
-        defaultEnd = max(cleaned_data.fixed['datetime'])
-
-        sqlHandler = ProjectSQLiteHandler('project_manager')
-        sqlHandler.cursor.execute("UPDATE setup set start_date = ?, end_date = ? where set_name = 'default'",[defaultStart,defaultEnd])
-        sqlHandler.connection.commit()
-        sqlHandler.closeDatabase()
-        # tell the model form to update now that there is data
-        modelForm = self.window().findChild(FormModelRun)
-        #start and end are tuples at this point
-        modelForm.update(start=defaultStart,end=defaultEnd, components=self.model.componentNames)
-
+        self.updateModelPage(cleaned_data)
         # generate netcdf files
         msg = QtWidgets.QMessageBox(QtWidgets.QMessageBox.Warning, "Time Series loaded",
                                     "Do you want to generate netcdf files?.")
@@ -534,6 +528,22 @@ class FormSetup(QtWidgets.QWidget):
             #pickle the data to be used later
             handler.storeData(cleaned_data,os.path.join(model.setupFolder, model.project + 'Setup.xml'))
         return
+    #DataObject with data frame called 'fixed' and field 'datetime'
+    def updateModelPage(self, data):
+        # start and end dates get set written to database as default date ranges
+        import pandas as pd
+        defaultStart = str((pd.to_datetime(data.fixed.index, unit='s')[0]).date())
+        defaultEnd = str((pd.to_datetime(data.fixed.index, unit='s')[len(data.fixed.index) -1]).date())
+
+        sqlHandler = ProjectSQLiteHandler()
+        sqlHandler.cursor.execute("UPDATE setup set date_start = ?, date_end = ? where set_name = 'default'",
+                                  [defaultStart, defaultEnd])
+        sqlHandler.connection.commit()
+        sqlHandler.closeDatabase()
+        # tell the model form to update now that there is data
+        modelForm = self.window().findChild(SetsTable)
+        # start and end are tuples at this point
+        modelForm.update(start=defaultStart, end=defaultEnd, components=','.join(self.model.componentNames.value))
 
     #event triggered when user navigates away from setup page
     def leaveEvent(self, event):
