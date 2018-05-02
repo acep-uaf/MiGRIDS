@@ -80,8 +80,9 @@ def setupGrid(inputDictionary):
         #if the rowname is a string show it otherwise don't
 
         if not rowNames[i][len(rowNames[i])-1:].isdigit():
-
-            grid.lbl.setText(rowNames[i])
+            # print(rowNames[i])
+            # grid.lbl.setText(rowNames[i])
+            grid.lbl.setText(rowNames[i].split('.')[len(rowNames[i].split('.')) - 1])
 
         # get the row of widgets
         r = inputDictionary[rowNames[i]]

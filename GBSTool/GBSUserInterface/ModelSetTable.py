@@ -21,9 +21,13 @@ class SetTableView(QtWidgets.QTableView):
             return components
 
         values = QtCore.QStringListModel(makeComponentList())
+        attributes = QtCore.QStringListModel([])
         self.setItemDelegateForColumn(1, TextDelegate(self))
-        self.setItemDelegateForColumn(2,ComboDelegate(self,values))
-        self.setItemDelegateForColumn(3,ComponentFormOpenerDelegate(self,'+'))
+        self.setItemDelegateForColumn(2,ComboDelegate(self,values,'componentName'))
+        #self.setItemDelegateForColumn(3,ComponentFormOpenerDelegate(self,'+'))
+        #attributes get updated when component Name gets selected (column 2)
+
+        self.setItemDelegateForColumn(3, ComboDelegate(self, attributes,'componentAttribute'))
 
 class SetTableModel(QtSql.QSqlTableModel):
     def __init__(self, parent):

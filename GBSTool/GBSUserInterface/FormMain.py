@@ -160,7 +160,8 @@ class PageBlock(QtWidgets.QTabWidget):
         #here is where we initilize this subclass
 
         self.addTab(FormContainer(self,[FormSetup(self), ResultsSetup(self)]), 'Setup')
-        self.addTab(FormContainer(self,[FormModelRun(self), ResultsModel(self)]),'Model')
+        #TODO change for back to ResultsModel
+        self.addTab(FormContainer(self,[FormModelRun(self), ResultsSetup(self)]),'Model')
         self.addTab(FormContainer(self, [FormOptimize(self), ResultsOptimize(self)]),'Optimize')
 
         return

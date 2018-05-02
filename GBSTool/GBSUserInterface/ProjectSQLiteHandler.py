@@ -1,7 +1,7 @@
 #TODO change module name
 class ProjectSQLiteHandler:
 
-    def __init__(self, database):
+    def __init__(self, database='project_manager'):
         import sqlite3 as lite
         self.connection = lite.connect(database)
         self.cursor = self.connection.cursor()

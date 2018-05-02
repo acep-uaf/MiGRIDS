@@ -1,4 +1,6 @@
 from PyQt5 import QtCore, QtWidgets, QtSql
+
+import os
 class ComboReference():
     def __init__(self,cmb,table,db):
         self.cmb = cmb
@@ -27,14 +29,14 @@ class ComboReference():
 
         return d
 class ComboDelegate(QtWidgets.QItemDelegate):
-    def __init__(self,parent,values):
+    def __init__(self,parent,values, name=None):
         QtWidgets.QItemDelegate.__init__(self,parent)
         self.values = values
-
+        self.name = name
 
     def createEditor(self,parent, option, index):
         combo = QtWidgets.QComboBox(parent)
-        combo.setObjectName('components')
+        combo.setObjectName(self.name)
         combo.setModel(self.values)
         combo.currentIndexChanged.connect(self.currentIndexChanged)
 
@@ -61,7 +63,26 @@ class ComboDelegate(QtWidgets.QItemDelegate):
 
     @QtCore.pyqtSlot()
     def currentIndexChanged(self):
+        from getComponentAttributesAsList import getComponentAttributesAsList
         self.commitData.emit(self.sender())
+        #if its the sets table then the attribute list needs to be updated
+        if self.name == 'componentName':
+            tv = self.parent()
+            cbs = tv.findChildren(ComboDelegate)
+            for cb in cbs:
+                if cb.name == 'componentAttribute':
+                    lm = cb.values
+                    #populate the combo box with the possible attributes that can be changed
+
+                    # project folder is from FormSetup model
+                    projectFolder = tv.window().findChild(QtWidgets.QWidget, "setupDialog").model.projectFolder
+                    componentFolder = os.path.join(projectFolder, 'InputData', 'Components')
+
+                    #we need the component name
+                    #component name is the currently selected text
+                    #we need the set#
+
+                    lm.setStringList(getComponentAttributesAsList(self.sender().currentText(),componentFolder))
 
 
 #LineEdit textbox connected to the table
@@ -155,10 +176,7 @@ class TextBoxWithClickDelegate(QtWidgets.QItemDelegate):
         str1 = ','.join(components)
 
         model.setData(index, str1)
-        #TODO reomove temporary debug code
-        sqlhandler = ProjectSQLiteHandler('project_manager')
-        print(sqlhandler.cursor.execute("select * from sets").fetchall())
-        sqlhandler.closeDatabase()
+
         #submit the model data to the database
         model.submitAll()
         #requery the database table
@@ -230,9 +248,9 @@ class ComponentFormOpenerDelegate(QtWidgets.QItemDelegate):
 
             component.component_directory = componentDir
             f = formFromXML(component, componentSoup)
+        #TODO we can get rid of this since this delegate is not used in the sets table
         elif type(model) is SetTableModel:
-            pageBlock = self.parent().parent().parent().parent().parent().parent().parent().parent()
-            mainForm = pageBlock.findChild(FormSetup)
+            mainForm= self.window().findChild(FormSetup)
 
             setupInfo = mainForm.model
             component_name = model.data(model.index(index.row(), 2))
@@ -248,7 +266,8 @@ class ComponentFormOpenerDelegate(QtWidgets.QItemDelegate):
                 # modify the soup to reflect data in the data model
 
                 component.component_directory = componentDir
-                f = formFromXML(component, componentSoup,False)
+                #f = formFromXML(component, componentSoup,False)
+                 #update the list of attributes
             else:
                 msg = QtWidgets.QMessageBox(QtWidgets.QMessageBox.Warning, "Missing Component Name",
                                             "You need to select a component before editing attributes.")

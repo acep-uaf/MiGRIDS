@@ -5,35 +5,42 @@ from TableHandler import TableHandler
 from ModelSetTable import SetTableModel, SetTableView
 from ModelRunTable import RunTableModel, RunTableView
 from ProjectSQLiteHandler import ProjectSQLiteHandler
+
+
 from UIToHandler import UIToHandler
 import datetime
+import os
 
+#main form containing setup and run information for a project
 class FormModelRun(QtWidgets.QWidget):
 
     def __init__(self, parent):
         super().__init__(parent)
-
         self.initUI()
 
     def initUI(self):
         self.setObjectName("modelRun")
-
+        #the first page is for set0
         self.tabs = SetsPage(self, 'set0')
-        self.setsTable = self.tabs
+        #self.setsTable = self.tabs
+        #create the run table
         self.runTable = self.createRunTable()
 
         self.layout = QtWidgets.QVBoxLayout()
+        #button to create a new set tab
         newTabButton = QtWidgets.QPushButton()
         newTabButton.setText(' + Set')
         newTabButton.setFixedWidth(100)
         newTabButton.clicked.connect(self.newTab)
         self.layout.addWidget(newTabButton)
-        self.layout.addWidget(self.setsTable)
+        #set table goes below the new tab button
+        #self.layout.addWidget(self.setsTable)
+        self.layout.addWidget(self.tabs)
+        #runs are at the bottom
         self.layout.addWidget(self.runTable)
 
         self.setLayout(self.layout)
         self.showMaximized()
-
 
     #the run table shows ??
     def createRunTable(self):
@@ -55,17 +62,26 @@ class FormModelRun(QtWidgets.QWidget):
 
         return gb
 
+    #add a new set to the project, this adds a new tab for the new set information
     def newTab(self):
         # get the set count
         tab_count = self.tabs.count()
         widg = SetsTable(self, 'set' + str(tab_count))
         self.tabs.addTab(widg, 'Set' + str(tab_count))
 
-        # calls the specified function connected to a button onClick event
+        #create a folder to hold the relevent set data
+        #project folder is from FormSetup model
+        projectFolder = self.window().findChild(QtWidgets.QWidget, "setupDialog").model.projectFolder
+        newFolder = os.path.join(projectFolder,'OutputData', 'Set' + str(tab_count))
+        if not os.path.exists(newFolder):
+            os.makedirs(newFolder)
+
+    # calls the specified function connected to a button onClick event
     @QtCore.pyqtSlot()
     def onClick(self, buttonFunction):
         buttonFunction()
 
+#each page contains information for a single model set
 class SetsPage(QtWidgets.QTabWidget):
 
     def __init__(self, parent,set):
@@ -79,30 +95,24 @@ class SetsPage(QtWidgets.QTabWidget):
         self.addTab(widg, self.set)
 
 
-
-
-#the set table shows components to include in the set
+#the set table shows components to include in the set and attributes to change for runs
 class SetsTable(QtWidgets.QGroupBox):
     def __init__(self, parent, set):
         super().__init__(parent)
         self.init(set)
 
     def init(self, set):
-
+        self.componentDefault = []
         self.set = set
-        handler = ProjectSQLiteHandler('project_manager')
-        defaultDate = handler.cursor.execute("select date_start from setup where set_name = 'default'").fetchone()
-        defaultDate = datetime.datetime.strptime(defaultDate[0], '%m/%d/%Y')
-        self.startDate = defaultDate
-
-        defaultDate = handler.cursor.execute("select date_end from setup where set_name = 'default'").fetchone()
-        defaultDate = datetime.datetime.strptime(defaultDate[0], '%m/%d/%Y')
-        self.endDate = defaultDate
-        handler.closeDatabase()
+        #get default date ranges
+        self.getDefaultDates()
+        #main layouts
         tableGroup = QtWidgets.QVBoxLayout()
+        #setup info for a set
+        tableGroup.addWidget(self.setInfo())
+        #buttons for adding and deleting set records
         tableGroup.addWidget(self.dataButtons('sets'))
-
-
+        #the table view filtered to the specific set for each tab
         tv = SetTableView(self,column1=self.set)
         tv.setObjectName('sets')
         m = SetTableModel(self)
@@ -112,24 +122,48 @@ class SetsTable(QtWidgets.QGroupBox):
             item = m.index(r,1)
             item.flags(~QtCore.Qt.ItemIsEditable)
             m.setItemData(QtCore.QModelIndex(r,1),item)
+            #TODO set persistent editor?
         #hide the id column
         tv.hideColumn(0)
-
         tableGroup.addWidget(tv, 1)
+
         self.setLayout(tableGroup)
         self.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
 
+    #sets the start and end date for a set.
+    #if no values are provided the values are drawn from the database
+    #tuple(s) -> None
+    def getDefaultDates(self, **kwargs):
+        #tuples
+        start = kwargs.get('start')
+        end = kwargs.get('end')
+
+        handler = ProjectSQLiteHandler()
+        if start == None:
+            start = handler.cursor.execute("select date_start from setup where set_name = 'default'").fetchone()
+        if end == None:
+            end = handler.cursor.execute("select date_end from setup where set_name = 'default'").fetchone()
+        handler.closeDatabase()
+        #format the tuples from database output to datetime objects
+        start = datetime.datetime.strptime(start[0], '%m/%d/%Y')
+        end = datetime.datetime.strptime(end[0], '%m/%d/%Y')
+        self.startDate = start
+        self.endDate = end
+        return
     @QtCore.pyqtSlot()
     def onClick(self, buttonFunction):
         buttonFunction()
+    #->QtWidgets.QGroupBox
     def setInfo(self):
         infoBox = QtWidgets.QGroupBox()
         infoRow = QtWidgets.QHBoxLayout()
         # time range filters
         infoRow.addWidget(QtWidgets.QLabel('Filter Date Range: '))
-        infoRow.addWidget(self.dateSelector(True))
+        ds = self.makeDateSelector(True)
+        infoRow.addWidget(ds)
         infoRow.addWidget(QtWidgets.QLabel(' to '))
-        infoRow.addWidget(self.dateSelector(False))
+        de = self.makeDateSelector(False)
+        infoRow.addWidget(de)
 
         infoRow.addWidget(QtWidgets.QLabel('Timestep:'))
         timestepWidget = QtWidgets.QLineEdit('1')
@@ -148,14 +182,22 @@ class SetsTable(QtWidgets.QGroupBox):
     def componentSelector(self):
         from Delegates import ClickableLineEdit
 
-        self.componentDefault = None
-
-
-        widg = ClickableLineEdit(self.componentDefault)
-        widg.setObjectName('components')
+        widg = ClickableLineEdit(','.join(self.componentDefault))
+        widg.setObjectName('componentNames')
 
         widg.clicked.connect(lambda: self.componentCellClicked())
         return widg
+    #tuple(s) -> None
+    def update(self, **kwargs):
+        self.componentDefault = kwargs.get('components')
+        start = kwargs.get('start')
+        end = kwargs.get('end')
+        self.getDefaultDates(start=start,end=end)
+
+        #find the widgets to update
+        self.setDateSelectorProperties(self.findChildren(QtWidgets.QDateEdit, 'startDate'))
+        self.setDateSelectorProperties(self.findChildren(QtWidgets.QDateEdit, 'endDate'))
+        self.findChildren(QtWidgets.QLineEdit,'componentNames').setText(self.componentDefault)
 
     @QtCore.pyqtSlot()
     def componentCellClicked(self):
@@ -176,24 +218,30 @@ class SetsTable(QtWidgets.QGroupBox):
         components = listDialog.checkedItems()
         # format the list to be inserted into a text field in a datatable
         str1 = ','.join(components)
-        widg = self.findChild(QtWidgets.QLineEdit,'components')
+        widg = self.findChild(QtWidgets.QLineEdit,'componentNames')
         widg.setText(str1)
 
-        #find the component drop down delegate and reset its list to components
+        #find the component drop down delegate and reset its list to the selected components
         tv = self.findChild(QtWidgets.QWidget,'sets')
-        #assumes the only ComboDelegate is the component selector
-        cb = tv.findChild(ComboDelegate)
-        lm = cb.values
-        lm.setStringList(components)
 
+        cbs = tv.findChildren(ComboDelegate)
+        for c in cbs:
 
+            if c.name == 'componentName':
+                lm = c.values
+                lm.setStringList(components)
 
-    #Boolean -> #QtWidget.QDateEdit()
-    def dateSelector(self,start = True):
-
+    #Boolean -> QDateEdit
+    def makeDateSelector(self, start=True):
         widg = QtWidgets.QDateEdit()
-        #default is entire dataset
-
+        if start:
+            widg.setObjectName('startDate')
+        else:
+            widg.setObjectName('endDate')
+        return widg
+    #QDateEdit, Boolean -> QDateEdit()
+    def setDateSelectorProperties(self, widg, start = True):
+        # default is entire dataset
         if start:
            widg.setDate(QtCore.QDate(self.startDate.year,self.startDate.month,self.startDate.day))
 
@@ -209,21 +257,32 @@ class SetsTable(QtWidgets.QGroupBox):
         buttonBox = QtWidgets.QGroupBox()
         buttonRow = QtWidgets.QHBoxLayout()
 
+
         # buttonRow.addWidget(self.makeBlockButton(self.functionForLoadDescriptor,
         #                                          None, 'SP_DialogOpenButton',
         #                                          'Load a previously created model.'))
 
         buttonRow.addWidget(makeButtonBlock(self, lambda: handler.functionForNewRecord(table),
                                             '+', None,
-                                            'Add'))
+                                            'Add a component change'))
         buttonRow.addWidget(makeButtonBlock(self, lambda: handler.functionForDeleteRecord(table),
                                             None, 'SP_TrashIcon',
-                                            'Delete'))
-        buttonRow.addWidget(makeButtonBlock(self, lambda: UIToHandler.runModels(self),
+                                            'Delete a component change'))
+        buttonRow.addWidget(makeButtonBlock(self, lambda: self.runSet(),
                                             'Run', None,
-                                            'Run'))
+                                            'Run Set'))
         buttonRow.addStretch(3)
-        buttonRow.addWidget(self.setInfo())
+
         buttonBox.setLayout(buttonRow)
         return buttonBox
+
+    def runSet(self):
+        uihandler = UIToHandler()
+        # currentSet is the buttons page name
+        currentSet = self.set
+        # component table is the table associated with the button
+        componentTable = self.findChild(SetTableView).model()
+        # projectFolder comes from the FormSetup
+        projectFolder = self.window().findChild(QtWidgets.QWidget, 'setupDialog').model.projectFolder
+        uihandler.runModels(currentSet,componentTable,projectFolder)
 

@@ -64,23 +64,24 @@ class formFromXML(QtWidgets.QDialog):
                 hint = "".join(tag.findAll(text=True))
 
                 #the tag name is the main label
-                if tag.parent.name not in ['component','childOf','type']:
+                if tag.parent.name not in ['component', 'childOf', 'type']:
                     parent = tag.parent.name
+                    pt = '.'.join([parent, tag.name])
                 else:
-                    parent =''
-                g1['rowNames'].append('.'.join([parent,tag.name]))
-                g1['rowNames'].append('.'.join([parent,tag.name]) + 'input' + str(row))
+                    pt = tag.name
+                g1['rowNames'].append(pt)
+                g1['rowNames'].append(pt + 'input' + str(row))
                 #every tag gets a grid for data input
                 #there are 4 columns - 2 for labels, 2 for values
                 #the default is 2 rows - 1 for tag name, 1 for data input
                 #more rows are added if more than 2 input attributes exist
 
                 #create the overall label
-                g1['.'.join([parent,tag.name])] = {1:{'widget':'lbl','name':tag.name}}
+                g1[pt] = {1:{'widget':'lbl','name':tag.name}}
                 column = 1
-                g1['.'.join([parent,tag.name]) + 'input' + str(row)] ={}
+                g1[pt + 'input' + str(row)] ={}
                 for a in tag.attrs:
-                    name = '.'.join([parent,tag.name,str(a)])
+                    name = '.'.join([pt,str(a)])
                     inputValue = tag[a]
                     #columns aways starts populating at 2
 
@@ -101,13 +102,14 @@ class formFromXML(QtWidgets.QDialog):
                         widget = 'chk'
 
                 #first column is the label
-                    g1['.'.join([parent,tag.name]) + 'input' + str(row)][column] = {'widget':'lbl','name':'lbl' + a, 'default':a, 'hint':hint}
+                    g1[pt + 'input' + str(row)][column] = {'widget':'lbl','name':'lbl' + a, 'default':a, 'hint':hint}
                     column+=1
 
                     if items is None:
-                        g1['.'.join([parent,tag.name]) + 'input' + str(row)][column] = {'widget': widget, 'name':name, 'default':inputValue, 'hint':hint}
+                        g1[pt + 'input' + str(row)][column] = {'widget': widget, 'name':name, 'default':inputValue, 'hint':hint}
                     else:
-                        g1['.'.join([parent,tag.name]) + 'input' + str(row)][column] = {'widget': widget, 'name':name, 'default': inputValue, 'items':items, 'hint':hint}
+                        g1[pt + 'input' + str(row)][column] = {'widget': widget, 'name':name, 'default': inputValue, 'items':items, 'hint':hint}
+        print(g1)
         #make the grid layout from the dictionary
         grid = setupGrid(g1)
         #add the grid to the parent layout
@@ -123,29 +125,30 @@ class formFromXML(QtWidgets.QDialog):
         for tag in self.soup.find_all():
             if tag.parent.name not in ['component', 'childOf', 'type']:
                 parent = tag.parent.name
+                pt = '.'.join([parent,tag.name])
             else:
-                parent = ''
+                pt = tag.name
             for a in tag.attrs:
-                widget = self.findChild((QtWidgets.QLineEdit, QtWidgets.QComboBox,QtWidgets.QCheckBox), '.'.join([parent,tag.name,str(a)]))
+                widget = self.findChild((QtWidgets.QLineEdit, QtWidgets.QComboBox,QtWidgets.QCheckBox), '.'.join([pt,str(a)]))
 
                 if type(widget) == QtWidgets.QLineEdit:
                     if tag.attrs[a] != widget.text():
-                        self.changes['.'.join([parent, tag.name, str(a)])]=widget.text()
+                        self.changes['.'.join([pt, str(a)])]=widget.text()
                         tag.attrs[a] = widget.text()
 
                 elif type(widget) == QtWidgets.QComboBox:
                     if tag.attrs[a] != widget.currentText():
-                        self.changes['.'.join([parent, tag.name, str(a)])]=widget.currentText()
+                        self.changes['.'.join([pt, str(a)])]=widget.currentText()
                         tag.attrs[a]= widget.currentText()
 
                 elif type(widget) == QtWidgets.QCheckBox:
 
 
                     if (widget.isChecked()) & (tag.attrs[a] != 'TRUE'):
-                        self.changes['.'.join([parent, tag.name, str(a)])]= 'TRUE'
+                        self.changes['.'.join([pt, str(a)])]= 'TRUE'
                         tag.attrs[a] = 'TRUE'
                     elif (not widget.isChecked()) & (tag.attrs[a] != 'FALSE'):
-                        self.changes['.'.join([parent,tag.name, str(a)])]= 'TRUE'
+                        self.changes['.'.join([pt, str(a)])]= 'TRUE'
                         tag.attrs[a]= 'FALSE'
 
     #when the form is closed the soup gets updated and writtent to an xml file
@@ -159,7 +162,7 @@ class formFromXML(QtWidgets.QDialog):
         #Tell the controller to tell the InputHandler to write the xml
         if self.write:
             handler = UIToHandler()
-            handler.writeSoup(self.componentName,self.fileDir,self.soup)
+            handler.writeComponentSoup(self.componentName, self.fileDir, self.soup)
         else:
             #return a list of changes
             print(self.changes)

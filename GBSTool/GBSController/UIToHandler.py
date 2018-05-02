@@ -5,7 +5,7 @@ import os
 import pickle
 from fillProjectData import fillProjectData
 from buildProjectSetup import buildProjectSetup
-from makeSoup import makeSoup
+from makeSoup import makeComponentSoup
 from readXmlTag import readXmlTag
 from writeXmlTag import writeXmlTag
 
@@ -24,12 +24,12 @@ class UIToHandler():
     #calls the InputHandler functions required to write component descriptor xml files
     def makeComponentDescriptor(self, component,componentDir):
          #returns either a template soup or filled soup
-        componentSoup = makeSoup(component, componentDir)
+        componentSoup = makeComponentSoup(component, componentDir)
         return componentSoup
 
     #pass a component name, component folder and soup object to be written to a component descriptor
     #string, string, soup -> None
-    def writeSoup(self, component, fileDir, soup):
+    def writeComponentSoup(self, component, fileDir, soup):
         from createComponentDescriptor import createComponentDescriptor
         #soup is an optional argument, without it a template xml will be created.
         createComponentDescriptor(component, fileDir, soup)
@@ -191,8 +191,10 @@ class UIToHandler():
         file.close()
         return data
 
-    def runModels(self):
+    def runModels(self, currentSet, componentTable, projectFolder):
         from PyQt5 import QtWidgets
+        from generateRuns import generateRuns
+        from makeAttributeXML import makeAttributeXML, writeAttributeXML
         #generate xml's based on inputs
         #call to run models
         msg = QtWidgets.QMessageBox(QtWidgets.QMessageBox.Warning, "I can't do this",
@@ -200,6 +202,14 @@ class UIToHandler():
         msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
         msg.exec()
         msg = QtWidgets.QMessageBox(QtWidgets.QMessageBox.Warning, "Starting Models",
-                                    "You won't beable to edit data while models are running. /n Are you sure you want to continue?")
+                                    "You won't beable to edit data while models are running. Are you sure you want to continue?")
         msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
         msg.exec()
+        #generate the setAttributes xml file
+        soup = makeAttributeXML(currentSet,componentTable)
+        setDir = os.path.join(projectFolder,'OutputData',currentSet)
+        fileName = os.path.basename(projectFolder) + currentSet + 'attributes.xml'
+        writeAttributeXML(soup,setDir,fileName)
+
+        #generate runs from attribute xml
+        generateRuns(setDir)

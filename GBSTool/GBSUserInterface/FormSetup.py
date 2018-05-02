@@ -10,6 +10,7 @@ from Component import Component
 from UIToHandler import UIToHandler
 from makeButtonBlock import makeButtonBlock
 from ResultsSetup import  ResultsSetup
+from FormModelRuns import FormModelRun
 
 
 class FormSetup(QtWidgets.QWidget):
@@ -499,10 +500,8 @@ class FormSetup(QtWidgets.QWidget):
         self.sendSetupData()
         # write all the xml files
 
-
         # start with the setupxml
         self.model.writeNewXML()
-
 
         #make sure the necessary information is filled in
         #required: input folder, data format, date-time fields, component max power
@@ -517,6 +516,10 @@ class FormSetup(QtWidgets.QWidget):
         sqlHandler.cursor.execute("UPDATE setup set start_date = ?, end_date = ? where set_name = 'default'",[defaultStart,defaultEnd])
         sqlHandler.connection.commit()
         sqlHandler.closeDatabase()
+        # tell the model form to update now that there is data
+        modelForm = self.window().findChild(FormModelRun)
+        #start and end are tuples at this point
+        modelForm.update(start=defaultStart,end=defaultEnd, components=self.model.componentNames)
 
         # generate netcdf files
         msg = QtWidgets.QMessageBox(QtWidgets.QMessageBox.Warning, "Time Series loaded",
