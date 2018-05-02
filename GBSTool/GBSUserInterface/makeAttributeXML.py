@@ -3,6 +3,7 @@
 def makeAttributeXML(currentSet,model):
     from ProjectSQLiteHandler import ProjectSQLiteHandler
     soup = readAttributeXML()
+
     #update the soup to reflect the model
     #for each row in model
     compName =''
@@ -10,22 +11,30 @@ def makeAttributeXML(currentSet,model):
     compAttr=''
     compValue=''
     for i in range(model.rowCount()):
-        compName = ' '.join([compName, model.data(i,2)])
-        compTag = ' '.join([compTag, model.data(i,3).split('.')[:-1]])
-        compAttr =  ' '.join([compAttr, model.data(i,3).split('.')[-1]])
-        compValue = ' '.join([compValue, model.data(i, 4)])
-    soup.compName.value = compName
-    soup.compTag.value = compTag
-    soup.compAttr.value = compAttr
-    soup.compValue.value = compValue
+        compName = ' '.join([compName, model.data(model.index(i,2))])
+        compTag = ' '.join([compTag, '.'.join(model.data(model.index(i,3)).split('.')[:-1])])
+        compAttr =  ' '.join([compAttr, model.data(model.index(i,3)).split('.')[-1]])
+        compValue = ' '.join([compValue, model.data(model.index(i, 4))])
+
+    tag = soup.find('compName')
+    tag.attrs['value'] = compName.lstrip()
+    tag = soup.find('compTag')
+    tag.attrs['value'] = compTag.lstrip()
+    tag = soup.find('compAttr')
+    tag.attrs['value'] = compAttr.lstrip()
+    tag = soup.find('compValue')
+    tag.attrs['value']= compValue.lstrip()
     #update the set information
     handler = ProjectSQLiteHandler()
-    dataTuple = handler.cursor.execute("SELECT set_name, date_start, date_end, timestep, component_names from setup where set_name = ?",currentSet.lower())
-    soup.setupTag.value = "componentNames runTimeSteps timeStep"
-
-    soup.setupAttr.value = "value value value"
-
-    soup.setupValue.value = " ".join(dataTuple[4],timeStepsToInteger(dataTuple,[1],dataTuple[2]),dataTuple[3])
+    dataTuple = handler.cursor.execute("SELECT set_name, date_start, date_end, timestep, component_names from setup where set_name = '" + currentSet.lower() + "'").fetchone()
+    #TODO remove
+    print(dataTuple)
+    tag = soup.find('setupTag')
+    tag.attrs['value'] = "componentNames runTimeSteps timeStep"
+    tag = soup.find('setupAttr')
+    tag.attrs['value']= "value value value"
+    tag = soup.find('setupValue')
+    tag.attrs['value'] = " ".join([dataTuple[4],timeStepsToInteger(dataTuple,[1],dataTuple[2]),str(dataTuple[3])])
 
     return soup
 def writeAttributeXML(soup,saveDir,setName):

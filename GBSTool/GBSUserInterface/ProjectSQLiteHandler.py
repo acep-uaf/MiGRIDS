@@ -163,7 +163,8 @@ class ProjectSQLiteHandler:
                         set_name unique,
                         date_start text,
                         date_end text,
-                        timestep integer
+                        timestep integer,
+                        component_names text
                         );""")
 
         self.cursor.execute("INSERT INTO setup (set_name,timestep,date_start,date_end) values('default',1,'1/1/2016','12/31/2016')")

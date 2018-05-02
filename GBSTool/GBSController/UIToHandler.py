@@ -191,7 +191,7 @@ class UIToHandler():
         file.close()
         return data
 
-    def runModels(self, currentSet, componentTable, projectFolder):
+    def runModels(self, currentSet, componentTable, setupInfo):
         from PyQt5 import QtWidgets
         from generateRuns import generateRuns
         from makeAttributeXML import makeAttributeXML, writeAttributeXML
@@ -207,9 +207,12 @@ class UIToHandler():
         msg.exec()
         #generate the setAttributes xml file
         soup = makeAttributeXML(currentSet,componentTable)
-        setDir = os.path.join(projectFolder,'OutputData',currentSet)
-        fileName = os.path.basename(projectFolder) + currentSet + 'attributes.xml'
+        setDir = os.path.join(setupInfo.projectFolder,'OutputData',currentSet.capitalize())
+        fileName = setupInfo.project + currentSet.capitalize() + 'Attributes.xml'
+
         writeAttributeXML(soup,setDir,fileName)
 
+        # TODO directory gets changed somewhere here -need to find where and set it back
+        #if it doesn't get reset then any attempts to run again will fail
         #generate runs from attribute xml
         generateRuns(setDir)

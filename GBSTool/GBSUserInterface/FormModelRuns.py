@@ -167,7 +167,7 @@ class SetsTable(QtWidgets.QGroupBox):
 
         infoRow.addWidget(QtWidgets.QLabel('Timestep:'))
         timestepWidget = QtWidgets.QLineEdit('1')
-
+        timestepWidget.setObjectName(('timestep'))
         timestepWidget.setValidator(QtGui.QIntValidator())
         infoRow.addWidget(timestepWidget,1)
 
@@ -277,12 +277,25 @@ class SetsTable(QtWidgets.QGroupBox):
         return buttonBox
 
     def runSet(self):
-        uihandler = UIToHandler()
-        # currentSet is the buttons page name
+        # currentSet
         currentSet = self.set
+        #set info needs to be updated in the database
+        setInfo = (
+            currentSet,
+            self.findChild(QtWidgets.QDateEdit,'startDate').text(),
+            self.findChild(QtWidgets.QDateEdit, 'endDate').text(),
+            self.findChild(QtWidgets.QLineEdit,'timestep').text(),
+            self.findChild(QtWidgets.QLineEdit,'componentNames').text()
+        )
+        sqlhandler = ProjectSQLiteHandler()
+        sqlhandler.cursor.execute("INSERT INTO setup(set_name, date_start, date_end, timestep, component_names) VALUES(?,?,?,?,?)",setInfo)
+        sqlhandler.connection.commit()
+        sqlhandler.closeDatabase()
+        uihandler = UIToHandler()
+
         # component table is the table associated with the button
         componentTable = self.findChild(SetTableView).model()
         # projectFolder comes from the FormSetup
-        projectFolder = self.window().findChild(QtWidgets.QWidget, 'setupDialog').model.projectFolder
-        uihandler.runModels(currentSet,componentTable,projectFolder)
+        setupModel = self.window().findChild(QtWidgets.QWidget, 'setupDialog').model
+        uihandler.runModels(currentSet,componentTable,setupModel)
 
