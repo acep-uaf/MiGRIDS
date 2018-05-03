@@ -1,5 +1,5 @@
 from PyQt5 import QtWidgets
-from UIToHandler import UIToHandler
+from GBSController.UIToHandler import UIToHandler
 class TableHandler():
 
     def __init__(self, parent):

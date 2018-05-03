@@ -1,5 +1,5 @@
 from PyQt5 import QtCore, QtWidgets, QtSql
-
+from GBSInputHandler.Component import Component
 import os
 class ComboReference():
     def __init__(self,cmb,table,db):
@@ -77,11 +77,7 @@ class ComboDelegate(QtWidgets.QItemDelegate):
                     # project folder is from FormSetup model
                     projectFolder = tv.window().findChild(QtWidgets.QWidget, "setupDialog").model.projectFolder
                     componentFolder = os.path.join(projectFolder, 'InputData', 'Components')
-
-                    #we need the component name
-                    #component name is the currently selected text
-                    #we need the set#
-
+                    #the curren selected component, and the folder with component xmls are passed used to generate tag list
                     lm.setStringList(getComponentAttributesAsList(self.sender().currentText(),componentFolder))
 
 
@@ -202,14 +198,14 @@ class ComponentFormOpenerDelegate(QtWidgets.QItemDelegate):
     @QtCore.pyqtSlot()
     def cellButtonClicked(self, index):
         from formFromXML import formFromXML
-        from UIToHandler import UIToHandler
+        from GBSController.UIToHandler import UIToHandler
         from ModelSetTable import SetTableModel
         from ModelComponentTable import  ComponentTableModel
         from FormSetup import FormSetup
         import os
 
         handler = UIToHandler()
-        from Component import Component
+
 
         model = self.parent().model()
         #if its a component table bring up the component editing form

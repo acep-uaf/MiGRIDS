@@ -5,9 +5,7 @@ from TableHandler import TableHandler
 from ModelSetTable import SetTableModel, SetTableView
 from ModelRunTable import RunTableModel, RunTableView
 from ProjectSQLiteHandler import ProjectSQLiteHandler
-
-
-from UIToHandler import UIToHandler
+from GBSController.UIToHandler import UIToHandler
 import datetime
 import os
 
@@ -202,7 +200,7 @@ class SetsTable(QtWidgets.QGroupBox):
 
         #find the widgets to update
         self.setDateSelectorProperties(self.findChild(QtWidgets.QDateEdit, 'startDate'))
-        self.setDateSelectorProperties(self.findChild(QtWidgets.QDateEdit, 'endDate',False))
+        self.setDateSelectorProperties(self.findChild(QtWidgets.QDateEdit, 'endDate'),False)
         self.findChild(QtWidgets.QLineEdit,'componentNames').setText(self.componentDefault)
 
     @QtCore.pyqtSlot()
@@ -245,6 +243,7 @@ class SetsTable(QtWidgets.QGroupBox):
         else:
             widg.setObjectName('endDate')
         return widg
+
     #QDateEdit, Boolean -> QDateEdit()
     def setDateSelectorProperties(self, widg, start = True):
         # default is entire dataset

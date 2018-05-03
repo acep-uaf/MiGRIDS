@@ -64,7 +64,7 @@ class UIToHandler():
     #string, string, SQLRecord -> SQLRecord
     def copyDescriptor(self,descriptorFile, componentDir, sqlRecord):
         import shutil
-        from Component import Component
+
         fileName =os.path.basename(descriptorFile)
 
         componentName = fileName[:-14]
@@ -216,3 +216,9 @@ class UIToHandler():
         #if it doesn't get reset then any attempts to run again will fail
         #generate runs from attribute xml
         generateRuns(setDir)
+
+        def inputHandlerToUI(self, setupFolder, setupInfo):
+            from GBSInputHandler.getSetupInformation import getSetupInformation
+            # assign tag values in the setupxml to the setupInfo model
+            getSetupInformation(os.path.join(setupFolder, setupInfo.project + 'Setup.xml'), setupInfo)
+            return

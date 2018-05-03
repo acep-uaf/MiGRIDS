@@ -6,7 +6,7 @@ from gridLayoutSetup import setupGrid
 from SetupWizard import SetupWizard
 from WizardTree import WizardTree
 from ModelSetupInformation import ModelSetupInformation
-from Component import Component
+from GBSInputHandler.Component import Component
 from UIToHandler import UIToHandler
 from makeButtonBlock import makeButtonBlock
 from ResultsSetup import  ResultsSetup

@@ -2,7 +2,7 @@
 import os
 import pickle
 from PyQt5 import QtWidgets, QtCore
-from UIToHandler import UIToHandler
+from GBSController.UIToHandler import UIToHandler
 from readXmlTag import readXmlTag
 
 
@@ -56,12 +56,13 @@ class ResultsSetup(QtWidgets.QWidget):
                 for s in self.displayData.keys():
                    if axis == 'xcombo':
                        if field != 'index':
-                           self.displayData[s]['x'] = self.data.getattribute(s)[field]
+                           newx = self.data.getattribute(s)[field]
+                           self.displayData[s]['x'] = newx.values
                        else:
                            self.displayData[s]['x'] = self.data.index
                    else:
                        if field != 'index':
-                            self.displayData[s]['y'] = self.data.getattribute(s)[field]
+                            self.displayData[s]['y'] = self.data.getattribute(s)[field].values
                        else:
                            self.displayData[s]['y'] = self.data.index
 
@@ -85,18 +86,17 @@ class ResultsSetup(QtWidgets.QWidget):
     def createRefreshButton(self):
         button = QtWidgets.QPushButton()
         button.setText("Refresh plot")
-        button.clicked.connect(lambda: self.refreshPlot(self.data))
+        button.clicked.connect(self.refreshPlot)
         return button
 
     #refresh the data plot with currently set data
-    def refreshPlot(self, data):
-        self.data = data
-        if data is not None:
-
+    def refreshPlot(self):
+        self.data = self.parent().findChild(QtWidgets.QWidget, 'setupDialog').model.data
+        if self.data is not None:
 
             #set the default data to display after fill options
-            if 'dsiplayData' not in self.__dict__.keys():
-                self.displayData = self.defaultDisplay(data)
+            if 'displayData' not in self.__dict__.keys():
+                self.displayData = self.defaultDisplay(self.data)
         else:
             self.displayData = None
         self.plotWidget.makePlot(self.displayData)

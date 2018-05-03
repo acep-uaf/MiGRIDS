@@ -1,5 +1,5 @@
 def getComponentAttributesAsList(componentName, componentFolder):
-    from UIToHandler import UIToHandler
+    from GBSController.UIToHandler import UIToHandler
 
     handler = UIToHandler()
     componentSoup = handler.makeComponentDescriptor(componentName, componentFolder)
@@ -12,5 +12,6 @@ def getComponentAttributesAsList(componentName, componentFolder):
             pt = tag.name
 
         for a in tag.attrs:
-             attributeList.append('.'.join([pt,str(a)]))
+            if a != 'unit':
+                 attributeList.append('.'.join([pt,str(a)]))
     return attributeList
