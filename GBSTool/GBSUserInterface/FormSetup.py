@@ -142,8 +142,6 @@ class FormSetup(QtWidgets.QWidget):
         hasSetup = model.feedSetupInfo()
 
         self.projectDatabase = False
-
-
         if hasSetup:
             self.fillData(model)
             self.topBlock.setEnabled(True)
@@ -198,6 +196,9 @@ class FormSetup(QtWidgets.QWidget):
             self.topBlock.setEnabled(True)
             self.environmentBlock.setEnabled(True)
             self.componentBlock.setEnabled(True)
+            # enable the model and optimize pages too
+            pages = self.window().findChild(QtWidgets.QTabWidget, 'pages')
+            pages.enableTabs()
             print('Loaded %s:' % model.project)
         else:
             #TODO allow new projects to be loaded with out closing window

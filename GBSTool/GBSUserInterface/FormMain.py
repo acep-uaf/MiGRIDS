@@ -94,7 +94,7 @@ class MainForm(QtWidgets.QMainWindow):
             if children:
                 self.addItems(item,children)
         return
-
+    #change focus to the selected item
     def switchFocus(self, position):
         #what item is selected
         indexes = self.treeBlock.selectedIndexes()
@@ -107,6 +107,7 @@ class MainForm(QtWidgets.QMainWindow):
             while index.parent().isValid():
                 index = index.parent()
                 level +=1
+
         #change the active tab depending on the selection
         self.pageBlock.setCurrentIndex(index.row())
         # change the focus depending on the selection
@@ -137,9 +138,7 @@ class MainForm(QtWidgets.QMainWindow):
 
     #page block contains all the forms
     def createPageBlock(self):
-
         pageBlock = PageBlock()
-
         return pageBlock
 
 class PageBlock(QtWidgets.QTabWidget):
@@ -150,26 +149,30 @@ class PageBlock(QtWidgets.QTabWidget):
 
     def initUI(self):
         from FormSetup import FormSetup
-        from FormContainer import FormContainer
         from ResultsSetup import ResultsSetup
-
-
-        #here is where we initilize this subclass
-
-        self.addTab(FormContainer(self,[FormSetup(self), ResultsSetup(self)]), 'Setup')
-
-    def enableTabs(self):
         from FormModelRuns import FormModelRun
         from FormOptimize import FormOptimize
         from ResultsModel import ResultsModel
         from ResultsOptimize import ResultsOptimize
         from FormContainer import FormContainer
 
-        self.addTab(FormContainer(self,[FormModelRun(self), ResultsModel(self)]),'Model')
-        self.addTab(FormContainer(self, [FormOptimize(self), ResultsOptimize(self)]),'Optimize')
+        self.addTab(FormContainer(self,[FormSetup(self), ResultsSetup(self)]), 'Setup')
+        self.addTab(FormContainer(self, [FormModelRun(self), ResultsModel(self)]), 'Model')
+        self.addTab(FormContainer(self, [FormOptimize(self), ResultsOptimize(self)]), 'Optimize')
+        self.findChild(FormModelRun).hide()
+        self.findChild(FormOptimize).hide()
+    #Creates model and optimize tabs
+    #this is called after a project name is set
+    def enableTabs(self):
+        from FormModelRuns import FormModelRun
+        from FormOptimize import FormOptimize
+
+        c1 = self.findChild(FormModelRun)
+        c1.show()
+        self.findChild(FormOptimize).show()
 
         return
-
+    #if the tab block is closed make sure all the data is written to xml files
     def closeEvent(self):
         import os
         import shutil
@@ -178,9 +181,10 @@ class PageBlock(QtWidgets.QTabWidget):
         if 'projectFolder' in setupForm.model.__dict__.keys():
             path = os.path.dirname(__file__)
             print('Database was saved to %s' % self.model.projectFolder)
-        #TODO uncomment once testing complete
-            #shutil.move(os.path.join(path, 'project_manager'),
-            #            os.path.join(self.model.projectFolder, 'project_manager'))
-        #else:
+
+        #Can be commmented out if we don't want to save the existing project database during development
+            shutil.move(os.path.join(path, 'project_manager'),
+                       os.path.join(self.model.projectFolder, 'project_manager'))
+        else:
             # if a project was never set then just close and remove the default database
-            #os.remove('project_manager')
+            os.remove('project_manager')

@@ -177,12 +177,12 @@ class SetsTableBlock(QtWidgets.QGroupBox):
         timestepWidget = QtWidgets.QLineEdit('1')
         timestepWidget.setObjectName(('timestep'))
         timestepWidget.setValidator(QtGui.QIntValidator())
-        infoRow.addWidget(timestepWidget,1)
+        infoRow.addWidget(timestepWidget)
 
-        infoRow.addWidget(QtWidgets.QLabel('Seconds'),2)
-        infoRow.addStretch(1)
-        infoRow.addWidget(QtWidgets.QLabel('Components'))
-        infoRow.addWidget(self.componentSelector())
+        infoRow.addWidget(QtWidgets.QLabel('Seconds'),1)
+        
+        infoRow.addWidget(QtWidgets.QLabel('Components'),)
+        infoRow.addWidget(self.componentSelector(),2)
         infoBox.setLayout(infoRow)
 
         return infoBox
