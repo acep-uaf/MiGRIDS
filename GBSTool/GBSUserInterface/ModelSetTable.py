@@ -6,7 +6,6 @@ class SetTableView(QtWidgets.QTableView):
     def __init__(self, *args, **kwargs):
         self.column1 = kwargs.get('column1')
         QtWidgets.QTableView.__init__(self, *args)
-
         self.setSizePolicy(QtWidgets.QSizePolicy.Expanding,QtWidgets.QSizePolicy.Expanding)
         self.resizeColumnsToContents()
 

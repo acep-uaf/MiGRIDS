@@ -25,7 +25,7 @@ class FormSetup(QtWidgets.QWidget):
     def initUI(self):
 
         self.setObjectName("setupDialog")
-        #self.resize(1754, 3000)
+
         self.model = model
 
         #the main layout is oriented vertically
@@ -35,7 +35,7 @@ class FormSetup(QtWidgets.QWidget):
 
         windowLayout.addWidget(self.ButtonBlock,2)
         #create some space between the buttons and xml setup block
-        windowLayout.addStretch(1)
+        
 
         #add the setup block
         self.createTopBlock()
@@ -43,7 +43,6 @@ class FormSetup(QtWidgets.QWidget):
         self.topBlock.setEnabled(False)
         windowLayout.addWidget(self.topBlock)
         #more space between component block
-        windowLayout.addStretch(1)
 
         #TODO move to seperate file
         dlist = [
@@ -70,29 +69,30 @@ class FormSetup(QtWidgets.QWidget):
         self.WizardTree = self.buildWizardTree(dlist)
         self.createTableBlock('Components', 'components', self.assignComponentBlock)
         self.componentBlock.setEnabled(False)
-
         windowLayout.addWidget(self.componentBlock)
+
         # the bottom block is disabled until a setup file is created or loaded
-        self.createTableBlock('Environment Data', 'environment', self.assignEnvironementBlock)
+        self.createTableBlock('Environment Data', 'environment', self.assignEnvironmentBlock)
         self.environmentBlock.setEnabled(False)
         windowLayout.addWidget(self.environmentBlock)
 
-        windowLayout.addStretch(2)
+
         windowLayout.addWidget(makeButtonBlock(self,self.createInputFiles,'Create input files',None,'Create input files to run models'),3)
 
-         #set the main layout as the layout for the window
-        self.layoutWidget = QtWidgets.QWidget(self)
-        self.layoutWidget.setLayout(windowLayout)
+        #set the main layout as the layout for the window
+
+        self.setLayout(windowLayout)
         #title is setup
         self.setWindowTitle('Setup')
-
+        self.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         #show the form
         self.showMaximized()
 
     # Setters
     #(String, number, list or Object) ->
-    def assignEnvironementBlock(self, value):
+    def assignEnvironmentBlock(self, value):
         self.environmentBlock = value
+
     def assignComponentBlock(self,value):
         self.componentBlock = value
 
@@ -119,7 +119,7 @@ class FormSetup(QtWidgets.QWidget):
 
         self.ButtonBlock.setSizePolicy(QtWidgets.QSizePolicy.Expanding,QtWidgets.QSizePolicy.Expanding)
 
-        self.ButtonBlock.setMinimumSize(self.size().width(),self.minimumSize().height())
+        #self.ButtonBlock.setMinimumSize(self.size().width(),self.minimumSize().height())
         return hlayout
 
     #method -> None
@@ -280,7 +280,7 @@ class FormSetup(QtWidgets.QWidget):
         gb.setLayout(tableGroup)
         gb.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         fn(gb)
-        return tv
+        return
 
     #Load an existing descriptor file and populate the component table
     #-> None
@@ -380,6 +380,7 @@ class FormSetup(QtWidgets.QWidget):
                                              None, 'SP_TrashIcon',
                                              'Delete a component'))
         buttonRow.addStretch(3)
+        buttonBox.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         buttonBox.setLayout(buttonRow)
         return buttonBox
 

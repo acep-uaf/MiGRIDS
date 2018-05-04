@@ -25,6 +25,7 @@ class FormModelRun(QtWidgets.QWidget):
         self.runTable = self.createRunTable()
 
         self.layout = QtWidgets.QVBoxLayout()
+
         #button to create a new set tab
         newTabButton = QtWidgets.QPushButton()
         newTabButton.setText(' + Set')

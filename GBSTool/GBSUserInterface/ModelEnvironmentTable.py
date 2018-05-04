@@ -4,7 +4,6 @@ from Delegates import *
 #subclass of QTableView for displaying component information
 class EnvironmentTableView(QtWidgets.QTableView):
     def __init__(self, *args, **kwargs):
-
         QtWidgets.QTableView.__init__(self, *args, **kwargs)
         self.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         self.resizeColumnsToContents()
