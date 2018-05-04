@@ -15,7 +15,7 @@ class MainForm(QtWidgets.QMainWindow):
 
         self.setObjectName("mainForm")
         self.layoutWidget = QtWidgets.QWidget(self)
-        windowLayout = QtWidgets.QHBoxLayout()
+
         docker = QtWidgets.QDockWidget()
 
         self.treeBlock = self.createNavTree()
@@ -145,21 +145,25 @@ class MainForm(QtWidgets.QMainWindow):
 class PageBlock(QtWidgets.QTabWidget):
     def __init__(self):
         super().__init__()
-
+        self.setObjectName('pages')
         self.initUI()
 
     def initUI(self):
         from FormSetup import FormSetup
-        from FormModelRuns import FormModelRun
         from FormContainer import FormContainer
         from ResultsSetup import ResultsSetup
-        from FormOptimize import FormOptimize
-        from ResultsModel import ResultsModel
-        from ResultsOptimize import ResultsOptimize
+
 
         #here is where we initilize this subclass
 
         self.addTab(FormContainer(self,[FormSetup(self), ResultsSetup(self)]), 'Setup')
+
+    def enableTabs(self):
+        from FormModelRuns import FormModelRun
+        from FormOptimize import FormOptimize
+        from ResultsModel import ResultsModel
+        from ResultsOptimize import ResultsOptimize
+        from FormContainer import FormContainer
 
         self.addTab(FormContainer(self,[FormModelRun(self), ResultsModel(self)]),'Model')
         self.addTab(FormContainer(self, [FormOptimize(self), ResultsOptimize(self)]),'Optimize')

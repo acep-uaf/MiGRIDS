@@ -33,7 +33,7 @@ class FormModelRun(QtWidgets.QWidget):
         newTabButton.clicked.connect(self.newTab)
         self.layout.addWidget(newTabButton)
         #set table goes below the new tab button
-        
+
         self.layout.addWidget(self.tabs)
         #runs are at the bottom
         self.layout.addWidget(self.runTable)

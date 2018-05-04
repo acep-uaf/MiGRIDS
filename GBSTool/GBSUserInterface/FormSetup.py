@@ -149,6 +149,9 @@ class FormSetup(QtWidgets.QWidget):
             self.topBlock.setEnabled(True)
             self.environmentBlock.setEnabled(True)
             self.componentBlock.setEnabled(True)
+            #enable the model and optimize pages too
+            pages = self.window().findChild(QtWidgets.QTabWidget,'pages')
+            pages.enableTabs()
 
     #searches for and loads existing project data - database, setupxml,descriptors, data object
     def functionForLoadButton(self):
