@@ -180,7 +180,7 @@ class SetsTableBlock(QtWidgets.QGroupBox):
         infoRow.addWidget(timestepWidget)
 
         infoRow.addWidget(QtWidgets.QLabel('Seconds'),1)
-        
+
         infoRow.addWidget(QtWidgets.QLabel('Components'),)
         infoRow.addWidget(self.componentSelector(),2)
         infoBox.setLayout(infoRow)
@@ -258,6 +258,7 @@ class SetsTableBlock(QtWidgets.QGroupBox):
             widg.setDate(QtCore.QDate(self.endDate.year, self.endDate.month, self.endDate.day))
 
         widg.setDateRange(self.startDate, self.endDate)
+        widg.setDisplayFormat('yyyy-MM-dd')
         return widg
 
     # string -> QGroupbox
@@ -297,7 +298,11 @@ class SetsTableBlock(QtWidgets.QGroupBox):
             self.findChild(QtWidgets.QLineEdit,'componentNames').text()
         )
         sqlhandler = ProjectSQLiteHandler()
-        sqlhandler.cursor.execute("INSERT INTO setup(set_name, date_start, date_end, timestep, component_names) VALUES(?,?,?,?,?)",setInfo)
+        try:
+            sqlhandler.cursor.execute("INSERT INTO setup(set_name, date_start, date_end, timestep, component_names) VALUES(?,?,?,?,?)",setInfo)
+        except:
+            sqlhandler.cursor.execute(
+                "UPDATE setup set date_start = ?, date_end=?, timestep=?, component_names=? WHERE set_name = '" + setInfo[0] + "'", setInfo[1:])
         sqlhandler.connection.commit()
         sqlhandler.closeDatabase()
         uihandler = UIToHandler()

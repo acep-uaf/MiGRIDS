@@ -212,9 +212,9 @@ class UIToHandler():
 
         writeAttributeXML(soup,setDir,fileName)
 
-        # TODO directory gets changed somewhere here -need to find where and set it back
-        #if it doesn't get reset then any attempts to run again will fail
-        #generate runs from attribute xml
+        # Check if a set component attribute database already exists
+        #if it does delete it.
+        #generate run folders from attributes xml
         generateRuns(setDir)
 
     def inputHandlerToUI(self, setupFolder, setupInfo):
