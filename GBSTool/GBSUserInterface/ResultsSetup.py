@@ -22,6 +22,7 @@ class ResultsSetup(QtWidgets.QWidget):
 
         self.data = self.parent().findChild(QtWidgets.QWidget,'setupDialog').model.data
         #self.displayData = {'fixed': {'x': None, 'y': None}, 'raw': {'x': None, 'y': None}}
+        #TODO data will always be None here?
         if self.data is not None:
             self.xcombo = self.createCombo((self.data.fixed.columns).append('index'), True)
             self.ycombo = self.createCombo((self.data.fixed.columns).append('index'), False)
@@ -113,6 +114,7 @@ class ResultsSetup(QtWidgets.QWidget):
             # combo boxes need to be set with field options
             options = list(data.fixed.columns.values)
 
+            options.append('index')
             self.xcombo.addItems(options)
             self.ycombo.addItems(options)
             self.displayData = self.defaultDisplay(data)

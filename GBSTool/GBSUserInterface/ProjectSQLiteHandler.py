@@ -136,8 +136,7 @@ class ProjectSQLiteHandler:
          FOREIGN KEY (attribute) REFERENCES ref_attributes(code)
          
          );""")
-             # #create a sql function to access the getTypeCount function
-        self.connection.create_function("componentName",1,self.getTypeCount)
+
         self.connection.commit()
         self.cursor.execute("DROP TABLE IF EXISTS sets")
         self.cursor.executescript("""
@@ -206,13 +205,19 @@ class ProjectSQLiteHandler:
                 valueStrings.append(values.loc[v, 'code'] + ' - ' + values.loc[v, 'description'])
         return valueStrings
 
-    def getTypeCount(self,finalName):
+    def getTypeCount(self,componentType):
         import re
-        print('Type count called for %s' %finalName)
-        count = re.findall(r'\d+', finalName)
-        if len(count) > 0:
-            count = int(count[0])
-            return count +1
+        #get the highest component name (biggest number)
+        finalName = self.cursor.execute("SELECT component_name FROM components where component_type = '" + componentType + "' ORDER BY component_name DESC").fetchone()
+        if finalName is not None:
+            finalName=finalName[0]
+            #extract the numbers in the name
+            count = re.findall(r'\d+',finalName)
+            #if there is more than one number use only the last number and add 1 to it
+            #if there aren't any other components of that type return 0
+            if len(count) > 0:
+                count = int(count[0])
+                return count +1
         return 0
 
     def getHeaders(self,table):

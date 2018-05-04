@@ -19,7 +19,7 @@ class FormModelRun(QtWidgets.QWidget):
     def initUI(self):
         self.setObjectName("modelRun")
         #the first page is for set0
-        self.tabs = SetsPage(self, 'set0')
+        self.tabs = SetsPages(self, 'set0')
         #self.setsTable = self.tabs
         #create the run table
         self.runTable = self.createRunTable()
@@ -64,7 +64,8 @@ class FormModelRun(QtWidgets.QWidget):
     def newTab(self):
         # get the set count
         tab_count = self.tabs.count()
-        widg = SetsTable(self, 'set' + str(tab_count))
+        widg = SetsTableBlock(self, 'set' + str(tab_count))
+        widg.update()
         self.tabs.addTab(widg, 'Set' + str(tab_count))
 
         #create a folder to hold the relevent set data
@@ -80,21 +81,23 @@ class FormModelRun(QtWidgets.QWidget):
         buttonFunction()
 
 #each page contains information for a single model set
-class SetsPage(QtWidgets.QTabWidget):
+class SetsPages(QtWidgets.QTabWidget):
 
     def __init__(self, parent,set):
         super().__init__(parent)
         self.set = set
+
         self.initUI()
 
     def initUI(self):
 
-        widg = SetsTable(self, self.set)
+        widg = SetsTableBlock(self, self.set)
+
         self.addTab(widg, self.set)
 
 
 #the set table shows components to include in the set and attributes to change for runs
-class SetsTable(QtWidgets.QGroupBox):
+class SetsTableBlock(QtWidgets.QGroupBox):
     def __init__(self, parent, set):
         super().__init__(parent)
         self.init(set)
@@ -198,11 +201,11 @@ class SetsTable(QtWidgets.QGroupBox):
         end = kwargs.get('end')
         self.getDefaultDates(start=start,end=end)
 
-        #find the widgets to update
+        #update the widget values
         self.setDateSelectorProperties(self.findChild(QtWidgets.QDateEdit, 'startDate'))
         self.setDateSelectorProperties(self.findChild(QtWidgets.QDateEdit, 'endDate'),False)
         self.findChild(QtWidgets.QLineEdit,'componentNames').setText(self.componentDefault)
-
+        return
     @QtCore.pyqtSlot()
     def componentCellClicked(self):
         from DialogComponentList import ComponentSetListForm

@@ -217,8 +217,8 @@ class UIToHandler():
         #generate runs from attribute xml
         generateRuns(setDir)
 
-        def inputHandlerToUI(self, setupFolder, setupInfo):
-            from GBSInputHandler.getSetupInformation import getSetupInformation
-            # assign tag values in the setupxml to the setupInfo model
-            getSetupInformation(os.path.join(setupFolder, setupInfo.project + 'Setup.xml'), setupInfo)
-            return
+    def inputHandlerToUI(self, setupFolder, setupInfo):
+        from GBSInputHandler.getSetupInformation import getSetupInformation
+        # assign tag values in the setupxml to the setupInfo model
+        getSetupInformation(os.path.join(setupFolder, setupInfo.project + 'Setup.xml'), setupInfo)
+        return

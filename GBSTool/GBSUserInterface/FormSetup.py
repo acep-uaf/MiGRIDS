@@ -10,7 +10,7 @@ from GBSInputHandler.Component import Component
 from UIToHandler import UIToHandler
 from makeButtonBlock import makeButtonBlock
 from ResultsSetup import  ResultsSetup
-from FormModelRuns import SetsTable
+from FormModelRuns import SetsTableBlock
 from ProjectSQLiteHandler import ProjectSQLiteHandler
 
 
@@ -68,19 +68,14 @@ class FormSetup(QtWidgets.QWidget):
         ]
 
         self.WizardTree = self.buildWizardTree(dlist)
-
-        # the bottom block is disabled until a setup file is created or loaded
-        self.createTableBlock('Environment Data','environment',self.assignEnvironementBlock)
-        self.environmentBlock.setEnabled(False)
-        windowLayout.addWidget(self.environmentBlock)
-
-
         self.createTableBlock('Components', 'components', self.assignComponentBlock)
         self.componentBlock.setEnabled(False)
 
         windowLayout.addWidget(self.componentBlock)
-
-        windowLayout.addStretch(2)
+        # the bottom block is disabled until a setup file is created or loaded
+        self.createTableBlock('Environment Data', 'environment', self.assignEnvironementBlock)
+        self.environmentBlock.setEnabled(False)
+        windowLayout.addWidget(self.environmentBlock)
 
         windowLayout.addStretch(2)
         windowLayout.addWidget(makeButtonBlock(self,self.createInputFiles,'Create input files',None,'Create input files to run models'),3)
@@ -329,6 +324,7 @@ class FormSetup(QtWidgets.QWidget):
         #insert an empty row as the last record
 
         model.insertRows(model.rowCount(),1)
+        #TODO persistent editors and delegats need to be set
         model.submitAll()
 
     #delete the selected record from the specified datatable
@@ -541,7 +537,7 @@ class FormSetup(QtWidgets.QWidget):
         sqlHandler.connection.commit()
         sqlHandler.closeDatabase()
         # tell the model form to update now that there is data
-        modelForm = self.window().findChild(SetsTable)
+        modelForm = self.window().findChild(SetsTableBlock)
         # start and end are tuples at this point
         modelForm.update(start=defaultStart, end=defaultEnd, components=','.join(self.model.componentNames.value))
 

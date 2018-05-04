@@ -225,14 +225,14 @@ class ModelSetupInformation:
     #read setup xml and assign values to the model parameters
     def feedSetupInfo(self):
         import os
-
+        handler = UIToHandler()
 
         if (self.project is None) | (self.project == ''):
             return False
         if not os.path.exists(self.setupFolder):
             return False
         # tell the controller to tell the InputHandler to read the xml and set the model values
-        inputHandlerToUI(self.setupFolder, self)
+        handler.inputHandlerToUI(self.setupFolder, self)
 
         return True
     #write a new setup xml file for this project
