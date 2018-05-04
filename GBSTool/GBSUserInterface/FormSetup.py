@@ -35,7 +35,7 @@ class FormSetup(QtWidgets.QWidget):
 
         windowLayout.addWidget(self.ButtonBlock,2)
         #create some space between the buttons and xml setup block
-        
+
 
         #add the setup block
         self.createTopBlock()
