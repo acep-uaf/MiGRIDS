@@ -259,6 +259,7 @@ class SetsTableBlock(QtWidgets.QGroupBox):
 
         widg.setDateRange(self.startDate, self.endDate)
         widg.setDisplayFormat('yyyy-MM-dd')
+        widg.setCalendarPopup(True)
         return widg
 
     # string -> QGroupbox
