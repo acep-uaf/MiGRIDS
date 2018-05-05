@@ -53,6 +53,12 @@
       If this is not set, then the timestamps will be assumed to be incorporated into the dataChannel. -->
     <timeChannel value="" format=""/>
 
+    <!-- 'inputUTCOffset' is the offset in hours from UTC time that input timestamps are in.   -->
+    <inputUTCOffset value="0" unit="hr"/>
+
+    <!-- 'inputDST' Indicates whether the input time values are daylight savings time.   -->
+    <inputDST value="F" unit="bool"/>
+
     <!-- 'realLoadChannel' is the name or index of the total grid real load. If this is not set, then the load will be
      calculated as the difference between all input generating unit data channels and input controllable loads data
      channels. -->
@@ -71,7 +77,7 @@
 
     <!-- 'inputTimeStep' is the original timestep recorded in the raw timeseries data fed into the model.
      Default is 1 minute. -->
-    <inputTimeStep value="1" unit="T"/>
+    <inputTimeStep value="1" unit="min"/>
 
     <!-- 'timeStep' is the desired timestep to be used in the simulation. The data will be resampled to this value.
      Default is 1 second. -->
