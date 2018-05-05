@@ -66,7 +66,7 @@ class MainForm(QtWidgets.QMainWindow):
         ]
         self.focusObjects = {'Input Files':FormSetup.functionForCreateButton,
                              'Format':'format',
-                             'Environemnt':'environment',
+                             'Environment':'environment',
                              'Components':'components',
 
                              'Sets':'modelSets',

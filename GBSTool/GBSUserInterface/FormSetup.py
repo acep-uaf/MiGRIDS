@@ -350,7 +350,7 @@ class FormSetup(QtWidgets.QWidget):
 
             result = msg.exec()
 
-            if result == 1024:
+            if result == QtWidgets.QMessageBox.Ok:
                 handler = UIToHandler()
                 removedRows = []
                 for r in selected:
@@ -523,8 +523,8 @@ class FormSetup(QtWidgets.QWidget):
 
         result = msg.exec()
         #if yes create the input netcdf files otherwise pickle the dataframe for later use
-        if result == 1024:
-            handler.createNetCDF(cleaned_data, componentDict, None, os.path.join(model.setupFolder, model.project + 'Setup.xml'))
+        if result == QtWidgets.QMessageBox.Ok:
+            handler.createNetCDF(cleaned_data.fixed, componentDict, None, os.path.join(model.setupFolder, model.project + 'Setup.xml'))
         else:
             #pickle the data to be used later
             handler.storeData(cleaned_data,os.path.join(model.setupFolder, model.project + 'Setup.xml'))
@@ -545,7 +545,18 @@ class FormSetup(QtWidgets.QWidget):
         modelForm = self.window().findChild(SetsTableBlock)
         # start and end are tuples at this point
         modelForm.update(start=defaultStart, end=defaultEnd, components=','.join(self.model.componentNames.value))
-
+    #fill the component list with component objects
+    #ComponentTableModel -> None
+    def makeComponentList(self,model):
+        self.model.components = []
+        for i in range(0, model.rowCount()):
+             c = Component(component_Name=model.data(model.index(i, 3)),
+                      scale=model.data(model.index(i, 5)),
+                      units=model.data(model.index(i, 4)),
+                      offset=model.data(model.index(i, 6)),
+                      attribute=model.data(model.index(i, 7)),
+                      type=model.data(model.index(i, 2)))
+             self.model.components.append(c)
     #event triggered when user navigates away from setup page
     def leaveEvent(self, event):
         # move the default database to the project folder and save xmls

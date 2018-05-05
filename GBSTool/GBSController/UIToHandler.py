@@ -156,7 +156,7 @@ class UIToHandler():
         if not os.path.exists(outputDirectory):
             os.makedirs(outputDirectory)
 
-        dataframe2netcdf(df.fixed, componentDict, None, outputDirectory)
+        dataframe2netcdf(df, componentDict, None, outputDirectory)
         return
 
     #save the data object as a pickle in the processed data folder
