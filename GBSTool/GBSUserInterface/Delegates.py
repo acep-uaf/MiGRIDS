@@ -131,7 +131,7 @@ class RelationDelegate(QtSql.QSqlRelationalDelegate):
 
             #check if there is already a component name
             currentName = tv.model().data(tv.model().index(currentRow,3))
-            if (currentName == '') | (currentName is None) | (currentName == 'NA'):
+            if (currentName == '') | (currentName is None) | (currentName == 'NA') | (currentName[0:3] != self.sender().currentText()):
                 #get the number of components of this type -
                 handler = ProjectSQLiteHandler()
                 i = handler.getTypeCount(self.sender().currentText())

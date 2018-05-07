@@ -136,17 +136,19 @@ class ResultsSetup(QtWidgets.QWidget):
         MainWindow = self.window()
         setupForm = MainWindow.findChild(QtWidgets.QWidget,'setupDialog')
         setupModel= setupForm.model
-        setupFile = os.path.join(setupModel.setupFolder, setupModel.project + 'Setup.xml')
-        componentModel = setupForm.findChild(QtWidgets.QWidget,'components').model()
-        #From the setup file read the location of the input pickle
-        #by replacing the current pickle with the loaded one the user can manually edit the input and
-        #  then return to working with the interface
-        data = handler.loadInputData(setupFile)
-        df = data.fixed
-        componentDict = {}
-        if 'components' not in setupModel.__dict__.keys():
-            #generate components
-            setupForm.makeComponentList(componentModel)
-        for c in setupModel.components:
-            componentDict[c] = c.toDictionary()
-        handler.createNetCDF(df, componentDict,None,setupFile)
+        if 'setupFolder' in setupModel.__dict__.keys():
+            setupFile = os.path.join(setupModel.setupFolder, setupModel.project + 'Setup.xml')
+            componentModel = setupForm.findChild(QtWidgets.QWidget,'components').model()
+            #From the setup file read the location of the input pickle
+            #by replacing the current pickle with the loaded one the user can manually edit the input and
+            #  then return to working with the interface
+            data = handler.loadInputData(setupFile)
+            df = data.fixed
+            componentDict = {}
+            if 'components' not in setupModel.__dict__.keys():
+                #generate components
+                setupForm.makeComponentList(componentModel)
+            for c in setupModel.components:
+                componentDict[c.component_name] = c.toDictionary()
+
+            handler.createNetCDF(df, componentDict,setupFile)

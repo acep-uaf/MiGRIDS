@@ -4,7 +4,7 @@
 # License: MIT License (see LICENSE file of this package for more information)
 
 # this function is passed a pandas dataframe and converts it to net cdf format
-def dataframe2netcdf(df,components,varnames=None,saveLocation=''):
+def dataframe2netcdf(df,components,saveLocation=''):
     # df is the dataframe. The headers will be used as the variable names unless they are specified by the 'headers' input
     # components is a dictionary of units and offsets for each component
     # varNames are the names of the variables specified by the columns of the dataframe *type string*
@@ -17,7 +17,7 @@ def dataframe2netcdf(df,components,varnames=None,saveLocation=''):
     import os
 
     # go to save directory
-    
+    here = os.getcwd()
     if saveLocation == '':
         print('Choose directory where to save the netCDF file.')
         import tkinter as tk
@@ -28,32 +28,29 @@ def dataframe2netcdf(df,components,varnames=None,saveLocation=''):
     os.chdir(saveLocation)
 
     # create a netCDF file for each data column of the data frame containing the timestamps and the data
-    for i in range(1,df.shape[1]): # skip the first column, Date
+    for component in components.keys(): # skip the first column, Date
         # get header name from dataframe
-        column = df.columns.values[i]
-        component = [x for x in components.keys() if x == column]
-        
-        component = component[0]
-        if varnames != None:
-            ncName = varnames[i-1] + '.nc'
-        else:
-            ncName = column + '.nc'
+
+        column = [c for c,x in enumerate(df.columns.values) if x == component]
+        if len(column) >0:
+            column = column[0]
+        ncName = component + '.nc'
         rootgrp = Dataset(ncName, 'w', format='NETCDF4') # create netCDF object
         rootgrp.createDimension('time', None)  # create dimension for all called time
         # create the time variable
-        rootgrp.createVariable('time', df.dtypes[i], 'time')  # create a var using the varnames
+        rootgrp.createVariable('time', df.dtypes[column], 'time')  # create a var using the varnames
         rootgrp.variables['time'][:] = np.array(df[df.columns.values[0]])  # fill with values
         # create the value variable
-        rootgrp.createVariable('value', df.dtypes[i], 'time')  # create a var using the varnames
-        rootgrp.variables['value'][:] = np.array(df[column])  # fill with values
+        rootgrp.createVariable('value', df.dtypes[column], 'time')  # create a var using the varnames
+        rootgrp.variables['value'][:] = np.array(df[component])  # fill with values
         # assign attributes
         rootgrp.variables['time'].units = 'seconds'  # set unit attribute
-        rootgrp.variables['value'].units = component['units'] # set unit attribute
-        rootgrp.variables['value'].Scale = component['scale'] # set unit attribute
-        rootgrp.variables['value'].offset = component['offset']  # set unit attribute
+        rootgrp.variables['value'].units = components[component]['units'] # set unit attribute
+        rootgrp.variables['value'].Scale = components[component]['scale'] # set unit attribute
+        rootgrp.variables['value'].offset = components[component]['offset']  # set unit attribute
         # close file
         rootgrp.close()
 
-    # end of file
-
+    # return to the starting directory
+    os.chdir(here)
 

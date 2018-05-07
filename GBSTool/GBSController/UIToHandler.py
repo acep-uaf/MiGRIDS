@@ -146,17 +146,17 @@ class UIToHandler():
     #dataframe of cleaned data
     #generate netcdf files for model running
     #dataframe, dictionary -> None
-    def createNetCDF(self, df,componentDict,varNames, setupFile):
+    def createNetCDF(self, df,componentDict,setupFile):
         from dataframe2netcdf import dataframe2netcdf
         inputDirectory = readXmlTag(setupFile, 'inputFileDir', 'value')
         inputDirectory = os.path.join(*inputDirectory)
-        inputDirectory = os.path.join('../../GBSProjects', inputDirectory)
-        outputDirectory = os.path.join(inputDirectory, '../ProcessedData')
+        #inputDirectory = os.path.join(inputDirectory, '../../GBSProjects')
+        outputDirectory = os.path.join("/",inputDirectory, '../ProcessedData')
         #it there isn't an output directory make one
         if not os.path.exists(outputDirectory):
             os.makedirs(outputDirectory)
 
-        dataframe2netcdf(df, componentDict, None, outputDirectory)
+        dataframe2netcdf(df, componentDict, outputDirectory)
         return
 
     #save the data object as a pickle in the processed data folder

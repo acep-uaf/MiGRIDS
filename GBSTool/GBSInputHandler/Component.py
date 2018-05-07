@@ -13,10 +13,10 @@ class Component:
         self.type = kwargs.get('type')
         self.attribute =kwargs.get('attribute')
         self.filepath = kwargs.get('filepath')
-        self.PInMaxPa = kwargs.get('pinmaxpa')
-        self.QInMaxPa = kwargs.get('qinmaxpa')
-        self.QOutMaxPa = kwargs.get('qoutmaxpa')
-        self.isVoltageSource=kwargs.get('voltagesource')
+        # self.PInMaxPa = kwargs.get('pinmaxpa')
+        # self.QInMaxPa = kwargs.get('qinmaxpa')
+        # self.QOutMaxPa = kwargs.get('qoutmaxpa')
+        # self.isVoltageSource=kwargs.get('voltagesource')
         self.tags=kwargs.get('tags')
 
 

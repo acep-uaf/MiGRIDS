@@ -452,6 +452,7 @@ class FormSetup(QtWidgets.QWidget):
 
     #send input data to the ModelSetupInformation data model
     def sendSetupData(self):
+        import re
         #cycle through the input children in the topblock
         for child in self.topBlock.findChildren((QtWidgets.QLineEdit,QtWidgets.QComboBox)):
 
@@ -470,20 +471,21 @@ class FormSetup(QtWidgets.QWidget):
         componentAttribute = []
         componentAttributeU = []
         #list of distinct components
-        self.components=[]
+        self.model.components=[]
         for i in range(0,componentModel.rowCount()):
 
             headerName.append(componentModel.data(componentModel.index(i,1)))
             componentName.append(componentModel.data(componentModel.index(i,3)))
             componentAttribute.append(componentModel.data(componentModel.index(i,7)))
             componentAttributeU.append(componentModel.data(componentModel.index(i,4)))
-            c = Component(component_Name =componentModel.data(componentModel.index(i,3)),
+            c = Component(component_name =componentModel.data(componentModel.index(i,3)) + componentModel.data(componentModel.index(i,7)),
                           scale=componentModel.data(componentModel.index(i,5)),
                           units=componentModel.data(componentModel.index(i,4)),
                         offset = componentModel.data(componentModel.index(i,6)),
                           attribute=componentModel.data(componentModel.index(i,7)),
-                          type = componentModel.data(componentModel.index(i,2)))
-            self.components.append(c)
+                          type = componentModel.data(componentModel.index(i,2)),
+                          original_field_name= componentModel.data(componentModel.index(i,2)))
+            self.model.components.append(c)
         #make a list of distinct values
         componentNames = list(set(componentName))
         #and the same data from the environment section
@@ -494,6 +496,15 @@ class FormSetup(QtWidgets.QWidget):
             componentName.append(envModel.data(envModel.index(j, 2)))
             componentAttribute.append(envModel.data(envModel.index(j, 6)))
             componentAttributeU.append(envModel.data(envModel.index(j, 3)))
+
+            c = Component(component_name=envModel.data(envModel.index(j,2))  + envModel.data(envModel.index(j,6)),
+
+                          scale=envModel.data(envModel.index(j,4)),
+                          units=envModel.data(envModel.index(j,3)),
+                          offset=envModel.data(envModel.index(j,5)),
+                          attribute=envModel.data(envModel.index(j,6)),
+                          original_field_name = envModel.data(envModel.index(j,1)))
+            self.model.components.append(c)
         model.assign('headerNamevalue',headerName)
         model.assign('componentNamevalue', componentName)
         model.assign('componentAttributevalue', componentAttribute)
@@ -547,16 +558,17 @@ class FormSetup(QtWidgets.QWidget):
         modelForm.update(start=defaultStart, end=defaultEnd, components=','.join(self.model.componentNames.value))
     #fill the component list with component objects
     #ComponentTableModel -> None
-    def makeComponentList(self,model):
-        self.model.components = []
-        for i in range(0, model.rowCount()):
-             c = Component(component_Name=model.data(model.index(i, 3)),
-                      scale=model.data(model.index(i, 5)),
-                      units=model.data(model.index(i, 4)),
-                      offset=model.data(model.index(i, 6)),
-                      attribute=model.data(model.index(i, 7)),
-                      type=model.data(model.index(i, 2)))
-             self.model.components.append(c)
+    #TODO this does not include environment
+    # def makeComponentList(self,model):
+    #     self.model.components = []
+    #     for i in range(0, model.rowCount()):
+    #          c = Component(component_Name=model.data(model.index(i, 3)),
+    #                   scale=model.data(model.index(i, 5)),
+    #                   units=model.data(model.index(i, 4)),
+    #                   offset=model.data(model.index(i, 6)),
+    #                   attribute=model.data(model.index(i, 7)),
+    #                   type=model.data(model.index(i, 2)))
+    #          self.model.components.append(c)
     #event triggered when user navigates away from setup page
     def leaveEvent(self, event):
         # move the default database to the project folder and save xmls
