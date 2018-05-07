@@ -120,24 +120,28 @@ class RelationDelegate(QtSql.QSqlRelationalDelegate):
     def currentIndexChanged(self):
 
         self.commitData.emit(self.sender())
-        #if a type from the components table was just set then fill in the component name
+        #if a type from the components table was just set then fill in the component name unless it is already named
         if (self.name == 'component_type') & (self.parent.objectName() == 'components'):
+            #get the table view object
             tv = self.parent
+            #combo is the combo box that is sending these data
             combo = self.sender()
-
+            #current row
             currentRow = tv.indexAt(combo.pos()).row()
 
-            #get the number of components of this type -
-            handler = ProjectSQLiteHandler()
-            i = handler.getTypeCount(self.sender().currentText())
-            handler.closeDatabase()
-            name = self.sender().currentText() + str(i)
-            print(name)
+            #check if there is already a component name
+            currentName = tv.model().data(tv.model().index(currentRow,3))
+            if (currentName == '') | (currentName is None) | (currentName == 'NA'):
+                #get the number of components of this type -
+                handler = ProjectSQLiteHandler()
+                i = handler.getTypeCount(self.sender().currentText())
+                handler.closeDatabase()
+                name = self.sender().currentText() + str(i)
 
-            tv.model().setData(tv.model().index(currentRow,3),name)
-            tv.model().submitAll()
-            tv.model().select()
-
+                tv.model().setData(tv.model().index(currentRow,3),name)
+                tv.model().submitAll()
+                tv.model().select()
+            return
 #QLineEdit that when clicked performs an action
 class ClickableLineEdit(QtWidgets.QLineEdit):
     clicked = QtCore.pyqtSignal()
