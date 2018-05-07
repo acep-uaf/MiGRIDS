@@ -154,7 +154,7 @@ class formFromXML(QtWidgets.QDialog):
     #when the form is closed the soup gets updated and writtent to an xml file
     #Event -> None
     def closeEvent(self,evnt):
-        from UIToHandler import UIToHandler
+        from GBSController.UIToHandler import UIToHandler
 
         print('closing descriptor file')
         #update soup

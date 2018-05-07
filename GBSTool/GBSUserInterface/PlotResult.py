@@ -13,7 +13,7 @@ class PlotResult(FigureCanvas):
         self.setParent(parent)
         self.figure = fig
         FigureCanvas.setSizePolicy(self,QtWidgets.QSizePolicy.Expanding,QtWidgets.QSizePolicy.Expanding)
-        #FigureCanvas.updateGeometry()
+
          #make plot
         self.makePlot(data)
 
@@ -27,7 +27,7 @@ class PlotResult(FigureCanvas):
 
             #data can have more than 1 series to display
             for k in data.keys():
-                if (data[k]['x'] is not None) & (data[k]['x'] is not None):
+                if (data[k]['x'] is not None) & (data[k]['y'] is not None):
                     ax.plot(data[k]['x'],data[k]['y'], label=k)
 
         ax.set_title('data plot')

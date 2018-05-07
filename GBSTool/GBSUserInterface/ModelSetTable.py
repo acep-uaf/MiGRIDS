@@ -1,12 +1,11 @@
 from PyQt5  import QtWidgets, QtSql, QtCore
-from Delegates import ComponentFormOpenerDelegate, TextBoxWithClickDelegate, TextDelegate
+from Delegates import TextDelegate
 from Delegates import ComboDelegate
 #subclass of QTableView for displaying set information
 class SetTableView(QtWidgets.QTableView):
     def __init__(self, *args, **kwargs):
         self.column1 = kwargs.get('column1')
         QtWidgets.QTableView.__init__(self, *args)
-
         self.setSizePolicy(QtWidgets.QSizePolicy.Expanding,QtWidgets.QSizePolicy.Expanding)
         self.resizeColumnsToContents()
 
@@ -24,9 +23,8 @@ class SetTableView(QtWidgets.QTableView):
         attributes = QtCore.QStringListModel([])
         self.setItemDelegateForColumn(1, TextDelegate(self))
         self.setItemDelegateForColumn(2,ComboDelegate(self,values,'componentName'))
-        #self.setItemDelegateForColumn(3,ComponentFormOpenerDelegate(self,'+'))
-        #attributes get updated when component Name gets selected (column 2)
 
+        #attributes (column 3)get updated when component Name gets selected (column 2)
         self.setItemDelegateForColumn(3, ComboDelegate(self, attributes,'componentAttribute'))
 
 class SetTableModel(QtSql.QSqlTableModel):
@@ -39,6 +37,7 @@ class SetTableModel(QtSql.QSqlTableModel):
         self.setTable('sets')
 
         self.setEditStrategy(QtSql.QSqlTableModel.OnFieldChange)
+        #the set table gets filtered to only show records for that set
         self.setFilter('set_name = ' + parent.set)
         self.select()
 

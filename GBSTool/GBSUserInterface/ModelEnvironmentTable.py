@@ -4,7 +4,6 @@ from Delegates import *
 #subclass of QTableView for displaying component information
 class EnvironmentTableView(QtWidgets.QTableView):
     def __init__(self, *args, **kwargs):
-
         QtWidgets.QTableView.__init__(self, *args, **kwargs)
         self.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         self.resizeColumnsToContents()
@@ -17,9 +16,10 @@ class EnvironmentTableView(QtWidgets.QTableView):
             self.setItemDelegateForColumn(i, TextDelegate(self))
         self.setColumnHidden(hidden, True)
 
-        combos = [3,6]
+        #column 2 is the component name. Environment variables need to be tied to an existing component name
+        combos = [2,3,6]
         for c in combos:
-            self.setItemDelegateForColumn(c,RelationDelegate(self))
+            self.setItemDelegateForColumn(c,RelationDelegate(self,None))
 
 #Tabel model to be displayed in component tableview
 class EnvironmentTableModel(QtSql.QSqlRelationalTableModel):
@@ -32,8 +32,7 @@ class EnvironmentTableModel(QtSql.QSqlRelationalTableModel):
         self.setJoinMode(QtSql.QSqlRelationalTableModel.LeftJoin)
         self.setRelation(6, QtSql.QSqlRelation('ref_env_attributes', 'code', 'code'))
         self.setRelation(3, QtSql.QSqlRelation('ref_speed_units', 'code', 'code'))
-
-
+        self.setRelation(2, QtSql.QSqlRelation('components', 'component_name', 'component_name'))
         self.setEditStrategy(QtSql.QSqlTableModel.OnFieldChange)
         self.select()
 

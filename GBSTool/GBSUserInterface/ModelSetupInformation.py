@@ -1,8 +1,8 @@
 '''SetupInformation is a data model for storing setup information collected through the SetupWizard or UISetupForm.
 The information is written to an XML file using the writeXML method. '''
-from Component import Component
-
-
+from GBSInputHandler.Component import Component
+from GBSController.UIToHandler import UIToHandler
+#setup tags are a class that is used for attributes that get written to the setup.xml
 class SetupTag:
     def __init__(self, n, v = None):
         self.name = n
@@ -29,7 +29,7 @@ class SetupTag:
 
 
 class ModelSetupInformation:
-    from Component import Component
+
     def __init__(self):
         #dictionary of dialog card names and their corresponding assignment functions
         #TODO make dynamic based on WizardTree names
@@ -193,8 +193,6 @@ class ModelSetupInformation:
             else:
                 method(value)
 
-    def getComponentData(self):
-        self.con
     #creates a dictionary designed to feed into fillProjectData
     #->dictionary
     def getSetupTags(self):
@@ -225,19 +223,19 @@ class ModelSetupInformation:
     #read setup xml and assign values to the model parameters
     def feedSetupInfo(self):
         import os
-        from inputHandlerToUI import inputHandlerToUI
+        handler = UIToHandler()
 
         if (self.project is None) | (self.project == ''):
             return False
         if not os.path.exists(self.setupFolder):
             return False
         # tell the controller to tell the InputHandler to read the xml and set the model values
-        inputHandlerToUI(self.setupFolder, self)
+        handler.inputHandlerToUI(self.setupFolder, self)
 
         return True
     #write a new setup xml file for this project
     def writeNewXML(self):
-        from UIToHandler import UIToHandler
+
         #tell controller to tell InputHandler package to write input xmls
         handler = UIToHandler()
         handler.makeSetup(self)

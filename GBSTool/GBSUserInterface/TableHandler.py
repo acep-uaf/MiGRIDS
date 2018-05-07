@@ -1,5 +1,5 @@
 from PyQt5 import QtWidgets
-from UIToHandler import UIToHandler
+from GBSController.UIToHandler import UIToHandler
 class TableHandler():
 
     def __init__(self, parent):
@@ -15,6 +15,10 @@ class TableHandler():
 
         model.insertRows(model.rowCount(), 1)
         model.submitAll()
+
+        #this is only for set table
+        tableView.openPersistentEditor(model.index(model.rowCount()-1, 1))
+        #For components the persistent editor should be on column 3
 
 
     def functionForDeleteRecord(self, table):

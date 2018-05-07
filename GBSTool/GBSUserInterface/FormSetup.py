@@ -6,11 +6,12 @@ from gridLayoutSetup import setupGrid
 from SetupWizard import SetupWizard
 from WizardTree import WizardTree
 from ModelSetupInformation import ModelSetupInformation
-from Component import Component
+from GBSInputHandler.Component import Component
 from UIToHandler import UIToHandler
 from makeButtonBlock import makeButtonBlock
 from ResultsSetup import  ResultsSetup
-from FormModelRuns import FormModelRun
+from FormModelRuns import SetsTableBlock
+from ProjectSQLiteHandler import ProjectSQLiteHandler
 
 
 class FormSetup(QtWidgets.QWidget):
@@ -24,7 +25,7 @@ class FormSetup(QtWidgets.QWidget):
     def initUI(self):
 
         self.setObjectName("setupDialog")
-        #self.resize(1754, 3000)
+
         self.model = model
 
         #the main layout is oriented vertically
@@ -34,7 +35,7 @@ class FormSetup(QtWidgets.QWidget):
 
         windowLayout.addWidget(self.ButtonBlock,2)
         #create some space between the buttons and xml setup block
-        windowLayout.addStretch(1)
+
 
         #add the setup block
         self.createTopBlock()
@@ -42,7 +43,6 @@ class FormSetup(QtWidgets.QWidget):
         self.topBlock.setEnabled(False)
         windowLayout.addWidget(self.topBlock)
         #more space between component block
-        windowLayout.addStretch(1)
 
         #TODO move to seperate file
         dlist = [
@@ -67,36 +67,32 @@ class FormSetup(QtWidgets.QWidget):
         ]
 
         self.WizardTree = self.buildWizardTree(dlist)
+        self.createTableBlock('Components', 'components', self.assignComponentBlock)
+        self.componentBlock.setEnabled(False)
+        windowLayout.addWidget(self.componentBlock)
 
         # the bottom block is disabled until a setup file is created or loaded
-        self.createTableBlock('Environment Data','environment',self.assignEnvironementBlock)
+        self.createTableBlock('Environment Data', 'environment', self.assignEnvironmentBlock)
         self.environmentBlock.setEnabled(False)
         windowLayout.addWidget(self.environmentBlock)
 
 
-        self.createTableBlock('Components', 'components', self.assignComponentBlock)
-        self.componentBlock.setEnabled(False)
-
-        windowLayout.addWidget(self.componentBlock)
-
-        windowLayout.addStretch(2)
-
-        windowLayout.addStretch(2)
         windowLayout.addWidget(makeButtonBlock(self,self.createInputFiles,'Create input files',None,'Create input files to run models'),3)
 
-         #set the main layout as the layout for the window
-        self.layoutWidget = QtWidgets.QWidget(self)
-        self.layoutWidget.setLayout(windowLayout)
+        #set the main layout as the layout for the window
+
+        self.setLayout(windowLayout)
         #title is setup
         self.setWindowTitle('Setup')
-
+        self.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         #show the form
         self.showMaximized()
 
     # Setters
     #(String, number, list or Object) ->
-    def assignEnvironementBlock(self, value):
+    def assignEnvironmentBlock(self, value):
         self.environmentBlock = value
+
     def assignComponentBlock(self,value):
         self.componentBlock = value
 
@@ -123,7 +119,7 @@ class FormSetup(QtWidgets.QWidget):
 
         self.ButtonBlock.setSizePolicy(QtWidgets.QSizePolicy.Expanding,QtWidgets.QSizePolicy.Expanding)
 
-        self.ButtonBlock.setMinimumSize(self.size().width(),self.minimumSize().height())
+        #self.ButtonBlock.setMinimumSize(self.size().width(),self.minimumSize().height())
         return hlayout
 
     #method -> None
@@ -146,18 +142,19 @@ class FormSetup(QtWidgets.QWidget):
         hasSetup = model.feedSetupInfo()
 
         self.projectDatabase = False
-
-
         if hasSetup:
             self.fillData(model)
             self.topBlock.setEnabled(True)
             self.environmentBlock.setEnabled(True)
             self.componentBlock.setEnabled(True)
+            #enable the model and optimize pages too
+            pages = self.window().findChild(QtWidgets.QTabWidget,'pages')
+            pages.enableTabs()
 
     #searches for and loads existing project data - database, setupxml,descriptors, data object
     def functionForLoadButton(self):
-        '''The load function needs to read the designated setup xml, look for descriptor xmls,
-        look for an existing project database. If xml's and database don't match rely on descriptors'''
+        '''The load function reads the designated setup xml, looks for descriptor xmls,
+        looks for an existing project database and a pickled data object.'''
         import os
         from replaceDefaultDatabase import replaceDefaultDatabase
 
@@ -184,23 +181,31 @@ class FormSetup(QtWidgets.QWidget):
 
             # display data
             self.fillData(model)
+
             # look for an existing data pickle
             handler = UIToHandler()
             self.model.data = handler.loadInputData(os.path.join(self.model.setupFolder, self.model.project + 'Setup.xml'))
-            #refresh the plot
+            if self.model.data is not None:
+                self.updateModelPage(self.model.data)
 
-            resultDisplay = self.parent().findChild(ResultsSetup)
+                #refresh the plot
+                resultDisplay = self.parent().findChild(ResultsSetup)
+                resultDisplay.defaultPlot(self.model.data)
 
-            resultDisplay.defaultPlot(self.model.data)
             #make the data blocks editable
             self.topBlock.setEnabled(True)
             self.environmentBlock.setEnabled(True)
             self.componentBlock.setEnabled(True)
+            # enable the model and optimize pages too
+            pages = self.window().findChild(QtWidgets.QTabWidget, 'pages')
+            pages.enableTabs()
             print('Loaded %s:' % model.project)
         else:
+            #TODO allow new projects to be loaded with out closing window
             msg = QtWidgets.QMessageBox(QtWidgets.QMessageBox.Warning, "Close project", "You need to close the sofware before you load a new project")
             msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
             msg.exec()
+
     #TODO make dynamic from list input
     def buildWizardTree(self, dlist):
 
@@ -279,7 +284,7 @@ class FormSetup(QtWidgets.QWidget):
         gb.setLayout(tableGroup)
         gb.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         fn(gb)
-        return tv
+        return
 
     #Load an existing descriptor file and populate the component table
     #-> None
@@ -323,6 +328,7 @@ class FormSetup(QtWidgets.QWidget):
         #insert an empty row as the last record
 
         model.insertRows(model.rowCount(),1)
+        #TODO persistent editors and delegats need to be set
         model.submitAll()
 
     #delete the selected record from the specified datatable
@@ -344,7 +350,7 @@ class FormSetup(QtWidgets.QWidget):
 
             result = msg.exec()
 
-            if result == 1024:
+            if result == QtWidgets.QMessageBox.Ok:
                 handler = UIToHandler()
                 removedRows = []
                 for r in selected:
@@ -378,6 +384,7 @@ class FormSetup(QtWidgets.QWidget):
                                              None, 'SP_TrashIcon',
                                              'Delete a component'))
         buttonRow.addStretch(3)
+        buttonBox.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         buttonBox.setLayout(buttonRow)
         return buttonBox
 
@@ -508,19 +515,7 @@ class FormSetup(QtWidgets.QWidget):
         # import datafiles
         handler = UIToHandler()
         cleaned_data, componentDict = handler.loadFixData(os.path.join(model.setupFolder, model.project + 'Setup.xml'))
-        #start and end dates get set written to database as default date ranges
-        defaultStart = min(cleaned_data.fixed['datetime'])
-        defaultEnd = max(cleaned_data.fixed['datetime'])
-
-        sqlHandler = ProjectSQLiteHandler('project_manager')
-        sqlHandler.cursor.execute("UPDATE setup set start_date = ?, end_date = ? where set_name = 'default'",[defaultStart,defaultEnd])
-        sqlHandler.connection.commit()
-        sqlHandler.closeDatabase()
-        # tell the model form to update now that there is data
-        modelForm = self.window().findChild(FormModelRun)
-        #start and end are tuples at this point
-        modelForm.update(start=defaultStart,end=defaultEnd, components=self.model.componentNames)
-
+        self.updateModelPage(cleaned_data)
         # generate netcdf files
         msg = QtWidgets.QMessageBox(QtWidgets.QMessageBox.Warning, "Time Series loaded",
                                     "Do you want to generate netcdf files?.")
@@ -528,13 +523,40 @@ class FormSetup(QtWidgets.QWidget):
 
         result = msg.exec()
         #if yes create the input netcdf files otherwise pickle the dataframe for later use
-        if result == 1024:
-            handler.createNetCDF(cleaned_data, componentDict, None, os.path.join(model.setupFolder, model.project + 'Setup.xml'))
+        if result == QtWidgets.QMessageBox.Ok:
+            handler.createNetCDF(cleaned_data.fixed, componentDict, None, os.path.join(model.setupFolder, model.project + 'Setup.xml'))
         else:
             #pickle the data to be used later
             handler.storeData(cleaned_data,os.path.join(model.setupFolder, model.project + 'Setup.xml'))
         return
+    #DataObject with data frame called 'fixed' and field 'datetime'
+    def updateModelPage(self, data):
+        # start and end dates get set written to database as default date ranges
+        import pandas as pd
+        defaultStart = str((pd.to_datetime(data.fixed.index, unit='s')[0]).date())
+        defaultEnd = str((pd.to_datetime(data.fixed.index, unit='s')[len(data.fixed.index) -1]).date())
 
+        sqlHandler = ProjectSQLiteHandler()
+        sqlHandler.cursor.execute("UPDATE setup set date_start = ?, date_end = ? where set_name = 'default'",
+                                  [defaultStart, defaultEnd])
+        sqlHandler.connection.commit()
+        sqlHandler.closeDatabase()
+        # tell the model form to update now that there is data
+        modelForm = self.window().findChild(SetsTableBlock)
+        # start and end are tuples at this point
+        modelForm.update(start=defaultStart, end=defaultEnd, components=','.join(self.model.componentNames.value))
+    #fill the component list with component objects
+    #ComponentTableModel -> None
+    def makeComponentList(self,model):
+        self.model.components = []
+        for i in range(0, model.rowCount()):
+             c = Component(component_Name=model.data(model.index(i, 3)),
+                      scale=model.data(model.index(i, 5)),
+                      units=model.data(model.index(i, 4)),
+                      offset=model.data(model.index(i, 6)),
+                      attribute=model.data(model.index(i, 7)),
+                      type=model.data(model.index(i, 2)))
+             self.model.components.append(c)
     #event triggered when user navigates away from setup page
     def leaveEvent(self, event):
         # move the default database to the project folder and save xmls

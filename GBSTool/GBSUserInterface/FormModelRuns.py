@@ -5,9 +5,7 @@ from TableHandler import TableHandler
 from ModelSetTable import SetTableModel, SetTableView
 from ModelRunTable import RunTableModel, RunTableView
 from ProjectSQLiteHandler import ProjectSQLiteHandler
-
-
-from UIToHandler import UIToHandler
+from GBSController.UIToHandler import UIToHandler
 import datetime
 import os
 
@@ -21,12 +19,13 @@ class FormModelRun(QtWidgets.QWidget):
     def initUI(self):
         self.setObjectName("modelRun")
         #the first page is for set0
-        self.tabs = SetsPage(self, 'set0')
+        self.tabs = SetsPages(self, 'set0')
         #self.setsTable = self.tabs
         #create the run table
         self.runTable = self.createRunTable()
 
         self.layout = QtWidgets.QVBoxLayout()
+
         #button to create a new set tab
         newTabButton = QtWidgets.QPushButton()
         newTabButton.setText(' + Set')
@@ -34,7 +33,7 @@ class FormModelRun(QtWidgets.QWidget):
         newTabButton.clicked.connect(self.newTab)
         self.layout.addWidget(newTabButton)
         #set table goes below the new tab button
-        #self.layout.addWidget(self.setsTable)
+
         self.layout.addWidget(self.tabs)
         #runs are at the bottom
         self.layout.addWidget(self.runTable)
@@ -66,7 +65,8 @@ class FormModelRun(QtWidgets.QWidget):
     def newTab(self):
         # get the set count
         tab_count = self.tabs.count()
-        widg = SetsTable(self, 'set' + str(tab_count))
+        widg = SetsTableBlock(self, 'set' + str(tab_count))
+        widg.update()
         self.tabs.addTab(widg, 'Set' + str(tab_count))
 
         #create a folder to hold the relevent set data
@@ -82,21 +82,23 @@ class FormModelRun(QtWidgets.QWidget):
         buttonFunction()
 
 #each page contains information for a single model set
-class SetsPage(QtWidgets.QTabWidget):
+class SetsPages(QtWidgets.QTabWidget):
 
     def __init__(self, parent,set):
         super().__init__(parent)
         self.set = set
+
         self.initUI()
 
     def initUI(self):
 
-        widg = SetsTable(self, self.set)
+        widg = SetsTableBlock(self, self.set)
+
         self.addTab(widg, self.set)
 
 
 #the set table shows components to include in the set and attributes to change for runs
-class SetsTable(QtWidgets.QGroupBox):
+class SetsTableBlock(QtWidgets.QGroupBox):
     def __init__(self, parent, set):
         super().__init__(parent)
         self.init(set)
@@ -122,7 +124,7 @@ class SetsTable(QtWidgets.QGroupBox):
             item = m.index(r,1)
             item.flags(~QtCore.Qt.ItemIsEditable)
             m.setItemData(QtCore.QModelIndex(r,1),item)
-            #TODO set persistent editor?
+
         #hide the id column
         tv.hideColumn(0)
         tableGroup.addWidget(tv, 1)
@@ -144,9 +146,15 @@ class SetsTable(QtWidgets.QGroupBox):
         if end == None:
             end = handler.cursor.execute("select date_end from setup where set_name = 'default'").fetchone()
         handler.closeDatabase()
+        print(start)
+        print(end)
         #format the tuples from database output to datetime objects
-        start = datetime.datetime.strptime(start[0], '%m/%d/%Y')
-        end = datetime.datetime.strptime(end[0], '%m/%d/%Y')
+        if type(start)== str:
+            start = datetime.datetime.strptime(start, '%Y-%m-%d')
+            end = datetime.datetime.strptime(end, '%Y-%m-%d')
+        else:
+            start = datetime.datetime.strptime(start[0], '%Y-%m-%d')
+            end = datetime.datetime.strptime(end[0], '%Y-%m-%d')
         self.startDate = start
         self.endDate = end
         return
@@ -167,14 +175,14 @@ class SetsTable(QtWidgets.QGroupBox):
 
         infoRow.addWidget(QtWidgets.QLabel('Timestep:'))
         timestepWidget = QtWidgets.QLineEdit('1')
-
+        timestepWidget.setObjectName(('timestep'))
         timestepWidget.setValidator(QtGui.QIntValidator())
-        infoRow.addWidget(timestepWidget,1)
+        infoRow.addWidget(timestepWidget)
 
-        infoRow.addWidget(QtWidgets.QLabel('Seconds'),2)
-        infoRow.addStretch(1)
-        infoRow.addWidget(QtWidgets.QLabel('Components'))
-        infoRow.addWidget(self.componentSelector())
+        infoRow.addWidget(QtWidgets.QLabel('Seconds'),1)
+
+        infoRow.addWidget(QtWidgets.QLabel('Components'),)
+        infoRow.addWidget(self.componentSelector(),2)
         infoBox.setLayout(infoRow)
 
         return infoBox
@@ -194,11 +202,11 @@ class SetsTable(QtWidgets.QGroupBox):
         end = kwargs.get('end')
         self.getDefaultDates(start=start,end=end)
 
-        #find the widgets to update
-        self.setDateSelectorProperties(self.findChildren(QtWidgets.QDateEdit, 'startDate'))
-        self.setDateSelectorProperties(self.findChildren(QtWidgets.QDateEdit, 'endDate'))
-        self.findChildren(QtWidgets.QLineEdit,'componentNames').setText(self.componentDefault)
-
+        #update the widget values
+        self.setDateSelectorProperties(self.findChild(QtWidgets.QDateEdit, 'startDate'))
+        self.setDateSelectorProperties(self.findChild(QtWidgets.QDateEdit, 'endDate'),False)
+        self.findChild(QtWidgets.QLineEdit,'componentNames').setText(self.componentDefault)
+        return
     @QtCore.pyqtSlot()
     def componentCellClicked(self):
         from DialogComponentList import ComponentSetListForm
@@ -239,6 +247,7 @@ class SetsTable(QtWidgets.QGroupBox):
         else:
             widg.setObjectName('endDate')
         return widg
+
     #QDateEdit, Boolean -> QDateEdit()
     def setDateSelectorProperties(self, widg, start = True):
         # default is entire dataset
@@ -249,6 +258,8 @@ class SetsTable(QtWidgets.QGroupBox):
             widg.setDate(QtCore.QDate(self.endDate.year, self.endDate.month, self.endDate.day))
 
         widg.setDateRange(self.startDate, self.endDate)
+        widg.setDisplayFormat('yyyy-MM-dd')
+        widg.setCalendarPopup(True)
         return widg
 
     # string -> QGroupbox
@@ -277,12 +288,29 @@ class SetsTable(QtWidgets.QGroupBox):
         return buttonBox
 
     def runSet(self):
-        uihandler = UIToHandler()
-        # currentSet is the buttons page name
+        # currentSet
         currentSet = self.set
+        #set info needs to be updated in the database
+        setInfo = (
+            currentSet,
+            self.findChild(QtWidgets.QDateEdit,'startDate').text(),
+            self.findChild(QtWidgets.QDateEdit, 'endDate').text(),
+            self.findChild(QtWidgets.QLineEdit,'timestep').text(),
+            self.findChild(QtWidgets.QLineEdit,'componentNames').text()
+        )
+        sqlhandler = ProjectSQLiteHandler()
+        try:
+            sqlhandler.cursor.execute("INSERT INTO setup(set_name, date_start, date_end, timestep, component_names) VALUES(?,?,?,?,?)",setInfo)
+        except:
+            sqlhandler.cursor.execute(
+                "UPDATE setup set date_start = ?, date_end=?, timestep=?, component_names=? WHERE set_name = '" + setInfo[0] + "'", setInfo[1:])
+        sqlhandler.connection.commit()
+        sqlhandler.closeDatabase()
+        uihandler = UIToHandler()
+
         # component table is the table associated with the button
         componentTable = self.findChild(SetTableView).model()
         # projectFolder comes from the FormSetup
-        projectFolder = self.window().findChild(QtWidgets.QWidget, 'setupDialog').model.projectFolder
-        uihandler.runModels(currentSet,componentTable,projectFolder)
+        setupModel = self.window().findChild(QtWidgets.QWidget, 'setupDialog').model
+        uihandler.runModels(currentSet,componentTable,setupModel)
 

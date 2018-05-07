@@ -18,6 +18,7 @@ from shutil import copyfile
 
 # TODO: this needs to be fixed
 def generateRuns(projectSetDir):
+    here = os.getcwd()
     os.chdir(projectSetDir) # change directories to the directory for this set of simulations
     # get the set number
     dir_path = os.path.basename(projectSetDir)
@@ -76,52 +77,50 @@ def generateRuns(projectSetDir):
     components = readXmlTag(setupFile, 'componentNames', 'value')
 
     # generate the run directories
-    runValuesUpdated = runValues # if any runValues are the names of another tag, than it will be updated here
+    runValuesUpdated = runValues # if any runValues are the names of another tag, then it will be updated here
     for run, val in enumerate(runValues): # for each simulation run
         # check if there already is a directory for this run number.
         runDir = os.path.join(projectSetDir,'Run'+str(run))
+        compDir = os.path.join(runDir, 'Components')
         if not os.path.isdir(runDir):
             os.mkdir(runDir) # make run directory
-            compDir = os.path.join(runDir, 'Components')
+
             os.mkdir(compDir) # make component directory
-            # copy component descritors  and update
-            for cpt in components: # for each component
-                # copy from main input data
-                copyfile(os.path.join(projectDir, 'InputData', 'Components', cpt + 'Descriptor.xml'),
-                         os.path.join(compDir, cpt + 'Set' + str(setNum) + 'Run' + str(run) + 'Descriptor.xml'))
+        # copy component descriptors  and update
+        for cpt in components: # for each component
+            # copy from main input data
+            copyfile(os.path.join(projectDir, 'InputData', 'Components', cpt + 'Descriptor.xml'),
+                     os.path.join(compDir, cpt + 'Set' + str(setNum) + 'Run' + str(run) + 'Descriptor.xml'))
 
 
-            # make changes
-            for idx, value in enumerate(val):
-                compFile = os.path.join(compDir, compName[idx] + 'Set' + str(setNum) + 'Run' + str(run) + 'Descriptor.xml')
-                tag = compTag[idx].split('.')
-                attr = compAttr[idx]
-                # check if value is a tag in the xml document
-                tryTagAttr = value.split('.') # split into tag and attribute
-                # seperate into tags and attribute. There may be multiple tags
-                tryTag = tryTagAttr[0]
-                for i in tryTagAttr[1:-1]: # if there are any other tag values
-                    tryTag = tryTag + '.' + i
-                if tryTag in compTag:
-                    tryAttr = tryTagAttr[-1] # the attribute
-                    idxTag = [i for i, x in enumerate(compTag) if x == tryTag]
-                    idxAttr = [i for i, x in enumerate(compAttr) if x == tryAttr]
-                    idxVal = list(set(idxTag).intersection(idxAttr))
-                    value = val[idxVal[0]] # choose the first match, if there are multiple
-                    a = list(runValuesUpdated[run]) # change values from tuple
-                    a[idx] = value
-                    runValuesUpdated[run] = tuple(a)
+        # make changes
+        for idx, value in enumerate(val):
+            compFile = os.path.join(compDir, compName[idx] + 'Set' + str(setNum) + 'Run' + str(run) + 'Descriptor.xml')
+            tag = compTag[idx].split('.')
+            attr = compAttr[idx]
+            # check if value is a tag in the xml document
+            tryTagAttr = value.split('.') # split into tag and attribute
+            # seperate into tags and attribute. There may be multiple tags
+            tryTag = tryTagAttr[0]
+            for i in tryTagAttr[1:-1]: # if there are any other tag values
+                tryTag = tryTag + '.' + i
+            if tryTag in compTag:
+                tryAttr = tryTagAttr[-1] # the attribute
+                idxTag = [i for i, x in enumerate(compTag) if x == tryTag]
+                idxAttr = [i for i, x in enumerate(compAttr) if x == tryAttr]
+                idxVal = list(set(idxTag).intersection(idxAttr))
+                value = val[idxVal[0]] # choose the first match, if there are multiple
+                a = list(runValuesUpdated[run]) # change values from tuple
+                a[idx] = value
+                runValuesUpdated[run] = tuple(a)
 
-                writeXmlTag(compFile, tag, attr, value)
+            writeXmlTag(compFile, tag, attr, value)
 
-                # if this is a wind turbine, then its values are being altered and the wind power time series will need
-                # to be recalculated
-                if 'wtg' in compName[idx]:
-                    if tag == 'powerCurveDataPoints' or tag == 'cutInWindSpeed' or tag == 'cutOutWindSpeedMax' or tag == 'cutOutWindSpeedMin' or tag == 'POutMaxPa':
-                        writeXmlTag(compFile, 'recalculateWtgPAvail', 'value', 'True')
-
-
-
+            # if this is a wind turbine, then its values are being altered and the wind power time series will need
+            # to be recalculated
+            if 'wtg' in compName[idx]:
+                if tag == 'powerCurveDataPoints' or tag == 'cutInWindSpeed' or tag == 'cutOutWindSpeedMax' or tag == 'cutOutWindSpeedMin' or tag == 'POutMaxPa':
+                    writeXmlTag(compFile, 'recalculateWtgPAvail', 'value', 'True')
 
     # create dataframe and save as SQL
     df = pd.DataFrame(data=runValuesUpdated, columns=heading)
@@ -131,8 +130,15 @@ def generateRuns(projectSetDir):
     df = df.assign(started=[0] * len(runValues))
     df = df.assign(finished=[0] * len(runValues))
     conn = sqlite3.connect('set' + str(setNum) + 'ComponentAttributes.db')  # create sql database
-    df.to_sql('compAttributes', conn, if_exists="fail", index=False)  # write to table compAttributes in db
+
+    try:
+        df.to_sql('compAttributes', conn, if_exists="fail", index=False)  # write to table compAttributes in db
+    except sqlite3.Error as er:
+        print(er)
+        print('You need to delete the existing set ComponentAttributes.db before creating a new components attribute table')
+
     conn.close()
+    os.chdir(here)
 
 
 

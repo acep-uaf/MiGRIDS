@@ -1,33 +1,8 @@
 from PyQt5 import QtCore, QtWidgets, QtSql
-
+from GBSInputHandler.Component import Component
+from ProjectSQLiteHandler import ProjectSQLiteHandler
 import os
-class ComboReference():
-    def __init__(self,cmb,table,db):
-        self.cmb = cmb
-        self.table = table
-        self.db = db
-        self.values = self.getValues()
-        self.valueCodes = self.getCodes()
-
-    def getValues(self):
-        values = self.db.getRefInput(self.table)
-        values.insert(0,'Select - Select')
-        return values
-    def getCodes(self):
-        return [self.parseCombo(x) for x in self.values]
-    def parseCombo(self, inputString):
-        code = inputString.split(" - ")[0]
-        description = inputString.split(" - ")[1]
-        return code, description
-
-    def valuesAsDict(self):
-
-        d={}
-        for v in self.values:
-            code,description = self.parseCombo(v)
-            d[code]=description
-
-        return d
+#class for combo boxes that are not derived from database relationships
 class ComboDelegate(QtWidgets.QItemDelegate):
     def __init__(self,parent,values, name=None):
         QtWidgets.QItemDelegate.__init__(self,parent)
@@ -38,8 +13,8 @@ class ComboDelegate(QtWidgets.QItemDelegate):
         combo = QtWidgets.QComboBox(parent)
         combo.setObjectName(self.name)
         combo.setModel(self.values)
-        combo.currentIndexChanged.connect(self.currentIndexChanged)
-
+        #combo.currentIndexChanged.connect(self.currentIndexChanged)
+        combo.activated.connect(self.currentIndexChanged)
         return combo
 
     def makeList(self,box, values):
@@ -77,13 +52,8 @@ class ComboDelegate(QtWidgets.QItemDelegate):
                     # project folder is from FormSetup model
                     projectFolder = tv.window().findChild(QtWidgets.QWidget, "setupDialog").model.projectFolder
                     componentFolder = os.path.join(projectFolder, 'InputData', 'Components')
-
-                    #we need the component name
-                    #component name is the currently selected text
-                    #we need the set#
-
+                    #the current selected component, and the folder with component xmls are passed used to generate tag list
                     lm.setStringList(getComponentAttributesAsList(self.sender().currentText(),componentFolder))
-
 
 #LineEdit textbox connected to the table
 class TextDelegate(QtWidgets.QItemDelegate):
@@ -91,6 +61,7 @@ class TextDelegate(QtWidgets.QItemDelegate):
         QtWidgets.QItemDelegate.__init__(self,parent)
         if 'column1' in parent.__dict__.keys():
             self.autotext1 = parent.column1
+
 
     def createEditor(self,parent, option, index):
         txt = QtWidgets.QLineEdit(parent)
@@ -102,6 +73,7 @@ class TextDelegate(QtWidgets.QItemDelegate):
         editor.blockSignals(True)
         if 'autotext1' in self.__dict__.keys():
             editor.setText(self.autotext1)
+
         else:
             editor.setText(str(index.model().data(index)))
 
@@ -115,19 +87,58 @@ class TextDelegate(QtWidgets.QItemDelegate):
     def currentIndexChanged(self):
         self.commitData.emit(self.sender())
 
+#combo boxes for tables with foreign keys
 class RelationDelegate(QtSql.QSqlRelationalDelegate):
-    def __init__(self, parent):
+    def __init__(self, parent,name):
         QtSql.QSqlRelationalDelegate.__init__(self,parent)
-
+        self.parent = parent
+        self.name=name
+    def createEditor(self, parent, option, index):
+        #make a combo box if there is a valid relation
+        if index.model().relation(index.column()).isValid:
+            editor = QtWidgets.QComboBox(parent)
+            editor.activated.connect(self.currentIndexChanged)
+            return editor
+        else:
+            return QtWidgets.QStyledItemDelegate(parent).createEditor(parent,option,index)
+    def setEditorData(self, editor, index):
+        m = index.model()
+        relation = m.relation(index.column())
+        if relation.isValid():
+            pmodel = QtSql.QSqlTableModel()
+            pmodel.setTable(relation.tableName())
+            pmodel.select()
+            editor.setModel(pmodel)
+            editor.setModelColumn(pmodel.fieldIndex(relation.displayColumn()))
+            editor.setCurrentIndex(editor.findText(m.data(index)))
 
     def setModelData(self,editor, model, index):
+         model.setData(index, editor.itemText(editor.currentIndex()))
 
-        model.setData(index, editor.itemText(editor.currentIndex()))
+
     @QtCore.pyqtSlot()
     def currentIndexChanged(self):
 
         self.commitData.emit(self.sender())
+        #if a type from the components table was just set then fill in the component name
+        if (self.name == 'component_type') & (self.parent.objectName() == 'components'):
+            tv = self.parent
+            combo = self.sender()
 
+            currentRow = tv.indexAt(combo.pos()).row()
+
+            #get the number of components of this type -
+            handler = ProjectSQLiteHandler()
+            i = handler.getTypeCount(self.sender().currentText())
+            handler.closeDatabase()
+            name = self.sender().currentText() + str(i)
+            print(name)
+
+            tv.model().setData(tv.model().index(currentRow,3),name)
+            tv.model().submitAll()
+            tv.model().select()
+
+#QLineEdit that when clicked performs an action
 class ClickableLineEdit(QtWidgets.QLineEdit):
     clicked = QtCore.pyqtSignal()
 
@@ -136,51 +147,6 @@ class ClickableLineEdit(QtWidgets.QLineEdit):
             self.clicked.emit()
         else:
             super().mousePressEvent(event)
-
-class TextBoxWithClickDelegate(QtWidgets.QItemDelegate):
-    def __init__(self, parent, text,fn):
-        QtWidgets.QItemDelegate.__init__(self, parent)
-        self.text = text
-
-    def createEditor(self,parent, option, index):
-        #Line Edit Object
-        txt = ClickableLineEdit(parent)
-        txt.clicked.connect(lambda: self.cellButtonClicked(index))
-        self.parent().setIndexWidget(index, txt)
-        return txt
-
-    def setEditorData(self, editor, index):
-        editor.blockSignals(True)
-        #displayed text gets set to model text value
-        editor.setText(str(index.model().data(index)))
-
-        editor.blockSignals(False)
-
-    def setModelData(self, editor, model, index):
-
-        model.setData(index, editor.text())
-
-    @QtCore.pyqtSlot()
-    def cellButtonClicked(self, index):
-        from DialogComponentList import ComponentSetListForm
-        from ProjectSQLiteHandler import ProjectSQLiteHandler
-        #get the data model
-        model = self.parent().model()
-        # get the cell, and open a listbox of possible components for this project
-        checked = model.data(model.index(index.row(), 2))
-        # checked is a comma seperated string but we need a list
-        checked = checked.split(',')
-        listDialog = ComponentSetListForm(checked)
-        components = listDialog.checkedItems()
-        #format the list to be inserted into a text field in a datatable
-        str1 = ','.join(components)
-
-        model.setData(index, str1)
-
-        #submit the model data to the database
-        model.submitAll()
-        #requery the database table
-        model.select()
 
 
 class ComponentFormOpenerDelegate(QtWidgets.QItemDelegate):
@@ -202,14 +168,13 @@ class ComponentFormOpenerDelegate(QtWidgets.QItemDelegate):
     @QtCore.pyqtSlot()
     def cellButtonClicked(self, index):
         from formFromXML import formFromXML
-        from UIToHandler import UIToHandler
+        from GBSController.UIToHandler import UIToHandler
         from ModelSetTable import SetTableModel
         from ModelComponentTable import  ComponentTableModel
         from FormSetup import FormSetup
         import os
 
         handler = UIToHandler()
-        from Component import Component
 
         model = self.parent().model()
         #if its a component table bring up the component editing form
@@ -248,29 +213,9 @@ class ComponentFormOpenerDelegate(QtWidgets.QItemDelegate):
 
             component.component_directory = componentDir
             f = formFromXML(component, componentSoup)
-        #TODO we can get rid of this since this delegate is not used in the sets table
-        elif type(model) is SetTableModel:
-            mainForm= self.window().findChild(FormSetup)
-
-            setupInfo = mainForm.model
-            component_name = model.data(model.index(index.row(), 2))
-            if ('setupFolder' in setupInfo.getAttributes()) & (component_name != ''):
-                 #look for a local component file
-
-                componentDir = os.path.join(setupInfo.setupFolder, '../Components')
-                component = Component(component_name=component_name)
-
-                # tell the input handler to create or read a component descriptor and combine it with attributes in component
-                componentSoup = handler.makeComponentDescriptor(component.component_name, componentDir)
-                # data from the form gets saved to a soup, then written to xml
-                # modify the soup to reflect data in the data model
-
-                component.component_directory = componentDir
-                #f = formFromXML(component, componentSoup,False)
-                 #update the list of attributes
-            else:
-                msg = QtWidgets.QMessageBox(QtWidgets.QMessageBox.Warning, "Missing Component Name",
+        else:
+            msg = QtWidgets.QMessageBox(QtWidgets.QMessageBox.Warning, "Missing Component Name",
                                             "You need to select a component before editing attributes.")
-                msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
-                msg.exec()
+            msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
+            msg.exec()
 
