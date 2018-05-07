@@ -193,8 +193,6 @@ class ModelSetupInformation:
             else:
                 method(value)
 
-    def getComponentData(self):
-        self.con
     #creates a dictionary designed to feed into fillProjectData
     #->dictionary
     def getSetupTags(self):

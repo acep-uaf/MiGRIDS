@@ -18,6 +18,7 @@ from shutil import copyfile
 
 # TODO: this needs to be fixed
 def generateRuns(projectSetDir):
+    here = os.getcwd()
     os.chdir(projectSetDir) # change directories to the directory for this set of simulations
     # get the set number
     dir_path = os.path.basename(projectSetDir)
@@ -121,9 +122,6 @@ def generateRuns(projectSetDir):
                 if tag == 'powerCurveDataPoints' or tag == 'cutInWindSpeed' or tag == 'cutOutWindSpeedMax' or tag == 'cutOutWindSpeedMin' or tag == 'POutMaxPa':
                     writeXmlTag(compFile, 'recalculateWtgPAvail', 'value', 'True')
 
-
-
-
     # create dataframe and save as SQL
     df = pd.DataFrame(data=runValuesUpdated, columns=heading)
     # add columns to indicate whether the simulation run has started or finished. This is useful for when multiple processors are
@@ -132,7 +130,7 @@ def generateRuns(projectSetDir):
     df = df.assign(started=[0] * len(runValues))
     df = df.assign(finished=[0] * len(runValues))
     conn = sqlite3.connect('set' + str(setNum) + 'ComponentAttributes.db')  # create sql database
-    #TODO couldn't this overwrite instead of fail?
+
     try:
         df.to_sql('compAttributes', conn, if_exists="fail", index=False)  # write to table compAttributes in db
     except sqlite3.Error as er:
@@ -140,6 +138,7 @@ def generateRuns(projectSetDir):
         print('You need to delete the existing set ComponentAttributes.db before creating a new components attribute table')
 
     conn.close()
+    os.chdir(here)
 
 
 

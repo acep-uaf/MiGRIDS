@@ -1,9 +1,9 @@
 
 import os
-import pickle
+
 from PyQt5 import QtWidgets, QtCore
 from GBSController.UIToHandler import UIToHandler
-from readXmlTag import readXmlTag
+
 
 
 class ResultsSetup(QtWidgets.QWidget):
@@ -124,7 +124,7 @@ class ResultsSetup(QtWidgets.QWidget):
     def createSubmitButton(self):
         button = QtWidgets.QPushButton()
         button.setText("Generate netCDF inputs")
-        button.clicked.connect(lambda: self.parent.onClick(self.generateNetcdf))
+        button.clicked.connect(self.generateNetcdf)
         return button
 
     #uses the current data object to generate input netcdfs
@@ -133,21 +133,20 @@ class ResultsSetup(QtWidgets.QWidget):
         handler = UIToHandler()
         #df gets read in from TimeSeries processed data folder
         #component dictionary comes from setupXML's
-        MainWindow = self.parent().parent()
-        setupModel = MainWindow.findChild(QtWidgets.QtWidget,'setupDialog').model
+        MainWindow = self.window()
+        setupForm = MainWindow.findChild(QtWidgets.QWidget,'setupDialog')
+        setupModel= setupForm.model
         setupFile = os.path.join(setupModel.setupFolder, setupModel.project + 'Setup.xml')
+        componentModel = setupForm.findChild(QtWidgets.QWidget,'components').model()
         #From the setup file read the location of the input pickle
         #by replacing the current pickle with the loaded one the user can manually edit the input and
         #  then return to working with the interface
-        #TODO xml reading should be moved to controller
-        inputDirectory = readXmlTag(setupFile, 'inputFileDir', 'value')
-        inputDirectory = os.path.join(*inputDirectory)
-        outputDirectory = os.path.join(inputDirectory, '/ProcessedData')
-
-        dataFile = os.path.join(outputDirectory,'processed_input_file.pkl')
-        data = pickle.load(dataFile,'b')
+        data = handler.loadInputData(setupFile)
         df = data.fixed
         componentDict = {}
+        if 'components' not in setupModel.__dict__.keys():
+            #generate components
+            setupForm.makeComponentList(componentModel)
         for c in setupModel.components:
             componentDict[c] = c.toDictionary()
         handler.createNetCDF(df, componentDict,None,setupFile)

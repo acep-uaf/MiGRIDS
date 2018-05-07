@@ -156,7 +156,7 @@ class UIToHandler():
         if not os.path.exists(outputDirectory):
             os.makedirs(outputDirectory)
 
-        dataframe2netcdf(df.fixed, componentDict, None, outputDirectory)
+        dataframe2netcdf(df, componentDict, None, outputDirectory)
         return
 
     #save the data object as a pickle in the processed data folder
@@ -197,10 +197,7 @@ class UIToHandler():
         from makeAttributeXML import makeAttributeXML, writeAttributeXML
         #generate xml's based on inputs
         #call to run models
-        msg = QtWidgets.QMessageBox(QtWidgets.QMessageBox.Warning, "I can't do this",
-                                    "I can't run models yet")
-        msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
-        msg.exec()
+
         msg = QtWidgets.QMessageBox(QtWidgets.QMessageBox.Warning, "Starting Models",
                                     "You won't beable to edit data while models are running. Are you sure you want to continue?")
         msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
@@ -212,9 +209,22 @@ class UIToHandler():
 
         writeAttributeXML(soup,setDir,fileName)
 
-        # TODO directory gets changed somewhere here -need to find where and set it back
-        #if it doesn't get reset then any attempts to run again will fail
-        #generate runs from attribute xml
+        # Check if a set component attribute database already exists
+        if os.path.exists(os.path.join(setDir, currentSet + 'ComponentAttributes.db')):
+            #ask to delete it or generate a new set
+            msg = QtWidgets.QMessageBox(QtWidgets.QMessageBox.Warning, "Overwrite files?",
+                                        "Set up files were already generated for this model set. Do you want to overwrite them? ")
+            msg.setStandardButtons(QtWidgets.QMessageBox.Yes|QtWidgets.QMessageBox.No)
+            result = msg.exec()
+
+            if result == QtWidgets.QMessageBox.Yes:
+                os.remove(os.path.join(setDir, currentSet + 'ComponentAttributes.db'))
+            else:
+                #create a new set tab
+                return
+
+        #if it does delete it.
+        #generate run folders from attributes xml
         generateRuns(setDir)
 
     def inputHandlerToUI(self, setupFolder, setupInfo):
