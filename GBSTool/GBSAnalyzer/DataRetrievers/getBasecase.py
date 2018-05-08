@@ -26,6 +26,7 @@ def getBasecase(projectName, rootProjectPath):
     :return varLoadP: [Series] variable (switchable, manageable, dispatchable) load vector
     :return firmGenP: [Series] firm generation vector
     :return varGenP: [Series] variable generation vector
+    :return allGenP: [DataFrame] contains time channel and all generator channels.
     '''
 
     # Read project meta data to get (a) all loads, (b) all generation, and their firm and variable subsets.
@@ -46,6 +47,7 @@ def getBasecase(projectName, rootProjectPath):
     firmGenP = pd.Series(firmLoadP.copy() * 0)
     varGenP = pd.Series(firmLoadP.copy() * 0)
     varLoadP = pd.Series(firmLoadP.copy() * 0)
+    allGenP = pd.DataFrame(time, columns=['time'])
 
     # Get list if all components
     components = setupMetaSoup.componentNames.get('value').split()
@@ -66,6 +68,10 @@ def getBasecase(projectName, rootProjectPath):
                 tempDf = getDataChannels(rootProjectPath, '/InputData/TimeSeriesData/ProcessedData/', chName)
                 val = pd.Series(tempDf[chName])
                 firmGenP = firmGenP + val
+
+                # Also add it to the allGenP dataframe
+                dfVal = pd.DataFrame(val, columns=[chName])
+                allGenP = pd.concat([allGenP, dfVal], axis=1)
 
             # If it cannot load follow, it is a variable generator
             else:  # not strtobool(cptMetaSoup.isLoadFollowing.get('value'))
@@ -118,5 +124,6 @@ def getBasecase(projectName, rootProjectPath):
             if cptMetaSoup.type.get('value') != 'grid':
                 raise UserWarning('Type for %s is not (properly) defined.', cptMetaSoup.component.get('name'))
 
+
     # Return the calculated channels
-    return time, firmLoadP, varLoadP, firmGenP, varGenP
+    return time, firmLoadP, varLoadP, firmGenP, varGenP, allGenP
