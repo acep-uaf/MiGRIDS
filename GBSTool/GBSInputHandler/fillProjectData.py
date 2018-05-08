@@ -29,10 +29,8 @@ def fillProjectData(projectDir = '',setupInfo = None):
         root.withdraw()
         projectDir = filedialog.askdirectory()
 
-    userInputDir = projectDir + '/InputData/Setup/UserInput/'
-
     if setupInfo is None:
-        fillProjectDataFromCSV(userInputDir)
+        fillProjectDataFromCSV(projectDir)
 
     else:
         fillProjectDataFromUI(projectDir,setupInfo)
