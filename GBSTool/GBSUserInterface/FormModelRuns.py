@@ -17,7 +17,7 @@ class FormModelRun(QtWidgets.QWidget):
         self.initUI()
 
     def initUI(self):
-        self.setObjectName("modelRun")
+        self.setObjectName("modelDialog")
         #the first page is for set0
         self.tabs = SetsPages(self, 'set0')
         #self.setsTable = self.tabs
@@ -104,6 +104,7 @@ class SetsTableBlock(QtWidgets.QGroupBox):
         self.init(set)
 
     def init(self, set):
+
         self.componentDefault = []
         self.set = set
         #get default date ranges

@@ -533,12 +533,13 @@ class FormSetup(QtWidgets.QWidget):
         msg.setStandardButtons(QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.Cancel)
 
         result = msg.exec()
-        #if yes create the input netcdf files otherwise pickle the dataframe for later use
+        #pickled data to be used later if needed
+        handler.storeData(cleaned_data, os.path.join(model.setupFolder, model.project + 'Setup.xml'))
+        #if yes create netcdf files
         if result == QtWidgets.QMessageBox.Ok:
-            handler.createNetCDF(cleaned_data.fixed, componentDict, None, os.path.join(model.setupFolder, model.project + 'Setup.xml'))
-        else:
-            #pickle the data to be used later
-            handler.storeData(cleaned_data,os.path.join(model.setupFolder, model.project + 'Setup.xml'))
+            handler.createNetCDF(cleaned_data.fixed, componentDict, os.path.join(model.setupFolder, model.project + 'Setup.xml'))
+
+
         return
     #DataObject with data frame called 'fixed' and field 'datetime'
     def updateModelPage(self, data):

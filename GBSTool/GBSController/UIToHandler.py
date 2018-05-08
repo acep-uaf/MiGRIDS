@@ -102,6 +102,7 @@ class UIToHandler():
         from fixBadData import fixBadData
         from fixDataInterval import fixDataInterval
 
+
         Village = readXmlTag(setupFile, 'project', 'name')[0]
         # input specification
         # input specification can be for multiple input files or a single file in AVEC format.
@@ -111,7 +112,7 @@ class UIToHandler():
         # input a list of subdirectories under the GBSProjects directory
         fileLocation = readXmlTag(setupFile, 'inputFileDir', 'value')
         fileLocation = os.path.join(*fileLocation)
-        fileLocation = os.path.join('../../GBSProjects', fileLocation)
+        fileLocation = os.path.join('/', fileLocation)
         # file type
         fileType = readXmlTag(setupFile, 'inputFileType', 'value')[0]
         outputInterval = readXmlTag(setupFile, 'outputTimeStep', 'value')[0] + \
@@ -177,15 +178,17 @@ class UIToHandler():
         file.close()
         return
 
-    #read in a pickled data object
+    #read in a pickled data object if it exists
     #string->object
     def loadInputData(self,setupFile):
         inputDirectory = readXmlTag(setupFile, 'inputFileDir', 'value')
         inputDirectory = os.path.join(*inputDirectory)
         outputDirectory = os.path.join('/', inputDirectory, '../ProcessedData')
-        if not os.path.exists(outputDirectory):
-            return None
         outfile = os.path.join(outputDirectory, 'processed_input_file.pkl')
+
+        if not os.path.exists(outfile):
+            return None
+
         file = open(outfile, 'rb')
         data = pickle.load(file)
         file.close()
