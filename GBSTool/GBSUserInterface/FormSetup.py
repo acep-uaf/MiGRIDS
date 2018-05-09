@@ -30,11 +30,10 @@ class FormSetup(QtWidgets.QWidget):
 
         #the main layout is oriented vertically
         windowLayout = QtWidgets.QVBoxLayout()
-        self.createButtonBlock()
-        #the top block is buttons to load setup xml and data files
 
+        # the top block is buttons to load setup xml and data files
+        self.createButtonBlock()
         windowLayout.addWidget(self.ButtonBlock,2)
-        #create some space between the buttons and xml setup block
 
 
         #add the setup block
@@ -42,8 +41,8 @@ class FormSetup(QtWidgets.QWidget):
         #the topBlock is hidden until we load or create a setup xml
         self.topBlock.setEnabled(False)
         windowLayout.addWidget(self.topBlock)
-        #more space between component block
 
+        #list of dictionaries containing information for wizard
         #TODO move to seperate file
         dlist = [
             [{'title': 'Time Series Data', 'prompt': 'Select the folder that contains time series data.',
@@ -151,7 +150,7 @@ class FormSetup(QtWidgets.QWidget):
             pages = self.window().findChild(QtWidgets.QTabWidget,'pages')
             pages.enableTabs()
 
-    #searches for and loads existing project data - database, setupxml,descriptors, data object
+    #searches for and loads existing project data - database, setupxml,descriptors, DataClass pickle
     def functionForLoadButton(self):
         '''The load function reads the designated setup xml, looks for descriptor xmls,
         looks for an existing project database and a pickled data object.'''
@@ -205,8 +204,10 @@ class FormSetup(QtWidgets.QWidget):
             msg = QtWidgets.QMessageBox(QtWidgets.QMessageBox.Warning, "Close project", "You need to close the sofware before you load a new project")
             msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
             msg.exec()
+        return
 
     #TODO make dynamic from list input
+    #List -> WizardTree
     def buildWizardTree(self, dlist):
 
         w1 = WizardTree(dlist[0][0], dlist[0][1], 2, [])
@@ -276,6 +277,7 @@ class FormSetup(QtWidgets.QWidget):
             tv = E.EnvironmentTableView(self)
             tv.setObjectName('environment')
             m = E.EnvironmentTableModel(self)
+
         tv.setModel(m)
 
         tv.hideColumn(0)
@@ -328,7 +330,7 @@ class FormSetup(QtWidgets.QWidget):
         #insert an empty row as the last record
 
         model.insertRows(model.rowCount(),1)
-        #TODO persistent editors and delegats need to be set
+
         model.submitAll()
 
     #delete the selected record from the specified datatable
@@ -393,7 +395,7 @@ class FormSetup(QtWidgets.QWidget):
     def fillData(self,model):
 
         from ProjectSQLiteHandler import ProjectSQLiteHandler
-
+        #dictionary of attributes of the class SetupTag belonging to a SetupInformation Model
         d = model.getSetupTags()
 
         #for every key in d find the corresponding textbox or combo box
@@ -421,21 +423,26 @@ class FormSetup(QtWidgets.QWidget):
         if not self.projectDatabase:
 
             # for headers, componentnames, componentattributes data goes into the database for table models
-            dbHandler = ProjectSQLiteHandler('project_manager')
+            dbHandler = ProjectSQLiteHandler()
+            #for every field listed in the header name tag create a table entry on the form
             for i in range(len(model.headerName.value)):
 
-
                 fields = ('original_field_name','component_name','attribute','units')
-                if (getDefault(model.headerName.value,i) != 'None'):
+                #as long as an NA isn't returned for the field name get the values for that field
+                if (getDefault(model.headerName.value,i) != 'NA'):
                     values = (getDefault(model.headerName.value,i), getDefault(model.componentName.value,i),
                           getDefault(model.componentAttribute.value,i), getDefault(model.componentAttribute.unit,i))
 
-
+                    #if the attribute is in the environment list then the data gets placed in the environment table
                     if getDefault(model.componentAttribute.value,i) in ['WS','WF','IR','Tamb','Tstorage']:
                         #insert into environment table
                         table = 'environment'
                     else:
                          table = 'components'
+                         #if its the components table then we need to fill in component type as well
+                         fields = fields + ('component_type',)
+                         componentType = getDefault(model.componentName.value,i)[0:3]
+                         values = values + (componentType,)
 
                     if len(dbHandler.cursor.execute("select * from " + table + " WHERE component_name = '" + getDefault(model.componentName.value,i) + "'").fetchall()) < 1:
                          dbHandler.insertRecord(table,fields,values)
@@ -451,6 +458,7 @@ class FormSetup(QtWidgets.QWidget):
         return
 
     #send input data to the ModelSetupInformation data model
+    #None->None
     def sendSetupData(self):
         import re
         #cycle through the input children in the topblock
@@ -511,37 +519,41 @@ class FormSetup(QtWidgets.QWidget):
         model.assign('componentAttributeunit', componentAttributeU)
         model.assign('componentNamesvalue', componentNames)
 
-    #write data to the data model and generate input xml files for setup and components
+    #write data to the ModelSetupInformation data model and generate input xml files for setup and components
+    #None->None
     def createInputFiles(self):
         import os
-        from ProjectSQLiteHandler import ProjectSQLiteHandler
+        self.addProgressBar()
+        self.progress.setRange(0,0)
         self.sendSetupData()
         # write all the xml files
 
         # start with the setupxml
         self.model.writeNewXML()
 
-        #make sure the necessary information is filled in
-        #required: input folder, data format, date-time fields, component max power
         # import datafiles
         handler = UIToHandler()
         cleaned_data, componentDict = handler.loadFixData(os.path.join(model.setupFolder, model.project + 'Setup.xml'))
         self.updateModelPage(cleaned_data)
+        # pickled data to be used later if needed
+        handler.storeData(cleaned_data, os.path.join(model.setupFolder, model.project + 'Setup.xml'))
+        self.progress.setRange(0,1)
         # generate netcdf files
         msg = QtWidgets.QMessageBox(QtWidgets.QMessageBox.Warning, "Time Series loaded",
                                     "Do you want to generate netcdf files?.")
         msg.setStandardButtons(QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.Cancel)
 
         result = msg.exec()
-        #pickled data to be used later if needed
-        handler.storeData(cleaned_data, os.path.join(model.setupFolder, model.project + 'Setup.xml'))
-        #if yes create netcdf files
+         #if yes create netcdf files, Otherwise this can be done after the data is reviewed.
         if result == QtWidgets.QMessageBox.Ok:
             handler.createNetCDF(cleaned_data.fixed, componentDict, os.path.join(model.setupFolder, model.project + 'Setup.xml'))
 
 
         return
-    #DataObject with data frame called 'fixed' and field 'datetime'
+
+    # DataClass with data frame called 'fixed' and field 'datetime'
+    # updates default component list, time range and time step values in the setup table and passes these values to the modelDialog
+    # DataClass -> None
     def updateModelPage(self, data):
         # start and end dates get set written to database as default date ranges
         import pandas as pd
@@ -557,30 +569,26 @@ class FormSetup(QtWidgets.QWidget):
         modelForm = self.window().findChild(SetsTableBlock)
         # start and end are tuples at this point
         modelForm.update(start=defaultStart, end=defaultEnd, components=','.join(self.model.componentNames.value))
-    #fill the component list with component objects
-    #ComponentTableModel -> None
-    #TODO this does not include environment
-    # def makeComponentList(self,model):
-    #     self.model.components = []
-    #     for i in range(0, model.rowCount()):
-    #          c = Component(component_Name=model.data(model.index(i, 3)),
-    #                   scale=model.data(model.index(i, 5)),
-    #                   units=model.data(model.index(i, 4)),
-    #                   offset=model.data(model.index(i, 6)),
-    #                   attribute=model.data(model.index(i, 7)),
-    #                   type=model.data(model.index(i, 2)))
-    #          self.model.components.append(c)
+
     #event triggered when user navigates away from setup page
+    #xml data gets written and the ModelSetupInformation attributes get updated
+    #Event -> None
     def leaveEvent(self, event):
-        # move the default database to the project folder and save xmls
+        # save xmls
         if 'projectFolder' in self.model.__dict__.keys():
-            # on close save the xml files
+            # on leave save the xml files
             self.sendSetupData()
             self.model.writeNewXML()
     # close event is triggered when the form is closed
     def closeEvent(self, event):
-        #move the default database to the project folder and save xmls
+        #save xmls
         if 'projectFolder' in self.model.__dict__.keys():
             # on close save the xml files
             self.sendSetupData()
             self.model.writeNewXML()
+#TODO add progress bar for uploading raw data and generating fixed data pickle
+    def addProgressBar(self):
+        self.bar = QtWidgets.QProgressBar(self)
+        self.bar.objectName('uploadBar')
+        self.bar.setGeometry(100,100,100,50)
+        return self.bar

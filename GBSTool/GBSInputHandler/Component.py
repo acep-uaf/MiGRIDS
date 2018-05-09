@@ -13,19 +13,17 @@ class Component:
         self.type = kwargs.get('type')
         self.attribute =kwargs.get('attribute')
         self.filepath = kwargs.get('filepath')
-        # self.PInMaxPa = kwargs.get('pinmaxpa')
-        # self.QInMaxPa = kwargs.get('qinmaxpa')
-        # self.QOutMaxPa = kwargs.get('qoutmaxpa')
-        # self.isVoltageSource=kwargs.get('voltagesource')
+
         self.tags=kwargs.get('tags')
 
-
+    # set the datatype for a column in a dataframe that contains data for a specific component
     def setDatatype(self, df):
+        #if the datatype is an integer it becomes a float with 0 decimal places
 
         if self.datatype[0:3] == 'int':
             df[self.component_name] = round(df[self.component_name].astype('float'), 0)
         else:
-            print(self.datatype)
+            #otherwise it is the specified datatype
             df[self.component_name] = df[self.component_name].astype(self.datatype)
         return df
 

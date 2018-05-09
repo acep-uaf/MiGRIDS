@@ -15,7 +15,6 @@ def fixDataInterval(data, interval):
      the mean of values within the new interval will be generated'''
     import pandas as pd
 
-
     #df contains the non-upsampled records. Means and standard deviation come from non-upsampled data.
     df = data.fixed.copy()
     #mean
