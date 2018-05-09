@@ -28,7 +28,7 @@ def getTransitionMatrix(timeSeries,numStates=100):
     for idx in range(len(binIdx)-1):
         TM[binIdx[idx]][binIdx[idx+1]] += 1
 
-    TM.dtype = float # convert to float to allow to normalize
+    TM = TM.astype(float) # convert to float to allow to normalize
 
     # normalize rows
     for row in TM:
