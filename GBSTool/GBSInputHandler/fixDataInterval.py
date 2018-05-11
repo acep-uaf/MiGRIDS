@@ -41,17 +41,24 @@ def fixDataInterval(data, interval):
 
         #number of steps 
         n = (records / timestep) + 1
+        # time constant. This value was empirically determined to result in a mean value between
+        tau = records*.2
+
 
         #renormalized variables
-        sigma_bis = sigma * np.sqrt(2.0 / n)
+        sigma_bis = sigma * np.sqrt(2.0 / n) # adapted from ipython interactive computing visualization cookbook
         sqrtdt = np.sqrt(timestep)
         #x is the array that will contain the new values
         x = np.zeros(shape=(len(mu), int(max(n))))
         #the starter value
         x[:, 0] = start
+        # use the next step in the time series as the average value for the synthesized data. The values will asympotically reach this value, resulting in a smooth transition.
+        mu = start.shift(-1)
+        mu.iloc[-1] = mu.iloc[-2]
 
         for i in range(int(max(n) - 1)):
-            x[:, i + 1] = x[:, i] + timestep * (-(x[:, i] - mu) / n) + sigma_bis * sqrtdt * (np.random.randn())
+            x[:, i + 1] = x[:, i] + timestep * (-(x[:, i] - mu) / tau) + np.multiply(sigma_bis.values * sqrtdt, np.random.randn(len(mu)))
+
 
         return x
 
@@ -74,7 +81,11 @@ def fixDataInterval(data, interval):
 
         #t is the numeric value of the dataframe timestamps
         t = pd.to_timedelta(pd.Series(pd.to_datetime(df.index.values, unit='s'),index=df.index)).dt.total_seconds()
-
+        # test if the index can be interpreted as datetime, if not recognized, convert
+        #try:
+        #    t = pd.to_timedelta(pd.Series(df.index.values)).dt.total_seconds()
+        #except ValueError:
+        #    t = pd.to_timedelta(pd.Series(pd.to_datetime(df.index.values, unit='s'), index=df.index)).dt.total_seconds()
         #intervals is the steps array repeated for every row of time
         intervals = np.repeat(steps, len(t), axis=0)
         #reshape the interval matrix so each row has every timestep
@@ -92,10 +103,13 @@ def fixDataInterval(data, interval):
     #if the resampled dataframe is bigger fill in new values
     if len(df) < len(data.fixed):
         #t is the time, k is the estimated value
-        t, k = estimateDistribution(df,interval)
+        t, k = estimateDistribution(df,interval) # t is number of seconds since 1970
         simulatedDf = pd.DataFrame({'time': t, 'value': k})
-        simulatedDf = simulatedDf.set_index(pd.to_datetime(simulatedDf['time']))
+        simulatedDf = simulatedDf.set_index(pd.to_datetime(simulatedDf['time']*1e9)) # need to scale to nano seconds to make datanumber
         simulatedDf = simulatedDf[~simulatedDf.index.duplicated(keep='last')]
+        # make sure timestamps for both df's are rounded to the same interval in order to join sucessfully
+        data.fixed.index = data.fixed.index.floor(interval)
+        simulatedDf.index = simulatedDf.index.floor(interval)
         #join the simulated values to the upsampled dataframe by timestamp
         data.fixed = data.fixed.join(simulatedDf, how='left')
         #fill na's for total_p with simulated values
