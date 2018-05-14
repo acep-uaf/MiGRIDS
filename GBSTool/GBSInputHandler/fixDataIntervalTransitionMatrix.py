@@ -30,22 +30,29 @@ def fixDataIntervalTransitionMatrix(data, interval, TM, values):
 
     # integer, numeric, numeric, numeric -> numeric array
     # uses the Langevin equation to estimate records based on provided mean (mu) and standard deviation and a start value
-    def getValuesLangevin(records, start, mu, sigma, timestep):
+    def getValuesLangevin(records, start, sigma, timestep):
         import numpy as np
 
         # number of steps
         n = (records / timestep) + 1
+        # time constant. This value was empirically determined to result in a mean value between
+        tau = records * .2
 
         # renormalized variables
-        sigma_bis = sigma * np.sqrt(2.0 / n)
+        # TODO: look at sigma calculation
+        sigma_bis = sigma * np.sqrt(2.0 / n)  # adapted from ipython interactive computing visualization cookbook
         sqrtdt = np.sqrt(timestep)
         # x is the array that will contain the new values
-        x = np.zeros(shape=(len(mu), int(max(n))))
+        x = np.zeros(shape=(len(start), int(max(n))))
         # the starter value
         x[:, 0] = start
+        # use the next step in the time series as the average value for the synthesized data. The values will asympotically reach this value, resulting in a smooth transition.
+        mu = start.shift(-1)
+        mu.iloc[-1] = mu.iloc[-2]
 
         for i in range(int(max(n) - 1)):
-            x[:, i + 1] = x[:, i] + timestep * (-(x[:, i] - mu) / n) + sigma_bis * sqrtdt * (np.random.randn())
+            x[:, i + 1] = x[:, i] + timestep * (-(x[:, i] - mu) / tau) + np.multiply(sigma_bis.values * sqrtdt,
+                                                                                     np.random.randn(len(mu)))
 
         return x
 
@@ -79,7 +86,7 @@ def fixDataIntervalTransitionMatrix(data, interval, TM, values):
     # dataframe -> integer array, integer array
     # returns arrays of time as seconds and values estimated using the Langevin equation
     # for all gaps of data within a dataframe
-    def estimateDistribution(df, interval):
+    def estimateDistribution(df, interval, useMarkov = False):
         import numpy as np
         # feeders for the langevin estimate
         mu = df['mu']
@@ -89,7 +96,10 @@ def fixDataIntervalTransitionMatrix(data, interval, TM, values):
         timestep = pd.Timedelta(interval).seconds
 
         # return an array of arrays of values
-        y = getValuesLangevin(records, start, mu, sigma, timestep)
+        if useMarkov:
+            y = getValuesMarkov(records, start, mu, sigma, timestep)
+        else:
+            y = getValuesLangevin(records, start, sigma, timestep)
         # steps is an array of timesteps in seconds with length = max(records)
         steps = np.arange(0, max(records) + 1, timestep)
 

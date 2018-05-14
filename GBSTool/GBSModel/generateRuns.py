@@ -16,7 +16,6 @@ import itertools
 import sqlite3
 from shutil import copyfile
 
-# TODO: this needs to be fixed
 def generateRuns(projectSetDir):
     here = os.getcwd()
     os.chdir(projectSetDir) # change directories to the directory for this set of simulations

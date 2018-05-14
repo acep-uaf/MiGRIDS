@@ -34,7 +34,7 @@ def fixDataInterval(data, interval):
 
     #integer, numeric, numeric, numeric -> numeric array
     #uses the Langevin equation to estimate records based on provided mean (mu) and standard deviation and a start value
-    def getValues(records, start, mu, sigma,timestep):
+    def getValues(records, start, sigma,timestep):
         import numpy as np
 
 
@@ -45,10 +45,11 @@ def fixDataInterval(data, interval):
 
 
         #renormalized variables
+        # TODO: look at sigma calculation
         sigma_bis = sigma * np.sqrt(2.0 / n) # adapted from ipython interactive computing visualization cookbook
         sqrtdt = np.sqrt(timestep)
         #x is the array that will contain the new values
-        x = np.zeros(shape=(len(mu), int(max(n))))
+        x = np.zeros(shape=(len(start), int(max(n))))
         #the starter value
         x[:, 0] = start
         # use the next step in the time series as the average value for the synthesized data. The values will asympotically reach this value, resulting in a smooth transition.
@@ -74,7 +75,7 @@ def fixDataInterval(data, interval):
         timestep = pd.Timedelta(interval).seconds
 
         #return an array of arrays of values
-        y = getValues(records, start, mu, sigma,timestep)
+        y = getValues(records, start, sigma,timestep)
         #steps is an array of timesteps in seconds with length = max(records)
         steps = np.arange(0, max(records) + 1, timestep)
 
