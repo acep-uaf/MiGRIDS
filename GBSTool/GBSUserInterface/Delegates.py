@@ -93,6 +93,7 @@ class RelationDelegate(QtSql.QSqlRelationalDelegate):
         QtSql.QSqlRelationalDelegate.__init__(self,parent)
         self.parent = parent
         self.name=name
+
     def createEditor(self, parent, option, index):
         #make a combo box if there is a valid relation
         if index.model().relation(index.column()).isValid:
@@ -101,6 +102,7 @@ class RelationDelegate(QtSql.QSqlRelationalDelegate):
             return editor
         else:
             return QtWidgets.QStyledItemDelegate(parent).createEditor(parent,option,index)
+
     def setEditorData(self, editor, index):
         m = index.model()
         relation = m.relation(index.column())
@@ -114,6 +116,7 @@ class RelationDelegate(QtSql.QSqlRelationalDelegate):
 
     def setModelData(self,editor, model, index):
          model.setData(index, editor.itemText(editor.currentIndex()))
+
 
 
     @QtCore.pyqtSlot()

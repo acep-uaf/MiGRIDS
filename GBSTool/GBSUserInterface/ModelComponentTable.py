@@ -1,7 +1,7 @@
 
 from Delegates import *
 
-#subclass of QTableView for displaying component information
+#QTableView for displaying component information
 class ComponentTableView(QtWidgets.QTableView):
     def __init__(self, *args, **kwargs):
         self.column3 = kwargs.get('column3')
@@ -16,11 +16,9 @@ class ComponentTableView(QtWidgets.QTableView):
         self.setColumnHidden(0, True)
 
         #combo columns
-
         self.setItemDelegateForColumn(2,RelationDelegate(self,'component_type'))
         self.setItemDelegateForColumn(7, RelationDelegate(self, 'component_attribute'))
         self.setItemDelegateForColumn(4, RelationDelegate(self, 'component_units'))
-
         self.setItemDelegateForColumn(8,ComponentFormOpenerDelegate(self,'+'))
 
 #data model to fill component table

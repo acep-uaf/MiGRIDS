@@ -11,10 +11,9 @@ def fixDataInterval(data, interval):
     ''' data is a DataClass with a pandas dataframe with datetime index.
      interval is the desired interval of data samples. If this is 
      less than what is available in the df a langevin estimator will be used to fill
-     in missing times. If the interval is greater thant the original time interval
+     in missing times. If the interval is greater than the original time interval
      the mean of values within the new interval will be generated'''
     import pandas as pd
-
 
     #df contains the non-upsampled records. Means and standard deviation come from non-upsampled data.
     df = data.fixed.copy()

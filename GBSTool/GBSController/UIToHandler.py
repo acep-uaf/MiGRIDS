@@ -102,6 +102,7 @@ class UIToHandler():
         from fixBadData import fixBadData
         from fixDataInterval import fixDataInterval
 
+
         Village = readXmlTag(setupFile, 'project', 'name')[0]
         # input specification
         # input specification can be for multiple input files or a single file in AVEC format.
@@ -111,7 +112,7 @@ class UIToHandler():
         # input a list of subdirectories under the GBSProjects directory
         fileLocation = readXmlTag(setupFile, 'inputFileDir', 'value')
         fileLocation = os.path.join(*fileLocation)
-        fileLocation = os.path.join('../../GBSProjects', fileLocation)
+        fileLocation = os.path.join('/', fileLocation)
         # file type
         fileType = readXmlTag(setupFile, 'inputFileType', 'value')[0]
         outputInterval = readXmlTag(setupFile, 'outputTimeStep', 'value')[0] + \
@@ -123,17 +124,14 @@ class UIToHandler():
         headerNames, componentUnits, componentAttributes, componentNames, newHeaderNames = getUnits(Village, os.path.dirname(setupFile))
 
         # read time series data, combine with wind data if files are seperate.
-
         df, listOfComponents = readDataFile(inputSpecification, fileLocation, fileType, headerNames, newHeaderNames,
                                             componentUnits,
                                             componentAttributes)  # dataframe with time series information. replace header names with column names
 
         # now fix the bad data
-
         df_fixed = fixBadData(df, os.path.dirname(setupFile), listOfComponents, inputInterval)
 
         # fix the intervals
-
         df_fixed_interval = fixDataInterval(df_fixed, outputInterval)
 
         d = {}
@@ -150,17 +148,17 @@ class UIToHandler():
         from dataframe2netcdf import dataframe2netcdf
         inputDirectory = readXmlTag(setupFile, 'inputFileDir', 'value')
         inputDirectory = os.path.join(*inputDirectory)
-        #inputDirectory = os.path.join(inputDirectory, '../../GBSProjects')
+
         outputDirectory = os.path.join("/",inputDirectory, '../ProcessedData')
-        #it there isn't an output directory make one
+        #if there isn't an output directory make one
         if not os.path.exists(outputDirectory):
             os.makedirs(outputDirectory)
 
         dataframe2netcdf(df, componentDict, outputDirectory)
         return
 
-    #save the data object as a pickle in the processed data folder
-    #Object, string -> None
+    #save the DataClass object as a pickle in the processed data folder
+    #DataClass, string -> None
     def storeData(self,df,setupFile):
 
         inputDirectory = readXmlTag(setupFile, 'inputFileDir', 'value')
@@ -177,20 +175,23 @@ class UIToHandler():
         file.close()
         return
 
-    #read in a pickled data object
+    #read in a pickled data object if it exists
     #string->object
     def loadInputData(self,setupFile):
         inputDirectory = readXmlTag(setupFile, 'inputFileDir', 'value')
         inputDirectory = os.path.join(*inputDirectory)
         outputDirectory = os.path.join('/', inputDirectory, '../ProcessedData')
-        if not os.path.exists(outputDirectory):
-            return None
         outfile = os.path.join(outputDirectory, 'processed_input_file.pkl')
+
+        if not os.path.exists(outfile):
+            return None
+
         file = open(outfile, 'rb')
         data = pickle.load(file)
         file.close()
         return data
-
+    #generates all the set and run folders in the output directories and starts the sequence of models running
+    #String, ComponentTable, SetupInformation
     def runModels(self, currentSet, componentTable, setupInfo):
         from PyQt5 import QtWidgets
         from generateRuns import generateRuns
