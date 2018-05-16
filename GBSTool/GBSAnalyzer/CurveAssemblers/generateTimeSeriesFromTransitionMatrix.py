@@ -17,7 +17,7 @@ def generateTimeSeries(TM, values, startingIdx, length):
     valIdx = startingIdx # the index of the value of the current step in time series
     indices = range(len(TM)) # list of possible indicies
 
-    for idx in range(length):
+    for idx in range(int(length)-1):
         # get next index
         valIdx = random.choices(indices, weights=TM[valIdx])[0]
         # add to the time series

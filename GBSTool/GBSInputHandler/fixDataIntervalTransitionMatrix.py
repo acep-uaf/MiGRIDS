@@ -1,11 +1,13 @@
 
-def fixDataIntervalTransitionMatrix(data, interval, TM, values):
+def fixDataIntervalTransitionMatrix(data, interval, useMarkov = False, TM = [], TMvalues = []):
     '''
     changes the timesteps of a time series to a fixed interval. A transition matrix is used to upsample the data if
     the timesteps in the data are longer than the desired interval
     :param data: input time series, a DataClass object.
+    :param useMarkov: Bool value whether to use Markov. Default if False. If False, Langevin will be used to upsample data.
     :param interval: desired interval in seconds
-    :param TM: transition matrix
+    :param TM: transition matrix of the difference from the linear difference between input data points
+    :param TMvalues: the values corresponding to the TM
     :return: data with a fixed timestep
     '''
 
@@ -30,7 +32,7 @@ def fixDataIntervalTransitionMatrix(data, interval, TM, values):
 
     # integer, numeric, numeric, numeric -> numeric array
     # uses the Langevin equation to estimate records based on provided mean (mu) and standard deviation and a start value
-    def getValuesLangevin(records, start, sigma, timestep):
+    def getValues(records, start, sigma, timestep):
         import numpy as np
 
         # number of steps
@@ -56,7 +58,7 @@ def fixDataIntervalTransitionMatrix(data, interval, TM, values):
 
         return x
 
-    def getValuesMarkov(records, start, mu, sigma, timestep, TM, values):
+    def getValuesMarkov(records, start, timestep, TM, TMvalues):
         '''
         calculates values based on markov chain
         :param records:
@@ -68,25 +70,28 @@ def fixDataIntervalTransitionMatrix(data, interval, TM, values):
         :return:
         '''
         import numpy as np
-        from CurveAssemblers.generateTimeSeriesFromTransitionMatrix import generateTimeSeries
+        from GBSAnalyzer.CurveAssemblers.generateTimeSeriesFromTransitionMatrix import generateTimeSeries
         # number of steps
-        n = (records / timestep) + 1
+        n = [int(x) for x in ((records / timestep) + 1)]
 
         # x is the array that will contain the new values
         x = np.zeros(shape=(len(start), int(max(n))))
-        # initial value
-        x = []
         thisStep = 0 # keeps track of the current timestep
-        for i in range(len(start)): # for each original value
+        for ii in range(len(start)): # for each original value
+            # find index of value
+            startingIdx = np.searchsorted(TMvalues, start[ii], side='left')
+            if startingIdx >= len(TMvalues):
+                startingIdx = len(TMvalues)-1
+            # add linear spaced values to the differences to get total values
+            x[ii,:n[ii]] = generateTimeSeries(TM, TMvalues, startingIdx, n[ii]) + np.linspace(start[ii],start[np.min([ii+1,len(start)-1])],n[ii])
 
-            generateTimeSeries(TM, values, startingIdx, n[i])
 
         return x
 
     # dataframe -> integer array, integer array
     # returns arrays of time as seconds and values estimated using the Langevin equation
     # for all gaps of data within a dataframe
-    def estimateDistribution(df, interval, useMarkov = False):
+    def estimateDistribution(df, interval, useMarkov = False, TM = [], TMvalues = []):
         import numpy as np
         # feeders for the langevin estimate
         mu = df['mu']
@@ -96,16 +101,21 @@ def fixDataIntervalTransitionMatrix(data, interval, TM, values):
         timestep = pd.Timedelta(interval).seconds
 
         # return an array of arrays of values
-        if useMarkov:
-            y = getValuesMarkov(records, start, mu, sigma, timestep)
+        if not useMarkov:
+            y = getValues(records, start, sigma, timestep)
         else:
-            y = getValuesLangevin(records, start, sigma, timestep)
+            y = getValuesMarkov(records, start, timestep, TM, TMvalues)
+
         # steps is an array of timesteps in seconds with length = max(records)
         steps = np.arange(0, max(records) + 1, timestep)
 
         # t is the numeric value of the dataframe timestamps
         t = pd.to_timedelta(pd.Series(pd.to_datetime(df.index.values, unit='s'), index=df.index)).dt.total_seconds()
-
+        # test if the index can be interpreted as datetime, if not recognized, convert
+        # try:
+        #    t = pd.to_timedelta(pd.Series(df.index.values)).dt.total_seconds()
+        # except ValueError:
+        #    t = pd.to_timedelta(pd.Series(pd.to_datetime(df.index.values, unit='s'), index=df.index)).dt.total_seconds()
         # intervals is the steps array repeated for every row of time
         intervals = np.repeat(steps, len(t), axis=0)
         # reshape the interval matrix so each row has every timestep
@@ -123,10 +133,14 @@ def fixDataIntervalTransitionMatrix(data, interval, TM, values):
     # if the resampled dataframe is bigger fill in new values
     if len(df) < len(data.fixed):
         # t is the time, k is the estimated value
-        t, k = estimateDistribution(df, interval)
+        t, k = estimateDistribution(df, interval, useMarkov, TM , TMvalues )  # t is number of seconds since 1970
         simulatedDf = pd.DataFrame({'time': t, 'value': k})
-        simulatedDf = simulatedDf.set_index(pd.to_datetime(simulatedDf['time']))
+        simulatedDf = simulatedDf.set_index(
+            pd.to_datetime(simulatedDf['time'] * 1e9))  # need to scale to nano seconds to make datanumber
         simulatedDf = simulatedDf[~simulatedDf.index.duplicated(keep='last')]
+        # make sure timestamps for both df's are rounded to the same interval in order to join sucessfully
+        data.fixed.index = data.fixed.index.floor(interval)
+        simulatedDf.index = simulatedDf.index.floor(interval)
         # join the simulated values to the upsampled dataframe by timestamp
         data.fixed = data.fixed.join(simulatedDf, how='left')
         # fill na's for total_p with simulated values
@@ -141,5 +155,3 @@ def fixDataIntervalTransitionMatrix(data, interval, TM, values):
 
     data.removeAnomolies()
     return data
-
-
