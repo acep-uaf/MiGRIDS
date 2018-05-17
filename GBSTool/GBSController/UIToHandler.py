@@ -196,6 +196,7 @@ class UIToHandler():
         from PyQt5 import QtWidgets
         from generateRuns import generateRuns
         from makeAttributeXML import makeAttributeXML, writeAttributeXML
+        from runSimulation0 import runSimulation
         #generate xml's based on inputs
         #call to run models
 
@@ -227,6 +228,9 @@ class UIToHandler():
         #if it does delete it.
         #generate run folders from attributes xml
         generateRuns(setDir)
+
+        #now start running models
+        runSimulation(projectSetDir=setDir)
 
     def inputHandlerToUI(self, setupFolder, setupInfo):
         from GBSInputHandler.getSetupInformation import getSetupInformation
