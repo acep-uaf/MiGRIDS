@@ -42,9 +42,9 @@ class ModelSetupInformation:
                                    'dateChannelformat':[self.assignDateChannel,SetupTag.assignFormat],
                                    'dateChannelvalue': [self.assignDateChannel, SetupTag.assignValue],
                                    'inputTimeStepvalue':[self.assignInputTimeStep,SetupTag.assignValue],
-                                   'outputTimeStepvalue':[self.assignOutputTimeStep,SetupTag.assignValue],
+                                   'timeStepvalue':[self.assigntimeStep,SetupTag.assignValue],
                                    'inputTimeStepunit':[self.assignInputTimeStep,SetupTag.assignUnits],
-                                   'outputTimeStepunit': [self.assignOutputTimeStep, SetupTag.assignUnits],
+                                   'timeStepunit': [self.assigntimeStep, SetupTag.assignUnits],
                                    'realLoadChannelvalue':[self.assignLoadChannel,SetupTag.assignValue],
                                    'realLoadChannelunit': [self.assignLoadChannel, SetupTag.assignUnits],
                                    'timeChannelformat': [self.assignTimeChannel, SetupTag.assignFormat],
@@ -74,7 +74,7 @@ class ModelSetupInformation:
         self.inputFileFormat = SetupTag('inputFileFormat')
         self.inputFileType = SetupTag('inputFileType')
         self.inputTimeStep = SetupTag('inputTimeStep')
-        self.outputTimeStep = SetupTag('outputTimeStep')
+        self.timeStep = SetupTag('timeStep')
         self.inputFileDir = SetupTag('inputFileDir')
         self.componentNames = SetupTag('componentNames')
         self.headerName = SetupTag('headerName')
@@ -164,8 +164,8 @@ class ModelSetupInformation:
     def assignInputTimeStep(self, m, v):
         self.inputTimeStep.assign(m, v)
 
-    def assignOutputTimeStep(self,m, v):
-        self.outputTimeStep.assign(m, v)
+    def assigntimeStep(self,m, v):
+        self.timeStep.assign(m, v)
 
     def assignWindFileDir(self,m,v):
         self.windFileDir.assign(m,v)

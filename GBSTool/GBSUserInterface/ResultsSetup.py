@@ -143,12 +143,15 @@ class ResultsSetup(QtWidgets.QWidget):
             #by replacing the current pickle with the loaded one the user can manually edit the input and
             #  then return to working with the interface
             data = handler.loadInputData(setupFile)
-            df = data.fixed
-            componentDict = {}
-            if 'components' not in setupModel.__dict__.keys():
-                #generate components
-                setupForm.makeComponentList(componentModel)
-            for c in setupModel.components:
-                componentDict[c.component_name] = c.toDictionary()
+            if data:
+                df = data.fixed
+                componentDict = {}
+                if 'components' not in setupModel.__dict__.keys():
+                    #generate components
+                    setupForm.makeComponentList(componentModel)
+                for c in setupModel.components:
+                    componentDict[c.component_name] = c.toDictionary()
 
-            handler.createNetCDF(df, componentDict,setupFile)
+                handler.createNetCDF(df, componentDict,setupFile)
+            else:
+                print("no data found")

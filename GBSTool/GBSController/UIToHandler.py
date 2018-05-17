@@ -115,8 +115,8 @@ class UIToHandler():
         fileLocation = os.path.join('/', fileLocation)
         # file type
         fileType = readXmlTag(setupFile, 'inputFileType', 'value')[0]
-        outputInterval = readXmlTag(setupFile, 'outputTimeStep', 'value')[0] + \
-                         readXmlTag(setupFile, 'outputTimeStep', 'unit')[0]
+        outputInterval = readXmlTag(setupFile, 'timeStep', 'value')[0] + \
+                         readXmlTag(setupFile, 'timeStep', 'unit')[0]
         inputInterval = readXmlTag(setupFile, 'inputTimeStep', 'value')[0] + \
                         readXmlTag(setupFile, 'inputTimeStep', 'unit')[0]
 
@@ -163,7 +163,7 @@ class UIToHandler():
 
         inputDirectory = readXmlTag(setupFile, 'inputFileDir', 'value')
         inputDirectory = os.path.join(*inputDirectory)
-        inputDirectory = os.path.join('../../GBSProjects', inputDirectory)
+        #inputDirectory = os.path.join('../../GBSProjects', inputDirectory)
         print(inputDirectory)
         outputDirectory = os.path.join(inputDirectory, '../ProcessedData')
         print(outputDirectory)

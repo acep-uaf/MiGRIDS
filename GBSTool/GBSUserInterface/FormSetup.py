@@ -248,8 +248,8 @@ class FormSetup(QtWidgets.QWidget):
                           'Input':{'Value':{'widget':'txt','name':'inputTimeStepvalue'},
                                     'Units':{'widget':'combo','items':['S','M','H'],'name':'inputTimeStepunit'}
                                    },
-                          'Output':{'Value':{'widget':'txt','name':'outputTimeStepvalue'},
-                                    'Units':{'widget':'combo','items':['S','M','H'],'name':'outputTimeStepunit'}}
+                          'Output':{'Value':{'widget':'txt','name':'timeStepvalue'},
+                                    'Units':{'widget':'combo','items':['S','M','H'],'name':'timeStepunit'}}
                           }
         grid = setupGrid(g2)
         hlayout.addLayout(grid)
@@ -588,7 +588,7 @@ class FormSetup(QtWidgets.QWidget):
             self.model.writeNewXML()
 #TODO add progress bar for uploading raw data and generating fixed data pickle
     def addProgressBar(self):
-        self.bar = QtWidgets.QProgressBar(self)
-        self.bar.objectName('uploadBar')
-        self.bar.setGeometry(100,100,100,50)
-        return self.bar
+        self.progress = QtWidgets.QProgressBar(self)
+        self.progress.setObjectName('uploadBar')
+        self.progress.setGeometry(100,100,100,50)
+        return self.progress
