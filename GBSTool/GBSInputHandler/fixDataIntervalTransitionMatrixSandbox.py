@@ -12,6 +12,11 @@ import copy
 import os
 from netCDF4 import Dataset
 
+### constants
+saveLocation = 'C:\\Users\\jbvandermeer\\Documents\\ACEP\\GBS\\TimeSeriesSynthesis\\BenchMarkPerformance\\Figures'
+
+
+'''
 #### create a sine wave ###
 Fs = 1/(60*15) # sampling freq: once every 15 min
 t = np.arange(1000)*(60*15) # time steps every 15 min
@@ -32,21 +37,18 @@ mu = 50
 sigma = 20
 for idx in range(len(values)):
     values[idx] += random.gauss(mu=mu, sigma=sigma) - mu/2
-
+'''
 #### grab Igiugig data ####
+# number of desired data points
+N = 2000000 # sample size
 # cd to Igiugig data
 here = os.path.dirname(os.path.realpath(__file__))
 os.chdir(here)
 os.chdir('..\..\GBSProjects\Igiugig0\InputData\TimeSeriesData\ProcessedData')
 # totalizer load, 15 min averages
 rootgrp = Dataset('load0P.nc', "r", format="NETCDF4")
-date_list = pd.to_datetime(rootgrp.variables['time'][0],unit='s')
-values = rootgrp.variables['value'][0]
-
-# Reduce the size of data to speed up testing
-N = 10000 # sample size
-date_list = date_list[:N]
-values = values[:N]
+date_list = pd.to_datetime(rootgrp.variables['time'][0][:N],unit='s')
+values = rootgrp.variables['value'][0][:N]
 
 # make low res data
 Ts = np.mean(np.diff(date_list)) / np.timedelta64(1,'s')  # mean sampling period in seconds of input data
@@ -77,9 +79,10 @@ Acopy = copy.copy(A)
 AHighRes = DataClass(dfHighRes,Fs)
 AHighRes.powerComponents = ['gen1','gen2']
 AHighRes.totalPower()
-'''
+
 ### test Langevin upsampling ###
-df = fixDataIntervalTransitionMatrix(A,'1s','','')
+sigma = np.std(AHighRes.raw.total_p)
+df = fixDataIntervalTransitionMatrix(A,'1s', sigma)
 plt.plot(df.fixed.gen1,'*-')
 plt.plot(df.raw.gen1,'*-')
 plt.show()
@@ -87,7 +90,7 @@ plt.show()
 # test frequency distribution
 # get the fft of input data
 yf_in = scipy.fftpack.fft(values)
-N_in = len(t)
+N_in = len(date_list)
 xf_in = np.linspace(0.0, 0.5*Fs, int(N_in/2))
 # get fft of output data
 yf_out = scipy.fftpack.fft(df.fixed.gen1)
@@ -100,7 +103,7 @@ plt.plot(xf_in, 2.0/N_in * np.abs(yf_in[:int(N_in/2)]))
 plt.plot(xf_out, 2.0/N_out * np.abs(yf_out[:int(N_out/2)]))
 
 plt.show()
-'''
+
 ### Test Markov ###
 
 # get transition matrix of differences from the moving average
@@ -109,14 +112,24 @@ window = TsRatio # make the window size the number of steps inbetween the low re
 valuesMovAve = AHighRes.raw.total_p.rolling(window).mean()
 valuesMovAve = valuesMovAve.bfill()
 valuesDiff = AHighRes.raw.total_p - valuesMovAve
+
+# upsample the low res data linearly.
+x = range(len(values))
+xLowRes = np.linspace(0,len(values),len(Acopy.raw.total_p))
+valuesInterp = np.interp(x, xLowRes, Acopy.raw.total_p)
+valuesDiff = AHighRes.raw.total_p - valuesInterp
+
 tm, tmValues = getTransitionMatrix(valuesDiff,numStates=100)
 
-dfMarkov = fixDataIntervalTransitionMatrix(Acopy,'1s', True, tm, tmValues)
+dfMarkov = fixDataIntervalTransitionMatrix(Acopy,'1s', sigma, True, tm, tmValues)
 
 plt.figure()
-plt.plot(dfMarkov.fixed.total_p,'*-')
-#plt.plot(df.fixed.gen1,'*-')
+plt.plot(dfMarkov.fixed.total_p)
+plt.plot(df.fixed.total_p)
 plt.plot(dfMarkov.raw.total_p,'*-')
+plt.plot(date_list,values*2)
+plt.legend(['Markov','Langevin','Original Low Res','Original High Res'])
+plt.ylabel('kW')
 plt.show()
 
 # test frequency distribution
@@ -124,3 +137,153 @@ plt.show()
 yf_outMarkov = scipy.fftpack.fft(dfMarkov.fixed.gen1)
 N_outMarkov = len(dfMarkov.fixed.gen1)
 xf_outMarkov = np.linspace(0.0, 0.5*1, int(N_out/2))
+
+# plot fft
+plt.figure()
+plt.plot(xf_in[1:], 2.0/N_in * np.abs(yf_in[1:int(N_in/2)]))
+plt.plot(xf_out[1:], 2.0/N_out * np.abs(yf_out[1:int(N_out/2)]))
+plt.plot(xf_outMarkov[1:], 2.0/N_out * np.abs(yf_outMarkov[1:int(N_out/2)]))
+plt.legend(['Langevin','Original','Markov'])
+
+### autocorrelation
+# look at up to > 1 day lag
+lagList = np.linspace(0,100000,99)
+originalAC = [] # original data
+# Langevin data
+langAC = []
+# Markov data
+markAC = []
+for lag in lagList:
+    originalAC += [AHighRes.raw.total_p.autocorr(int(int(lag)))]
+    langAC += [df.fixed.total_p.autocorr(int(int(lag)))]
+    markAC += [dfMarkov.fixed.total_p.autocorr(int(int(lag)))]
+
+# plot
+plt.figure()
+plt.plot(lagList/3600,originalAC)
+plt.plot(lagList/3600,langAC)
+plt.plot(lagList/3600,markAC)
+
+plt.legend(['Original','Langevin','Markov'])
+plt.xlabel('hours')
+plt.ylabel('Autocorrelation')
+os.chdir(saveLocation)
+#plt.savefig('AutoCorrelation.png')
+
+
+# look at around 30 min lag
+lagList = np.linspace(0, 2000, 100)
+originalAC = []  # original data
+# Langevin data
+langAC = []
+# Markov data
+markAC = []
+for lag in lagList:
+    originalAC += [AHighRes.raw.total_p.autocorr(int(int(lag)))]
+    langAC += [df.fixed.total_p.autocorr(int(int(lag)))]
+    markAC += [dfMarkov.fixed.total_p.autocorr(int(int(lag)))]
+
+# plot
+plt.figure()
+plt.plot(lagList/60, originalAC)
+plt.plot(lagList/60, langAC)
+plt.plot(lagList/60, markAC)
+
+plt.legend(['Original', 'Langevin', 'Markov'])
+plt.xlabel('minutes')
+plt.ylabel('Autocorrelation')
+os.chdir(saveLocation)
+#plt.savefig('AutoCorrelationZoom.png')
+
+
+### power spectral density
+
+plt.subplot(211)
+plt.plot(date_list,values*2)
+plt.plot(df.fixed.total_p)
+plt.plot(dfMarkov.fixed.total_p)
+plt.legend(['Original','Langevin','Markov'])
+plt.ylabel('kW')
+plt.subplot(212)
+plt.psd(AHighRes.raw.total_p,256,1)
+plt.psd(df.fixed.total_p,256,1)
+plt.psd(dfMarkov.fixed.total_p,256,1)
+plt.show()
+
+plt.figure()
+plt.psd(AHighRes.raw.total_p,256,1)
+plt.psd(df.fixed.total_p,256,1)
+plt.psd(dfMarkov.fixed.total_p,256,1)
+plt.show()
+
+from scipy import signal
+freqsOrig, psdOrig = signal.welch(AHighRes.raw.total_p, 1.0)
+freqsLang, psdLang = signal.welch(df.fixed.total_p, 1.0)
+freqsMarkov, psdMarkov = signal.welch(dfMarkov.fixed.total_p, 1.0)
+plt.figure()
+plt.semilogx(freqsOrig, psdOrig)
+plt.semilogx(freqsLang, psdLang)
+plt.semilogx(freqsMarkov, psdMarkov)
+plt.title('PSD: power spectral density')
+plt.xlabel('Frequency')
+plt.ylabel('Power')
+plt.tight_layout()
+
+
+### pdf
+
+bins = np.linspace(np.min(AHighRes.raw.total_p)*0.8, np.max(AHighRes.raw.total_p)*1.2,20)
+histOrig = np.histogram(AHighRes.raw.total_p, bins = bins)
+histLang = np.histogram(df.fixed.total_p,bins = bins)
+histMarkov = np.histogram(dfMarkov.fixed.total_p,bins = bins)
+
+xPdf = bins[:-1]
+barWidth = np.min(np.diff(bins))/4
+plt.figure()
+plt.bar(xPdf,histOrig[0]/sum(histOrig[0])*100,barWidth)
+plt.bar(xPdf + barWidth,histLang[0]/sum(histLang[0])*100, barWidth)
+plt.bar(xPdf + 2* barWidth,histMarkov[0]/sum(histMarkov[0])*100, barWidth)
+plt.xlabel('kW')
+plt.ylabel('Percent of time [%]')
+plt.legend(['Original','Langevin','Markov'])
+
+### statistics
+def getStats(sig):
+    # sig is the signal to get parameters for
+    percentiles = [1,10,25,50,75,90,99]
+    perctVal = []
+    for percentile in percentiles:
+        perctVal += [np.percentile(sig,percentile)]
+    return [np.mean(sig), np.min(sig), np.max(sig), np.std(sig)], perctVal
+
+statsOrig = getStats(AHighRes.raw.total_p)
+statsLang = getStats(df.fixed.total_p)
+statsMark = getStats(dfMarkov.fixed.total_p)
+
+os.chdir(saveLocation)
+import csv
+with open('stats.csv', 'w', newline='') as csvfile:
+    spamwriter = csv.writer(csvfile, delimiter=' ',
+                            quotechar='|', quoting=csv.QUOTE_MINIMAL)
+    spamwriter.writerow(statsOrig)
+    spamwriter.writerow(statsLang)
+    spamwriter.writerow(statsMark)
+
+# TODO: finish
+def saveFigure(extension):
+    import tkinter as tk
+    from tkinter import filedialog
+    print('Choose the where to save the figure.')
+    f = filedialog.asksaveasfile(mode='w', defaultextension=extension)
+    if f is None:  # asksaveasfile return `None` if dialog closed with "cancel".
+        return
+    text2save = str(text.get(1.0, END))  # starts from `1.0`, not `0.0`
+    f.write(text2save)
+    f.close()  # `()` was missing.
+
+
+
+    root = tk.Tk()
+    root.withdraw()
+    figName = filedialog.asksaveasfile()
+    plt.savefig('AutoCorrelation.png')

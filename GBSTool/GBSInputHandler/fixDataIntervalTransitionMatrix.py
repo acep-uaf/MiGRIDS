@@ -1,5 +1,5 @@
 
-def fixDataIntervalTransitionMatrix(data, interval, useMarkov = False, TM = [], TMvalues = []):
+def fixDataIntervalTransitionMatrix(data, interval, sigma = None, useMarkov = False, TM = [], TMvalues = []):
     '''
     changes the timesteps of a time series to a fixed interval. A transition matrix is used to upsample the data if
     the timesteps in the data are longer than the desired interval
@@ -77,11 +77,8 @@ def fixDataIntervalTransitionMatrix(data, interval, useMarkov = False, TM = [], 
         # x is the array that will contain the new values
         x = np.zeros(shape=(len(start), int(max(n))))
         thisStep = 0 # keeps track of the current timestep
+        startingIdx = np.searchsorted(TMvalues, 0, side='left') # initial difference is zero
         for ii in range(len(start)): # for each original value
-            # find index of value
-            startingIdx = np.searchsorted(TMvalues, start[ii], side='left')
-            if startingIdx >= len(TMvalues):
-                startingIdx = len(TMvalues)-1
             # add linear spaced values to the differences to get total values
             x[ii,:n[ii]] = generateTimeSeries(TM, TMvalues, startingIdx, n[ii]) + np.linspace(start[ii],start[np.min([ii+1,len(start)-1])],n[ii])
 
@@ -91,12 +88,13 @@ def fixDataIntervalTransitionMatrix(data, interval, useMarkov = False, TM = [], 
     # dataframe -> integer array, integer array
     # returns arrays of time as seconds and values estimated using the Langevin equation
     # for all gaps of data within a dataframe
-    def estimateDistribution(df, interval, useMarkov = False, TM = [], TMvalues = []):
+    def estimateDistribution(df, interval, sigma = None, useMarkov = False, TM = [], TMvalues = []):
         import numpy as np
         # feeders for the langevin estimate
         mu = df['mu']
         start = df['total_p']
-        sigma = df['sigma']
+        if sigma is None:
+            sigma = df['sigma']
         records = df['timediff'] / pd.to_timedelta(interval)
         timestep = pd.Timedelta(interval).seconds
 
@@ -133,7 +131,7 @@ def fixDataIntervalTransitionMatrix(data, interval, useMarkov = False, TM = [], 
     # if the resampled dataframe is bigger fill in new values
     if len(df) < len(data.fixed):
         # t is the time, k is the estimated value
-        t, k = estimateDistribution(df, interval, useMarkov, TM , TMvalues )  # t is number of seconds since 1970
+        t, k = estimateDistribution(df, interval, sigma, useMarkov, TM , TMvalues )  # t is number of seconds since 1970
         simulatedDf = pd.DataFrame({'time': t, 'value': k})
         simulatedDf = simulatedDf.set_index(
             pd.to_datetime(simulatedDf['time'] * 1e9))  # need to scale to nano seconds to make datanumber
