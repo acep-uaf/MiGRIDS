@@ -1,6 +1,7 @@
 
 from fixDataIntervalTransitionMatrix import fixDataIntervalTransitionMatrix
 from fixDataInterval import fixDataInterval
+from GBSAnalyzer.PerformanceAnalyzers.rainfallCounting import rainflow
 from fixBadData import DataClass
 import pandas as pd
 import random
@@ -11,10 +12,12 @@ import scipy.fftpack
 import copy
 import os
 from netCDF4 import Dataset
+import pickle
+
 
 ### constants
 saveLocation = 'C:\\Users\\jbvandermeer\\Documents\\ACEP\\GBS\\TimeSeriesSynthesis\\BenchMarkPerformance\\Figures'
-
+timeNow = datetime.datetime.now().strftime("%Y %m %d %H %M %S")
 
 '''
 #### create a sine wave ###
@@ -40,7 +43,7 @@ for idx in range(len(values)):
 '''
 #### grab Igiugig data ####
 # number of desired data points
-N = 2000000 # sample size
+N = 1000000 # sample size
 # cd to Igiugig data
 here = os.path.dirname(os.path.realpath(__file__))
 os.chdir(here)
@@ -80,12 +83,44 @@ AHighRes = DataClass(dfHighRes,Fs)
 AHighRes.powerComponents = ['gen1','gen2']
 AHighRes.totalPower()
 
+# save
+os.chdir(saveLocation)
+pickle.dump(AHighRes,open("OriginalResults"+timeNow+".p", "wb"))
+
 ### test Langevin upsampling ###
-sigma = np.std(AHighRes.raw.total_p)
-df = fixDataIntervalTransitionMatrix(A,'1s', sigma)
+# find average std per 15 min period
+sigmaList = []
+meanList = []
+#for idx in range(np.min([int((len(AHighRes.raw.total_p)-(15*60))/(15*60)),100000])):
+for idx in range(len(A.raw.total_p)): # for each low res value
+    sigmaList += [np.std(AHighRes.raw.total_p[idx*15*60:(idx+1)*15*60])]
+    meanList += [np.mean(AHighRes.raw.total_p[idx*15*60:(idx+1)*15*60])]
+sigma = np.nanmean(sigmaList)
+sigma = None
+sigmaFromLowRes = A.raw.total_p.rolling(10, 1).std() # for comparing with other sigma calculation
+sigmaFromLowRes[0] = sigmaFromLowRes[1]
+plt.plot(sigmaFromLowRes,sigmaList,'.',markersize = 1)
+# compare pdfs of rolling 15 min and 1 sec data
+bins = np.linspace(np.min([np.min(sigmaList),np.min(sigmaFromLowRes)]), np.max([np.max(sigmaList),np.max(sigmaFromLowRes)]),20)
+histSigma1sec = np.histogram(sigmaList, bins = bins)
+histSigma15min = np.histogram(sigmaFromLowRes, bins = bins)
+xPdf = bins[:-1]
+barWidth = np.min(np.diff(bins))/3
+plt.figure()
+plt.bar(xPdf,histSigma1sec[0]/sum(histSigma1sec[0])*100,barWidth)
+plt.bar(xPdf + barWidth,histSigma15min[0]/sum(histSigma15min[0])*100, barWidth)
+plt.ylabel('Probability [%]')
+plt.xlabel('Standard Deviation')
+plt.legend(['STD of 1 sec values in a 15 min period','Rolling STD of the 10 past 15 min values'])
+#sigma = np.std(AHighRes.raw.total_p)
+df = fixDataIntervalTransitionMatrix(A,'1s', sigma, stdNum = 5)
 plt.plot(df.fixed.gen1,'*-')
 plt.plot(df.raw.gen1,'*-')
-plt.show()
+#plt.show()
+
+#save data
+os.chdir(saveLocation)
+pickle.dump(df,open("LangevinResults"+timeNow+".p", "wb"))
 
 # test frequency distribution
 # get the fft of input data
@@ -102,7 +137,7 @@ plt.figure()
 plt.plot(xf_in, 2.0/N_in * np.abs(yf_in[:int(N_in/2)]))
 plt.plot(xf_out, 2.0/N_out * np.abs(yf_out[:int(N_out/2)]))
 
-plt.show()
+#plt.show()
 
 ### Test Markov ###
 
@@ -121,7 +156,11 @@ valuesDiff = AHighRes.raw.total_p - valuesInterp
 
 tm, tmValues = getTransitionMatrix(valuesDiff,numStates=100)
 
-dfMarkov = fixDataIntervalTransitionMatrix(Acopy,'1s', sigma, True, tm, tmValues)
+dfMarkov = fixDataIntervalTransitionMatrix(Acopy,'1s', sigma, True, tm, tmValues, stdNum = 5)
+
+# save
+os.chdir(saveLocation)
+pickle.dump(df,open("MarkovResults"+timeNow+".p", "wb"))
 
 plt.figure()
 plt.plot(dfMarkov.fixed.total_p)
@@ -130,6 +169,7 @@ plt.plot(dfMarkov.raw.total_p,'*-')
 plt.plot(date_list,values*2)
 plt.legend(['Markov','Langevin','Original Low Res','Original High Res'])
 plt.ylabel('kW')
+plt.savefig('timeSeries '+timeNow+'.png')
 plt.show()
 
 # test frequency distribution
@@ -144,6 +184,8 @@ plt.plot(xf_in[1:], 2.0/N_in * np.abs(yf_in[1:int(N_in/2)]))
 plt.plot(xf_out[1:], 2.0/N_out * np.abs(yf_out[1:int(N_out/2)]))
 plt.plot(xf_outMarkov[1:], 2.0/N_out * np.abs(yf_outMarkov[1:int(N_out/2)]))
 plt.legend(['Langevin','Original','Markov'])
+plt.savefig('fft '+timeNow+'.png')
+# plt.show()
 
 ### autocorrelation
 # look at up to > 1 day lag
@@ -158,16 +200,23 @@ for lag in lagList:
     langAC += [df.fixed.total_p.autocorr(int(int(lag)))]
     markAC += [dfMarkov.fixed.total_p.autocorr(int(int(lag)))]
 
+# save
+os.chdir(saveLocation)
+pickle.dump(originalAC,open("originalAC"+timeNow+".p", "wb"))
+pickle.dump(langAC,open("langAC"+timeNow+".p", "wb"))
+pickle.dump(markAC,open("markAC"+timeNow+".p", "wb"))
+
 # plot
 plt.figure()
 plt.plot(lagList/3600,originalAC)
 plt.plot(lagList/3600,langAC)
 plt.plot(lagList/3600,markAC)
-
 plt.legend(['Original','Langevin','Markov'])
 plt.xlabel('hours')
 plt.ylabel('Autocorrelation')
+plt.show()
 os.chdir(saveLocation)
+plt.savefig('AutoCorrelation '+timeNow+'.png')
 #plt.savefig('AutoCorrelation.png')
 
 
@@ -183,16 +232,23 @@ for lag in lagList:
     langAC += [df.fixed.total_p.autocorr(int(int(lag)))]
     markAC += [dfMarkov.fixed.total_p.autocorr(int(int(lag)))]
 
+# save
+os.chdir(saveLocation)
+pickle.dump(originalAC,open("originalACZoom"+timeNow+".p", "wb"))
+pickle.dump(langAC,open("langACZoom"+timeNow+".p", "wb"))
+pickle.dump(markAC,open("markACZoom"+timeNow+".p", "wb"))
+
 # plot
 plt.figure()
 plt.plot(lagList/60, originalAC)
 plt.plot(lagList/60, langAC)
 plt.plot(lagList/60, markAC)
-
 plt.legend(['Original', 'Langevin', 'Markov'])
 plt.xlabel('minutes')
 plt.ylabel('Autocorrelation')
 os.chdir(saveLocation)
+plt.show()
+plt.savefig('AutoCorrelationZoom '+timeNow+'.png')
 #plt.savefig('AutoCorrelationZoom.png')
 
 
@@ -205,29 +261,27 @@ plt.plot(dfMarkov.fixed.total_p)
 plt.legend(['Original','Langevin','Markov'])
 plt.ylabel('kW')
 plt.subplot(212)
-plt.psd(AHighRes.raw.total_p,256,1)
-plt.psd(df.fixed.total_p,256,1)
-plt.psd(dfMarkov.fixed.total_p,256,1)
-plt.show()
+origPSD = plt.psd(AHighRes.raw.total_p,256,1)
+langPSD = plt.psd(df.fixed.total_p,256,1)
+markPSD = plt.psd(dfMarkov.fixed.total_p,256,1)
+plt.savefig('psd '+timeNow+'.png')
+#plt.show()
 
 plt.figure()
 plt.psd(AHighRes.raw.total_p,256,1)
 plt.psd(df.fixed.total_p,256,1)
 plt.psd(dfMarkov.fixed.total_p,256,1)
-plt.show()
+plt.legend(['Original','Langevin','Markov'])
+plt.ylabel('kW')
+plt.savefig('psdZoom '+timeNow+'.png')
+#plt.show()
 
-from scipy import signal
-freqsOrig, psdOrig = signal.welch(AHighRes.raw.total_p, 1.0)
-freqsLang, psdLang = signal.welch(df.fixed.total_p, 1.0)
-freqsMarkov, psdMarkov = signal.welch(dfMarkov.fixed.total_p, 1.0)
-plt.figure()
-plt.semilogx(freqsOrig, psdOrig)
-plt.semilogx(freqsLang, psdLang)
-plt.semilogx(freqsMarkov, psdMarkov)
-plt.title('PSD: power spectral density')
-plt.xlabel('Frequency')
-plt.ylabel('Power')
-plt.tight_layout()
+# save
+os.chdir(saveLocation)
+pickle.dump(origPSD,open("origPSD"+timeNow+".p", "wb"))
+pickle.dump(langPSD,open("langPSD"+timeNow+".p", "wb"))
+pickle.dump(markPSD,open("markPSD"+timeNow+".p", "wb"))
+
 
 
 ### pdf
@@ -236,6 +290,12 @@ bins = np.linspace(np.min(AHighRes.raw.total_p)*0.8, np.max(AHighRes.raw.total_p
 histOrig = np.histogram(AHighRes.raw.total_p, bins = bins)
 histLang = np.histogram(df.fixed.total_p,bins = bins)
 histMarkov = np.histogram(dfMarkov.fixed.total_p,bins = bins)
+
+# save
+os.chdir(saveLocation)
+pickle.dump(histOrig,open("histOrig"+timeNow+".p", "wb"))
+pickle.dump(histLang,open("histLang"+timeNow+".p", "wb"))
+pickle.dump(histMarkov,open("histMarkov"+timeNow+".p", "wb"))
 
 xPdf = bins[:-1]
 barWidth = np.min(np.diff(bins))/4
@@ -246,6 +306,43 @@ plt.bar(xPdf + 2* barWidth,histMarkov[0]/sum(histMarkov[0])*100, barWidth)
 plt.xlabel('kW')
 plt.ylabel('Percent of time [%]')
 plt.legend(['Original','Langevin','Markov'])
+plt.savefig('pdf  '+timeNow+'.png')
+plt.show()
+
+### rainflow
+# find extremeties
+def turningpoints(lst):
+    dx = np.diff(lst)
+    dxSign = np.sign(dx) # get the sign of the differences
+    ddxSign = np.diff(dxSign) # differences of the sign of differences, indicate all turning points
+    idxTurn = np.where(ddxSign)[0]
+    return [lst[int(idx+1)] for idx in idxTurn]
+
+# Take the integral of the time series. If this is a load profile, given a perfectly level power source, these cycle
+# amplitudes represent the total energy in and out of the energy storage system, the total require capacity. If the
+# time series is a generating profile and the load is perfectly level, it means the same thing.
+langCumSum = np.cumsum(df.fixed.total_p - np.mean(df.fixed.total_p))
+origCumSum = np.cumsum(AHighRes.raw.total_p - np.mean(AHighRes.raw.total_p))
+langExt = turningpoints(langCumSum)
+origExt = turningpoints(origCumSum)
+rf = rainflow(np.array(langExt))
+# sort according to cycle amplitude
+idxRf = rf[0,:].argsort()
+rf = rf[:,idxRf]
+essSize = rf[0,:]
+# ess savings are cycle amplitude (peak) * number of full cyles * 2
+# (since 1 half cycle is a charge/discharge)
+essSavings = np.cumsum(rf[0,:]*rf[3,:])*2
+# bin
+rfCount = np.histogram(rf,20)
+plt.loglog(essSize,essSavings)
+plt.xlabel('Maximum cycle amplitude [kW]')
+plt.ylabel('Total throughput [kWh]')
+
+# TODO: bin count according to amplitude bins, to get the number of cycles and total throughput per cycle amplitude
+
+
+
 
 ### statistics
 def getStats(sig):
@@ -262,7 +359,7 @@ statsMark = getStats(dfMarkov.fixed.total_p)
 
 os.chdir(saveLocation)
 import csv
-with open('stats.csv', 'w', newline='') as csvfile:
+with open('stats'+timeNow+'.csv', 'w', newline='') as csvfile:
     spamwriter = csv.writer(csvfile, delimiter=' ',
                             quotechar='|', quoting=csv.QUOTE_MINIMAL)
     spamwriter.writerow(statsOrig)

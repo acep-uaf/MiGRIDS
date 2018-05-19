@@ -131,11 +131,12 @@ class DataClass:
     # DataClass -> null
     # replaces time interval data where the power output drops or increases significantly
     # compared to overall data characteristics
-    def removeAnomolies(self):
+    def removeAnomolies(self, stdNum = 3):
+        # stdNum is defines how many stds from the mean is acceptable. default is 3, but this may be too tight for some data sets.
         mean = np.mean(self.fixed[TOTALP])
         std = np.std(self.fixed[TOTALP])
         #self.fixed[(self.fixed[TOTALP] < mean - 3 * std)] = None
-        self.fixed[(self.fixed[TOTALP] < mean - 3 * std) | (self.fixed[TOTALP] > mean + 3 * std)] = None
+        self.fixed[(self.fixed[TOTALP] < mean - stdNum * std) | (self.fixed[TOTALP] > mean + stdNum * std)] = None
         # replace values with linear interpolation from surrounding values
         self.fixed = self.fixed.interpolate()
         self.totalPower()

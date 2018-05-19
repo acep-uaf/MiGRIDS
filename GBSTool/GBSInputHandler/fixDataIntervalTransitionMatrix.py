@@ -1,5 +1,5 @@
 
-def fixDataIntervalTransitionMatrix(data, interval, sigma = None, useMarkov = False, TM = [], TMvalues = []):
+def fixDataIntervalTransitionMatrix(data, interval, sigma = None, useMarkov = False, TM = [], TMvalues = [], stdNum = 3):
     '''
     changes the timesteps of a time series to a fixed interval. A transition matrix is used to upsample the data if
     the timesteps in the data are longer than the desired interval
@@ -8,6 +8,7 @@ def fixDataIntervalTransitionMatrix(data, interval, sigma = None, useMarkov = Fa
     :param interval: desired interval in seconds
     :param TM: transition matrix of the difference from the linear difference between input data points
     :param TMvalues: the values corresponding to the TM
+    :param stdNum: the number of standard deviations from mean that is acceptable in the data set. outside values trimmed off.
     :return: data with a fixed timestep
     '''
 
@@ -151,5 +152,5 @@ def fixDataIntervalTransitionMatrix(data, interval, sigma = None, useMarkov = Fa
         # get rid of columns added
         data.fixed = data.fixed.drop('time', 1)
 
-    data.removeAnomolies()
+    data.removeAnomolies(stdNum = stdNum)
     return data
