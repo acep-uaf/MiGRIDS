@@ -3,18 +3,20 @@
 # Date: March 8, 2018
 # License: MIT License (see LICENSE file of this package for more information)
 
+import glob
 # imports
 import os
-import sys
-import numpy as np
-import glob
 import sqlite3
+import sys
+
+import numpy as np
 import pandas as pd
+
 here = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(os.path.join(here, '../../'))
 sys.path.append(here)
 from GBSAnalyzer.DataRetrievers.readNCFile import readNCFile
-from GBSAnalyzer.PerformanceAnalyzers.getFuelUse import getFuelUse
+
 
 def getRunMetaData(projectSetDir,runs):
     for runNum in runs:
@@ -22,7 +24,7 @@ def getRunMetaData(projectSetDir,runs):
         projectRunDir = os.path.join(projectSetDir,'Run'+str(runNum))
         # get the set number
         dir_path = os.path.basename(projectSetDir)
-        setNum = int(dir_path[3:])
+        setNum = str(dir_path[3:])
 
         # go to dir where output files are saved
         os.chdir(os.path.join(projectRunDir, 'OutputData'))

@@ -3,14 +3,15 @@
 # Jeremy VanderMeer, jbvandermeer@alaska.edu, Alaska Center for Energy and Power
 # Date: November 27, 2017
 # License: MIT License (see LICENSE file of this package for more information)
-from bisect import bisect_left
-from bs4 import BeautifulSoup as Soup
 import sys
+
+from bs4 import BeautifulSoup as Soup
+
 sys.path.append('../')
 from GBSAnalyzer.CurveAssemblers.esLossMapAssembler import esLossMap
 from GBSInputHandler.readXmlTag import readXmlTag
 import numpy as np
-from getIntListIndex import getIntListIndex
+from GBSModel.getIntListIndex import getIntListIndex
 
 class ElectricalEnergyStorage:
     '''
