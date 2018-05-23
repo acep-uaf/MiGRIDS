@@ -33,7 +33,7 @@ class ResultsModel(QtWidgets.QWidget):
 
     # ->plotWidget
     def createPlotArea(self, data):
-        from PlotResult import PlotResult
+        from GBSUserInterface.PlotResult import PlotResult
         plotWidget = PlotResult(self, data)
         return plotWidget
 

@@ -1,8 +1,8 @@
 #MainForm is the parent for for all sections of the User Interface
 #it consists of a navigation tree and pages
 from PyQt5 import QtWidgets, QtCore, QtGui
-from ConsoleDisplay import ConsoleDisplay
-from FormSetup import FormSetup
+from GBSUserInterface.ConsoleDisplay import ConsoleDisplay
+from GBSUserInterface.FormSetup import FormSetup
 
 class MainForm(QtWidgets.QMainWindow):
 
@@ -148,30 +148,32 @@ class PageBlock(QtWidgets.QTabWidget):
         self.initUI()
 
     def initUI(self):
-        from FormSetup import FormSetup
-        from ResultsSetup import ResultsSetup
-        from FormModelRuns import FormModelRun
-        from FormOptimize import FormOptimize
-        from ResultsModel import ResultsModel
-        from ResultsOptimize import ResultsOptimize
-        from FormContainer import FormContainer
+        from GBSUserInterface.FormSetup import FormSetup
+        from GBSUserInterface.ResultsSetup import ResultsSetup
+        from GBSUserInterface.FormModelRuns import FormModelRun
+        from GBSUserInterface.FormOptimize import FormOptimize
+        from GBSUserInterface.ResultsModel import ResultsModel
+        from GBSUserInterface.ResultsOptimize import ResultsOptimize
+        from GBSUserInterface.FormContainer import FormContainer
 
-        self.addTab(FormContainer(self,[FormSetup(self), ResultsSetup(self)]), 'Setup')
-        self.addTab(FormContainer(self, [FormModelRun(self), ResultsModel(self)]), 'Model')
-        self.addTab(FormContainer(self, [FormOptimize(self), ResultsOptimize(self)]), 'Optimize')
+        self.addTab(FormContainer(self,[FormSetup(self), ResultsSetup(self)],'Setup'), 'Setup')
+        self.addTab(FormContainer(self, [FormModelRun(self), ResultsModel(self)],'Model'), 'Model')
+        self.addTab(FormContainer(self, [FormOptimize(self), ResultsOptimize(self)],'Optimize'), 'Optimize')
         self.findChild(FormModelRun).hide()
         self.findChild(FormOptimize).hide()
+
     #Creates model and optimize tabs
     #this is called after a project name is set
     def enableTabs(self):
-        from FormModelRuns import FormModelRun
-        from FormOptimize import FormOptimize
+        from GBSUserInterface.FormModelRuns import FormModelRun
+        from GBSUserInterface.FormOptimize import FormOptimize
 
         c1 = self.findChild(FormModelRun)
         c1.show()
         self.findChild(FormOptimize).show()
 
         return
+
     #if the tab block is closed make sure all the data is written to xml files
     def closeEvent(self):
         import os

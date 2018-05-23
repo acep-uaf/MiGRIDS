@@ -2,6 +2,7 @@
 The information is written to an XML file using the writeXML method. '''
 from GBSInputHandler.Component import Component
 from GBSController.UIToHandler import UIToHandler
+import os
 #setup tags are a class that is used for attributes that get written to the setup.xml
 class SetupTag:
     def __init__(self, n, v = None):
@@ -42,9 +43,9 @@ class ModelSetupInformation:
                                    'dateChannelformat':[self.assignDateChannel,SetupTag.assignFormat],
                                    'dateChannelvalue': [self.assignDateChannel, SetupTag.assignValue],
                                    'inputTimeStepvalue':[self.assignInputTimeStep,SetupTag.assignValue],
-                                   'timeStepvalue':[self.assigntimeStep,SetupTag.assignValue],
+                                   'timeStepvalue':[self.assignTimeStep, SetupTag.assignValue],
                                    'inputTimeStepunit':[self.assignInputTimeStep,SetupTag.assignUnits],
-                                   'timeStepunit': [self.assigntimeStep, SetupTag.assignUnits],
+                                   'timeStepunit': [self.assignTimeStep, SetupTag.assignUnits],
                                    'realLoadChannelvalue':[self.assignLoadChannel,SetupTag.assignValue],
                                    'realLoadChannelunit': [self.assignLoadChannel, SetupTag.assignUnits],
                                    'timeChannelformat': [self.assignTimeChannel, SetupTag.assignFormat],
@@ -87,20 +88,16 @@ class ModelSetupInformation:
     # but this will likely change to perform some actions during parameter assigment.
     # That is why each parameter has its own fuction
     def assignProject(self, name):
-        import os
-        
+
         self.project = name
 
         if 'setupFolder' not in self.__dict__.keys():
             path = os.path.dirname(__file__)
             self.setupFolder = os.path.join(path, '../../GBSProjects/', self.project, 'InputData/Setup')
         self.componentFolder = os.path.join(self.setupFolder ,'../Components')
-
-
         self.projectFolder = os.path.join(self.setupFolder, '../../' )
+        self.outputFolder = os.path.join(self.projectFolder, 'OutputData')
 
-        self.outputFolder = os.path.join(self.projectFolder, '/OutputData')
-        print('project folder set to %s' %self.projectFolder)
         #if there isn't a setup folder then its a new project
         if not os.path.exists(self.setupFolder):
             #make the project folder
@@ -108,6 +105,7 @@ class ModelSetupInformation:
         if not os.path.exists(self.componentFolder):
             #make the component
             os.makedirs(self.componentFolder)
+
     def assignInputFileType(self,m,v):
         self.inputFileType.assign(m,v)
 
@@ -164,7 +162,7 @@ class ModelSetupInformation:
     def assignInputTimeStep(self, m, v):
         self.inputTimeStep.assign(m, v)
 
-    def assigntimeStep(self,m, v):
+    def assignTimeStep(self, m, v):
         self.timeStep.assign(m, v)
 
     def assignWindFileDir(self,m,v):
@@ -193,6 +191,12 @@ class ModelSetupInformation:
                 method[0](method[1],value)
             else:
                 method(value)
+
+    #return the file path for a set attribute xml file for a given set
+    #String -> String
+    def getSetAttributeXML(self, set):
+        filePath = os.path.join(self.outputFolder, set, self.project + set + 'Attributes.xml')
+        return filePath
 
     #creates a dictionary designed to feed into fillProjectData
     #->dictionary

@@ -1,4 +1,4 @@
-#TODO change module name
+
 class ProjectSQLiteHandler:
 
     def __init__(self, database='project_manager'):
@@ -62,7 +62,8 @@ class ProjectSQLiteHandler:
         refTables = [
             'ref_component_attribute',
             'ref_component_type',
-            'ref_datetime_format',
+            'ref_date_format',
+            'ref_time_format',
             'ref_data_format',
             'ref_power_units',
             'ref_attributes',
@@ -75,10 +76,12 @@ class ProjectSQLiteHandler:
             'ref_temperature_units',
             'ref_true_false',
             'ref_env_attributes',
-            'ref_frequency_units'
+            'ref_frequency_units',
+            'ref_file_type'
         ]
         for r in refTables:
             self.createRefTable(r)
+        self.addRefValues('ref_file_type',[(0,'CSV','Comma Seperated Values'), (1,'MET','MET text file'), (2,'TXT','Tab delimited')])
         self.addRefValues('ref_current_units',[(0,'A','amps'),(1,'kA','kiloamps')])
         self.addRefValues('ref_frequency_units',[(0, 'Hz','hertz')])
         self.addRefValues('ref_temperature_units',[(0,'C','Celcius'),(1,'F','Farhenheit'),(2,'K','Kelvin')])
@@ -90,10 +93,21 @@ class ProjectSQLiteHandler:
         self.addRefValues('ref_speed_units', [(0, 'm/s','meters per second'),(1,'ft/s','feet per second'),
                                               (2,'km/hr','kilometers per hour'),(3,'mi/hr','miles per hour')])
         self.addRefValues('ref_time_units',[(0,'S','Seconds'),(1,'m','Minutes')])
-        self.addRefValues('ref_datetime_format',[(0,'Ordinal','Ordinal'),(1,'Excel','Excel')])
+        self.addRefValues('ref_date_format',[(0,'MM/DD/YY','MM/DD/YY'),(1,'MM/DD/YYYY','MM/DD/YYYY'),
+                                                 (2,'YYYY/MM/DD','YYYY/MM/DD'),(3,'DD/MM/YYYY','DD/MM/YYYY'),
+                                             (4, 'MM-DD-YY', 'MM-DD-YY'), (5, 'MM-DD-YYYY', 'MM-DD-YYYY'),
+                                             (6, 'YYYY-MM-DD', 'YYYY-MM-DD'), (7, 'DD-MM-YYYY', 'DD-MM-YYYY'),
+                                             (8, 'mon dd yyyy', 'mon dd yyyy'),
+                                             (9, 'days', 'days')
+                                                 ])
+        self.addRefValues('ref_time_format',[(0,'HH:mm:SS','HH:mm:SS'),(1,'HH:mm','HH:mm'),
+                                             (2,'hours','hours'),
+                                                 (3,'minutes','minutes'),(4,'seconds','seconds')
+                                                 ])
 
-        self.addRefValues('ref_data_format',[(0,'AVEC + wind', 'Load information is in a csv, wind data is in a tab delimmited text file'),
-                                             (1,'AVEC', 'All data is within a single CSV file')
+        self.addRefValues('ref_data_format',[(0,'components + MET', 'Load and component data are seperate from wind data'),
+                                             (1,'components', 'All component, load and environemtnal data is within a single timeseries file'),
+                                             (2, 'component + load + environment', 'Seperate files for load, component and wind data.')
                             ])
 
         self.addRefValues('ref_component_type' ,[(0,'wtg', 'windturbine'),
@@ -147,6 +161,20 @@ class ProjectSQLiteHandler:
         change_tag text,
         to_value text);""")
 
+        self.cursor.execute("DROP TABLE IF EXISTS inputFiles")
+        self.cursor.executescript("""
+                CREATE TABLE IF NOT EXISTS inputFiles
+                (_id integer primary key,
+                file_type text , 
+                datatype text ,
+                directory text,
+                input_timestep text,
+                date_column text,
+                date_format text,
+                time_column text,
+                time_format text,
+                include_channels text);""")
+
         self.cursor.execute("DROP TABLE IF EXISTS runs")
         self.cursor.executescript("""
                 CREATE TABLE IF NOT EXISTS runs
@@ -177,7 +205,6 @@ class ProjectSQLiteHandler:
                  scale numeric,
                  offset numeric,
                  attribute text,
-                 
                  tags text,
                  
                  FOREIGN KEY (units) REFERENCES ref_universal_units(code),
@@ -187,6 +214,28 @@ class ProjectSQLiteHandler:
 
 
         self.connection.commit()
+
+    #get the set info for a specific set or default values if no set is specified
+    #String -> dictionary
+    def getSetInfo(self,set='default'):
+        setDict = {}
+        #get tuple
+        values = self.cursor.execute("select timestep, date_start, date_end, component_names from setup where set_name = '" + set + "'").fetchone()
+        if values is None:
+            values = self.cursor.execute(
+                "select timestep, date_start, date_end, component_names from setup where set_name = 'default'").fetchone()
+
+        setDict['timestep'] = values[0]
+        setDict['date_start'] = values[1]
+        setDict['date_end'] = values[2]
+        setDict['component_names'] = values[3]
+        values = self.cursor.execute("select date_start, date_end from setup where set_name = 'default'").fetchone()
+        setDict['min_date'] = values[0]
+        setDict['max_date'] = values[1]
+        if setDict.get('component_names') is None:
+            setDict['component_names'] = []
+
+        return setDict
     def insertRecord(self, table, fields, values):
         string_fields = ','.join(fields)
         string_values = ','.join('?' * len(values))
@@ -250,7 +299,7 @@ class ProjectSQLiteHandler:
             except:
                 print('%s column was not found in the data table' %k)
         self.connection.commit()
-    #determines if a componente record needs to be created or updated and implements the correct function
+    #determines if a component record needs to be created or updated and implements the correct function
     #returns true if the record is a new record and was added to the table
     #dictionary -> Boolean
     def writeComponent(self,componentDict):

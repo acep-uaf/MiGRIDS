@@ -1,11 +1,12 @@
 #Form for display model run parameters
 from PyQt5 import QtWidgets, QtCore, QtGui
-from makeButtonBlock import makeButtonBlock
-from TableHandler import TableHandler
-from ModelSetTable import SetTableModel, SetTableView
-from ModelRunTable import RunTableModel, RunTableView
-from ProjectSQLiteHandler import ProjectSQLiteHandler
+from GBSUserInterface.makeButtonBlock import makeButtonBlock
+from GBSUserInterface.TableHandler import TableHandler
+from GBSUserInterface.ModelSetTable import SetTableModel, SetTableView
+from GBSUserInterface.ModelRunTable import RunTableModel, RunTableView
+from GBSUserInterface.ProjectSQLiteHandler import ProjectSQLiteHandler
 from GBSController.UIToHandler import UIToHandler
+from GBSUserInterface.Pages import Pages
 import datetime
 import os
 
@@ -19,7 +20,8 @@ class FormModelRun(QtWidgets.QWidget):
     def initUI(self):
         self.setObjectName("modelDialog")
         #the first page is for set0
-        self.tabs = SetsPages(self, 'set0')
+        #self.tabs = SetsPages(self, 'Set0')
+        self.tabs = Pages(self,'Set0',SetsTableBlock)
         #self.setsTable = self.tabs
         #create the run table
         self.runTable = self.createRunTable()
@@ -66,7 +68,7 @@ class FormModelRun(QtWidgets.QWidget):
         # get the set count
         tab_count = self.tabs.count()
         widg = SetsTableBlock(self, 'set' + str(tab_count))
-        widg.update()
+        widg.fillSetInfo()
         self.tabs.addTab(widg, 'Set' + str(tab_count))
 
         #create a folder to hold the relevent set data
@@ -82,19 +84,19 @@ class FormModelRun(QtWidgets.QWidget):
         buttonFunction()
 
 #each page contains information for a single model set
-class SetsPages(QtWidgets.QTabWidget):
-
-    def __init__(self, parent,set):
-        super().__init__(parent)
-        self.set = set
-
-        self.initUI()
-
-    def initUI(self):
-
-        widg = SetsTableBlock(self, self.set)
-
-        self.addTab(widg, self.set)
+# class SetsPages(QtWidgets.QTabWidget):
+#
+#     def __init__(self, parent,set):
+#         super().__init__(parent)
+#         self.set = set
+#
+#         self.initUI()
+#
+#     def initUI(self):
+#
+#         widg = SetsTableBlock(self, self.set)
+#
+#         self.addTab(widg, self.set)
 
 
 #the set table shows components to include in the set and attributes to change for runs
@@ -112,7 +114,10 @@ class SetsTableBlock(QtWidgets.QGroupBox):
         #main layouts
         tableGroup = QtWidgets.QVBoxLayout()
         #setup info for a set
-        tableGroup.addWidget(self.setInfo())
+
+        self.setInfo = self.makeSetInfo()
+        tableGroup.addWidget(self.setInfo)
+
         #buttons for adding and deleting set records
         tableGroup.addWidget(self.dataButtons('sets'))
         #the table view filtered to the specific set for each tab
@@ -131,8 +136,14 @@ class SetsTableBlock(QtWidgets.QGroupBox):
         tableGroup.addWidget(tv, 1)
 
         self.setLayout(tableGroup)
+        if set is not None:
+            self.fillSetInfo(set)
+        else:
+            self.fillSetInfo()
         self.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
-
+    #fill form with existing data
+    def fillData(self,set):
+       return
     #sets the start and end date for a set.
     #if no values are provided the values are drawn from the database
     #tuple(s) -> None
@@ -147,8 +158,7 @@ class SetsTableBlock(QtWidgets.QGroupBox):
         if end == None:
             end = handler.cursor.execute("select date_end from setup where set_name = 'default'").fetchone()
         handler.closeDatabase()
-        print(start)
-        print(end)
+
         #format the tuples from database output to datetime objects
         if type(start)== str:
             start = datetime.datetime.strptime(start, '%Y-%m-%d')
@@ -162,8 +172,12 @@ class SetsTableBlock(QtWidgets.QGroupBox):
     @QtCore.pyqtSlot()
     def onClick(self, buttonFunction):
         buttonFunction()
+
+
     #->QtWidgets.QGroupBox
-    def setInfo(self):
+    def makeSetInfo(self, **kwargs):
+        set = kwargs.get("set")
+
         infoBox = QtWidgets.QGroupBox()
         infoRow = QtWidgets.QHBoxLayout()
         # time range filters
@@ -182,37 +196,74 @@ class SetsTableBlock(QtWidgets.QGroupBox):
 
         infoRow.addWidget(QtWidgets.QLabel('Seconds'),1)
 
-        infoRow.addWidget(QtWidgets.QLabel('Components'),)
+        infoRow.addWidget(QtWidgets.QLabel('Components'))
         infoRow.addWidget(self.componentSelector(),2)
         infoBox.setLayout(infoRow)
 
         return infoBox
-    #->QtWidgets.QLineEdit
-    def componentSelector(self):
-        from Delegates import ClickableLineEdit
 
-        widg = ClickableLineEdit(','.join(self.componentDefault))
+    #->QtWidgets.QLineEdit
+    def componentSelector(self,**kwargs):
+        from GBSUserInterface.Delegates import ClickableLineEdit
+        #if components are not provided use the default list
+        if kwargs.get("components"):
+            components = kwargs.get("components")
+        else:
+            components = self.componentDefault
+
+
+        widg = ClickableLineEdit(','.join(components))
         widg.setObjectName('componentNames')
 
         widg.clicked.connect(lambda: self.componentCellClicked())
         return widg
-    #tuple(s) -> None
-    def update(self, **kwargs):
-        self.componentDefault = kwargs.get('components')
-        start = kwargs.get('start')
-        end = kwargs.get('end')
-        self.getDefaultDates(start=start,end=end)
+    #fills the setup portion of a set tab with either default values or current database values
+    #String -> None
+    def fillSetInfo(self, set = 'default'):
 
-        #update the widget values
+        databaseHandler = ProjectSQLiteHandler()
+        # dictionary of set info
+        setInfo = databaseHandler.getSetInfo(set)
+        databaseHandler.closeDatabase()
+        if type(setInfo['component_names']) == str:
+            self.componentDefault = setInfo['component_names'].split(',')
+        else:
+            self.componentDefault = setInfo['component_names']
+        start = datetime.datetime.strptime(setInfo['min_date'],'%Y-%m-%d')
+        end = datetime.datetime.strptime(setInfo['max_date'],'%Y-%m-%d')
+
+
+        #dates are strings here but they need to be datetimes
+        self.startDate = setInfo.get('date_start')
+        self.endDate = setInfo.get('date_end')
+        self.getDefaultDates(start=self.startDate, end=self.endDate)
+        #fillSetInfo the widget values
+        wids = self.findChildren(QtWidgets.QWidget)
         self.setDateSelectorProperties(self.findChild(QtWidgets.QDateEdit, 'startDate'))
         self.setDateSelectorProperties(self.findChild(QtWidgets.QDateEdit, 'endDate'),False)
-        self.findChild(QtWidgets.QLineEdit,'componentNames').setText(self.componentDefault)
+        self.findChild(QtWidgets.QDateEdit, 'startDate').setDateRange(start, end)
+        self.findChild(QtWidgets.QDateEdit, 'endDate').setDateRange(start, end)
+        self.findChild(QtWidgets.QLineEdit,'componentNames').setText(','.join(self.componentDefault))
+        self.updateComponentDelegate(self.componentDefault)
         return
+    #update the component drop down in the set table to include the selected or default components
+    def updateComponentDelegate(self,components):
+        from GBSUserInterface.Delegates import ComboDelegate, ComponentFormOpenerDelegate
+        # find the component drop down delegate and reset its list to the selected components
+        tv = self.findChild(QtWidgets.QWidget, 'sets')
+
+        cbs = tv.findChildren(ComboDelegate)
+        for c in cbs:
+
+            if c.name == 'componentName':
+                lm = c.values
+                lm.setStringList(components)
+
     @QtCore.pyqtSlot()
     def componentCellClicked(self):
-        from DialogComponentList import ComponentSetListForm
-        from ProjectSQLiteHandler import ProjectSQLiteHandler
-        from Delegates import ComboDelegate, ComponentFormOpenerDelegate
+        from GBSUserInterface.DialogComponentList import ComponentSetListForm
+        from GBSUserInterface.ProjectSQLiteHandler import ProjectSQLiteHandler
+
         import pandas as pd
         handler = ProjectSQLiteHandler('project_manager')
 
@@ -229,16 +280,7 @@ class SetsTableBlock(QtWidgets.QGroupBox):
         str1 = ','.join(components)
         widg = self.findChild(QtWidgets.QLineEdit,'componentNames')
         widg.setText(str1)
-
-        #find the component drop down delegate and reset its list to the selected components
-        tv = self.findChild(QtWidgets.QWidget,'sets')
-
-        cbs = tv.findChildren(ComboDelegate)
-        for c in cbs:
-
-            if c.name == 'componentName':
-                lm = c.values
-                lm.setStringList(components)
+        self.updateComponentDelegate(components)
 
     #Boolean -> QDateEdit
     def makeDateSelector(self, start=True):
@@ -258,7 +300,7 @@ class SetsTableBlock(QtWidgets.QGroupBox):
         else:
             widg.setDate(QtCore.QDate(self.endDate.year, self.endDate.month, self.endDate.day))
 
-        widg.setDateRange(self.startDate, self.endDate)
+
         widg.setDisplayFormat('yyyy-MM-dd')
         widg.setCalendarPopup(True)
         return widg
@@ -311,7 +353,11 @@ class SetsTableBlock(QtWidgets.QGroupBox):
 
         # component table is the table associated with the button
         componentTable = self.findChild(SetTableView).model()
-        # projectFolder comes from the FormSetup
-        setupModel = self.window().findChild(QtWidgets.QWidget, 'setupDialog').model
-        uihandler.runModels(currentSet,componentTable,setupModel)
+        if componentTable.rowCount() > 0:
 
+            uihandler.runModels(currentSet, componentTable,self.window().findChild(QtWidgets.QWidget,'setupDialog').model)
+        else:
+            msg = QtWidgets.QMessageBox(QtWidgets.QMessageBox.Warning, "Add components",
+                                        "You need to select component attributes to alter before running sets.")
+            msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
+            msg.exec()

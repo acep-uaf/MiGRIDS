@@ -50,8 +50,6 @@ def generateRuns(projectSetDir):
     # get headings
     heading = [x + '.' + compTag[idx] + '.' + compAttr[idx] for idx, x in enumerate(compName)]
 
-
-
     # get the setup information for this set of simulations
     setupTag = readXmlTag(projectName + 'Set'+str(setNum) + 'Attributes.xml', ['setupAttributeValues', 'setupTag'], 'value')
     setupAttr = readXmlTag(projectName + 'Set'+str(setNum) + 'Attributes.xml', ['setupAttributeValues', 'setupAttr'], 'value')
@@ -85,7 +83,7 @@ def generateRuns(projectSetDir):
             os.mkdir(runDir) # make run directory
 
             os.mkdir(compDir) # make component directory
-        # copy component descriptors  and update
+        # copy component descriptors  and fillSetInfo
         for cpt in components: # for each component
             # copy from main input data
             copyfile(os.path.join(projectDir, 'InputData', 'Components', cpt + 'Descriptor.xml'),

@@ -3,11 +3,13 @@
 
 import os
 import pickle
-from fillProjectData import fillProjectData
-from buildProjectSetup import buildProjectSetup
-from makeSoup import makeComponentSoup
-from readXmlTag import readXmlTag
-from writeXmlTag import writeXmlTag
+from GBSInputHandler.fillProjectData import fillProjectData
+from GBSInputHandler.buildProjectSetup import buildProjectSetup
+from GBSInputHandler.makeSoup import makeComponentSoup
+from GBSInputHandler.readXmlTag import readXmlTag
+from GBSInputHandler.writeXmlTag import writeXmlTag
+from GBSUserInterface.ProjectSQLiteHandler import ProjectSQLiteHandler
+from bs4 import BeautifulSoup
 
 class UIToHandler():
     #generates an setup xml file based on information in a ModelSetupInformation object
@@ -30,7 +32,7 @@ class UIToHandler():
     #pass a component name, component folder and soup object to be written to a component descriptor
     #string, string, soup -> None
     def writeComponentSoup(self, component, fileDir, soup):
-        from createComponentDescriptor import createComponentDescriptor
+        from GBSInputHandler.createComponentDescriptor import createComponentDescriptor
         #soup is an optional argument, without it a template xml will be created.
         createComponentDescriptor(component, fileDir, soup)
         return
@@ -60,7 +62,7 @@ class UIToHandler():
                 directories.append(file)
         return directories
 
-    #copy an existing xml file to the current project director and write contents to SQLRecord to update project_manager database
+    #copy an existing xml file to the current project director and write contents to SQLRecord to fillSetInfo project_manager database
     #string, string, SQLRecord -> SQLRecord
     def copyDescriptor(self,descriptorFile, componentDir, sqlRecord):
         import shutil
@@ -97,10 +99,10 @@ class UIToHandler():
     #String, String, String -> DataClass
     def loadFixData(self, setupFile):
         print(setupFile)
-        from getUnits import getUnits
-        from readDataFile import readDataFile
-        from fixBadData import fixBadData
-        from fixDataInterval import fixDataInterval
+        from GBSInputHandler.getUnits import getUnits
+        from GBSInputHandler.readDataFile import readDataFile
+        from GBSInputHandler.fixBadData import fixBadData
+        from GBSInputHandler.fixDataInterval import fixDataInterval
 
 
         Village = readXmlTag(setupFile, 'project', 'name')[0]
@@ -145,7 +147,7 @@ class UIToHandler():
     #generate netcdf files for model running
     #dataframe, dictionary -> None
     def createNetCDF(self, df,componentDict,setupFile):
-        from dataframe2netcdf import dataframe2netcdf
+        from GBSInputHandler.dataframe2netcdf import dataframe2netcdf
         inputDirectory = readXmlTag(setupFile, 'inputFileDir', 'value')
         inputDirectory = os.path.join(*inputDirectory)
 
@@ -194,9 +196,9 @@ class UIToHandler():
     #String, ComponentTable, SetupInformation
     def runModels(self, currentSet, componentTable, setupInfo):
         from PyQt5 import QtWidgets
-        from generateRuns import generateRuns
-        from makeAttributeXML import makeAttributeXML, writeAttributeXML
-        from runSimulation0 import runSimulation
+        from GBSModel.generateRuns import generateRuns
+        from GBSUserInterface.makeAttributeXML import makeAttributeXML, writeAttributeXML
+        from GBSModel.runSimulation0 import runSimulation
         #generate xml's based on inputs
         #call to run models
 
@@ -237,3 +239,15 @@ class UIToHandler():
         # assign tag values in the setupxml to the setupInfo model
         getSetupInformation(os.path.join(setupFolder, setupInfo.project + 'Setup.xml'), setupInfo)
         return
+
+    # creates a soup object from set attribute xml file
+    # ->soup
+    def getSetAttributeXML(self, xmlFile):
+        #read the attributes xml
+        infile_child = open(xmlFile, "r")  # open
+        contents_child = infile_child.read()
+        infile_child.close()
+        soup = BeautifulSoup(contents_child, 'xml')  # turn into soup
+
+
+        return soup

@@ -2,7 +2,7 @@
 import logging
 
 from PyQt5 import QtWidgets
-from DisplayWriter import DisplayWriter, QtHandler
+from GBSUserInterface.DisplayWriter import DisplayWriter, QtHandler
 
 handler = QtHandler()
 

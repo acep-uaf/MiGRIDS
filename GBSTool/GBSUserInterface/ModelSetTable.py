@@ -1,6 +1,6 @@
 from PyQt5  import QtWidgets, QtSql, QtCore
-from Delegates import TextDelegate
-from Delegates import ComboDelegate
+from GBSUserInterface.Delegates import TextDelegate, ComboDelegate
+from GBSUserInterface.ProjectSQLiteHandler import ProjectSQLiteHandler
 #subclass of QTableView for displaying set information
 class SetTableView(QtWidgets.QTableView):
     def __init__(self, *args, **kwargs):
@@ -11,7 +11,7 @@ class SetTableView(QtWidgets.QTableView):
 
         def makeComponentList():
             import pandas as pd
-            from ProjectSQLiteHandler import ProjectSQLiteHandler
+
             sqlhandler = ProjectSQLiteHandler('project_manager')
             components = pd.read_sql_query("select component_name from components", sqlhandler.connection)
 

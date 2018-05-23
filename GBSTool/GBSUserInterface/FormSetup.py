@@ -1,17 +1,20 @@
 
 from PyQt5 import QtCore, QtWidgets
-import ModelComponentTable as T
-import ModelEnvironmentTable as E
-from gridLayoutSetup import setupGrid
-from SetupWizard import SetupWizard
-from WizardTree import WizardTree
-from ModelSetupInformation import ModelSetupInformation
+import GBSUserInterface.ModelComponentTable as T
+import GBSUserInterface.ModelEnvironmentTable as E
+from GBSUserInterface.gridLayoutSetup import setupGrid
+from GBSUserInterface.SetupWizard import SetupWizard
+from GBSUserInterface.WizardTree import WizardTree
+from GBSUserInterface.ModelSetupInformation import ModelSetupInformation
 from GBSInputHandler.Component import Component
-from UIToHandler import UIToHandler
-from makeButtonBlock import makeButtonBlock
-from ResultsSetup import  ResultsSetup
-from FormModelRuns import SetsTableBlock
-from ProjectSQLiteHandler import ProjectSQLiteHandler
+from GBSController.UIToHandler import UIToHandler
+from GBSUserInterface.makeButtonBlock import makeButtonBlock
+from GBSUserInterface.ResultsSetup import  ResultsSetup
+from GBSUserInterface.FormModelRuns import SetsTableBlock
+from GBSUserInterface.Pages import Pages
+from GBSUserInterface.FileBlock import FileBlock
+from GBSUserInterface.ProjectSQLiteHandler import ProjectSQLiteHandler
+from GBSUserInterface.loadSets import loadSets
 
 
 class FormSetup(QtWidgets.QWidget):
@@ -33,14 +36,17 @@ class FormSetup(QtWidgets.QWidget):
 
         # the top block is buttons to load setup xml and data files
         self.createButtonBlock()
-        windowLayout.addWidget(self.ButtonBlock,2)
+        windowLayout.addWidget(self.ButtonBlock)
+        self.tabs = Pages(self, 'input1',FileBlock)
+        #each file type gets its own page to specify formats and headers to include
+        # button to create a new set tab
+        newTabButton = QtWidgets.QPushButton()
+        newTabButton.setText(' + Input')
+        newTabButton.setFixedWidth(100)
+        newTabButton.clicked.connect(self.newTab)
+        windowLayout.addWidget(newTabButton)
 
-
-        #add the setup block
-        self.createTopBlock()
-        #the topBlock is hidden until we load or create a setup xml
-        self.topBlock.setEnabled(False)
-        windowLayout.addWidget(self.topBlock)
+        windowLayout.addWidget(self.tabs,3)
 
         #list of dictionaries containing information for wizard
         #TODO move to seperate file
@@ -66,18 +72,12 @@ class FormSetup(QtWidgets.QWidget):
         ]
 
         self.WizardTree = self.buildWizardTree(dlist)
-        self.createTableBlock('Components', 'components', self.assignComponentBlock)
-        self.componentBlock.setEnabled(False)
-        windowLayout.addWidget(self.componentBlock)
-
-        # the bottom block is disabled until a setup file is created or loaded
-        self.createTableBlock('Environment Data', 'environment', self.assignEnvironmentBlock)
-        self.environmentBlock.setEnabled(False)
-        windowLayout.addWidget(self.environmentBlock)
-
-
-        windowLayout.addWidget(makeButtonBlock(self,self.createInputFiles,'Create input files',None,'Create input files to run models'),3)
-
+        button = QtWidgets.QPushButton('Create input files')
+        button.setToolTip('Create input files to run models')
+        button.clicked.connect(lambda: self.onClick(self.createInputFiles))
+        button.setFixedWidth(200)
+        #windowLayout.addWidget(makeButtonBlock(self,self.createInputFiles,'Create input files',None,'Create input files to run models'),3)
+        windowLayout.addWidget(button)
         #set the main layout as the layout for the window
 
         self.setLayout(windowLayout)
@@ -87,13 +87,7 @@ class FormSetup(QtWidgets.QWidget):
         #show the form
         self.showMaximized()
 
-    # Setters
-    #(String, number, list or Object) ->
-    def assignEnvironmentBlock(self, value):
-        self.environmentBlock = value
 
-    def assignComponentBlock(self,value):
-        self.componentBlock = value
 
     #FormSetup -> QWidgets.QHBoxLayout
     #creates a horizontal button layout to insert in FormSetup
@@ -155,7 +149,7 @@ class FormSetup(QtWidgets.QWidget):
         '''The load function reads the designated setup xml, looks for descriptor xmls,
         looks for an existing project database and a pickled data object.'''
         import os
-        from replaceDefaultDatabase import replaceDefaultDatabase
+        from GBSUserInterface.replaceDefaultDatabase import replaceDefaultDatabase
 
         if (self.model.project == '') | (self.model.project is None):
             #launch file navigator to identify setup file
@@ -163,7 +157,6 @@ class FormSetup(QtWidgets.QWidget):
             if (setupFile == ('','')) | (setupFile is None):
                 return
             model.assignSetupFolder(setupFile[0])
-
 
             #Look for an existing component database and replace the default one with it
             if os.path.exists(os.path.join(self.model.projectFolder,'project_manager')):
@@ -191,16 +184,30 @@ class FormSetup(QtWidgets.QWidget):
                 resultDisplay = self.parent().findChild(ResultsSetup)
                 resultDisplay.defaultPlot(self.model.data)
 
-            #make the data blocks editable
-            self.topBlock.setEnabled(True)
-            self.environmentBlock.setEnabled(True)
-            self.componentBlock.setEnabled(True)
-            # enable the model and optimize pages too
-            pages = self.window().findChild(QtWidgets.QTabWidget, 'pages')
-            pages.enableTabs()
-            print('Loaded %s:' % model.project)
+            # return true if sets have been run
+            setsRun = loadSets(model,self.window())
+
+
+            #make the data blocks editable if there are no sets already created
+            #if sets have been created then input data is not editable from the interface
+            if setsRun:
+                msg = QtWidgets.QMessageBox(QtWidgets.QMessageBox.Warning, "Analysis in Progress",
+                                            "Analysis results were detected. You cannot edit projected input data after analysis has begun.")
+                msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
+                msg.exec()
+            else:
+                self.tabs.setEnabled(True)
+                #self.topBlock.setEnabled(True)
+                #self.environmentBlock.setEnabled(True)
+                #self.componentBlock.setEnabled(True)
+                # enable the model and optimize pages too
+                modelPages = self.window().findChild(QtWidgets.QTabWidget, 'modelPages')
+                modelPages.enableTabs()
+                print('Loaded %s:' % model.project)
+
+
         else:
-            #TODO allow new projects to be loaded with out closing window
+            #TODO allow new projects to be loaded without closing window
             msg = QtWidgets.QMessageBox(QtWidgets.QMessageBox.Warning, "Close project", "You need to close the sofware before you load a new project")
             msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
             msg.exec()
@@ -217,252 +224,13 @@ class FormSetup(QtWidgets.QWidget):
         w5 = WizardTree(dlist[4][0], dlist[4][1], 0, [w4])
         return w5
 
-    #FormSetup -> FormSetup
-    #creates a horizontal layout containing gridlayouts for data input
-    def createTopBlock(self):
-         #create a horizontal grouping to contain the top setup xml portion of the form
-        self.topBlock = QtWidgets.QGroupBox('Setup XML')
-        hlayout = QtWidgets.QHBoxLayout()
-        
-        hlayout.setObjectName("layout1")
-        
-        #add the setup grids
-        g1 = {'headers':['Attribute','Field','Format'],
-                          'rowNames':['Date','Time','Load'],
-                          'columnWidths': [1, 1, 1],
-                          'Date':{'Field':{'widget':'txt','name':'dateChannelvalue'},
-                                  'Format':{'widget':'combo','items':['ordinal'],'name':'dateChannelformat'},
-                                            },
-                          'Time':{'Field':{'widget':'txt','name':'timeChannelvalue'},
-                                 'Format':{'widget':'combo','items':['excel'],'name':'timeChannelformat'}
-                                  },
-                          'Load':{'Field':{'widget':'txt','name':'realLoadChannelvalue'},
-                                 'Format':{'widget':'combo','items':['KW','W','MW'],'name':'realLoadChannelunit'}}}
-        grid = setupGrid(g1)
-        hlayout.addLayout(grid)
-        hlayout.addStretch(1)    
-        #add the second grid
-        g2 = {'headers':['TimeStep','Value','Units'],
-                          'rowNames':['Input','Output'],
-                          'columnWidths': [1, 1, 1],
-                          'Input':{'Value':{'widget':'txt','name':'inputTimeStepvalue'},
-                                    'Units':{'widget':'combo','items':['S','M','H'],'name':'inputTimeStepunit'}
-                                   },
-                          'Output':{'Value':{'widget':'txt','name':'timeStepvalue'},
-                                    'Units':{'widget':'combo','items':['S','M','H'],'name':'timeStepunit'}}
-                          }
-        grid = setupGrid(g2)
-        hlayout.addLayout(grid)
-
-        #add another stretch to keep the grids away from the right edge
-        hlayout.addStretch(1)
-        self.topBlock.setObjectName('format')
-        self.topBlock.setLayout(hlayout)
-        self.topBlock.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
-        self.topBlock.sizePolicy().retainSizeWhenHidden()
-
-    #layout for tables
-    def createTableBlock(self, title, table, fn):
-
-        gb = QtWidgets.QGroupBox(title)
-
-        tableGroup = QtWidgets.QVBoxLayout()
-        tableGroup.addWidget(self.dataButtons(table))
-        if table =='components':
-            tv = T.ComponentTableView(self)
-            tv.setObjectName('components')
-            m = T.ComponentTableModel(self)
-
-        else:
-            tv = E.EnvironmentTableView(self)
-            tv.setObjectName('environment')
-            m = E.EnvironmentTableModel(self)
-
-        tv.setModel(m)
-
-        tv.hideColumn(0)
-
-        tableGroup.addWidget(tv, 1)
-        gb.setLayout(tableGroup)
-        gb.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
-        fn(gb)
-        return
-
-    #Load an existing descriptor file and populate the component table
-    #-> None
-    def functionForLoadDescriptor(self):
-        #TODO temporary message to prevent unique index error
-        msg = QtWidgets.QMessageBox(QtWidgets.QMessageBox.Warning, 'Load Descriptor',
-                                    'If the component descriptor file you are loading has the same name as an existing component it will not load')
-        msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
-        msg.exec()
-
-        tableView = self.findChild((QtWidgets.QTableView), 'components')
-        model = tableView.model()
-        #identify the xml
-        descriptorFile = QtWidgets.QFileDialog.getOpenFileName(self, "Select a descriptor file", None, "*xml")
-        if (descriptorFile == ('', '')) | (descriptorFile is None):
-            return
-
-        fieldName, ok = QtWidgets.QInputDialog.getText(self, 'Field Name','Enter the name of the channel that contains data for this component.')
-        #if a field was entered add it to the table model and database
-        if ok:
-            record = model.record()
-            record.setValue('original_field_name',fieldName)
-
-            handler = UIToHandler()
-            record = handler.copyDescriptor(descriptorFile[0],self.model.componentFolder, record)
-
-            #add a row into the database
-            model.insertRowIntoTable(record)
-            # refresh the table
-            model.select()
-        return
-
-    # Add an empty record to the specified datatable
-    # String -> None
-    def functionForNewRecord(self, table):
-        #add an empty record to the table
-
-        #get the model
-        tableView= self.findChild((QtWidgets.QTableView), table)
-        model = tableView.model()
-        #insert an empty row as the last record
-
-        model.insertRows(model.rowCount(),1)
-
-        model.submitAll()
-
-    #delete the selected record from the specified datatable
-    #String -> None
-    def functionForDeleteRecord(self, table):
-
-        #get selected rows
-        tableView = self.findChild((QtWidgets.QTableView), table)
-        model = tableView.model()
-        #selected is the indices of the selected rows
-        selected = tableView.selectionModel().selection().indexes()
-        if len(selected) == 0:
-            msg = QtWidgets.QMessageBox(QtWidgets.QMessageBox.Warning,'Select Rows','Select rows before attempting to delete')
-            msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
-            msg.exec()
-        else:
-            msg = QtWidgets.QMessageBox(QtWidgets.QMessageBox.Warning,'Confirm Delete','Are you sure you want to delete the selected records?')
-            msg.setStandardButtons(QtWidgets.QMessageBox.Ok|QtWidgets.QMessageBox.Cancel)
-
-            result = msg.exec()
-
-            if result == QtWidgets.QMessageBox.Ok:
-                handler = UIToHandler()
-                removedRows = []
-                for r in selected:
-                    if r.row() not in removedRows:
-                        if table == 'components':
-                            # remove the xml files too
-                            handler.removeDescriptor(model.data(model.index(r.row(), 3)), self.model.componentFolder)
-                        removedRows.append(r.row())
-                        model.removeRows(r.row(),1)
-
-
-
-                #Delete the record from the database and refresh the tableview
-                model.submitAll()
-                model.select()
-
-    #string -> QGroupbox
-    def dataButtons(self,table):
-        buttonBox = QtWidgets.QGroupBox()
-        buttonRow = QtWidgets.QHBoxLayout()
-
-        if table == 'components':
-
-            buttonRow.addWidget(makeButtonBlock(self,self.functionForLoadDescriptor,
-                                               None, 'SP_DialogOpenButton', 'Load a previously created component xml file.'))
-
-        buttonRow.addWidget(makeButtonBlock(self,lambda:self.functionForNewRecord(table),
-                                             '+', None,
-                                             'Add a component'))
-        buttonRow.addWidget(makeButtonBlock(self,lambda:self.functionForDeleteRecord(table),
-                                             None, 'SP_TrashIcon',
-                                             'Delete a component'))
-        buttonRow.addStretch(3)
-        buttonBox.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
-        buttonBox.setLayout(buttonRow)
-        return buttonBox
-
-    #inserts data from the data model into corresponding boxes on the screen
-    #SetupInfo -> None
-    def fillData(self,model):
-
-        from ProjectSQLiteHandler import ProjectSQLiteHandler
-        #dictionary of attributes of the class SetupTag belonging to a SetupInformation Model
-        d = model.getSetupTags()
-
-        #for every key in d find the corresponding textbox or combo box
-
-        for k in d.keys():
-
-            for a in d[k]:
-                if d[k][a] is not None:
-                    edit_field = self.findChild((QtWidgets.QLineEdit,QtWidgets.QComboBox), k + a)
-
-                    if type(edit_field) is QtWidgets.QLineEdit:
-
-                        edit_field.setText(d[k][a])
-                    elif type(edit_field) is QtWidgets.QComboBox:
-                        edit_field.setCurrentIndex(edit_field.findText(d[k][a]))
-
-
-        def getDefault(l,i):
-            try:
-                l[i]
-                return l[i]
-            except IndexError:
-                return 'NA'
-        #this is what happens if there isn't already a project database.
-        if not self.projectDatabase:
-
-            # for headers, componentnames, componentattributes data goes into the database for table models
-            dbHandler = ProjectSQLiteHandler()
-            #for every field listed in the header name tag create a table entry on the form
-            for i in range(len(model.headerName.value)):
-
-                fields = ('original_field_name','component_name','attribute','units')
-                #as long as an NA isn't returned for the field name get the values for that field
-                if (getDefault(model.headerName.value,i) != 'NA'):
-                    values = (getDefault(model.headerName.value,i), getDefault(model.componentName.value,i),
-                          getDefault(model.componentAttribute.value,i), getDefault(model.componentAttribute.unit,i))
-
-                    #if the attribute is in the environment list then the data gets placed in the environment table
-                    if getDefault(model.componentAttribute.value,i) in ['WS','WF','IR','Tamb','Tstorage']:
-                        #insert into environment table
-                        table = 'environment'
-                    else:
-                         table = 'components'
-                         #if its the components table then we need to fill in component type as well
-                         fields = fields + ('component_type',)
-                         componentType = getDefault(model.componentName.value,i)[0:3]
-                         values = values + (componentType,)
-
-                    if len(dbHandler.cursor.execute("select * from " + table + " WHERE component_name = '" + getDefault(model.componentName.value,i) + "'").fetchall()) < 1:
-                         dbHandler.insertRecord(table,fields,values)
-            dbHandler.closeDatabase()
-
-        #refresh the tables
-        tableView = self.findChild((QtWidgets.QTableView), 'environment')
-        tableModel= tableView.model()
-        tableModel.select()
-        tableView = self.findChild((QtWidgets.QTableView), 'components')
-        tableModel = tableView.model()
-        tableModel.select()
-        return
-
-    #send input data to the ModelSetupInformation data model
-    #None->None
+    # send input data to the ModelSetupInformation data model
+    # reads through all the file tabs to collect input
+    # None->None
     def sendSetupData(self):
-        import re
-        #cycle through the input children in the topblock
-        for child in self.topBlock.findChildren((QtWidgets.QLineEdit,QtWidgets.QComboBox)):
+        #needs to come from each page
+        # cycle through the input children in the topblock
+        for child in self.topBlock.findChildren((QtWidgets.QLineEdit, QtWidgets.QComboBox)):
 
             if type(child) is QtWidgets.QLineEdit:
                 value = child.text()
@@ -470,61 +238,66 @@ class FormSetup(QtWidgets.QWidget):
             else:
                 value = child.itemText(child.currentIndex())
 
-            self.model.assign(child.objectName(),value)
-        #we also need headerNames, componentNames, attributes and units from the component section
-        componentView = self.findChild((QtWidgets.QTableView),'components')
-        componentModel = componentView.model()
-        headerName=[]
+            self.model.assign(child.objectName(), value)
+        # we also need headerNames, componentNames, attributes and units from the component section
+
+        headerName = []
         componentName = []
         componentAttribute = []
         componentAttributeU = []
-        #list of distinct components
-        self.model.components=[]
-        for i in range(0,componentModel.rowCount()):
+        # list of distinct components
+        self.model.components = []
+        #do for each tab
+        tabWidget = self.findChild(QtWidgets.QTabWidget)
+        for t in range(tabWidget.count):
+            page = tabWidget.widget(t)
+            componentView = page.findChild((QtWidgets.QTableView), 'components')
+            componentModel = componentView.model()
+            for i in range(0, componentModel.rowCount()):
+                headerName.append(componentModel.data(componentModel.index(i, 1)))
+                componentName.append(componentModel.data(componentModel.index(i, 3)))
+                componentAttribute.append(componentModel.data(componentModel.index(i, 7)))
+                componentAttributeU.append(componentModel.data(componentModel.index(i, 4)))
+                c = Component(component_name=componentModel.data(componentModel.index(i, 3)) + componentModel.data(
+                    componentModel.index(i, 7)),
+                              scale=componentModel.data(componentModel.index(i, 5)),
+                              units=componentModel.data(componentModel.index(i, 4)),
+                              offset=componentModel.data(componentModel.index(i, 6)),
+                              attribute=componentModel.data(componentModel.index(i, 7)),
+                              type=componentModel.data(componentModel.index(i, 2)),
+                              original_field_name=componentModel.data(componentModel.index(i, 2)))
+                self.model.components.append(c)
+            # make a list of distinct values
+            componentNames = list(set(componentName))
+            # and the same data from the environment section
+            envView = self.findChild((QtWidgets.QTableView), 'environment')
+            envModel = envView.model()
+            for j in range(0, envModel.rowCount()):
+                headerName.append(envModel.data(envModel.index(j, 1)))
+                componentName.append(envModel.data(envModel.index(j, 2)))
+                componentAttribute.append(envModel.data(envModel.index(j, 6)))
+                componentAttributeU.append(envModel.data(envModel.index(j, 3)))
 
-            headerName.append(componentModel.data(componentModel.index(i,1)))
-            componentName.append(componentModel.data(componentModel.index(i,3)))
-            componentAttribute.append(componentModel.data(componentModel.index(i,7)))
-            componentAttributeU.append(componentModel.data(componentModel.index(i,4)))
-            c = Component(component_name =componentModel.data(componentModel.index(i,3)) + componentModel.data(componentModel.index(i,7)),
-                          scale=componentModel.data(componentModel.index(i,5)),
-                          units=componentModel.data(componentModel.index(i,4)),
-                        offset = componentModel.data(componentModel.index(i,6)),
-                          attribute=componentModel.data(componentModel.index(i,7)),
-                          type = componentModel.data(componentModel.index(i,2)),
-                          original_field_name= componentModel.data(componentModel.index(i,2)))
-            self.model.components.append(c)
-        #make a list of distinct values
-        componentNames = list(set(componentName))
-        #and the same data from the environment section
-        envView = self.findChild((QtWidgets.QTableView), 'environment')
-        envModel = envView.model()
-        for j in range(0, envModel.rowCount()):
-            headerName.append(envModel.data(envModel.index(j, 1)))
-            componentName.append(envModel.data(envModel.index(j, 2)))
-            componentAttribute.append(envModel.data(envModel.index(j, 6)))
-            componentAttributeU.append(envModel.data(envModel.index(j, 3)))
+                c = Component(component_name=envModel.data(envModel.index(j, 2)) + envModel.data(envModel.index(j, 6)),
 
-            c = Component(component_name=envModel.data(envModel.index(j,2))  + envModel.data(envModel.index(j,6)),
-
-                          scale=envModel.data(envModel.index(j,4)),
-                          units=envModel.data(envModel.index(j,3)),
-                          offset=envModel.data(envModel.index(j,5)),
-                          attribute=envModel.data(envModel.index(j,6)),
-                          original_field_name = envModel.data(envModel.index(j,1)))
-            self.model.components.append(c)
-        model.assign('headerNamevalue',headerName)
+                              scale=envModel.data(envModel.index(j, 4)),
+                              units=envModel.data(envModel.index(j, 3)),
+                              offset=envModel.data(envModel.index(j, 5)),
+                              attribute=envModel.data(envModel.index(j, 6)),
+                              original_field_name=envModel.data(envModel.index(j, 1)))
+                self.model.components.append(c)
+        model.assign('headerNamevalue', headerName)
         model.assign('componentNamevalue', componentName)
         model.assign('componentAttributevalue', componentAttribute)
         model.assign('componentAttributeunit', componentAttributeU)
         model.assign('componentNamesvalue', componentNames)
 
-    #write data to the ModelSetupInformation data model and generate input xml files for setup and components
-    #None->None
+    # write data to the ModelSetupInformation data model and generate input xml files for setup and components
+    # None->None
     def createInputFiles(self):
         import os
         self.addProgressBar()
-        self.progress.setRange(0,0)
+        self.progress.setRange(0, 0)
         self.sendSetupData()
         # write all the xml files
 
@@ -533,21 +306,22 @@ class FormSetup(QtWidgets.QWidget):
 
         # import datafiles
         handler = UIToHandler()
-        cleaned_data, componentDict = handler.loadFixData(os.path.join(model.setupFolder, model.project + 'Setup.xml'))
+        cleaned_data, componentDict = handler.loadFixData(
+            os.path.join(model.setupFolder, model.project + 'Setup.xml'))
         self.updateModelPage(cleaned_data)
         # pickled data to be used later if needed
         handler.storeData(cleaned_data, os.path.join(model.setupFolder, model.project + 'Setup.xml'))
-        self.progress.setRange(0,1)
+        self.progress.setRange(0, 1)
         # generate netcdf files
         msg = QtWidgets.QMessageBox(QtWidgets.QMessageBox.Warning, "Time Series loaded",
                                     "Do you want to generate netcdf files?.")
         msg.setStandardButtons(QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.Cancel)
 
         result = msg.exec()
-         #if yes create netcdf files, Otherwise this can be done after the data is reviewed.
+        # if yes create netcdf files, Otherwise this can be done after the data is reviewed.
         if result == QtWidgets.QMessageBox.Ok:
-            handler.createNetCDF(cleaned_data.fixed, componentDict, os.path.join(model.setupFolder, model.project + 'Setup.xml'))
-
+            handler.createNetCDF(cleaned_data.fixed, componentDict,
+                                 os.path.join(model.setupFolder, model.project + 'Setup.xml'))
 
         return
 
@@ -558,17 +332,19 @@ class FormSetup(QtWidgets.QWidget):
         # start and end dates get set written to database as default date ranges
         import pandas as pd
         defaultStart = str((pd.to_datetime(data.fixed.index, unit='s')[0]).date())
-        defaultEnd = str((pd.to_datetime(data.fixed.index, unit='s')[len(data.fixed.index) -1]).date())
+        defaultEnd = str((pd.to_datetime(data.fixed.index, unit='s')[len(data.fixed.index) - 1]).date())
 
+        defaultComponents = ','.join(self.model.componentNames.value)
         sqlHandler = ProjectSQLiteHandler()
-        sqlHandler.cursor.execute("UPDATE setup set date_start = ?, date_end = ? where set_name = 'default'",
-                                  [defaultStart, defaultEnd])
+        sqlHandler.cursor.execute(
+            "UPDATE setup set date_start = ?, date_end = ?, component_names = ? where set_name = 'default'",
+            [defaultStart, defaultEnd, defaultComponents])
         sqlHandler.connection.commit()
         sqlHandler.closeDatabase()
-        # tell the model form to update now that there is data
+        # tell the model form to fillSetInfo now that there is data
         modelForm = self.window().findChild(SetsTableBlock)
         # start and end are tuples at this point
-        modelForm.update(start=defaultStart, end=defaultEnd, components=','.join(self.model.componentNames.value))
+        modelForm.makeSetInfo(start=defaultStart, end=defaultEnd, components=defaultComponents)
 
     #event triggered when user navigates away from setup page
     #xml data gets written and the ModelSetupInformation attributes get updated
@@ -592,3 +368,18 @@ class FormSetup(QtWidgets.QWidget):
         self.progress.setObjectName('uploadBar')
         self.progress.setGeometry(100,100,100,50)
         return self.progress
+
+    # add a new file input tab
+    def newTab(self):
+        # get the set count
+        tab_count = self.tabs.count()
+        widg = FileBlock(self, 'Input' + str(tab_count))
+        #widg.fillSetInfo()
+        self.tabs.addTab(widg, 'Input' + str(tab_count))
+
+    # calls the specified function connected to a button onClick event
+    @QtCore.pyqtSlot()
+    def onClick(self, buttonFunction):
+        buttonFunction()
+
+

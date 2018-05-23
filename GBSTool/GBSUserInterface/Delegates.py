@@ -1,6 +1,6 @@
 from PyQt5 import QtCore, QtWidgets, QtSql
 from GBSInputHandler.Component import Component
-from ProjectSQLiteHandler import ProjectSQLiteHandler
+from GBSUserInterface.ProjectSQLiteHandler import ProjectSQLiteHandler
 import os
 #class for combo boxes that are not derived from database relationships
 class ComboDelegate(QtWidgets.QItemDelegate):
@@ -38,7 +38,7 @@ class ComboDelegate(QtWidgets.QItemDelegate):
 
     @QtCore.pyqtSlot()
     def currentIndexChanged(self):
-        from getComponentAttributesAsList import getComponentAttributesAsList
+        from GBSUserInterface.getComponentAttributesAsList import getComponentAttributesAsList
         self.commitData.emit(self.sender())
         #if its the sets table then the attribute list needs to be updated
         if self.name == 'componentName':

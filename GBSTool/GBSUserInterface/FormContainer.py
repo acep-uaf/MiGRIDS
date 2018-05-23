@@ -3,12 +3,12 @@ from PyQt5 import QtWidgets, QtCore
 class FormContainer(QtWidgets.QWidget):
     #if the screen is big enough show input and results
     #if its not very big show input and results on seperate tabs
-    def __init__(self, parent, widgetList):
+    def __init__(self, parent, widgetList,name):
         super().__init__(parent)
         self.widgetList = widgetList
-        self.initUI()
+        self.initUI(name)
 
-    def initUI(self):
+    def initUI(self,name):
         #the current app
         app = QtCore.QCoreApplication.instance()
         #screen resolution
@@ -29,4 +29,5 @@ class FormContainer(QtWidgets.QWidget):
             for l in self.widgetList:
                 tabArea.addTab(l, l.objectName())
             layout.addWidget(tabArea)
+        self.setObjectName(name)
         self.setLayout(layout)

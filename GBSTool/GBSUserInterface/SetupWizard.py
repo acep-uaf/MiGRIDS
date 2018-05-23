@@ -4,7 +4,7 @@
 import pandas as pd
 from PyQt5 import QtWidgets, QtGui, QtCore
 
-from ProjectSQLiteHandler import ProjectSQLiteHandler
+from GBSUserInterface.ProjectSQLiteHandler import ProjectSQLiteHandler
 
 class SetupWizard:
 

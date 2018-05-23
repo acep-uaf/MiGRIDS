@@ -121,7 +121,7 @@ class formFromXML(QtWidgets.QDialog):
     #None->None
     def update(self):
 
-        #for every tag in the soup update its value from the form
+        #for every tag in the soup fillSetInfo its value from the form
         for tag in self.soup.find_all():
             if tag.parent.name not in ['component', 'childOf', 'type']:
                 parent = tag.parent.name
@@ -157,7 +157,7 @@ class formFromXML(QtWidgets.QDialog):
         from GBSController.UIToHandler import UIToHandler
 
         print('closing descriptor file')
-        #update soup
+        #fillSetInfo soup
         self.update()
         #Tell the controller to tell the InputHandler to write the xml
         if self.write:

@@ -1,5 +1,5 @@
 
-from Delegates import *
+from GBSUserInterface.Delegates import *
 
 #QTableView for displaying component information
 class ComponentTableView(QtWidgets.QTableView):

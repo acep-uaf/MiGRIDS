@@ -1,21 +1,24 @@
+import datetime
+import pandas as pd
+
 #uses a set name and data model of component attribute changes to generate set#attribute.xml based on template
 #string, Table -> Beautifulsoup
-def makeAttributeXML(currentSet,model):
-    from ProjectSQLiteHandler import ProjectSQLiteHandler
+def makeAttributeXML(currentSet,compmodel):
+    from GBSUserInterface.ProjectSQLiteHandler import ProjectSQLiteHandler
     from PyQt5 import QtWidgets
-    soup = readAttributeXML()
+    soup = readTemplateAttributeXML()
 
-    #update the soup to reflect the model
+    #fillSetInfo the soup to reflect the model
     #for each row in model
     compName =''
     compTag = ''
     compAttr=''
     compValue=''
-    for i in range(model.rowCount()):
-        compName = ' '.join([compName, model.data(model.index(i,2))])
-        compTag = ' '.join([compTag, '.'.join(model.data(model.index(i,3)).split('.')[:-1])])
-        compAttr =  ' '.join([compAttr, model.data(model.index(i,3)).split('.')[-1]])
-        compValue = ' '.join([compValue, model.data(model.index(i, 4))])
+    for i in range(compmodel.rowCount()):
+        compName = ' '.join([compName, compmodel.data(compmodel.index(i,2))])
+        compTag = ' '.join([compTag, '.'.join(compmodel.data(compmodel.index(i,3)).split('.')[:-1])])
+        compAttr =  ' '.join([compAttr, compmodel.data(compmodel.index(i,3)).split('.')[-1]])
+        compValue = ' '.join([compValue, compmodel.data(compmodel.index(i, 4))])
 
     tag = soup.find('compName')
     tag.attrs['value'] = compName.lstrip()
@@ -25,7 +28,8 @@ def makeAttributeXML(currentSet,model):
     tag.attrs['value'] = compAttr.lstrip()
     tag = soup.find('compValue')
     tag.attrs['value']= compValue.lstrip()
-    #update the set information
+
+    #fillSetInfo the set information
     handler = ProjectSQLiteHandler()
     dataTuple = handler.cursor.execute("SELECT set_name, date_start, date_end, timestep, component_names from setup where set_name = '" + currentSet.lower() + "'").fetchone()
 
@@ -34,7 +38,7 @@ def makeAttributeXML(currentSet,model):
     tag = soup.find('setupAttr')
     tag.attrs['value']= "value value value"
     tag = soup.find('setupValue')
-    df = model.parent().window().findChild(QtWidgets.QWidget, 'setupDialog').model.data.fixed
+    df = compmodel.parent().window().findChild(QtWidgets.QWidget, 'setupDialog').model.data.fixed
     tag.attrs['value'] = " ".join([dataTuple[4],timeStepsToInteger(dataTuple[1],dataTuple[2],df),str(dataTuple[3])])
 
     return soup
@@ -49,11 +53,13 @@ def writeAttributeXML(soup,saveDir,setName):
     f.write(soup.prettify())
     f.close()
     return
+#dataframe, integer - > datetime
+def integerToTimeIndex(df, i):
+    d = pd.to_datetime(df.index[int(i)]).date()
+    return d
 
-#TODO create function to change dates into integer ranges for data input rows
 def timeStepsToInteger(d1,d2,df):
-    import datetime
-    import pandas as pd
+
     d1 = datetime.datetime.strptime(d1, '%Y-%m-%d')
     d2 = datetime.datetime.strptime(d2, '%Y-%m-%d')
 
@@ -64,11 +70,11 @@ def timeStepsToInteger(d1,d2,df):
         d2 = pd.to_datetime(df[:d2].last_valid_index())
         v1 = df.index.get_loc(d1)
         v2 = df.index.get_loc(d2)
-        return '-'.join([str(v1),str(v2)])
+        return ' '.join([str(v1),str(v2)])
     return 'all'
 
-
-def readAttributeXML():
+#->Soup
+def readTemplateAttributeXML():
     from bs4 import BeautifulSoup
     import os
     # xml templates are in the model/resources/descriptor folder
