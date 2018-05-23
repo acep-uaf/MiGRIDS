@@ -10,7 +10,6 @@ here = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(os.path.join(here, '../'))
 from GBSInputHandler.readXmlTag import readXmlTag
 from GBSInputHandler.writeXmlTag import writeXmlTag
-import numpy as np
 import pandas as pd
 import itertools
 import sqlite3
@@ -21,7 +20,7 @@ def generateRuns(projectSetDir):
     os.chdir(projectSetDir) # change directories to the directory for this set of simulations
     # get the set number
     dir_path = os.path.basename(projectSetDir)
-    setNum = int(dir_path[3:])
+    setNum = str(dir_path[3:])
     # get the project name
     os.chdir(projectSetDir)
     os.chdir('../..')

@@ -3,18 +3,13 @@
 # Date: November 27, 2017
 # License: MIT License (see LICENSE file of this package for more information)
 
-import itertools
-import numpy as np
 import sys
 
-from WindTurbine import WindTurbine
+import numpy as np
+
+from GBSModel.WindTurbine import WindTurbine
 
 sys.path.append('../')
-from GBSAnalyzer.CurveAssemblers.wtgPowerCurveAssembler import WindPowerCurve
-from bisect import bisect_left
-from netCDF4 import Dataset
-from GBSAnalyzer.DataRetrievers.readNCFile import readNCFile
-from Generator import Generator
 
 
 class Windfarm:

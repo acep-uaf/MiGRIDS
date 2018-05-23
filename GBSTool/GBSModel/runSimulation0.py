@@ -3,30 +3,23 @@
 # Date: February 28, 2018
 # License: MIT License (see LICENSE file of this package for more information)
 
-import cProfile
-import numpy as np
-import numpy as np
 import os
-import os
-import pandas as pd
+import sqlite3
 # add to sys path
 import sys
 import tkinter as tk
-from shutil import copyfile
 from tkinter import filedialog
-import sqlite3
 
-from SystemOperations import SystemOperations
+import pandas as pd
+
+from GBSModel.SystemOperations import SystemOperations
 
 here = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(os.path.join(here, '../'))
 sys.path.append(here)
-from GBSInputHandler.writeXmlTag import writeXmlTag
 from GBSInputHandler.readXmlTag import readXmlTag
-from GBSInputHandler.fillProjectData import fillProjectData
-import glob
 from GBSAnalyzer.DataWriters.writeNCFile import writeNCFile
-from GBSInputHandler.writeXmlTag import writeXmlTag
+
 
 def runSimulation(projectSetDir = ''):
 
@@ -38,7 +31,7 @@ def runSimulation(projectSetDir = ''):
 
     # get set number
     dir_path = os.path.basename(projectSetDir)
-    setNum = int(dir_path[3:])
+    setNum = str(dir_path[3:])
     # get the project name
     os.chdir(projectSetDir)
     os.chdir('../..')
@@ -139,26 +132,26 @@ def runSimulation(projectSetDir = ''):
 
         # initiate the system operations
         # code profiler
-        pr0 = cProfile.Profile()
-        pr0.enable()
+        # pr0 = cProfile.Profile()
+        # pr0.enable()
         SO = SystemOperations(timeStep = timeStep, runTimeSteps = runTimeSteps, loadRealFiles = loadProfileFile, loadReactiveFiles = [],
                               predictLoad = predictLoad, predictWind = predictWind, getMinSrcFile = getMinSrcFile,
                          genIDs = genIDs, genStates = genStates, genDescriptors = genDescriptors, genDispatch = genDispatch,
                          wtgIDs = wtgIDs, wtgStates = wtgStates, wtgDescriptors = wtgDescriptors, wtgSpeedFiles = timeSeriesDir, wtgDispatch = wtgDispatch,
                          eesIDs = eesIDs, eesStates = eesStates, eesSOCs = eesSOC, eesDescriptors = eesDescriptors, eesDispatch = eesDispatch)
         # stop profiler
-        pr0.disable()
-        pr0.print_stats(sort="calls")
+        # pr0.disable()
+        #pr0.print_stats(sort="calls")
 
         # run the simulation
         # code profiler
-        pr1 = cProfile.Profile()
-        pr1.enable()
+        # pr1 = cProfile.Profile()
+        # pr1.enable()
         # run sim
         SO.runSimulation()
         # stop profiler
-        pr1.disable()
-        pr1.print_stats(sort="calls")
+        # pr1.disable()
+        # pr1.print_stats(sort="calls")
 
         # save data
         os.chdir(outputDataDir)

@@ -3,17 +3,19 @@
 # Date: November 27, 2017
 # License: MIT License (see LICENSE file of this package for more information)
 
-from Powerhouse import Powerhouse
-from Windfarm import Windfarm
-#from SolarFarm import Solarfarm
-from ElectricalEnergyStorageSystem import ElectricalEnergyStorageSystem
-#from ThermalSystem import ThermalSystem
-from Demand import Demand
-from getSeriesIndices import getSeriesIndices
+import importlib.util
 import os
 import sys
-import importlib.util
+
 import numpy as np
+
+# from ThermalSystem import ThermalSystem
+from GBSModel.Demand import Demand
+# from SolarFarm import Solarfarm
+from GBSModel.ElectricalEnergyStorageSystem import ElectricalEnergyStorageSystem
+from GBSModel.Powerhouse import Powerhouse
+from GBSModel.Windfarm import Windfarm
+
 
 class SystemOperations:
     # System Variables

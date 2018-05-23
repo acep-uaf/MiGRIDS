@@ -3,14 +3,18 @@
 # Date: November 27, 2017
 # License: MIT License (see LICENSE file of this package for more information)
 
-from Generator import Generator
 import itertools
 import sys
+
 import numpy as np
+
+from GBSModel.Generator import Generator
+
 sys.path.append('../')
 from GBSAnalyzer.CurveAssemblers.genFuelCurveAssembler import GenFuelCurve
-from getIntListIndex import getIntListIndex
-from bisect import bisect_left
+from GBSModel.getIntListIndex import getIntListIndex
+
+
 # import GeneratorDispatch
 
 class Powerhouse:

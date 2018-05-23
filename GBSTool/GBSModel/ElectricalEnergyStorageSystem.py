@@ -3,10 +3,10 @@
 # Date: February 8, 2018
 # License: MIT License (see LICENSE file of this package for more information)
 
-from ElectricalEnergyStorage import ElectricalEnergyStorage
-import itertools
 import sys
-import numpy as np
+
+from GBSModel.ElectricalEnergyStorage import ElectricalEnergyStorage
+
 sys.path.append('../')
 import importlib.util
 import os

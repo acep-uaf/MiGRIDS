@@ -4,13 +4,12 @@
 # License: MIT License (see LICENSE file of this package for more information)
 
 
-# imports
-from getSeriesIndices import getSeriesIndices
 import numpy as np
 from scipy.interpolate import interp1d
 
-
 from GBSAnalyzer.DataRetrievers.readNCFile import readNCFile
+# imports
+from GBSModel.getSeriesIndices import getSeriesIndices
 
 
 class Demand:

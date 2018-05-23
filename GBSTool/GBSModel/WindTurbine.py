@@ -14,8 +14,8 @@ sys.path.append(os.path.join(here, '../'))
 from GBSAnalyzer.CurveAssemblers.wtgPowerCurveAssembler import WindPowerCurve
 from bisect import bisect_left
 from GBSAnalyzer.DataRetrievers.readNCFile import readNCFile
-from getIntListIndex import getIntListIndex
-from getSeriesIndices import getSeriesIndices
+from GBSModel.getIntListIndex import getIntListIndex
+from GBSModel.getSeriesIndices import getSeriesIndices
 import numpy as np
 from scipy.interpolate import interp1d
 from distutils.util import strtobool
@@ -98,7 +98,6 @@ class WindTurbine:
         wtgDescriptorXml = wtgDescriptorFile.read()
         wtgDescriptorFile.close()
         wtgSoup = Soup(wtgDescriptorXml, "xml")
-
 
         # Dig through the tree for the required data
         self.wtgName = wtgSoup.component.get('name')
