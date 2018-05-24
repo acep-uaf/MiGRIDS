@@ -41,8 +41,15 @@ headerNames, componentUnits, componentAttributes, componentNames, newHeaderNames
 
 # read time series data, combine with wind data if files are seperate.
 from readDataFile import readDataFile
-df, listOfComponents= readDataFile(inputSpecification,fileLocation,fileType,headerNames,newHeaderNames,componentUnits,componentAttributes) # dataframe with time series information. replace header names with column names
-
+# iterate through all sets of input files
+for idx in range(len(inputSpecification)):
+    df0, listOfComponents0= readDataFile(inputSpecification,fileLocation,fileType,headerNames,newHeaderNames,componentUnits,componentAttributes) # dataframe with time series information. replace header names with column names
+    if idx == 0: # initiate data frames if first iteration, otherwise append
+        df = df0
+        listOfComponents = listOfComponents0
+    else:
+        df.join(df0)
+        listOfComponents.append(listOfComponents0)
 # now fix the bad data
 from fixBadData import fixBadData
 df_fixed = fixBadData(df,setupDir,listOfComponents,inputInterval)
