@@ -3,13 +3,15 @@
 
 import os
 import pickle
-from GBSInputHandler.fillProjectData import fillProjectData
-from GBSInputHandler.buildProjectSetup import buildProjectSetup
-from GBSInputHandler.makeSoup import makeComponentSoup
-from GBSInputHandler.readXmlTag import readXmlTag
-from GBSInputHandler.writeXmlTag import writeXmlTag
-from GBSUserInterface.ProjectSQLiteHandler import ProjectSQLiteHandler
+
 from bs4 import BeautifulSoup
+
+from GBSAnalyzer.DataRetrievers.readXmlTag import readXmlTag
+from GBSInputHandler.buildProjectSetup import buildProjectSetup
+from GBSInputHandler.fillProjectData import fillProjectData
+from GBSInputHandler.makeSoup import makeComponentSoup
+from GBSInputHandler.writeXmlTag import writeXmlTag
+
 
 class UIToHandler():
     #generates an setup xml file based on information in a ModelSetupInformation object

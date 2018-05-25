@@ -1,19 +1,16 @@
 
 import cProfile
-import numpy as np
-import numpy as np
 import os
-import os
-import pandas as pd
 import sys
 import tkinter as tk
 from tkinter import filedialog
 
+import numpy as np
+import pandas as pd
 from SystemOperations import SystemOperations
 
 sys.path.append('../')
-from GBSInputHandler.writeXmlTag import writeXmlTag
-from GBSInputHandler.readXmlTag import readXmlTag
+from GBSAnalyzer.DataRetrievers.readXmlTag import readXmlTag
 import glob
 from GBSAnalyzer.DataWriters import writeNCFile
 

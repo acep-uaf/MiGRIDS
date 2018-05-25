@@ -8,7 +8,7 @@ import os
 import sys
 here = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(os.path.join(here, '../'))
-from GBSInputHandler.readXmlTag import readXmlTag
+from GBSAnalyzer.DataRetrievers.readXmlTag import readXmlTag
 from GBSInputHandler.writeXmlTag import writeXmlTag
 import pandas as pd
 import itertools

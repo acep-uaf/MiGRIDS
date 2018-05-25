@@ -19,21 +19,34 @@ fileName = filedialog.askopenfilename()
 import os
 setupDir = os.path.dirname(fileName)
 # Village name
-from readXmlTag import readXmlTag
+from GBSAnalyzer.DataRetrievers.readXmlTag import readXmlTag
 Village = readXmlTag(fileName,'project','name')[0]
 # input specification
 #input specification can be for multiple input files or a single file in AVEC format.
-inputSpecification = readXmlTag(fileName,'inputFileFormat','value')[0]
+inputSpecification = readXmlTag(fileName,'inputFileFormat','value')
 #filelocation is the raw timeseries file.
 #if multiple files specified look for raw_wind directory
 # input a list of subdirectories under the GBSProjects directory
 fileLocation = readXmlTag(fileName,'inputFileDir','value')
-fileLocation = os.path.join(*fileLocation)
-fileLocation = os.path.join('../../GBSProjects', fileLocation)
+fileLocation = [os.path.join('../../GBSProjects', *x) for x in fileLocation]
 # file type
-fileType = readXmlTag(fileName,'inputFileType','value')[0]
-outputInterval = readXmlTag(fileName,'outputTimeStep','value')[0] + readXmlTag(fileName,'outputTimeStep','unit')[0]
-inputInterval = readXmlTag(fileName,'inputTimeStep','value')[0] + readXmlTag(fileName,'inputTimeStep','unit')[0]
+fileType = readXmlTag(fileName,'inputFileType','value')
+
+outputInterval = readXmlTag(fileName,'timeStep','value')
+outputIntervalUnit = readXmlTag(fileName,'timeStep','unit')
+inputInterval = readXmlTag(fileName,'inputTimeStep','value')
+inputIntervalUnit = readXmlTag(fileName,'inputTimeStep','unit')
+
+for idx in range(len(outputInterval)): # for each group of input files
+    if len(outputIntervalUnit) > 1:
+        outputInterval[idx] += outputIntervalUnit[idx]
+    else:
+        outputInterval[idx] += outputIntervalUnit[0]
+    if len(inputIntervalUnit) > 1:
+        inputInterval[idx] += inputIntervalUnit[idx]
+    else:
+        inputInterval[idx] += inputIntervalUnit[0]
+
 
 # get data units and header names
 from getUnits import getUnits
@@ -42,8 +55,8 @@ headerNames, componentUnits, componentAttributes, componentNames, newHeaderNames
 # read time series data, combine with wind data if files are seperate.
 from readDataFile import readDataFile
 # iterate through all sets of input files
-for idx in range(len(inputSpecification)):
-    df0, listOfComponents0= readDataFile(inputSpecification,fileLocation,fileType,headerNames,newHeaderNames,componentUnits,componentAttributes) # dataframe with time series information. replace header names with column names
+for idx in range(len(fileLocation)):
+    df0, listOfComponents0= readDataFile(fileType[idx],fileLocation[idx],fileType[idx],headerNames[idx],newHeaderNames[idx],componentUnits[idx],componentAttributes[idx]) # dataframe with time series information. replace header names with column names
     if idx == 0: # initiate data frames if first iteration, otherwise append
         df = df0
         listOfComponents = listOfComponents0

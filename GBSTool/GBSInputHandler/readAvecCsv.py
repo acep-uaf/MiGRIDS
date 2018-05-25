@@ -62,13 +62,21 @@ def readAvecCsv(fileName,fileLocation='',columnNames=None,useNames=None,componen
 
     if columnNames!=None:
         if all(isinstance(n,str) for n in columnNames): # if columnNames are strings (header names)
-            dfNew = dfNew[['DATE','TIME']+columnNames] # combine date and time with columns to keep
+            if isinstance(columnNames,(list,tuple,np.ndarray)): # check if multple collumns
+                dfNew = dfNew[['DATE','TIME']+columnNames] # combine date and time with columns to keep
+            else:
+                dfNew = dfNew[['DATE', 'TIME'] + [columnNames]]  # combine date and time with columns to keep
         else: # otherwise, if the indices of the columnss
-            dfNew = dfNew[[1,2] + columnNames]
+            if isinstance(columnNames, (list, tuple, np.ndarray)):  # check if multple collumns
+                dfNew = dfNew[[1,2] + columnNames]
+            else:
+                dfNew = dfNew[[1, 2] + [columnNames]]
 
     if np.all(useNames!=None):
-
-        dfNew.columns = [['DATE','TIME']+useNames] # add date and time to the column names
+        if isinstance(useNames, (list, tuple, np.ndarray)):  # check if multple collumns
+            dfNew.columns = [['DATE','TIME']+useNames] # add date and time to the column names
+        else:
+            dfNew.columns = [['DATE', 'TIME'] + [useNames]]  # add date and time to the column names
 
     #if np.all(componentUnits!=None):
         # import unit conversion definitions
