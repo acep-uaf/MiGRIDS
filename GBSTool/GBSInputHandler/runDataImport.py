@@ -10,6 +10,7 @@
 # get input data to run the functions to import data into the project
 from tkinter import filedialog
 import tkinter as tk
+import pandas as pd
 #print('Select the xml project setup file')
 root = tk.Tk()
 root.withdraw()
@@ -37,6 +38,15 @@ outputIntervalUnit = readXmlTag(fileName,'timeStep','unit')
 inputInterval = readXmlTag(fileName,'inputTimeStep','value')
 inputIntervalUnit = readXmlTag(fileName,'inputTimeStep','unit')
 
+# get date and time values
+dateColumnName = readXmlTag(fileName,'dateChannel','value')
+dateColumnFormat = readXmlTag(fileName,'dateChannel','format')
+timeColumnName = readXmlTag(fileName,'timeChannel','value')
+timeColumnFormat = readXmlTag(fileName,'timeChannel','format')
+utcOffsetValue = readXmlTag(fileName,'inputUTCOffset','value')
+utcOffsetUnit = readXmlTag(fileName,'inputUTCOffset','unit')
+dst = readXmlTag(fileName,'inputDST','value')
+
 for idx in range(len(outputInterval)): # for each group of input files
     if len(outputIntervalUnit) > 1:
         outputInterval[idx] += outputIntervalUnit[idx]
@@ -56,12 +66,12 @@ headerNames, componentUnits, componentAttributes, componentNames, newHeaderNames
 from readDataFile import readDataFile
 # iterate through all sets of input files
 for idx in range(len(fileLocation)):
-    df0, listOfComponents0= readDataFile(fileType[idx],fileLocation[idx],fileType[idx],headerNames[idx],newHeaderNames[idx],componentUnits[idx],componentAttributes[idx]) # dataframe with time series information. replace header names with column names
+    df0, listOfComponents0= readDataFile(fileType[idx],fileLocation[idx],fileType[idx],headerNames[idx],newHeaderNames[idx],componentUnits[idx],componentAttributes[idx], dateColumnName[idx], dateColumnFormat[idx], timeColumnName[idx], timeColumnFormat[idx], utcOffsetValue[idx], utcOffsetUnit[0], dst[idx]) # dataframe with time series information. replace header names with column names
     if idx == 0: # initiate data frames if first iteration, otherwise append
         df = df0
         listOfComponents = listOfComponents0
     else:
-        df.join(df0)
+        df = pd.merge(df,df0,how='outer',on='DATE')
         listOfComponents.append(listOfComponents0)
 # now fix the bad data
 from fixBadData import fixBadData

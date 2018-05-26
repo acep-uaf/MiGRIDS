@@ -4,7 +4,7 @@
 # License: MIT License (see LICENSE file of this package for more information)
 # assumes the first column is always a date column
 # reads data files from user and outputs a dataframe.
-def readDataFile(inputFileType,fileLocation='',fileType='csv',columnNames=None,useNames=None,componentUnits=None,componentAttributes=None):
+def readDataFile(inputFileType,fileLocation,fileType,columnNames,useNames,componentUnits,componentAttributes, dateColumnName, dateColumnFormat, timeColumnName, timeColumnFormat, utcOffsetValue, utcOffsetUnit, dst):
     # inputSpecification points to a script to accept data from a certain input data format *type string*
     # fileLocation is the dir where the data files are stored. It is either absolute or relative to the GBS project InputData dir *type string*
     # fileType is the file type. default is csv. All files of this type will be read from the dir *type string*
@@ -44,15 +44,15 @@ def readDataFile(inputFileType,fileLocation='',fileType='csv',columnNames=None,u
     else:
         fileLocation = os.path.join(here,fileLocation)
     os.chdir(fileLocation)
-    # get just the filenames ending with fileType
+    # get just the filenames ending with fileType. check for both upper and lower case
     
-    fileNames = [f for f in os.listdir(fileLocation) if os.path.isfile(f) & f.endswith(fileType)]
+    fileNames = [f for f in os.listdir(fileLocation) if os.path.isfile(f) & (f.endswith(fileType.upper()) or f.endswith(fileType.lower()))]
     
     df = pd.DataFrame()
     ####### Parse the time series data files ############
     # depending on input specification, different procedure
     if inputFileType.lower() =='csv':
-        df = readAllAvecTimeSeries(fileNames,fileLocation,columnNames,useNames,componentUnits)
+        df = readAllAvecTimeSeries(fileNames,fileLocation,columnNames,useNames,componentUnits, dateColumnName, dateColumnFormat, timeColumnName, timeColumnFormat, utcOffsetValue, utcOffsetUnit, dst)
     elif inputFileType.lower() == 'met':
         df = readWindData(fileLocation)
         '''
