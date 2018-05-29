@@ -66,7 +66,7 @@ def generateRuns(projectSetDir):
         for idx, val in enumerate(setupValue):  # iterate through all setup attribute values
             tag = setupTag[idx].split('.')
             attr = setupAttr[idx]
-            value = val.split(',')
+            value = val
             writeXmlTag(setupFile, tag, attr, value)
 
     # get the components to be run
