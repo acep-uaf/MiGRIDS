@@ -42,14 +42,15 @@ for idx in range(len(values)):
     values[idx] += random.gauss(mu=mu, sigma=sigma) - mu/2
 '''
 #### grab Igiugig data ####
-# number of desired data points
-N = 1000000 # sample size
+
 # cd to Igiugig data
 here = os.path.dirname(os.path.realpath(__file__))
 os.chdir(here)
 os.chdir('..\..\GBSProjects\Igiugig0\InputData\TimeSeriesData\ProcessedData')
 # totalizer load, 15 min averages
 rootgrp = Dataset('load0P.nc', "r", format="NETCDF4")
+# number of desired data points
+N = len(rootgrp.variables['time'][0]) # sample size
 date_list = pd.to_datetime(rootgrp.variables['time'][0][:N],unit='s')
 values = rootgrp.variables['value'][0][:N]
 
@@ -85,10 +86,15 @@ AHighRes.totalPower()
 
 # save
 os.chdir(saveLocation)
-pickle.dump(AHighRes,open("OriginalResults"+timeNow+".p", "wb"))
+pickleOut = open("OriginalResults"+timeNow+".p", "wb")
+pickle.dump(AHighRes.fixed,pickleOut)
+pickleOut.close()
 
 ### test Langevin upsampling ###
+# test effect of sample period on std
+
 # find average std per 15 min period
+'''
 sigmaList = []
 meanList = []
 #for idx in range(np.min([int((len(AHighRes.raw.total_p)-(15*60))/(15*60)),100000])):
@@ -96,9 +102,11 @@ for idx in range(len(A.raw.total_p)): # for each low res value
     sigmaList += [np.std(AHighRes.raw.total_p[idx*15*60:(idx+1)*15*60])]
     meanList += [np.mean(AHighRes.raw.total_p[idx*15*60:(idx+1)*15*60])]
 sigma = np.nanmean(sigmaList)
-sigma = None
 sigmaFromLowRes = A.raw.total_p.rolling(10, 1).std() # for comparing with other sigma calculation
 sigmaFromLowRes[0] = sigmaFromLowRes[1]
+#sigma = sigmaFromLowRes*1.5
+sigmaMuRatio = sigmaList[:-1]/np.abs(np.diff(A.raw.total_p))
+meanSigmaMuRatio = np.mean(sigmaMuRatio)
 plt.plot(sigmaFromLowRes,sigmaList,'.',markersize = 1)
 # compare pdfs of rolling 15 min and 1 sec data
 bins = np.linspace(np.min([np.min(sigmaList),np.min(sigmaFromLowRes)]), np.max([np.max(sigmaList),np.max(sigmaFromLowRes)]),20)
@@ -112,15 +120,24 @@ plt.bar(xPdf + barWidth,histSigma15min[0]/sum(histSigma15min[0])*100, barWidth)
 plt.ylabel('Probability [%]')
 plt.xlabel('Standard Deviation')
 plt.legend(['STD of 1 sec values in a 15 min period','Rolling STD of the 10 past 15 min values'])
+
+sigma = None
 #sigma = np.std(AHighRes.raw.total_p)
 df = fixDataIntervalTransitionMatrix(A,'1s', sigma, stdNum = 5)
-plt.plot(df.fixed.gen1,'*-')
-plt.plot(df.raw.gen1,'*-')
+print('Calculated Langevin Data')
+plt.figure()
+plt.plot(df.fixed.total_p)
+plt.plot(df.raw.total_p,'*-')
+plt.plot(AHighRes.raw.total_p)
 #plt.show()
 
 #save data
 os.chdir(saveLocation)
-pickle.dump(df,open("LangevinResults"+timeNow+".p", "wb"))
+pickleOut = open("LangevinResults"+timeNow+".p", "wb")
+pickle.dump(df.fixed,pickleOut)
+pickleOut.close()
+
+#pickle.dump(df,open("LangevinResults"+timeNow+".p", "wb"))
 
 # test frequency distribution
 # get the fft of input data
@@ -138,9 +155,9 @@ plt.plot(xf_in, 2.0/N_in * np.abs(yf_in[:int(N_in/2)]))
 plt.plot(xf_out, 2.0/N_out * np.abs(yf_out[:int(N_out/2)]))
 
 #plt.show()
-
+'''
 ### Test Markov ###
-
+print('precalculating transition matrix')
 # get transition matrix of differences from the moving average
 from GBSAnalyzer.DataRetrievers.getTimeSeriesTransitionMatrix import getTransitionMatrix
 window = TsRatio # make the window size the number of steps inbetween the low res data steps
@@ -153,14 +170,22 @@ x = range(len(values))
 xLowRes = np.linspace(0,len(values),len(Acopy.raw.total_p))
 valuesInterp = np.interp(x, xLowRes, Acopy.raw.total_p)
 valuesDiff = AHighRes.raw.total_p - valuesInterp
-
+print('caculating transition matrix')
 tm, tmValues = getTransitionMatrix(valuesDiff,numStates=100)
 
+print('Got Transition Matrix')
+sigma = None
 dfMarkov = fixDataIntervalTransitionMatrix(Acopy,'1s', sigma, True, tm, tmValues, stdNum = 5)
+
+print('Synthesized Markov Data')
 
 # save
 os.chdir(saveLocation)
-pickle.dump(df,open("MarkovResults"+timeNow+".p", "wb"))
+pickleOut = open("MarkovResults"+timeNow+".p", "wb")
+pickle.dump(dfMarkov.fixed,pickleOut)
+pickleOut.close()
+
+#pickle.dump(df,open("MarkovResults"+timeNow+".p", "wb"))
 
 plt.figure()
 plt.plot(dfMarkov.fixed.total_p)
@@ -185,7 +210,7 @@ plt.plot(xf_out[1:], 2.0/N_out * np.abs(yf_out[1:int(N_out/2)]))
 plt.plot(xf_outMarkov[1:], 2.0/N_out * np.abs(yf_outMarkov[1:int(N_out/2)]))
 plt.legend(['Langevin','Original','Markov'])
 plt.savefig('fft '+timeNow+'.png')
-# plt.show()
+plt.show()
 
 ### autocorrelation
 # look at up to > 1 day lag
@@ -265,7 +290,7 @@ origPSD = plt.psd(AHighRes.raw.total_p,256,1)
 langPSD = plt.psd(df.fixed.total_p,256,1)
 markPSD = plt.psd(dfMarkov.fixed.total_p,256,1)
 plt.savefig('psd '+timeNow+'.png')
-#plt.show()
+plt.show()
 
 plt.figure()
 plt.psd(AHighRes.raw.total_p,256,1)
@@ -274,7 +299,7 @@ plt.psd(dfMarkov.fixed.total_p,256,1)
 plt.legend(['Original','Langevin','Markov'])
 plt.ylabel('kW')
 plt.savefig('psdZoom '+timeNow+'.png')
-#plt.show()
+plt.show()
 
 # save
 os.chdir(saveLocation)
@@ -322,25 +347,95 @@ def turningpoints(lst):
 # amplitudes represent the total energy in and out of the energy storage system, the total require capacity. If the
 # time series is a generating profile and the load is perfectly level, it means the same thing.
 langCumSum = np.cumsum(df.fixed.total_p - np.mean(df.fixed.total_p))
+MarkCumSum = np.cumsum(dfMarkov.fixed.total_p - np.mean(dfMarkov.fixed.total_p))
 origCumSum = np.cumsum(AHighRes.raw.total_p - np.mean(AHighRes.raw.total_p))
+CumSumArray = np.concatenate((origCumSum[:len(langCumSum),np.newaxis], langCumSum[:,np.newaxis], MarkCumSum[:,np.newaxis]),1)
+
+legendTxt = ['Original','Langevin','Markov']
+plt.close('all') # close all figures
+for col in range(CumSumArray.shape[1]):
+    valExt = turningpoints(CumSumArray[:,col]) # get extreema of series
+    rf = rainflow(np.array(valExt))
+    idxRf = rf[0, :].argsort()
+    rf = rf[:, idxRf]
+    cycleAmp = rf[0, :]
+    # ess savings are cycle amplitude (peak) * number of full cyles * 2
+    # (since 1 half cycle is a charge/discharge)
+    essSavings = np.cumsum(rf[0, :] * rf[3, :]) * 2
+    # bin
+    rfCount = np.histogram(rf, 20)
+    plt.figure(0)
+    plt.loglog(cycleAmp, essSavings)
+    plt.xlabel('Maximum cycle amplitude [kWh]')
+    plt.ylabel('Total throughput [kWh]')
+    # bin values
+    binsRf = np.logspace(np.log10(np.min(cycleAmp)), np.log10(np.max(cycleAmp) * 1.1), 20)
+    idxBinsRf = np.digitize(cycleAmp, binsRf)  # get the indicies for the binned cycle amplitudes
+
+    numCyclesBinned = []  # initiate the number of cycles per bin
+    for idx in range(len(binsRf)):  # for each bin
+        numCyclesBinned += [sum(rf[3, idxBinsRf == idx])]
+    # plot
+    plt.figure(1)
+    plt.plot(CumSumArray[:,col])
+    plt.ylabel('State of charge [kWh]')
+    plt.figure(2)
+    plt.loglog(binsRf, numCyclesBinned, '*-')
+    plt.xlabel('Cycle Amplitude [kWh]')
+    plt.ylabel('Number of cycles')
+    plt.figure(3)
+    plt.loglog(binsRf, numCyclesBinned * binsRf, '*-')
+    plt.xlabel('Cycle Amplitude [kWh]')
+    plt.ylabel('Throughput [kWh]')
+
+# save figures
+plt.figure(0)
+plt.legend(legendTxt)
+plt.savefig('Rainflow Cumulative throughput '+timeNow+'.png')
+plt.figure(1)
+plt.legend(legendTxt)
+plt.savefig('Rainflow Cumulative time series '+timeNow+'.png')
+plt.figure(2)
+plt.legend(legendTxt)
+plt.savefig('Rainflow Cycles per amplitude '+timeNow+'.png')
+plt.figure(3)
+plt.legend(legendTxt)
+plt.savefig('Rainflow throuput per amplitude '+timeNow+'.png')
+
 langExt = turningpoints(langCumSum)
 origExt = turningpoints(origCumSum)
 rf = rainflow(np.array(langExt))
 # sort according to cycle amplitude
 idxRf = rf[0,:].argsort()
 rf = rf[:,idxRf]
-essSize = rf[0,:]
+cycleAmp = rf[0,:]
 # ess savings are cycle amplitude (peak) * number of full cyles * 2
 # (since 1 half cycle is a charge/discharge)
 essSavings = np.cumsum(rf[0,:]*rf[3,:])*2
 # bin
 rfCount = np.histogram(rf,20)
-plt.loglog(essSize,essSavings)
-plt.xlabel('Maximum cycle amplitude [kW]')
+plt.figure()
+plt.loglog(cycleAmp,essSavings)
+plt.xlabel('Maximum cycle amplitude [kWh]')
 plt.ylabel('Total throughput [kWh]')
 
 # TODO: bin count according to amplitude bins, to get the number of cycles and total throughput per cycle amplitude
+#binsRfLang = np.concatenate(([0],0,np.log10(np.max(cycleAmp)*1.1),15))) # all cycles with amplitude less than 1, put together
+binsRfLang = np.logspace(np.log10(np.min(cycleAmp)),np.log10(np.max(cycleAmp)*1.1),20)
+idxBinsRfLang = np.digitize(cycleAmp, binsRfLang) # get the indicies for the binned cycle amplitudes
 
+numCyclesBinnedLang = [] # initiate the number of cycles per bin
+for idx in range(len(binsRfLang)): # for each bin
+    numCyclesBinnedLang += [sum(rf[3,idxBinsRfLang == idx])]
+
+# plot
+plt.figure()
+plt.plot(langCumSum)
+plt.ylabel('')
+plt.figure()
+plt.loglog(binsRfLang, numCyclesBinnedLang,'*-')
+plt.figure()
+plt.loglog(binsRfLang, numCyclesBinnedLang*binsRfLang,'*-')
 
 
 

@@ -1,13 +1,13 @@
 from readAvecCsv import readAvecCsv
 
-def readAllAvecTimeSeries(fileNames, fileLocation, columnNames, useNames, componentUnits):
+def readAllAvecTimeSeries(fileNames, fileLocation, columnNames, useNames, componentUnits, dateColumnName, dateColumnFormat, timeColumnName, timeColumnFormat, utcOffsetValue, utcOffsetUnit, dst):
     print(fileNames)
     print(fileLocation)
     for i in range(len(fileNames)):  # for each data file
         if i == 0:  # read data file into a new dataframe if first iteration
-            df = readAvecCsv(fileNames[i], fileLocation, columnNames, useNames, componentUnits)
+            df = readAvecCsv(fileNames[i], fileLocation, columnNames, useNames, componentUnits, dateColumnName, dateColumnFormat, timeColumnName, timeColumnFormat, utcOffsetValue, utcOffsetUnit, dst)
         else:  # otherwise append
-            df2 = readAvecCsv(fileNames[i], fileLocation, columnNames, useNames, componentUnits)  # the new file
+            df2 = readAvecCsv(fileNames[i], fileLocation, columnNames, useNames, componentUnits, dateColumnName, dateColumnFormat, timeColumnName, timeColumnFormat, utcOffsetValue, utcOffsetUnit, dst)  # the new file
             # get intersection of columns,
             df2Col = df2.columns
             dfCol = df.columns

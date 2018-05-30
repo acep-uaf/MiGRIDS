@@ -293,7 +293,7 @@ def readWindData(fileDir, channels):
     winddf = fillWindRecords(df,channels)
 
     return fileDict, winddf
-
+'''
 fileDir = '/Users/tawnamorgan/Documents/GBSTools/GBSProjects/StMary/InputData/TimeSeriesData/RawWindData'
 #fileDict, winddf = readWindData(fileDir, ['CH4'])
 
@@ -337,3 +337,4 @@ rootgrp.variables['value'].Scale = 1  # set unit attribute
 rootgrp.variables['value'].offset = 0  # set unit attribute
 # close file
 rootgrp.close()
+'''

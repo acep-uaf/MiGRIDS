@@ -9,7 +9,7 @@ from bs4 import BeautifulSoup as Soup
 
 sys.path.append('../')
 from GBSAnalyzer.CurveAssemblers.esLossMapAssembler import esLossMap
-from GBSInputHandler.readXmlTag import readXmlTag
+from GBSAnalyzer.DataRetrievers.readXmlTag import readXmlTag
 import numpy as np
 from GBSModel.getIntListIndex import getIntListIndex
 

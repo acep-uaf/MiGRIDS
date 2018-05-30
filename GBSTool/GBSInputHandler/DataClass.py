@@ -1,9 +1,9 @@
 # DataClass is object with raw_data, fixed_data,baddata dictionary, and system characteristics.
-from identifyGenColumns import identifyGenColumns
+from GBSTool.GBSInputHandler.identifyGenColumns import identifyGenColumns
 import pandas as pd
-from isInline import isInline
-from badDictAdd import badDictAdd
-from getReplacements import getReplacement
+from GBSTool.GBSInputHandler.isInline import isInline
+from GBSTool.GBSInputHandler.badDictAdd import badDictAdd
+from GBSTool.GBSInputHandler.getReplacements import getReplacement
 from matplotlib.backends.backend_pdf import PdfPages
 import matplotlib as plt
 import pickle

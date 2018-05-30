@@ -9,5 +9,5 @@ inputFileFormat,,,,,value,AVEC
 inputFileType,,,,,value,CSV
 timeStep,,,,,value,30
 timeStep,,,,,unit,s
-inputFileDir,,,,,value,
+inputFileDir,,,,,value,StMary InputData TimeSeriesData RawData
 project,,,,,name,StMary

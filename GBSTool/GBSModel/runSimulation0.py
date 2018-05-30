@@ -17,7 +17,7 @@ from GBSModel.SystemOperations import SystemOperations
 here = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(os.path.join(here, '../'))
 sys.path.append(here)
-from GBSInputHandler.readXmlTag import readXmlTag
+from GBSAnalyzer.DataRetrievers.readXmlTag import readXmlTag
 from GBSAnalyzer.DataWriters.writeNCFile import writeNCFile
 
 

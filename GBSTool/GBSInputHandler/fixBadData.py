@@ -41,10 +41,11 @@ def fixBadData(df, setupDir, ListOfComponents, sampleInterval):
        '''change out of bounds values to be within limits'''
        # look up possible min/max
        maxPower = getValue(descriptorxml, "POutMaxPa")
-       minPower = 0
+       minPower = getValue(descriptorxml, "PInMaxPa")
        if (maxPower is not None) & (minPower is not None):
            try:
                over = df[component] > maxPower
+
                under = df[component] < minPower
                df[component] = data.fixed[component].mask((over | under))
                if(len(df[component][pd.isnull(df[component])].index.tolist()) > 0):
@@ -97,6 +98,7 @@ def fixBadData(df, setupDir, ListOfComponents, sampleInterval):
    # replace out of bounds component values before we use these data to replace missing data
    for c in ListOfComponents:
        if c.component_name.lower()[-1:] == 'p':
+           # TODO: c.component_name[0:4] cannot be used in case the base component type has more than 3 letters or the number more than 2 digits. For example 'wtg10'
            descriptorxmlpath = os.path.join(setupDir, '..', 'Components', ''.join([c.component_name[0:4], DESCXML]))
            try:
                descriptorxml = ET.parse(descriptorxmlpath)
@@ -128,6 +130,7 @@ def fixBadData(df, setupDir, ListOfComponents, sampleInterval):
            return True
 
        if c.component_name.lower()[-1:] == 'p':
+           # TODO: see above
            descriptorxmlpath = os.path.join(setupDir, '..', 'Components', ''.join([c.component_name[0:4], DESCXML]))
            try:
                descriptorxml = ET.parse(descriptorxmlpath)
