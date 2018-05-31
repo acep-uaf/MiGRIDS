@@ -22,7 +22,8 @@ class FileBlock(QtWidgets.QGroupBox):
     # -> QVBoxLayout
     def createFileTab(self):
         windowLayout = QtWidgets.QVBoxLayout()
-        self.createTableBlock('Setup', 'inputFile',self.assignFileBlock)
+        self.createTopBlock('Setup','inputFile',self.assignFileBlock)
+        #self.createTableBlock('Setup', 'inputFile',self.assignFileBlock)
         # the topBlock is hidden until we load or create a setup xml
         #self.FileBlock.setEnabled(False)
         windowLayout.addWidget(self.FileBlock)
@@ -39,46 +40,41 @@ class FileBlock(QtWidgets.QGroupBox):
 
         # creates a horizontal layout containing gridlayouts for data input
         # TODO this changes to a table view.
-    # def createTopBlock(self):
-    #     # create a horizontal grouping to contain the top setup xml portion of the form
-    #     self.topBlock = QtWidgets.QGroupBox('Setup XML')
-    #     hlayout = QtWidgets.QHBoxLayout()
-    #
-    #     hlayout.setObjectName("layout1")
-    #
-    #     # add the setup grids
-    #     g1 = {'headers': ['Attribute', 'Field', 'Format'],
-    #               'rowNames': ['Date', 'Time', 'Load'],
-    #               'columnWidths': [1, 1, 1],
-    #               'Date': {'Field': {'widget': 'txt', 'name': 'dateChannelvalue'},
-    #                        'Format': {'widget': 'combo', 'items': ['ordinal'], 'name': 'dateChannelformat'},
-    #                        },
-    #               'Time': {'Field': {'widget': 'txt', 'name': 'timeChannelvalue'},
-    #                        'Format': {'widget': 'combo', 'items': ['excel'], 'name': 'timeChannelformat'}
-    #                        }
-    #               }
-    #     grid = setupGrid(g1)
-    #     hlayout.addLayout(grid)
-    #     hlayout.addStretch(1)
-    #     # add the second grid
-    #     g2 = {'headers': ['TimeStep', 'Value', 'Units'],
-    #               'rowNames': ['Input', 'Output'],
-    #               'columnWidths': [1, 1, 1],
-    #               'Input': {'Value': {'widget': 'txt', 'name': 'inputTimeStepvalue'},
-    #                         'Units': {'widget': 'combo', 'items': ['S', 'M', 'H'], 'name': 'inputTimeStepunit'}
-    #                         },
-    #               'Output': {'Value': {'widget': 'txt', 'name': 'timeStepvalue'},
-    #                          'Units': {'widget': 'combo', 'items': ['S', 'M', 'H'], 'name': 'timeStepunit'}}
-    #               }
-    #     grid = setupGrid(g2)
-    #     hlayout.addLayout(grid)
-    #
-    #     # add another stretch to keep the grids away from the right edge
-    #     hlayout.addStretch(1)
-    #     self.topBlock.setObjectName('format')
-    #     self.topBlock.setLayout(hlayout)
-    #     self.topBlock.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
-    #     self.topBlock.sizePolicy().retainSizeWhenHidden()
+    def createTopBlock(self,title, table, fn):
+        # create a horizontal grouping to contain the top setup xml portion of the form
+        gb = QtWidgets.QGroupBox(title)
+        hlayout = QtWidgets.QHBoxLayout()
+
+        hlayout.setObjectName("setup")
+
+        # add the setup grids
+        g1 = {'headers': ['Attribute', 'Field', 'Format'],
+                  'rowNames': ['Date', 'Time', ],
+                  'columnWidths': [1, 1, 1],
+                  'Date': {'Field': {'widget': 'txt', 'name': 'dateChannelvalue'},
+                           'Format': {'widget': 'combo', 'items': ['ordinal'], 'name': 'dateChannelformat'},
+                           },
+                  'Time': {'Field': {'widget': 'txt', 'name': 'timeChannelvalue'},
+                           'Format': {'widget': 'combo', 'items': ['excel'], 'name': 'timeChannelformat'}
+                           }
+                  }
+        grid = setupGrid(g1)
+        hlayout.addLayout(grid)
+        hlayout.addStretch(1)
+        # add the second grid
+        g2 = {'headers': ['TimeStep', 'Value', 'Units'],
+                  'rowNames': ['Input', 'Output'],
+                  'columnWidths': [1, 1, 1],
+                  'Input': {'Value': {'widget': 'txt', 'name': 'inputTimeStepvalue'},
+                            'Units': {'widget': 'combo', 'items': ['S', 'M', 'H'], 'name': 'inputTimeStepunit'}
+                            },
+                  'Output': {'Value': {'widget': 'txt', 'name': 'timeStepvalue'},
+                             'Units': {'widget': 'combo', 'items': ['S', 'M', 'H'], 'name': 'timeStepunit'}}
+                  }
+
+
+        gb.setLayout(hlayout)
+        fn(gb)
 
         # layout for tables
     def createTableBlock(self, title, table, fn):
@@ -293,3 +289,5 @@ class FileBlock(QtWidgets.QGroupBox):
         self.componentBlock = value
     def assignFileBlock(self,value):
         self.FileBlock = value
+        self.FileBlock.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+        self.FileBlock.sizePolicy().retainSizeWhenHidden()

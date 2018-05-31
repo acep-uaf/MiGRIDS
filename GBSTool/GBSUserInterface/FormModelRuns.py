@@ -22,6 +22,7 @@ class FormModelRun(QtWidgets.QWidget):
         #the first page is for set0
         #self.tabs = SetsPages(self, 'Set0')
         self.tabs = Pages(self,'Set0',SetsTableBlock)
+        self.tabs.setObjectName('modelPages')
         #self.setsTable = self.tabs
         #create the run table
         self.runTable = self.createRunTable()
@@ -83,20 +84,6 @@ class FormModelRun(QtWidgets.QWidget):
     def onClick(self, buttonFunction):
         buttonFunction()
 
-#each page contains information for a single model set
-# class SetsPages(QtWidgets.QTabWidget):
-#
-#     def __init__(self, parent,set):
-#         super().__init__(parent)
-#         self.set = set
-#
-#         self.initUI()
-#
-#     def initUI(self):
-#
-#         widg = SetsTableBlock(self, self.set)
-#
-#         self.addTab(widg, self.set)
 
 
 #the set table shows components to include in the set and attributes to change for runs

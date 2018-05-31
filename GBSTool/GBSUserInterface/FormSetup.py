@@ -1,8 +1,6 @@
 
 from PyQt5 import QtCore, QtWidgets
-import GBSUserInterface.ModelComponentTable as T
-import GBSUserInterface.ModelEnvironmentTable as E
-from GBSUserInterface.gridLayoutSetup import setupGrid
+
 from GBSUserInterface.SetupWizard import SetupWizard
 from GBSUserInterface.WizardTree import WizardTree
 from GBSUserInterface.ModelSetupInformation import ModelSetupInformation
@@ -170,23 +168,24 @@ class FormSetup(QtWidgets.QWidget):
 
             # assign setup information to data model
             model.feedSetupInfo()
-
+            # TODO this needs to be moved to a page block
             # display data
-            self.fillData(model)
+            #self.fillData(model)
 
             # look for an existing data pickle
             handler = UIToHandler()
-            self.model.data = handler.loadInputData(os.path.join(self.model.setupFolder, self.model.project + 'Setup.xml'))
+            #TODO uncomment to load data
+            #self.model.data = handler.loadInputData(os.path.join(self.model.setupFolder, self.model.project + 'Setup.xml'))
             if self.model.data is not None:
                 self.updateModelPage(self.model.data)
 
                 #refresh the plot
                 resultDisplay = self.parent().findChild(ResultsSetup)
                 resultDisplay.defaultPlot(self.model.data)
-
+           # TODO uncomment
             # return true if sets have been run
-            setsRun = loadSets(model,self.window())
-
+            #setsRun = loadSets(model,self.window())
+            setsRun = False
 
             #make the data blocks editable if there are no sets already created
             #if sets have been created then input data is not editable from the interface
@@ -197,12 +196,7 @@ class FormSetup(QtWidgets.QWidget):
                 msg.exec()
             else:
                 self.tabs.setEnabled(True)
-                #self.topBlock.setEnabled(True)
-                #self.environmentBlock.setEnabled(True)
-                #self.componentBlock.setEnabled(True)
-                # enable the model and optimize pages too
-                modelPages = self.window().findChild(QtWidgets.QTabWidget, 'modelPages')
-                modelPages.enableTabs()
+
                 print('Loaded %s:' % model.project)
 
 
@@ -353,8 +347,10 @@ class FormSetup(QtWidgets.QWidget):
         # save xmls
         if 'projectFolder' in self.model.__dict__.keys():
             # on leave save the xml files
-            self.sendSetupData()
-            self.model.writeNewXML()
+            # TODO uncomment
+            #self.sendSetupData()
+            #self.model.writeNewXML()
+            return
     # close event is triggered when the form is closed
     def closeEvent(self, event):
         #save xmls

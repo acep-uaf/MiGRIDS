@@ -44,8 +44,8 @@ class formFromXML(QtWidgets.QDialog):
     #BeautifulSoup QVBoxLayout -> QVBoxLayout
     def displayXML(self, soup, vlayout):
         from bs4 import Comment
-        from ProjectSQLiteHandler import ProjectSQLiteHandler
-        from gridLayoutSetup import setupGrid
+        from GBSUserInterface.ProjectSQLiteHandler import ProjectSQLiteHandler
+        from GBSUserInterface.gridLayoutSetup import setupGrid
         g1 = {'headers': [1,2,3,4,5],
               'rowNames': [],
               'columnWidths': [2, 1, 1, 1, 1]}
@@ -109,7 +109,7 @@ class formFromXML(QtWidgets.QDialog):
                         g1[pt + 'input' + str(row)][column] = {'widget': widget, 'name':name, 'default':inputValue, 'hint':hint}
                     else:
                         g1[pt + 'input' + str(row)][column] = {'widget': widget, 'name':name, 'default': inputValue, 'items':items, 'hint':hint}
-        print(g1)
+
         #make the grid layout from the dictionary
         grid = setupGrid(g1)
         #add the grid to the parent layout
@@ -142,7 +142,6 @@ class formFromXML(QtWidgets.QDialog):
                         tag.attrs[a]= widget.currentText()
 
                 elif type(widget) == QtWidgets.QCheckBox:
-
 
                     if (widget.isChecked()) & (tag.attrs[a] != 'TRUE'):
                         self.changes['.'.join([pt, str(a)])]= 'TRUE'

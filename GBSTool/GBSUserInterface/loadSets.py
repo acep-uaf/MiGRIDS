@@ -51,7 +51,8 @@ def updateRunsSql():
 # ModelSetupInfo -> Boolean
 def loadSets(model,window):
     import os
-    from GBSUserInterface.FormModelRuns import SetsTableBlock, SetsPages
+    from GBSUserInterface.FormModelRuns import SetsTableBlock
+    from GBSUserInterface.Pages import Pages
     from PyQt5 import QtWidgets
     # if sets have been run then setup should not be editable, return True
     if os.path.exists(model.outputFolder):
@@ -68,7 +69,7 @@ def loadSets(model,window):
             updateSetsSql(set,model)
             # fill run table with run data
             updateRunsSql()
-            book = window.findChild(SetsPages)
+            book = window.findChild(Pages)
             objects = book.findChildren(QtWidgets.QWidget)
             # each tab is a QStackedWidget
             currentTab = book.findChildren(SetsTableBlock)[int(''.join(filter(str.isdigit, set)))]

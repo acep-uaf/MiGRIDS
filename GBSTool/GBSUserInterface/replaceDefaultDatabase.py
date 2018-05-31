@@ -1,5 +1,5 @@
 def replaceDefaultDatabase(projectdb):
-    from ProjectSQLiteHandler import ProjectSQLiteHandler
+    from GBSUserInterface.ProjectSQLiteHandler import ProjectSQLiteHandler
     import pandas as pd
     tables = ['environment', 'components', 'sets','runs']
     for t in tables:
