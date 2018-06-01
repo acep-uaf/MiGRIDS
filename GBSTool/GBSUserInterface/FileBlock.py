@@ -78,16 +78,6 @@ class FileBlock(QtWidgets.QGroupBox):
         grid = setupGrid(g1)
         hlayout.addLayout(grid)
         hlayout.addStretch(1)
-        # add the second grid
-        g2 = {'headers': ['TimeStep', 'Value', 'Units'],
-                  'rowNames': ['Input', 'Output'],
-                  'columnWidths': [1, 1, 1],
-                  'Input': {'Value': {'widget': 'txt', 'name': 'inputTimeStepvalue'},
-                            'Units': {'widget': 'combo', 'items': ['S', 'M', 'H'], 'name': 'inputTimeStepunit'}
-                            },
-                  'Output': {'Value': {'widget': 'txt', 'name': 'timeStepvalue'},
-                             'Units': {'widget': 'combo', 'items': ['S', 'M', 'H'], 'name': 'timeStepunit'}}
-                  }
 
 
         gb.setLayout(hlayout)

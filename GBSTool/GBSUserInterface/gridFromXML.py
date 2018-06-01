@@ -2,23 +2,24 @@
 from PyQt5 import QtWidgets, QtCore, QtGui
 
 class gridFromXML(QtWidgets.QHBoxLayout):
-    def __init__(self, componentSoup, fields = [],write=True):
-        super().__init__()
+    def __init__(self, parent,soup, fields = [],write=False):
+        super().__init__(parent)
         self.fields = fields
-
-        self.soup = componentSoup
-
+        #soup is from the xml file that was read in
+        self.soup = soup
+        #write is whether or not to write the changed soup an xml file; default is False
         self.write = write
         self.changes={}
         gb = self.displayXML(self.soup, QtWidgets.QVBoxLayout())
+
         self.addLayout(gb)
+
 
 
     #create a layout from the xml that was turned into soup
     #BeautifulSoup QVBoxLayout -> QVBoxLayout
     def displayXML(self, soup, vlayout):
-        from bs4 import Comment
-        from GBSUserInterface.ProjectSQLiteHandler import ProjectSQLiteHandler
+
         from GBSUserInterface.gridLayoutSetup import setupGrid
         g1 = {'headers': [1,2,3,4,5],
               'rowNames': [],
@@ -31,35 +32,29 @@ class gridFromXML(QtWidgets.QHBoxLayout):
             hint = "".join(tag.findAll(text=True))
 
             #the tag name is the main label
-            if tag.parent.name not in ['component', 'childOf', 'type']:
+            if tag.parent.name not in ['component', 'childOf', 'type','[document]']:
                 parent = tag.parent.name
                 pt = '.'.join([parent, tag.name])
             else:
                 pt = tag.name
             g1['rowNames'].append(pt)
-            g1['rowNames'].append(pt + 'input' + str(row))
-            #every tag gets a grid for data input
-            #there are 4 columns - 2 for labels, 2 for values
-            #the default is 2 rows - 1 for tag name, 1 for data input
-            #more rows are added if more than 2 input attributes exist
 
             #create the overall label
             g1[pt] = {1:{'widget':'lbl','name':tag.name}}
             column = 1
-            g1[pt + 'input' + str(row)] ={}
 
             for a in tag.attrs:
-                print(a)
+
                 name = '.'.join([pt,str(a)])
-
-
                 inputValue = tag[a]
+
                 #columns aways starts populating at 2
                 if a != 'choices':
 
                     if column <=4:
                        column+=1
                     else:
+                        #start populating a new data input row
                        column = 2
                        row+=1
 
@@ -77,14 +72,22 @@ class gridFromXML(QtWidgets.QHBoxLayout):
                         widget = 'txt'
                         items = None
                 #first column is the label
-                    g1[pt + 'input' + str(row)][column] = {'widget':'lbl','name':'lbl' + a, 'default':a, 'hint':hint}
-                    print(g1)
+                    #don't show the labe if it is value
+                    if a == 'value':
+                        g1[pt][column] = {'widget': 'lbl', 'name': 'lbl' + a,
+                                          'hint': hint}
+                    else:
+                        g1[pt][column] = {'widget': 'lbl', 'name': 'lbl' + a, 'default': a,
+                                                           'hint': hint}
+
                     column+=1
 
                     if items is None:
-                        g1[pt + 'input' + str(row)][column] = {'widget': widget, 'name':name, 'default':inputValue, 'hint':hint}
+                        g1[pt][column] = {'widget': widget, 'name': name, 'default': inputValue,
+                                                               'hint': hint}
                     else:
-                        g1[pt + 'input' + str(row)][column] = {'widget': widget, 'name':name, 'default': inputValue, 'items':items, 'hint':hint}
+                        g1[pt][column] = {'widget': widget, 'name': name, 'default': inputValue,
+                                                               'items': items, 'hint': hint}
 
         #make the grid layout from the dictionary
         grid = setupGrid(g1)
@@ -93,9 +96,4 @@ class gridFromXML(QtWidgets.QHBoxLayout):
 
         return vlayout
 
-    #updates the soup to reflect changes in the form
-    #None->None
-    def update(self):
 
-        #for all the  children on the form update their values in the project database
-        return

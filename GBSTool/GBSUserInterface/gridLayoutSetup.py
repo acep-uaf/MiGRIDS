@@ -36,7 +36,12 @@ def setupGrid(inputDictionary):
         return result
 
     font = QtGui.QFont()
-    #font.setPointSize(26)
+    lfont = QtGui.QFont()
+    l1font = QtGui.QFont()
+    lfont.setBold(True)
+    l1font.setBold(True)
+    l1font.setPointSize(20)
+
     # grid block layout
     grid = QtWidgets.QGridLayout()
     grid.setContentsMargins(0, 0, 0, 0)
@@ -55,7 +60,7 @@ def setupGrid(inputDictionary):
         # the x position is the sum of previous widths
         xpos = getPosition(i, inputDictionary['columnWidths'])
         grid.lbl = QtWidgets.QLabel()
-        grid.lbl.setFont(font)
+        grid.lbl.setFont(lfont)
         #All the headers are label objects with a name beginning with 'lbl'
         grid.lbl.setObjectName('lbl' + str(headers[i]))
 
@@ -74,7 +79,7 @@ def setupGrid(inputDictionary):
     for i in range(len(rowNames)):
         # for every row name create a label
         grid.lbl = QtWidgets.QLabel()
-        grid.lbl.setFont(font)
+
         grid.lbl.setObjectName('lbl' + str(rowNames[i]))
         grid.addWidget(grid.lbl, i + 1, 1, 1, 1)
 
@@ -87,9 +92,15 @@ def setupGrid(inputDictionary):
                 label = re.sub("([a-z])([A-Z])","\g<1> \g<2>",label)
                 grid.lbl.setText(label)
 
+
         # get the row of widgets
         r = inputDictionary[rowNames[i]]
-
+        # if there is no data in the row align right
+        if len(r.keys()) <= 1:
+            grid.lbl.setAlignment(QtCore.Qt.AlignLeft)
+            grid.lbl.setFont(l1font)
+        else:
+            grid.lbl.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignCenter)
         # fill in row values
         if len(headers) % 2 != 0:
             h_to_fill = headers[1:]

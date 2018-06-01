@@ -56,7 +56,7 @@ class ProjectSQLiteHandler:
 
         self.cursor.executemany("INSERT INTO " + tablename + "(sort_order,code, description) VALUES (?,?,?)" ,values)
         self.connection.commit()
-
+    #makes the default database associated with every new project.
     def makeDatabase(self):
         print('Making default database')
         refTables = [
@@ -161,9 +161,9 @@ class ProjectSQLiteHandler:
         change_tag text,
         to_value text);""")
 
-        self.cursor.execute("DROP TABLE IF EXISTS inputFiles")
+        self.cursor.execute("DROP TABLE IF EXISTS input_files")
         self.cursor.executescript("""
-                CREATE TABLE IF NOT EXISTS inputFiles
+                CREATE TABLE IF NOT EXISTS input_files
                 (_id integer primary key,
                 file_type text , 
                 datatype text ,
@@ -174,6 +174,13 @@ class ProjectSQLiteHandler:
                 time_column text,
                 time_format text,
                 include_channels text);""")
+        #The table optimize input only contains parameters that were changed from the default
+        self.cursor.execute("Drop TABLE IF EXISTS optimize_input")
+        self.cursor.executescript("""
+                     CREATE TABLE IF NOT EXISTS optimizer_input
+                     (_id integer primary key,
+                     parameter text,
+                     parameter_value text);""")
 
         self.cursor.execute("DROP TABLE IF EXISTS runs")
         self.cursor.executescript("""
@@ -236,12 +243,31 @@ class ProjectSQLiteHandler:
             setDict['component_names'] = []
 
         return setDict
+    #inserts a single record into a specified table given a list of fields to insert values into and a list of values
+    #String, ListOfString, ListOfString
     def insertRecord(self, table, fields, values):
         string_fields = ','.join(fields)
         string_values = ','.join('?' * len(values))
+        try:
+            self.cursor.execute("INSERT INTO " + table + "(" + string_fields + ")" + "VALUES (" + string_values + ")", values)
+            self.connection.commit()
+            return True
+        except:
+            return False
 
-        self.cursor.execute("INSERT INTO " + table + "(" + string_fields + ")" + "VALUES (" + string_values + ")", values)
-        self.connection.commit()
+    # updates a single record in a specified table given a field to match, value to match, list of fields to insert values into and a list of values
+    # String, ListOfString, ListOfString, ListOfString, ListOfString
+    def updateRecord(self,table, keyField,keyValue,fields,values):
+        updateFields = ' '.join([' = '.join([a, ("'" + b + "'")] for a,b in zip(fields,values))])
+        keyFields = ' '.join([' = '.join([a, ("'" + b + "'")] for a, b in zip(keyField, keyValue))])
+        try:
+            self.cursor.execute("UPDATE " + table + " SET " + updateFields + " WHERE " + keyFields
+                                )
+            self.connection.commit()
+            return True
+        except:
+            return False
+        return
     def getRefInput(self, tables):
         #table is a list of tables
         import pandas as pd
