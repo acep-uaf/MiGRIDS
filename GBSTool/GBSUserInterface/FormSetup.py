@@ -368,7 +368,7 @@ class FormSetup(QtWidgets.QWidget):
     # add a new file input tab
     def newTab(self):
         # get the set count
-        tab_count = self.tabs.count()
+        tab_count = self.tabs.count() +1
         widg = FileBlock(self, 'Input' + str(tab_count))
         #widg.fillSetInfo()
         self.tabs.addTab(widg, 'Input' + str(tab_count))

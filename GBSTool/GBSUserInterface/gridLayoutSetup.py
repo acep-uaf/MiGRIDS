@@ -118,7 +118,7 @@ def setupGrid(inputDictionary):
                 #if there is a hint it gets set
                 if 'hint' in r[h].keys():
                     grid.wid.setToolTip(r[h]['hint'])
-                    grid.wid.setToolTipDuration(2000)
+                    grid.wid.setToolTipDuration(10000)
 
                 if 'default' in r[h].keys():
                     #check what kind of widget it is and set its default value

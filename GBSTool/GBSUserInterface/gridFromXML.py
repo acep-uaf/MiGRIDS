@@ -20,9 +20,9 @@ class gridFromXML(QtWidgets.QHBoxLayout):
         from bs4 import Comment
         from GBSUserInterface.ProjectSQLiteHandler import ProjectSQLiteHandler
         from GBSUserInterface.gridLayoutSetup import setupGrid
-        g1 = {'headers': [1,2,3,4,5,6],
+        g1 = {'headers': [1,2,3,4,5],
               'rowNames': [],
-              'columnWidths': [2, 1, 1, 1, 1,1]}
+              'columnWidths': [2, 1, 1, 1, 1]}
 
         #this uses a generic units table
 
@@ -52,35 +52,39 @@ class gridFromXML(QtWidgets.QHBoxLayout):
                 print(a)
                 name = '.'.join([pt,str(a)])
 
-                if a == 'value':
-                    inputValue = tag[a]
+
+                inputValue = tag[a]
                 #columns aways starts populating at 2
+                if a != 'choices':
 
-                if column <=5:
-                   column+=1
-                else:
-                   column = 2
-                   row+=1
+                    if column <=4:
+                       column+=1
+                    else:
+                       column = 2
+                       row+=1
 
-                widget = 'txt'
-                items = None
-                #if setting units attribute use a combo box
-                if a =='choices':
-                    widget = 'combo'
-                    items = tag[a].split(' ')
-                #if the value is set to true false use a checkbox
-                if a == 'active':
-                    widget = 'chk'
+                    widget = 'txt'
+                    items = None
+                    #if setting units attribute use a combo box
+                    if 'choices' in tag.attrs:
+                        widget = 'combo'
+                        items = tag['choices'].split(' ')
 
-            #first column is the label
-                g1[pt + 'input' + str(row)][column] = {'widget':'lbl','name':'lbl' + a, 'default':a, 'hint':hint}
-                print(g1)
-                column+=1
+                    #if the value is set to true false use a checkbox
+                    if a == 'active':
+                        widget = 'chk'
+                    if a == 'mode':
+                        widget = 'txt'
+                        items = None
+                #first column is the label
+                    g1[pt + 'input' + str(row)][column] = {'widget':'lbl','name':'lbl' + a, 'default':a, 'hint':hint}
+                    print(g1)
+                    column+=1
 
-                if items is None:
-                    g1[pt + 'input' + str(row)][column] = {'widget': widget, 'name':name, 'default':inputValue, 'hint':hint}
-                else:
-                    g1[pt + 'input' + str(row)][column] = {'widget': widget, 'name':name, 'default': inputValue, 'items':items, 'hint':hint}
+                    if items is None:
+                        g1[pt + 'input' + str(row)][column] = {'widget': widget, 'name':name, 'default':inputValue, 'hint':hint}
+                    else:
+                        g1[pt + 'input' + str(row)][column] = {'widget': widget, 'name':name, 'default': inputValue, 'items':items, 'hint':hint}
 
         #make the grid layout from the dictionary
         grid = setupGrid(g1)

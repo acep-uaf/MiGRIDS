@@ -3,6 +3,7 @@
 import sys
 from PyQt5 import QtWidgets,QtSql
 
+
 from GBSUserInterface.FormMain import MainForm
 from GBSUserInterface.ProjectSQLiteHandler import ProjectSQLiteHandler
 
@@ -31,6 +32,7 @@ def callUIForm():
 
     #launch the main form which contains subforms
     s = MainForm()
+
     try:
         sys.exit(app.exec_())
     except:

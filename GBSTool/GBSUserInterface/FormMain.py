@@ -159,8 +159,9 @@ class PageBlock(QtWidgets.QTabWidget):
         self.addTab(FormContainer(self,[FormSetup(self), ResultsSetup(self)],'Setup'), 'Setup')
         self.addTab(FormContainer(self, [FormModelRun(self), ResultsModel(self)],'Model'), 'Model')
         self.addTab(FormContainer(self, [FormOptimize(self), ResultsOptimize(self)],'Optimize'), 'Optimize')
-        self.findChild(FormModelRun).hide()
-        self.findChild(FormOptimize).hide()
+        # Todo set back to hide
+        #self.findChild(FormModelRun).hide()
+        #self.findChild(FormOptimize).hide()
 
     #Creates model and optimize tabs
     #this is called after a project name is set
