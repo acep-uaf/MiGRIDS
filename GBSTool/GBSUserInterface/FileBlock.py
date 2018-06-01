@@ -48,16 +48,32 @@ class FileBlock(QtWidgets.QGroupBox):
         hlayout.setObjectName("setup")
 
         # add the setup grids
-        g1 = {'headers': ['Attribute', 'Field', 'Format'],
-                  'rowNames': ['Date', 'Time', ],
-                  'columnWidths': [1, 1, 1],
-                  'Date': {'Field': {'widget': 'txt', 'name': 'dateChannelvalue'},
-                           'Format': {'widget': 'combo', 'items': ['ordinal'], 'name': 'dateChannelformat'},
-                           },
-                  'Time': {'Field': {'widget': 'txt', 'name': 'timeChannelvalue'},
-                           'Format': {'widget': 'combo', 'items': ['excel'], 'name': 'timeChannelformat'}
-                           }
-                  }
+        g1 = {'headers': [1,2,3,4],
+                  'rowNames': [1,2,3,4],
+                  'columnWidths': [1, 1, 1,1],
+                  1:{1:{'widget':'lbl','name':'File Type:'},
+                     2:{'widget':'combo', 'name':'fileTypevalue', 'items':['csv']},
+                     3: {'widget': 'lbl', 'name': 'Data Type', },
+                     4: {'widget': 'combo', 'name': 'dataTypevalue', 'items': ['wind','timeseries']}
+                     },
+                  2: {1: {'widget': 'lbl', 'name': 'Directory'},
+                      2: {'widget': 'txt', 'name': 'directory'},
+                      3: {'widget': 'lbl', 'name': 'timestep'},
+                      4: {'widget': 'txt', 'name': 'inputTimestep'}
+                      },
+                  3: {1: {'widget': 'lbl', 'name': 'Date Channel'},
+                      2: {'widget': 'txt', 'name': 'dateChannelvalue'},
+                      3: {'widget': 'lbl', 'name': 'Date Format'},
+                      4: {'widget': 'combo', 'items': ['##/##/##'], 'name': 'dateChannelformat'}
+                      },
+                  4: {1: {'widget': 'lbl', 'name': 'Time Channel'},
+                      2: {'widget': 'txt', 'name': 'timeChannelvalue'},
+                      3: {'widget': 'lbl', 'name': 'Time Format'},
+                      4: {'widget': 'combo', 'items': ['##:##:##'], 'name': 'dateChannelformat'}
+                      }
+
+                    }
+
         grid = setupGrid(g1)
         hlayout.addLayout(grid)
         hlayout.addStretch(1)
