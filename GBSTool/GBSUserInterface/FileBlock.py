@@ -51,25 +51,26 @@ class FileBlock(QtWidgets.QGroupBox):
         g1 = {'headers': [1,2,3,4],
                   'rowNames': [1,2,3,4],
                   'columnWidths': [1, 1, 1,1],
-                  1:{1:{'widget':'lbl','name':'File Type:'},
-                     2:{'widget':'combo', 'name':'fileTypevalue', 'items':['csv']},
-                     3: {'widget': 'lbl', 'name': 'Data Type', },
-                     4: {'widget': 'combo', 'name': 'dataTypevalue', 'items': ['wind','timeseries']}
+                  1:{1:{'widget':'lbl','name':'File Type:', 'default':'File Type'},
+                     2:{'widget':'combo', 'name':'fileTypevalue', 'items':['csv', 'MET']},
+                     3: {'widget': 'lbl', 'name': 'Directory', 'default': 'Directory'},
+                     4: {'widget': 'txt', 'name': 'directory'}
                      },
-                  2: {1: {'widget': 'lbl', 'name': 'Directory'},
-                      2: {'widget': 'txt', 'name': 'directory'},
-                      3: {'widget': 'lbl', 'name': 'timestep'},
-                      4: {'widget': 'txt', 'name': 'inputTimestep'}
+                  2: {
+                      1: {'widget': 'lbl', 'name': 'timestep','default':'Timestep'},
+                      2: {'widget': 'txt', 'name': 'timestepvalue','default':'1'},
+                      3: {'widget': 'lbl', 'name': 'units', 'default':'Time Units'},
+                      4: {'widget': 'combo','name':'timestepunits','default':'S','items':['S','m','H']}
                       },
-                  3: {1: {'widget': 'lbl', 'name': 'Date Channel'},
+                  3: {1: {'widget': 'lbl', 'name': 'Date Channel','default':'Date Channel'},
                       2: {'widget': 'txt', 'name': 'dateChannelvalue'},
-                      3: {'widget': 'lbl', 'name': 'Date Format'},
-                      4: {'widget': 'combo', 'items': ['##/##/##'], 'name': 'dateChannelformat'}
+                      3: {'widget': 'lbl', 'name': 'Date Format','default':'Date Format'},
+                      4: {'widget': 'combo', 'items': ['mm/dd/yy', 'mon-dd YYYY', 'mm/dd/yyyy','mm-dd-yyyy', 'dd/mm/yyyy'], 'name': 'dateChannelformat'}
                       },
-                  4: {1: {'widget': 'lbl', 'name': 'Time Channel'},
+                  4: {1: {'widget': 'lbl', 'name': 'Time Channel', 'default':'Time Channel'},
                       2: {'widget': 'txt', 'name': 'timeChannelvalue'},
-                      3: {'widget': 'lbl', 'name': 'Time Format'},
-                      4: {'widget': 'combo', 'items': ['##:##:##'], 'name': 'dateChannelformat'}
+                      3: {'widget': 'lbl', 'name': 'Time Format', 'default': 'Time Format'},
+                      4: {'widget': 'combo', 'items': ['hh:mm:ss'], 'name': 'dateChannelformat'}
                       }
 
                     }

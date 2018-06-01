@@ -6,6 +6,7 @@ Created on Tue Mar 13 08:58:02 2018
 """
 
 from PyQt5 import QtCore, QtGui, QtWidgets
+import re
 #useds locations and values specified in a dictionary to create a grid layout
 #dictionary should contain atleast 'headers' and 'rowNames' keys
 #headers and rowNames can be numbers in which case they won't be displayed
@@ -39,7 +40,7 @@ def setupGrid(inputDictionary):
     # grid block layout
     grid = QtWidgets.QGridLayout()
     grid.setContentsMargins(0, 0, 0, 0)
-    grid.setObjectName("grdSetup")
+    grid.setObjectName("inputGrid")
 
     #list of top row values
 
@@ -81,15 +82,20 @@ def setupGrid(inputDictionary):
 
         if type(rowNames[i]) != int:
             if not rowNames[i][len(rowNames[i])-1:].isdigit():
-            # print(rowNames[i])
-            # grid.lbl.setText(rowNames[i])
-                grid.lbl.setText(rowNames[i].split('.')[len(rowNames[i].split('.')) - 1])
+                label = rowNames[i].split('.')[len(rowNames[i].split('.')) - 1]
+                #make camelCase space delimited
+                label = re.sub("([a-z])([A-Z])","\g<1> \g<2>",label)
+                grid.lbl.setText(label)
 
         # get the row of widgets
         r = inputDictionary[rowNames[i]]
 
         # fill in row values
-        for h in headers[1:]:
+        if len(headers) % 2 != 0:
+            h_to_fill = headers[1:]
+        else:
+            h_to_fill = headers
+        for h in h_to_fill:
 
             # identify what kind of widget it is
             if h in r.keys():
