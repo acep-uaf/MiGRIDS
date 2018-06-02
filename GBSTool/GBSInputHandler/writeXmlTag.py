@@ -7,6 +7,7 @@
 def writeXmlTag(fileName,tag,attr,value,fileDir=''):
     # general imports
     import os
+    import numpy as np
     from bs4 import BeautifulSoup
 
 
@@ -25,7 +26,7 @@ def writeXmlTag(fileName,tag,attr,value,fileDir=''):
     else: # if it is just one string
         a = soup.find(tag)
     # convert value to strings if not already
-    if isinstance(value, (list, tuple)): # if a list or tuple, iterate
+    if isinstance(value, (list, tuple, np.ndarray)): # if a list or tuple, iterate
         value = [str(e) for e in value]
     else:
         value = str(value)

@@ -21,17 +21,21 @@ from matplotlib.backends.backend_pdf import PdfPages
 import matplotlib.gridspec as gridspec
 from scipy import fftpack
 from netCDF4 import Dataset
+from GBSInputHandler.processInputDataFrame import processInputDataFrame
 
 #String, String -> dataframe
-def readWindData(fileDir, channels):
+def readWindData(fileDir, columnNames, useNames,componentUnits, dateColumnName, dateColumnFormat, timeColumnName, timeColumnFormat, utcOffsetValue, utcOffsetUnit, dst):
     '''imports all data files in a folder and converts parameters to a dataframe'''
     import os
-    DATETIME = 'Date & Time Stamp'
+    #DATETIME = 'Date & Time Stamp'
+    DATETIME = dateColumnName
     def readAsHeader(file, header_dict, componentName):
 
         inline = file.readline().split('\t')
+        inline = [re.sub(r"\s+", '_', x.strip()) for x in inline] # strip whitespaces at ends and replaces spaces with underscores
         #assumes 'Date & Time Stamp' is the first column name where the dataframe starts. Thus we return the dictionary.
-        if inline[0].strip() == DATETIME:
+        if inline[0] == DATETIME:
+        #if inline[0].strip() == DATETIME:
             names = inline
             return header_dict, names
         else:
@@ -84,8 +88,8 @@ def readWindData(fileDir, channels):
         combinedHeader[channel]={'Description':h[oc]['Description'],
                     'Height':h[oc]['Height'],
                     'Offset':h[oc]['Offset'],
-                        'Scale Factor':h[oc]['Scale Factor'],
-                            'Units':h[oc]['Units']}
+                    'Scale_Factor':h[oc]['Scale_Factor'],
+                    'Units':h[oc]['Units']}
         return combinedHeader
 
     # a data class for estimating and storing windspeed data collected at intervals
@@ -207,12 +211,12 @@ def readWindData(fileDir, channels):
     for k in combinedHeader.keys():
         columns_to_scale = [x for x in df.columns if x[0:len(k)] == k]
         for c in columns_to_scale:
-            if combinedHeader[k]['Scale Factor'] != '0':
+            if combinedHeader[k]['Scale_Factor'] != '0':
                print(k)
                print(c)
-               print(combinedHeader[k]['Scale Factor'])
+               print(combinedHeader[k]['Scale_Factor'])
                if np.issubdtype(df[c],np.number):
-                   df[c] = df[c] * float(combinedHeader[k]['Scale Factor']) + float(combinedHeader[k]['Offset'])
+                   df[c] = df[c] * float(combinedHeader[k]['Scale_Factor']) + float(combinedHeader[k]['Offset'])
 
     def createNetCDF(df, increment):
         # create a netcdf file
@@ -290,8 +294,10 @@ def readWindData(fileDir, channels):
                 print ('An error occured. Current results are stored in %s' %database)
         return winddf
 
-    winddf = fillWindRecords(df,channels)
-
+    #winddf = fillWindRecords(df,channels)
+    # only choose the channels desired
+    winddf = processInputDataFrame(df, columnNames, useNames, dateColumnName, dateColumnFormat, timeColumnName, timeColumnFormat, utcOffsetValue, utcOffsetUnit, dst)
+    #winddf = df[columnNames]
     return fileDict, winddf
 '''
 fileDir = '/Users/tawnamorgan/Documents/GBSTools/GBSProjects/StMary/InputData/TimeSeriesData/RawWindData'

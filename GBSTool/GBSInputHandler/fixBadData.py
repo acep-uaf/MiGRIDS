@@ -20,6 +20,7 @@ from scipy import stats
 from DataClass import DataClass
 from isInline import isInline
 from badDictAdd import badDictAdd
+import matplotlib.pyplot as plt
 
 
 # constants
@@ -40,8 +41,13 @@ def fixBadData(df, setupDir, ListOfComponents, sampleInterval):
    def checkMinMaxPower(component, df, descriptorxml, baddata):
        '''change out of bounds values to be within limits'''
        # look up possible min/max
-       maxPower = getValue(descriptorxml, "POutMaxPa")
-       minPower = getValue(descriptorxml, "PInMaxPa")
+       # if it is a sink, max power is the input, else it is the output
+       if getValue(descriptorxml, "type", False) == "sink":
+           maxPower = getValue(descriptorxml, "PInMaxPa")
+           minPower = getValue(descriptorxml, "POutMaxPa")
+       else:
+           maxPower = getValue(descriptorxml, "POutMaxPa")
+           minPower = getValue(descriptorxml, "PInMaxPa")
        if (maxPower is not None) & (minPower is not None):
            try:
                over = df[component] > maxPower
@@ -58,10 +64,12 @@ def fixBadData(df, setupDir, ListOfComponents, sampleInterval):
 
    # XML, String -> float
    # returns the 'value' at a specific node within an xml file.
-   def getValue(xml, node):
+   def getValue(xml, node, convetToFloat = True):
        '''returns the value at a specified noede within an xml file'''
        if xml.find(node) is not None:
-           value = float(xml.find(node).attrib.get('value'))
+            value = xml.find(node).attrib.get('value')
+            if convetToFloat is True:
+                value = float(value)
        else:
            value = 0
        return value
@@ -70,7 +78,9 @@ def fixBadData(df, setupDir, ListOfComponents, sampleInterval):
    logging.basicConfig(filename=filename, level=logging.DEBUG, format='%(asctime)s %(message)s')
 
    # create DataClass object to store raw, fixed, and summery outputs
-   data = DataClass(df, sampleInterval)
+   # use the largest sample interval for the data class
+   sampleIntervalTimeDelta = pd.to_timedelta(sampleInterval)
+   data = DataClass(df, max(sampleIntervalTimeDelta))
    # empty list of Components to be filled
    componentList = []
 
@@ -95,11 +105,18 @@ def fixBadData(df, setupDir, ListOfComponents, sampleInterval):
    # scale data based on units and offset in the component xml file
    data.scaleData(ListOfComponents)
 
-   # replace out of bounds component values before we use these data to replace missing data
-   for c in ListOfComponents:
-       if c.component_name.lower()[-1:] == 'p':
-           # TODO: c.component_name[0:4] cannot be used in case the base component type has more than 3 letters or the number more than 2 digits. For example 'wtg10'
-           descriptorxmlpath = os.path.join(setupDir, '..', 'Components', ''.join([c.component_name[0:4], DESCXML]))
+   # TODO: remove after testign
+   plt.plot(data.fixed.total_p)
+   plt.plot(data.fixed.load0P)
+
+   '''
+    # replace out of bounds component values before we use these data to replace missing data
+    for c in ListOfComponents:
+        if c.component_name.lower()[-1:] == 'p':
+           # seperate the component name and attribute. Eg 'wtg10WS' becomes 'wtg10' which is the component name. The use of
+           # c.component_name is a bit of a misnomer in the Component class
+           componentName = c.component_name[0:len(c.component_name) - len(c.attribute)]
+           descriptorxmlpath = os.path.join(setupDir, '..', 'Components', ''.join([componentName, DESCXML]))
            try:
                descriptorxml = ET.parse(descriptorxmlpath)
 
@@ -109,11 +126,18 @@ def fixBadData(df, setupDir, ListOfComponents, sampleInterval):
                    print('no column named %s' % c.component_name)
            except FileNotFoundError:
                print('Descriptor xml for %s not found' % c.component_name)
+    '''
+
+    # TODO: remove after testign
+   plt.plot(data.fixed.total_p)
+   plt.plot(data.fixed.load0P)
+
    # recalculate total_p, data gaps will sum to 0.
    data.totalPower()
 
    # replace the 0's with values from elsewhere in the dataset
-   data.fixOfflineData()
+   # TODO: this needs to be implemnted to allow multiple data channels
+   #data.fixOfflineData()
 
    #reads the component descriptor files and
    #returns True if none of the components have isFrequencyReference=1 and
@@ -151,7 +175,7 @@ def fixBadData(df, setupDir, ListOfComponents, sampleInterval):
        data.fixGen(powerColumns)
        data.totalPower()
 
-   data.removeAnomolies()
+   data.removeAnomolies(5)
    data.totalPower()
 
    return data

@@ -45,8 +45,14 @@ def readDataFile(inputFileType,fileLocation,fileType,columnNames,useNames,compon
         fileLocation = os.path.join(here,fileLocation)
     os.chdir(fileLocation)
     # get just the filenames ending with fileType. check for both upper and lower case
-    
-    fileNames = [f for f in os.listdir(fileLocation) if os.path.isfile(f) & (f.endswith(fileType.upper()) or f.endswith(fileType.lower()))]
+    # met files are text.
+    if fileType.lower() == 'met':
+        fileNames = [f for f in os.listdir(fileLocation) if
+                     os.path.isfile(f) & (f.endswith('TXT') or f.endswith('txt'))]
+    else:
+        fileNames = [f for f in os.listdir(fileLocation) if
+                     os.path.isfile(f) & (f.endswith(fileType.upper()) or f.endswith(fileType.lower()))]
+
     
     df = pd.DataFrame()
     ####### Parse the time series data files ############
@@ -54,7 +60,7 @@ def readDataFile(inputFileType,fileLocation,fileType,columnNames,useNames,compon
     if inputFileType.lower() =='csv':
         df = readAllAvecTimeSeries(fileNames,fileLocation,columnNames,useNames,componentUnits, dateColumnName, dateColumnFormat, timeColumnName, timeColumnFormat, utcOffsetValue, utcOffsetUnit, dst)
     elif inputFileType.lower() == 'met':
-        df = readWindData(fileLocation)
+        fileDict, df = readWindData(fileLocation,columnNames,useNames,componentUnits, dateColumnName, dateColumnFormat, timeColumnName, timeColumnFormat, utcOffsetValue, utcOffsetUnit, dst)
         '''
     if inputFileType == 'AVECMulti':
         #read the wind data from a seperate file
@@ -68,10 +74,7 @@ def readDataFile(inputFileType,fileLocation,fileType,columnNames,useNames,compon
         #merge wind values with timeseries?? or generate wind file seperately?
         df = df.join(winddf)
 '''
-    # try to convert to numeric
-    df = df.apply(pd.to_numeric,errors='coerce')
-    #order by datetime
-    df = df.sort_values([df.columns[0]]).reset_index(drop=True)
+
     
     # convert units
     if np.all(componentUnits != None):
@@ -108,7 +111,7 @@ def readDataFile(inputFileType,fileLocation,fileType,columnNames,useNames,compon
                 # get the desired data type and convert
                 datatype = readXmlTag('internalUnitDefault.xml', ['unitDefaults', componentAttributes[i]], 'datatype',
                                       unitConventionDir)[0]
-                listOfComponents.append(Component(component_name=useNames[i],units=units,scale=scale,offset=offset,datatype=datatype))
+                listOfComponents.append(Component(component_name=useNames[i],units=units,scale=scale,offset=offset,datatype=datatype,attribute=componentAttributes))
 
     # return to original directory
     os.chdir(here)

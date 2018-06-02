@@ -11,6 +11,11 @@
 from tkinter import filedialog
 import tkinter as tk
 import pandas as pd
+import numpy as np
+
+# CONSTANTS
+YEARSECONDS = 31536000 # seconds in a non-leap Year
+
 #print('Select the xml project setup file')
 root = tk.Tk()
 root.withdraw()
@@ -46,12 +51,17 @@ timeColumnFormat = readXmlTag(fileName,'timeChannel','format')
 utcOffsetValue = readXmlTag(fileName,'inputUTCOffset','value')
 utcOffsetUnit = readXmlTag(fileName,'inputUTCOffset','unit')
 dst = readXmlTag(fileName,'inputDST','value')
+flexibleYear = readXmlTag(fileName,'flexibleYear','value')
+# convert string to bool
+flexibleYear = [(x.lower() == 'true') | (x.lower() == 't') for x in flexibleYear]
 
-for idx in range(len(outputInterval)): # for each group of input files
+for idx in range(len(outputInterval)): # there should only be one output interval specified
     if len(outputIntervalUnit) > 1:
         outputInterval[idx] += outputIntervalUnit[idx]
     else:
         outputInterval[idx] += outputIntervalUnit[0]
+
+for idx in range(len(inputInterval)):  # for each group of input files
     if len(inputIntervalUnit) > 1:
         inputInterval[idx] += inputIntervalUnit[idx]
     else:
@@ -71,8 +81,45 @@ for idx in range(len(fileLocation)):
         df = df0
         listOfComponents = listOfComponents0
     else:
-        df = pd.merge(df,df0,how='outer',on='DATE')
-        listOfComponents.append(listOfComponents0)
+        # check if on average more than a year difference between new dataset and existing
+        meanTimeNew = np.mean(df0.DATE)
+        meanTimeOld = np.mean(df.DATE)
+        # round to the nearest number of year difference
+        yearDiff = np.round((meanTimeNew - meanTimeOld) / YEARSECONDS)
+        # if the difference is greater than a year between datasets to be merged, see if can change the year on one
+        if abs(yearDiff) >= 0:
+            # if can change the year on the new data
+            if flexibleYear[idx]:
+                # find the number of years to add or subtract
+                df0.DATE = df0.DATE - yearDiff*YEARSECONDS
+            # otherwise, check if can adjust the existing dataframe
+            elif all(flexibleYear[:idx]):
+                df.DATE = df.DATE + yearDiff*YEARSECONDS
+
+        df = df.append(df0)
+        listOfComponents.extend(listOfComponents0)
+
+# order by datetime
+df = df.sort_values(['DATE']).reset_index(drop=True)
+# find rows with identical dates and combine rows, keeping real data and discarding nans in columns
+dupDate = df.DATE[df.DATE.duplicated()]
+
+for date in dupDate: # for each duplicate row
+    # find with same index
+    sameIdx = df.index[df.DATE == date]
+    # for each column, find first non-nan value, if one
+    for col in df.columns:
+        # first good value
+        goodIdx = df.loc[sameIdx,col].first_valid_index()
+        if goodIdx != None:
+            df.loc[sameIdx[0], col]= df.loc[goodIdx, col]
+    # remove duplicate columns
+    df = df.drop(sameIdx[1:])
+
+
+# remove duplicates in list of components
+listOfComponents = list(set(listOfComponents))
+
 # now fix the bad data
 from fixBadData import fixBadData
 df_fixed = fixBadData(df,setupDir,listOfComponents,inputInterval)

@@ -59,6 +59,11 @@
     <!-- 'inputDST' Indicates whether the input time values are daylight savings time.   -->
     <inputDST value="F" unit="bool"/>
 
+    <!-- 'flexibleYear' Indicates whether the year of the input data can be changec to align with other available data.
+    For example, Load data may be available for one year and wind data for another. Making the year flexible on one or
+    both datasets will allow them to be run together as though they occured the same year. Default is False.    -->
+    <flexibleYear value="False" unit="bool"/>
+
     <!-- 'realLoadChannel' is the name or index of the total grid real load. If this is not set, then the load will be
      calculated as the difference between all input generating unit data channels and input controllable loads data
      channels. -->

@@ -35,6 +35,7 @@ def getReplacement(df, indices, component=None):
 
             # a matching record is one that is the same day of the week, similar time of day and has enough
             # valid records following it to fill the empty block
+
             directMatch = blockLength[blockLength == len(missingdf)].first_valid_index()
         # move the search window to the following year
         dtStart = dtStart + pd.DateOffset(years=1)
@@ -47,7 +48,7 @@ def getReplacement(df, indices, component=None):
             return False
         else:
             # keep looking on the remainder of the list
-            return getReplacementStart(dtStart, timeRange, entiredf, missingdf, directMatch)
+            return getReplacementStart(dtStart, timeRange, entiredf[component], missingdf[component], directMatch)
 
     # dataframe, index, dataframe, string -> null
     # replaces a block of data and logs the indeces as bad records
