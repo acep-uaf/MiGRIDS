@@ -168,12 +168,17 @@ class ProjectSQLiteHandler:
                 file_type text , 
                 datatype text ,
                 directory text,
-                input_timestep text,
+                timestep text,
+                time_units text,
                 date_column text,
                 date_format text,
                 time_column text,
                 time_format text,
-                include_channels text);""")
+                include_channels text,
+                FOREIGN KEY (time_units) REFERENCES ref_time_units(code),
+                FOREIGN KEY (time_format) REFERENCES ref_time_format(code),
+                FOREIGN KEY (date_format) REFERENCES ref_date_format(code));""")
+        
         #The table optimize input only contains parameters that were changed from the default
         self.cursor.execute("Drop TABLE IF EXISTS optimize_input")
         self.cursor.executescript("""
@@ -268,6 +273,9 @@ class ProjectSQLiteHandler:
         except:
             return False
         return
+
+    #resturns a string that combines code and descriptor columns from a reference table into a single '-' sepearted string
+    #String -> String
     def getRefInput(self, tables):
         #table is a list of tables
         import pandas as pd
@@ -279,7 +287,8 @@ class ProjectSQLiteHandler:
             for v in range(len(values)):
                 valueStrings.append(values.loc[v, 'code'] + ' - ' + values.loc[v, 'description'])
         return valueStrings
-
+    #returns the number of components of a specific type withing the component table
+    #String -> integer
     def getTypeCount(self,componentType):
         import re
         #get the highest component name (biggest number)
@@ -294,21 +303,25 @@ class ProjectSQLiteHandler:
                 count = int(count[0])
                 return count +1
         return 0
-
+    #returns a list of column names for a table
+    # String -> list
     def getHeaders(self,table):
         #Todo read from database
         headers = self.cursor.execute("select sql from sqlite_master where name = " + table + " and type = 'table'")
 
         return headers
+    #returns true if a field within the specified table has a reference constraint
     #String, String -> Boolean
-    def hasRef(self,column):
+    def hasRef(self,column, table):
 
-        sql = self.cursor.execute("SELECT sql FROM sqlite_master WHERE type = 'table' and name = 'components'").fetchone()
+        sql = self.cursor.execute("SELECT sql FROM sqlite_master WHERE type = 'table' and name = '" + table + "'").fetchone()
         if column + ') references ' in sql[0].lower():
             return True
         return False
-    def getRef(self,column):
-        s1 = self.cursor.execute("SELECT sql FROM sqlite_master WHERE type = 'table' and name = 'components'").fetchone()
+    #returns the name of a reference table for a specified column in a table
+    #String, String -> String
+    def getRef(self,column, table):
+        s1 = self.cursor.execute("SELECT sql FROM sqlite_master WHERE type = 'table' and name = '" + table + "'").fetchone()
         s1 = s1[0].lower()
         s2 = column + ") references "
         table = s1[s1.find(s2) + len(s2):].replace("(code)", "")
@@ -318,6 +331,8 @@ class ProjectSQLiteHandler:
         table = table.strip()
 
         return table
+    #updates the component table with a key and values in a dictionary
+    #Dictionary -> None
     def updateComponent(self, dict):
         for k in dict.keys():
             try:
@@ -336,6 +351,9 @@ class ProjectSQLiteHandler:
             self.updateComponent(componentDict)
             return True
         return False
+
+    #returns a table of values for the code column in a a reference table
+    #String -> pandas.Series
     def getCodes(self,table):
 
         import pandas as pd
