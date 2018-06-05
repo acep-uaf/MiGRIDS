@@ -2,12 +2,15 @@ from GBSUserInterface.ProjectSQLiteHandler import ProjectSQLiteHandler
 import GBSUserInterface.ModelComponentTable as T
 import GBSUserInterface.ModelEnvironmentTable as E
 import GBSUserInterface.ModelFileInfoTable as F
+import re
+import os
+from GBSUserInterface.Delegates import ClickableLineEdit
 from GBSUserInterface.gridLayoutSetup import setupGrid
 from GBSController.UIToHandler import UIToHandler
 from GBSUserInterface.makeButtonBlock import makeButtonBlock
-from GBSInputHandler.Component import Component
-from PyQt5 import QtWidgets
+from PyQt5 import QtWidgets,QtCore
 # The file block is a group of widgets for entering file specific inputs
+#its parent is FormSetup
 class FileBlock(QtWidgets.QGroupBox):
     def __init__(self, parent, input):
         super().__init__(parent)
@@ -18,28 +21,37 @@ class FileBlock(QtWidgets.QGroupBox):
         self.input = input
         windowLayout = self.createFileTab()
         self.setLayout(windowLayout)
-
+        self.model = self.window().findChild(QtWidgets.QWidget,'setupDialog').model
+        self.setFocusPolicy(QtCore.Qt.StrongFocus)
     # -> QVBoxLayout
     def createFileTab(self):
         windowLayout = QtWidgets.QVBoxLayout()
         self.createTopBlock('Setup','inputFile',self.assignFileBlock)
-        #self.createTableBlock('Setup', 'inputFile',self.assignFileBlock)
-        # the topBlock is hidden until we load or create a setup xml
-        #self.FileBlock.setEnabled(False)
+        l = self.FileBlock.findChild(QtWidgets.QWidget,'inputFileDir')
+        l.clicked.connect(self.lineclicked)
         windowLayout.addWidget(self.FileBlock)
 
         self.createTableBlock('Components', 'components', self.assignComponentBlock)
-        #self.componentBlock.setEnabled(False)
+
         windowLayout.addWidget(self.componentBlock)
 
         # the bottom block is disabled until a setup file is created or loaded
         self.createTableBlock('Environment Data', 'environment', self.assignEnvironmentBlock)
-        #self.environmentBlock.setEnabled(False)
+
         windowLayout.addWidget(self.environmentBlock)
         return windowLayout
 
         # creates a horizontal layout containing gridlayouts for data input
-        # TODO this changes to a table view.
+    @QtCore.pyqtSlot()
+    def lineclicked(self):
+        print('open dialog search')
+
+        folderDialog = QtWidgets.QFileDialog.getExistingDirectory(None, 'Select a directory.',os.getcwd())
+        #once selected folderDialog gets set to the input box
+        self.findChild(QtWidgets.QWidget, 'inputFileDir').setText(folderDialog)
+
+        return folderDialog
+
     def createTopBlock(self,title, table, fn):
         # create a horizontal grouping to contain the top setup xml portion of the form
         gb = QtWidgets.QGroupBox(title)
@@ -49,28 +61,28 @@ class FileBlock(QtWidgets.QGroupBox):
 
         # add the setup grids
         g1 = {'headers': [1,2,3,4],
-                  'rowNames': [1,2,3,4],
-                  'columnWidths': [1, 1, 1,1],
+                  'rowNames': [1,2,3],
+                  'columnWidths': [1, 1,1,1],
                   1:{1:{'widget':'lbl','name':'File Type:', 'default':'File Type'},
                      2:{'widget':'combo', 'name':'fileTypevalue', 'items':['csv', 'MET']},
-                     3: {'widget': 'lbl', 'name': 'Directory', 'default': 'Directory'},
-                     4: {'widget': 'txt', 'name': 'directory'}
+                     3: {'widget': 'lbl', 'name': 'File Directory', 'default': 'Directory'},
+                     4: {'widget': 'lncl', 'name': 'inputFileDir'}
                      },
-                  2: {
-                      1: {'widget': 'lbl', 'name': 'timestep','default':'Timestep'},
-                      2: {'widget': 'txt', 'name': 'timestepvalue','default':'1'},
-                      3: {'widget': 'lbl', 'name': 'units', 'default':'Time Units'},
-                      4: {'widget': 'combo','name':'timestepunits','default':'S','items':['S','m','H']}
-                      },
-                  3: {1: {'widget': 'lbl', 'name': 'Date Channel','default':'Date Channel'},
+                  # 2: {
+                  #     1: {'widget': 'lbl', 'name': 'timestep','default':'Timestep'},
+                  #     2: {'widget': 'txt', 'name': 'timestepvalue','default':'1'},
+                  #     3: {'widget': 'lbl', 'name': 'units', 'default':'Time Units'},
+                  #     4: {'widget': 'combo','name':'timestepunits','default':'S','items':['S','m','H']}
+                  #     },
+                  2: {1: {'widget': 'lbl', 'name': 'Date Channel','default':'Date Channel'},
                       2: {'widget': 'txt', 'name': 'dateChannelvalue'},
                       3: {'widget': 'lbl', 'name': 'Date Format','default':'Date Format'},
                       4: {'widget': 'combo', 'items': ['mm/dd/yy', 'mon-dd YYYY', 'mm/dd/yyyy','mm-dd-yyyy', 'dd/mm/yyyy'], 'name': 'dateChannelformat'}
                       },
-                  4: {1: {'widget': 'lbl', 'name': 'Time Channel', 'default':'Time Channel'},
+                  3: {1: {'widget': 'lbl', 'name': 'Time Channel', 'default':'Time Channel'},
                       2: {'widget': 'txt', 'name': 'timeChannelvalue'},
                       3: {'widget': 'lbl', 'name': 'Time Format', 'default': 'Time Format'},
-                      4: {'widget': 'combo', 'items': ['hh:mm:ss'], 'name': 'dateChannelformat'}
+                      4: {'widget': 'combo', 'items': ['hh:mm:ss'], 'name': 'timeChannelformat'}
                       }
 
                     }
@@ -78,7 +90,6 @@ class FileBlock(QtWidgets.QGroupBox):
         grid = setupGrid(g1)
         hlayout.addLayout(grid)
         hlayout.addStretch(1)
-
 
         gb.setLayout(hlayout)
         fn(gb)
@@ -117,7 +128,7 @@ class FileBlock(QtWidgets.QGroupBox):
     # Load an existing descriptor file and populate the component table
     # -> None
     def functionForLoadDescriptor(self):
-        # TODO temporary message to prevent unique index error
+
         msg = QtWidgets.QMessageBox(QtWidgets.QMessageBox.Warning, 'Load Descriptor',
                                     'If the component descriptor file you are loading has the same name as an existing component it will not load')
         msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
@@ -298,3 +309,40 @@ class FileBlock(QtWidgets.QGroupBox):
         self.FileBlock = value
         self.FileBlock.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         self.FileBlock.sizePolicy().retainSizeWhenHidden()
+
+    # if the fileblock looses focus update database information
+
+    def focusOutEvent(self, event):
+        #get values from the file block
+        setupFields,setupValues = self.getSetupInfo()
+        print(event.type())
+        #update database table
+        dbhandler = ProjectSQLiteHandler()
+
+        if not dbhandler.insertRecord('input_files', setupFields,setupValues):
+            dbhandler.updateRecord('input_files',['_id'], [setupFields[0]],
+                                   setupFields[1:],
+                                   setupValues[1:])
+        return
+    #reads data from an file input top block and returns a list of fields and values
+    def getSetupInfo(self):
+        fieldNames = ['_id']
+        values = [re.findall(r'\d+',self.input)[0]]
+        for child in self.FileBlock.findChildren((QtWidgets.QLineEdit, QtWidgets.QComboBox)):
+
+            if type(child) is QtWidgets.QLineEdit:
+                fieldNames.append(child.objectName())
+                values.append(child.text())
+            elif type(child) is ClickableLineEdit:
+                fieldNames.append(child.objectName())
+                values.append(child.text())
+            else:
+                fieldNames.append(child.objectName())
+                values.append(child.itemText(child.currentIndex()))
+
+        return fieldNames,values
+
+    # calls the specified function connected to a button onClick event
+    @QtCore.pyqtSlot()
+    def onClick(self, buttonFunction):
+        buttonFunction()

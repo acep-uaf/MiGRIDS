@@ -174,11 +174,11 @@ class ComponentFormOpenerDelegate(QtWidgets.QItemDelegate):
 
     @QtCore.pyqtSlot()
     def cellButtonClicked(self, index):
-        from formFromXML import formFromXML
+        from GBSUserInterface.formFromXML import formFromXML
         from GBSController.UIToHandler import UIToHandler
-        from ModelSetTable import SetTableModel
-        from ModelComponentTable import  ComponentTableModel
-        from FormSetup import FormSetup
+
+        from GBSUserInterface.ModelComponentTable import  ComponentTableModel
+
         import os
 
         handler = UIToHandler()

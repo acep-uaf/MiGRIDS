@@ -222,29 +222,37 @@ class FormSetup(QtWidgets.QWidget):
     # reads through all the file tabs to collect input
     # None->None
     def sendSetupData(self):
-        #needs to come from each page
-        # cycle through the input children in the topblock
-        for child in self.topBlock.findChildren((QtWidgets.QLineEdit, QtWidgets.QComboBox)):
-
-            if type(child) is QtWidgets.QLineEdit:
-                value = child.text()
-
-            else:
-                value = child.itemText(child.currentIndex())
-
-            self.model.assign(child.objectName(), value)
-        # we also need headerNames, componentNames, attributes and units from the component section
 
         headerName = []
         componentName = []
         componentAttribute = []
         componentAttributeU = []
+        fileType = []
+        dateChannel = []
+        dateFormat = []
+        timeChannel = []
+        timeFormat = []
+        fileDirectory= []
         # list of distinct components
         self.model.components = []
-        #do for each tab
+        #needs to come from each page
+
         tabWidget = self.findChild(QtWidgets.QTabWidget)
         for t in range(tabWidget.count):
             page = tabWidget.widget(t)
+            # cycle through the input children in the topblock
+            for child in self.topBlock.findChildren((QtWidgets.QLineEdit, QtWidgets.QComboBox)):
+
+                if type(child) is QtWidgets.QLineEdit:
+                    value = child.text()
+
+                else:
+                    value = child.itemText(child.currentIndex())
+                #append to appropriate list
+                listx = globals(child.objectName())
+                listx.append(value)
+
+        # we also need headerNames, componentNames, attributes and units from the component section
             componentView = page.findChild((QtWidgets.QTableView), 'components')
             componentModel = componentView.model()
             for i in range(0, componentModel.rowCount()):
@@ -285,6 +293,12 @@ class FormSetup(QtWidgets.QWidget):
         model.assign('componentAttributevalue', componentAttribute)
         model.assign('componentAttributeunit', componentAttributeU)
         model.assign('componentNamesvalue', componentNames)
+        model.assign('inputFileType', fileType)
+        model.assign('inputFileDir',fileDirectory)
+        model.assign('dateChannelvalue', dateChannel)
+        model.assign('dateChannelformat',dateFormat)
+        model.assign('timeChannelvalue',timeChannel)
+        model.assign('timeChannelformat',timeFormat)
 
     # write data to the ModelSetupInformation data model and generate input xml files for setup and components
     # None->None
@@ -351,6 +365,7 @@ class FormSetup(QtWidgets.QWidget):
             #self.sendSetupData()
             #self.model.writeNewXML()
             return
+
     # close event is triggered when the form is closed
     def closeEvent(self, event):
         #save xmls

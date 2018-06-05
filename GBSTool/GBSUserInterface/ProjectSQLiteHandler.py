@@ -165,20 +165,18 @@ class ProjectSQLiteHandler:
         self.cursor.executescript("""
                 CREATE TABLE IF NOT EXISTS input_files
                 (_id integer primary key,
-                file_type text , 
+                filedypevalue text , 
                 datatype text ,
-                directory text,
+                inputfiledir text,
                 timestep text,
-                time_units text,
-                date_column text,
-                date_format text,
-                time_column text,
-                time_format text,
-                include_channels text,
-                FOREIGN KEY (time_units) REFERENCES ref_time_units(code),
-                FOREIGN KEY (time_format) REFERENCES ref_time_format(code),
-                FOREIGN KEY (date_format) REFERENCES ref_date_format(code));""")
-        
+                datechannelvalue text,
+                datechannelformat text,
+                timechannelvalue text,
+                timechannelformat text,
+                includechannels text,
+                FOREIGN KEY (timechannelformat) REFERENCES ref_time_format(code),
+                FOREIGN KEY (datechannelformat) REFERENCES ref_date_format(code));""")
+
         #The table optimize input only contains parameters that were changed from the default
         self.cursor.execute("Drop TABLE IF EXISTS optimize_input")
         self.cursor.executescript("""
@@ -263,8 +261,9 @@ class ProjectSQLiteHandler:
     # updates a single record in a specified table given a field to match, value to match, list of fields to insert values into and a list of values
     # String, ListOfString, ListOfString, ListOfString, ListOfString
     def updateRecord(self,table, keyField,keyValue,fields,values):
-        updateFields = ' '.join([' = '.join([a, ("'" + b + "'")] for a,b in zip(fields,values))])
-        keyFields = ' '.join([' = '.join([a, ("'" + b + "'")] for a, b in zip(keyField, keyValue))])
+        updateFields = ', '.join([a + " = '" + b + "'" for a,b in zip(fields,values)])
+
+        keyFields = ', '.join([a + " = '" + b + "'" for a,b in zip(keyField,keyValue)])
         try:
             self.cursor.execute("UPDATE " + table + " SET " + updateFields + " WHERE " + keyFields
                                 )
