@@ -49,23 +49,11 @@ class FormSetup(QtWidgets.QWidget):
         #list of dictionaries containing information for wizard
         #TODO move to seperate file
         dlist = [
-            [{'title': 'Time Series Data', 'prompt': 'Select the folder that contains time series data.',
-              'sqltable': None,
-              'sqlfield': None, 'reftable': None, 'name': 'inputFileDirvalue', 'folder': True}, 'Data Input Format'],
-
-            [{'title': 'Load Hydro Data', 'prompt': 'Select the folder that contains hydro speed data.',
-              'sqltable': None,
-              'sqlfield': None, 'reftable': None, 'name': 'hydroFileDirvalue', 'folder': True}, 'Data Input Format'],
-
-            [{'title': 'Load Wind Data', 'prompt': 'Select the folder that contains wind speed data.', 'sqltable': None,
-              'sqlfield': None, 'reftable': None, 'name': 'windFileDirvalue', 'folder': True}, 'Data Input Format'],
-
-            [{'title': 'Data Input Format', 'prompt': 'Select the format your data is in.', 'sqltable': None,
-              'sqlfield': None, 'reftable': 'ref_data_format', 'name': 'inputFileFormatvalue', 'folder': False},
-             'Project'],
-
+            [{'title': 'Timestep', 'prompt': 'Enter desired timestep', 'sqltable': None, 'sqlfield': None,
+              'reftable': None, 'name': 'timestep', 'folder': False}, 'project', ],
             [{'title': 'Project', 'prompt': 'Enter the name of your project', 'sqltable': None,
               'sqlfield': None, 'reftable': None, 'name': 'project', 'folder': False}, None, ]
+
 
         ]
 
@@ -210,13 +198,11 @@ class FormSetup(QtWidgets.QWidget):
     #TODO make dynamic from list input
     #List -> WizardTree
     def buildWizardTree(self, dlist):
+        wiztree = QtWidgets.QWizard()
+        wiztree.addPage(WizardPage(dlist[0], first = True))
+        wiztree.addPage(WizardPage(dlist[1],last=True))
+        return wiztree
 
-        w1 = WizardTree(dlist[0][0], dlist[0][1], 2, [])
-        #w2 = WizardTree(dlist[1][0], dlist[1][1], 1, [])  # hydro
-        w3 = WizardTree(dlist[2][0], dlist[2][1], 0, [])  # wind
-        w4 = WizardTree(dlist[3][0], dlist[3][1], 0, [w1, w3])  # inputFileFormat
-        w5 = WizardTree(dlist[4][0], dlist[4][1], 0, [w4])
-        return w5
 
     # send input data to the ModelSetupInformation data model
     # reads through all the file tabs to collect input
@@ -394,3 +380,33 @@ class FormSetup(QtWidgets.QWidget):
         buttonFunction()
 
 
+class WizardPage(QtWidgets.QWizardPage):
+    def __init__(self, parent,inputdict,**kwargs):
+        super().__init__(parent)
+        self.first = kwargs.get('first')
+        self.last = kwargs.get('last')
+        self.initUI(inputdict)
+
+    # initialize the form
+    def initUI(self, inputdict):
+        self.setTitle(inputdict['title'])
+        self.input = self.getWidget(inputdict['inputType'])
+        if 'items' in inputdict.keys():
+            self.input.addItems(inputdict['items'])
+        self.input.setObjectName(inputdict['name'])
+        self.label = QtWidgets.QLabel
+        self.label.setText(inputdict['prompt'])
+        layout = QtWidgets.QVBoxLayout()
+        layout.addWidget(self.label)
+        layout.addWidget(self.input)
+        self.setLayout(layout)
+        return
+
+    def getWidget(self,inputType):
+        if inputType == 'cmb':
+            return QtWidgets.QComboBox
+        elif inputType == 'txt':
+            return QtWidgets.QLineEdit()
+        return QtWidgets.QLineEdit()
+
+    def

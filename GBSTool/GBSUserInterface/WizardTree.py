@@ -1,5 +1,5 @@
 class WizardTree:
-    #WizardTree, dictionary, string, integer, ListOfWizardTree -> WizardTree
+    #dictionary, string, integer, ListOfWizardTree -> WizardTree
     def __init__(self, value, parentKey, siblingPosition, lstWizardTree):
         self.key = value['title']
         self.value = value
