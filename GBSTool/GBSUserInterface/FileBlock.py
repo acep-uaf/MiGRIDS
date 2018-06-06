@@ -62,7 +62,7 @@ class FileBlock(QtWidgets.QGroupBox):
         # add the setup grids
         g1 = {'headers': [1,2,3,4],
                   'rowNames': [1,2,3],
-                  'columnWidths': [1, 1,1,1],
+                  'columnWidths': [1, 1,1,3],
                   1:{1:{'widget':'lbl','name':'File Type:', 'default':'File Type'},
                      2:{'widget':'combo', 'name':'fileTypevalue', 'items':['csv', 'MET']},
                      3: {'widget': 'lbl', 'name': 'File Directory', 'default': 'Directory'},
@@ -105,11 +105,6 @@ class FileBlock(QtWidgets.QGroupBox):
             tv = T.ComponentTableView(self)
             tv.setObjectName('components')
             m = T.ComponentTableModel(self)
-        elif table == 'inputFile':
-            tv = F.FileInfoTableView(self)
-            tv.setObjectName('inputFile')
-            m = F.FileInfoTableModel(self)
-
         else:
             tv = E.EnvironmentTableView(self)
             tv.setObjectName('environment')
@@ -309,6 +304,7 @@ class FileBlock(QtWidgets.QGroupBox):
         self.FileBlock = value
         self.FileBlock.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         self.FileBlock.sizePolicy().retainSizeWhenHidden()
+        self.FileBlock.setObjectName('fileInput')
 
     # if the fileblock looses focus update database information
 

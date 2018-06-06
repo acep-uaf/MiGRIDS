@@ -1,8 +1,7 @@
 
-from PyQt5 import QtCore, QtWidgets
+from PyQt5 import QtCore, QtWidgets, QtGui
 
-from GBSUserInterface.SetupWizard import SetupWizard
-from GBSUserInterface.WizardTree import WizardTree
+
 from GBSUserInterface.ModelSetupInformation import ModelSetupInformation
 from GBSInputHandler.Component import Component
 from GBSController.UIToHandler import UIToHandler
@@ -12,7 +11,7 @@ from GBSUserInterface.FormModelRuns import SetsTableBlock
 from GBSUserInterface.Pages import Pages
 from GBSUserInterface.FileBlock import FileBlock
 from GBSUserInterface.ProjectSQLiteHandler import ProjectSQLiteHandler
-from GBSUserInterface.loadSets import loadSets
+from GBSUserInterface.ModelSetupInformation import SetupTag
 
 
 class FormSetup(QtWidgets.QWidget):
@@ -47,14 +46,15 @@ class FormSetup(QtWidgets.QWidget):
         windowLayout.addWidget(self.tabs,3)
 
         #list of dictionaries containing information for wizard
+        #this is the information that is not input file specific.
         #TODO move to seperate file
         dlist = [
-            [{'title': 'Timestep', 'prompt': 'Enter desired timestep', 'sqltable': None, 'sqlfield': None,
-              'reftable': None, 'name': 'timestep', 'folder': False}, 'project', ],
-            [{'title': 'Project', 'prompt': 'Enter the name of your project', 'sqltable': None,
-              'sqlfield': None, 'reftable': None, 'name': 'project', 'folder': False}, None, ]
-
-
+            {'title': 'Dates to model', 'prompt': 'Enter the timespan you would like to include in the model.', 'sqltable': None,
+              'sqlfield': None, 'reftable': None, 'name': 'runTimesteps', 'folder': False, 'dates':True},
+            {'title': 'Timestep', 'prompt': 'Enter desired timestep', 'sqltable': None, 'sqlfield': None,
+              'reftable': 'ref_time_units', 'name': 'timestep', 'folder': False},
+            {'title': 'Project', 'prompt': 'Enter the name of your project', 'sqltable': None,
+              'sqlfield': None, 'reftable': None, 'name': 'project', 'folder': False}
         ]
 
         self.WizardTree = self.buildWizardTree(dlist)
@@ -114,9 +114,9 @@ class FormSetup(QtWidgets.QWidget):
         #make a database
         #s is the 1st dialog box for the setup wizard
 
-        s = SetupWizard(self.WizardTree, model, self)
-
-
+        #s = SetupWizard(self.WizardTree, model, self)
+        s = self.WizardTree
+        s.exec_()
         #display collected data
         hasSetup = model.feedSetupInfo()
 
@@ -199,10 +199,25 @@ class FormSetup(QtWidgets.QWidget):
     #List -> WizardTree
     def buildWizardTree(self, dlist):
         wiztree = QtWidgets.QWizard()
-        wiztree.addPage(WizardPage(dlist[0], first = True))
-        wiztree.addPage(WizardPage(dlist[1],last=True))
+        wiztree.setWizardStyle(QtWidgets.QWizard.ModernStyle)
+        wiztree.setWindowTitle("Setup")
+        wiztree.addPage(WizardPage(dlist[2]))
+        wiztree.addPage(TextWithDropDown(dlist[1]))
+        wiztree.addPage(TwoDatesDialog(dlist[0]))
+
+        btn = wiztree.button(QtWidgets.QWizard.FinishButton)
+        btn.clicked.connect(self.saveInput)
         return wiztree
 
+    def saveInput(self):
+        #update sql table
+        #update model info
+        model = self.model
+        model.assignProject(self.WizardTree.field('project'))
+        model.assignTimeStep(SetupTag.assignValue,self.WizardTree.field('timestep'))
+        model.assignRunTimeSteps(SetupTag.assignValue,self.WizardTree.field('runTimesteps'))
+        print([self.WizardTree.field('timestep'),self.WizardTree.field('runTimesteps')])
+        return
 
     # send input data to the ModelSetupInformation data model
     # reads through all the file tabs to collect input
@@ -381,32 +396,123 @@ class FormSetup(QtWidgets.QWidget):
 
 
 class WizardPage(QtWidgets.QWizardPage):
-    def __init__(self, parent,inputdict,**kwargs):
-        super().__init__(parent)
+    def __init__(self, inputdict,**kwargs):
+        super().__init__()
         self.first = kwargs.get('first')
         self.last = kwargs.get('last')
         self.initUI(inputdict)
 
     # initialize the form
     def initUI(self, inputdict):
+        self.d = inputdict
         self.setTitle(inputdict['title'])
-        self.input = self.getWidget(inputdict['inputType'])
-        if 'items' in inputdict.keys():
-            self.input.addItems(inputdict['items'])
+        self.input = self.setInput()
+
         self.input.setObjectName(inputdict['name'])
-        self.label = QtWidgets.QLabel
+        self.label = QtWidgets.QLabel()
         self.label.setText(inputdict['prompt'])
         layout = QtWidgets.QVBoxLayout()
         layout.addWidget(self.label)
         layout.addWidget(self.input)
         self.setLayout(layout)
+        self.registerField(inputdict['name'],self.input)
+
         return
 
-    def getWidget(self,inputType):
-        if inputType == 'cmb':
-            return QtWidgets.QComboBox
-        elif inputType == 'txt':
-            return QtWidgets.QLineEdit()
-        return QtWidgets.QLineEdit()
+    def setInput(self):
+        wid = QtWidgets.QLineEdit()
+        return wid
 
-    def
+    def getInput(self):
+        return self.input.text()
+
+class FolderDialog(WizardPage):
+    def __init__(self, parent, d):
+        WizardPage(self, parent, d)
+
+    def setInput(self):
+        box = QtWidgets.QHBoxLayout()
+        self.input = QtWidgets.QLineEdit()
+        self.input.setObjectName('inputText')
+
+        self.button = QtWidgets.QPushButton()
+        self.endDate.setObjectName('loadFile')
+
+        box.addWidget(self.inputText)
+        box.addWidget(self.loadFile)
+        return box
+
+
+class TwoDatesDialog(WizardPage):
+    def __init__(self,d):
+        super().__init__(d)
+
+    def setInput(self):
+        grp = QtWidgets.QGroupBox()
+        box = QtWidgets.QHBoxLayout()
+        self.startDate = QtWidgets.QDateEdit()
+        self.startDate.setObjectName('start')
+        self.startDate.setDisplayFormat('yyyy-MM-dd')
+        self.startDate.setCalendarPopup(True)
+        self.endDate = QtWidgets.QDateEdit()
+        self.endDate.setObjectName('end')
+        self.endDate.setDisplayFormat('yyyy-MM-dd')
+        self.endDate.setCalendarPopup(True)
+        box.addWidget(self.startDate)
+        box.addWidget(self.endDate)
+        grp.setLayout(box)
+        return grp
+
+    def getInput(self):
+        return " - ".join([self.startDate.text(),self.endDate.text()])
+
+class DropDown(WizardPage):
+    def __init__(self,d):
+        super().__init__(d)
+
+    def setInput(self):
+        self.input = QtWidgets.QComboBox()
+        self.input.setItems(self.getItems())
+        return
+    def getInput(self):
+        return self.breakItems(self.input.itemText(self.input.currentIndex()))
+
+    def getItems(self):
+        dbhandler = ProjectSQLiteHandler()
+        items = dbhandler.getCodes(self.d['reftable'])
+        return items
+    def breakItems(self,str):
+        item = str.split(' - ')[0]
+        return item
+
+
+class TextWithDropDown(WizardPage):
+    def __init__(self, d):
+        super().__init__(d)
+
+    def setInput(self):
+        grp = QtWidgets.QGroupBox()
+        box = QtWidgets.QHBoxLayout()
+        self.combo = QtWidgets.QComboBox()
+
+        self.combo.addItems(self.getItems())
+        self.text = QtWidgets.QLineEdit()
+        self.text.setValidator(QtGui.QIntValidator())
+        box.addWidget(self.text)
+        box.addWidget(self.combo)
+        grp.setLayout(box)
+        return grp
+
+    def getInput(self):
+        input = self.text.text()
+        item = self.breakItems(self.input.itemText(self.input.currentIndex()))
+        strInput = ' '.join([input,item])
+        return strInput
+    def getItems(self):
+        dbhandler = ProjectSQLiteHandler()
+        items = dbhandler.getCodes(self.d['reftable'])
+        return items
+
+    def breakItems(self, str):
+        item = str.split(' - ')[0]
+        return item
