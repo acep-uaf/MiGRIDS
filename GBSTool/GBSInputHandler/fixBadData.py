@@ -17,9 +17,9 @@ import logging
 import pandas as pd
 import numpy as np
 from scipy import stats
-from DataClass import DataClass
-from isInline import isInline
-from badDictAdd import badDictAdd
+from GBSInputHandler.DataClass import DataClass
+from GBSInputHandler.isInline import isInline
+from GBSInputHandler.badDictAdd import badDictAdd
 import matplotlib.pyplot as plt
 
 
@@ -29,7 +29,9 @@ DESCXML = 'Descriptor.xml'  # the suffix of the xml for each component that cont
 TOTALP = 'total_p'  # the name of the column that contains the sum of power output for all components
 
 
-# dataframe, string, list -> DataClass
+# dataframe, string, list, list -> DataClass
+# Dataframe is the combined dataframe consisting of all data input (multiple files may have been merged)
+# SampleInterval is a list of sample intervals for each input file
 # returns a DataClass object with raw and cleaned data and powercomponent information
 def fixBadData(df, setupDir, ListOfComponents, sampleInterval):
    '''returns cleaned dataframe'''
@@ -83,13 +85,18 @@ def fixBadData(df, setupDir, ListOfComponents, sampleInterval):
    data = DataClass(df, max(sampleIntervalTimeDelta))
    # empty list of Components to be filled
    componentList = []
-
+   
    # create a list of power columns (column names ending in p)
    powerColumns = []
+   eColumns = []
    for c in ListOfComponents:
-       componentList.append(c.component_name)
-       if c.component_name.lower()[-1:] == 'p':
-           powerColumns.append(c.component_name)
+       componentList.append(c.column_name)
+       attribute = attributeFromColumn(c.column_name)
+       if attribute == 'P':
+           powerColumns.append(c.column_name)
+       elif attribute in ['WS','HS','IR']:
+           eColumns.append(c.column_name)
+           
    # store the power column list in the DataClass
    data.powerComponents = powerColumns
    # data gaps are filled with NA's to be filled later
@@ -101,7 +108,11 @@ def fixBadData(df, setupDir, ListOfComponents, sampleInterval):
    # grouping column is the id of groups of rows where total_p value is repeated over more that 2 timesteps
    data.fixed['grouping'] = 0
    data.fixed['grouping'] = isInline(data.fixed['total_p'])
-
+   
+   #these are the offline groupings for e-columns 
+   for e in data.ecolumns:
+       data.fixed['_'.join([e,'grouping'])] = isInline(data.fixed[e])
+       
    # scale data based on units and offset in the component xml file
    data.scaleData(ListOfComponents)
 
@@ -109,24 +120,24 @@ def fixBadData(df, setupDir, ListOfComponents, sampleInterval):
    plt.plot(data.fixed.total_p)
    plt.plot(data.fixed.load0P)
 
-   '''
-    # replace out of bounds component values before we use these data to replace missing data
-    for c in ListOfComponents:
-        if c.component_name.lower()[-1:] == 'p':
-           # seperate the component name and attribute. Eg 'wtg10WS' becomes 'wtg10' which is the component name. The use of
-           # c.component_name is a bit of a misnomer in the Component class
-           componentName = c.component_name[0:len(c.component_name) - len(c.attribute)]
-           descriptorxmlpath = os.path.join(setupDir, '..', 'Components', ''.join([componentName, DESCXML]))
-           try:
-               descriptorxml = ET.parse(descriptorxmlpath)
 
-               try:
-                   checkMinMaxPower(c.component_name, data.fixed, descriptorxml, data.baddata)
-               except KeyError:
-                   print('no column named %s' % c.component_name)
-           except FileNotFoundError:
-               print('Descriptor xml for %s not found' % c.component_name)
-    '''
+    # replace out of bounds component values before we use these data to replace missing data
+    for c in data.powerComponents:
+    
+       # seperate the component name and attribute. Eg 'wtg10WS' becomes 'wtg10' which is the component name. The use of
+       # c.column_name is a bit of a misnomer in the Component class
+       componentName = componentNameFromColumn(c)
+       descriptorxmlpath = os.path.join(setupDir, '..', 'Components', ''.join([componentName, DESCXML]))
+       try:
+           descriptorxml = ET.parse(descriptorxmlpath)
+
+           try:
+               checkMinMaxPower(c, data.fixed, descriptorxml, data.baddata)
+           except KeyError:
+               print('no column named %s' % c)
+       except FileNotFoundError:
+           print('Descriptor xml for %s not found' % c)
+
 
     # TODO: remove after testign
    plt.plot(data.fixed.total_p)
@@ -134,10 +145,12 @@ def fixBadData(df, setupDir, ListOfComponents, sampleInterval):
 
    # recalculate total_p, data gaps will sum to 0.
    data.totalPower()
-
+   
    # replace the 0's with values from elsewhere in the dataset
    # TODO: this needs to be implemnted to allow multiple data channels
-   #data.fixOfflineData()
+   
+   
+   data.fixOfflineData()
 
    #reads the component descriptor files and
    #returns True if none of the components have isFrequencyReference=1 and
@@ -153,9 +166,9 @@ def fixBadData(df, setupDir, ListOfComponents, sampleInterval):
        if c is None:
            return True
 
-       if c.component_name.lower()[-1:] == 'p':
+       if c.column_name in data.powerComponents:
            # TODO: see above
-           descriptorxmlpath = os.path.join(setupDir, '..', 'Components', ''.join([c.component_name[0:4], DESCXML]))
+           descriptorxmlpath = os.path.join(setupDir, '..', 'Components', ''.join([componentNameFromColumn(c.column_name), DESCXML]))
            try:
                descriptorxml = ET.parse(descriptorxmlpath)
 
@@ -183,8 +196,19 @@ def fixBadData(df, setupDir, ListOfComponents, sampleInterval):
 
 # supporting functions for fixBadData
 
+def attributeFromColumn(columnHeading):
+    match = re.match(r"([a-z]+)([0-9]+)([A-Z]+", columnHeading, re.I)
+    if match:
+        attribute = match.group(3)
+        return attribute
+    return
 
-
+def componentNameFromColumn(columnHeading):
+    match = re.match(r"([a-z]+)([0-9]+)", columnHeading, re.I)
+    if match:
+        name = match
+        return name 
+    return
 
 # list of indices, dataframe, component -> dataframe
 # modifies the existing values in a dataframe using linear interpolation
