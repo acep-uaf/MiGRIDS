@@ -12,14 +12,17 @@ import os
 import logging
 
 TOTALP = 'total_p'
+MAXMISSING= '14 days'
 
 class DataClass:
     """A class with access to both raw and fixed dataframes."""
-
-    def __init__(self, raw_df, sampleInterval):
+    #DataFrame, timedelta,list,timedelta -> 
+    def __init__(self, raw_df, sampleInterval,truncate=None,maxMissing=MAXMISSING):
         if len(raw_df) > 0:
             self.raw = raw_df.copy()
-            self.fixed = pd.DataFrame(raw_df.copy(), raw_df.index, raw_df.columns)
+            #self.fixed is a list of dataframes derived from raw_df split whenever a gap in data greater than maxmissing occurs           
+            self.fixed = self.splitDataFrame(pd.DataFrame(raw_df.copy(), raw_df.index, raw_df.columns),maxMissing)
+            print('Created %d dataframes that will be evaluated.' %len(self.fixed))
             # give the fixed data a time index to work with - assumes this is in the first column
             time_index = pd.to_datetime(self.fixed.iloc[:, 0], unit='s')
 
@@ -30,11 +33,30 @@ class DataClass:
             self.fixed = pd.DataFrame()
         self.timeInterval = sampleInterval
         self.powerComponents = []
+        self.ecolumns = []
+        #truncate is a list of dates that indicate the portion of the dataframe to fix and include in analysis
+        self.truncate = truncate
+        self.maxmissing = maxmissing
         self.baddata = {}
         return
     def getattribute(self, a):
         return self.__getattribute__(a)
-
+    
+    #DataFrame, timedelta ->listOfDataFrame
+    #splits a dataframe where data is missing that exceeds maxMissing
+    def splitDataFrame(self,df, m):
+        df = df.sort_index(0, ascending=True)
+        df['timeDiff'] = pd.Series(pd.to_datetime(df.index, unit='s'), df.index).diff()
+        df['gaps'] = df['timeDiff'].apply(lambda x: 1 if x > pd.to_timedelta(m) else 0).cumsum()
+        #these are the dataframe groups
+        groups = df.groupby('gaps',as_index=True)
+        d=[]
+        for name, group in groups:
+            group = group.drop('gaps', axis = 1)
+            group = group.drop('timeDiff', axis = 1)
+            d.append(group)
+        return d
+    
     # DataClass -> null
     # summarizes raw and fixed data and print resulting dataframe descriptions
     def summarize(self):
@@ -141,9 +163,12 @@ class DataClass:
         self.fixed = self.fixed.interpolate()
         self.totalPower()
         return
-
+###########
+        
     # DataClass -> null
     # fills values for all components for time blocks when data collection was offline
+    # power components are summed and replaced together
+    # ecolumns are replaced individually
     def fixOfflineData(self):
         # find offline time blocks
         groups = self.fixed.groupby(self.fixed['grouping'], as_index=True)
