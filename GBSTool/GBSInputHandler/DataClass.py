@@ -175,27 +175,32 @@ class DataClass:
     # fills values for all components for time blocks when data collection was offline
     # power components are summed and replaced together
     # ecolumns are replaced individually
-    def fixOfflineData(self):
+    def fixOfflineData(self,column, inputType):
         for df in self.fixed:
             if self.truncate not None:
                 df_to_fix = df[self.truncate[0]:self.truncate[1]]
             else:
                 df_to_fix = df
+            #if there is still data in the dataframe after we have truncated it to the specified interval replace bad data
             if len(df_to_fix) > 1:
                 # find offline time blocks
-                groups = df.groupby(df['grouping'], as_index=True)
+                #if we are working with totalp 
+                if column = TOTALP:
+                    groups = df.groupby(df['grouping'], as_index=True)
+                else:
+                    groups = df.groupby(df['_'.join([column,'grouping'])], as_index=True)
     
                 logging.info('%d blocks of time consisting of %d rows of data are offline and are being replaced' % (
-                    len(groups), len(df[pd.isnull(df.total_p)])))
+                    len(groups), len(df[pd.isnull(df[column])])))
                 # record the offline records in our baddata dictionary
                 badDictAdd(TOTALP,
                        self.baddata, '2.Offline',
-                       df[pd.isnull(df[TOTALP])].index.tolist())
-    
-                df[TOTALP].replace(0, None)
+                       df[pd.isnull(df[column])].index.tolist())
+                #replace the bad data values with None
+                df[column].replace(-999, None)
                 # based on our list of bad groups of data, replace the values
                 for name, group in groups:
-                    if (len(group) > 3) | (min(group[TOTALP]) == 0):
+                    if (len(group) > 3) | (min(group[column]) == 0):
                         #replacements can come from all of the input data not just the subsetted portion
-                        getReplacement(self.fixed, group.index, 'total_p')
+                        getReplacement(self.fixed, group.index, column)
         return
