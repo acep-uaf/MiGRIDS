@@ -50,7 +50,7 @@ def fixDataInterval(data, interval):
         # steps is an array of timesteps in seconds with length = max(records)
         steps = np.arange(0, int(n95)*timestep, timestep)
         # t is the numeric value of the dataframe timestamps
-        t = pd.to_timedelta(pd.Series(pd.to_datetime(df.index.values, unit='s'), index=df.index)).dt.total_seconds()
+        t = pd.to_timedelta(pd.Series(pd.to_datetime(start.index.values, unit='s'), index=start.index)).dt.total_seconds()
         # intervals is the steps array repeated for every row of time
         intervals = np.repeat(steps, len(t), axis=0)
         # reshape the interval matrix so each row has every timestep
@@ -74,17 +74,18 @@ def fixDataInterval(data, interval):
         values = np.concatenate(x)
 
         # individually calc the rest
-        for idx in range(idxOver95):
+        for idx in idxOver95:
             # find remaining values to be calculated
-            nRemaining = max([n[idx] - n95, 0])
+            nRemaining = int(max([n[idx].values[0] - n95, 0]))
             # calc remaining values
             x0 = np.zeros(shape = (nRemaining,))
             # first value is last value of array
-            x0[0] = x[idx][-1]
+            x0[0] = x[idx, -1]
+
             # corresponding time matrix
-            time_matrix0 = time_matrix[idx][-1] + np.arange(0,nRemaining*interval,interval)
+            time_matrix0 = time_matrix[idx,-1] + np.arange(0,nRemaining*timestep,timestep)
             for idx0 in range(1,nRemaining):
-                x0[idx0] = x0[idx0-1] + timestep * (-(x0[idx0-1] - mu) / tau) + np.multiply(sigma_bis.values * sqrtdt, np.random.randn(len(mu)))
+                x0[idx0] = x0[idx0-1] + timestep * (-(x0[idx0-1] - mu[idx]) / tau[idx]) + np.multiply(sigma_bis.values[idx] * sqrtdt, np.random.randn())
 
             # append to already calculated values
             values = np.append(values, x0)
