@@ -262,6 +262,8 @@ def getNext(i, l, step):
 # if component is total_p then replaces all columns with replacement data
 def dataReplace(df, missing, replacement, component=None):
     '''replaces the values in one dataframe with those from another'''
+    
+    #TODO only replace powercomponents. 
     if component == 'total_p':
         df.loc[min(missing.index):max(missing.index)] = replacement.values
     else:

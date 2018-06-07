@@ -175,7 +175,7 @@ class DataClass:
     # fills values for all components for time blocks when data collection was offline
     # power components are summed and replaced together
     # ecolumns are replaced individually
-    def fixOfflineData(self,column, inputType):
+    def fixOfflineData(self,column):
         for df in self.fixed:
             if self.truncate not None:
                 df_to_fix = df[self.truncate[0]:self.truncate[1]]
@@ -204,3 +204,28 @@ class DataClass:
                         #replacements can come from all of the input data not just the subsetted portion
                         getReplacement(self.fixed, group.index, column)
         return
+
+    # dataframe, dataframe, dataframe, string -> dataframe
+    # replaces a subset of data in a series with another subset of data of the same length from the same series
+    # if component is total_p then replaces all columns with replacement data
+    def dataReplace(self, df, missing, replacement, component=None):
+        '''replaces the values in one dataframe with those from another'''
+        
+        #if ecolumns are empty they will get replaced along with power components, otherwise they will remain as they were.
+        if component == TOTOALP:
+            columnsToReplace = self.powerComponents 
+            for e in self.ecolumns:
+                if isempty(e):
+                    columnsToReplace.append(e)
+            
+            df.loc[min(missing.index):max(missing.index), columnsToReplace] = replacement[columnsToReplace].values
+        else:
+            df.loc[min(missing.index):max(missing.index), component] = replacement[component].values
+        return df
+    
+#DataFrame, String -> Boolean
+#return true if a column does not contain any values
+   def isempty(self, df,column):
+       if sum(df[column]) == 0:
+           return True
+       return False

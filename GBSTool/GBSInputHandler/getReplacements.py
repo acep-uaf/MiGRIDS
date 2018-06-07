@@ -5,7 +5,7 @@
 def getReplacement(df, indices, component=None):
     import logging
     import pandas as pd
-    from fixBadData import linearFix, dataReplace
+    from GBSInputHandler.fixBadData import linearFix, dataReplace
 
     # index,range in same units as index, dataframe, dataframe, index
     def getReplacementStart(dtStart, timeRange, entiredf, missingdf, directMatch=None):
@@ -54,9 +54,10 @@ def getReplacement(df, indices, component=None):
     # replaces a block of data and logs the indeces as bad records
     def replaceRecords(entiredf, dtStart, missingdf, strcomponent):
         window = len(missingdf)
-        # TODO what is the shape of replacement if component is a list?
+        #this is the replacement block
         replacement = entiredf[dtStart:][0:window]
         addin = " scaled values from "
+
         dataReplace(entiredf, missingdf, replacement, strcomponent)
 
         logging.info("replaced inline values %s through %s with %s %s through %s."
@@ -93,7 +94,7 @@ def getReplacement(df, indices, component=None):
         replaceRecords(df, replacementStart, missingBlock, component)
         return True
     elif len(missingBlock) <= 15:
-        # if we didn't find a replacement and its only a few missing records us linear estimation
+        # if we didn't find a replacement and its only a few missing records use linear estimation
         index_list = missingBlock.index.tolist()
         linearFix(index_list, df, component)
         logging.info("No similar data subsets found. Using linear interpolation to replace inline values %s through %s."
