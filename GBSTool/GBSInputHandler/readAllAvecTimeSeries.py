@@ -1,4 +1,4 @@
-from readAvecCsv import readAvecCsv
+from GBSInputHandler.readAvecCsv import readAvecCsv
 
 def readAllAvecTimeSeries(fileNames, fileLocation, columnNames, useNames, componentUnits, dateColumnName, dateColumnFormat, timeColumnName, timeColumnFormat, utcOffsetValue, utcOffsetUnit, dst):
     print(fileNames)

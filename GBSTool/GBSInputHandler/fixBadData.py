@@ -14,6 +14,7 @@
 import xml.etree.ElementTree as ET
 import os
 import logging
+import re
 import pandas as pd
 import numpy as np
 from scipy import stats
@@ -121,9 +122,9 @@ def fixBadData(df, setupDir, ListOfComponents, sampleInterval):
    plt.plot(data.fixed.load0P)
 
 
-    # replace out of bounds component values before we use these data to replace missing data
-    for c in data.powerComponents:
-    
+   # replace out of bounds component values before we use these data to replace missing data
+   for c in data.powerComponents:
+
        # seperate the component name and attribute. Eg 'wtg10WS' becomes 'wtg10' which is the component name. The use of
        # c.column_name is a bit of a misnomer in the Component class
        componentName = componentNameFromColumn(c)

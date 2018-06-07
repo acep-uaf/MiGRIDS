@@ -61,20 +61,8 @@ def readDataFile(inputFileType,fileLocation,fileType,columnNames,useNames,compon
         df = readAllAvecTimeSeries(fileNames,fileLocation,columnNames,useNames,componentUnits, dateColumnName, dateColumnFormat, timeColumnName, timeColumnFormat, utcOffsetValue, utcOffsetUnit, dst)
     elif inputFileType.lower() == 'met':
         fileDict, df = readWindData(fileLocation,columnNames,useNames,componentUnits, dateColumnName, dateColumnFormat, timeColumnName, timeColumnFormat, utcOffsetValue, utcOffsetUnit, dst)
-        '''
-    if inputFileType == 'AVECMulti':
-        #read the wind data from a seperate file
-        windfolder = os.path.join(fileLocation,'../../RawWindData')
-        #winddf is a dataset at 1 second intervals
-        winddf = readWindData(windfolder)
-        #check if years match
-        if winddf.date.year != df.date.year:
-            ps = pd.Series(pd.to_datetime(winddf['time']))
-            ps = ps.apply(lambda dt: dt.replace(year=df.year))
-        #merge wind values with timeseries?? or generate wind file seperately?
-        df = df.join(winddf)
-'''
-
+        
+ 
     
     # convert units
     if np.all(componentUnits != None):

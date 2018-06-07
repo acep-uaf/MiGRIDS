@@ -10,11 +10,13 @@
 # get input data to run the functions to import data into the project
 from tkinter import filedialog
 import tkinter as tk
-import pandas as pd
-import numpy as np
+import os
+from GBSAnalyzer.DataRetrievers.readXmlTag import readXmlTag
+from GBSInputHandler.getUnits import getUnits
 
-# CONSTANTS
-YEARSECONDS = 31536000 # seconds in a non-leap Year
+from GBSInputHandler.mergeInputs import mergeInputs
+
+
 
 #print('Select the xml project setup file')
 root = tk.Tk()
@@ -22,114 +24,72 @@ root.withdraw()
 root.attributes('-topmost',1)
 fileName = filedialog.askopenfilename()
 # get the setup Directory
-import os
+
 setupDir = os.path.dirname(fileName)
 # Village name
-from GBSAnalyzer.DataRetrievers.readXmlTag import readXmlTag
+
 Village = readXmlTag(fileName,'project','name')[0]
 # input specification
 #input specification can be for multiple input files or a single file in AVEC format.
 inputSpecification = readXmlTag(fileName,'inputFileFormat','value')
+inputDictionary = {}
 #filelocation is the raw timeseries file.
 #if multiple files specified look for raw_wind directory
 # input a list of subdirectories under the GBSProjects directory
 fileLocation = readXmlTag(fileName,'inputFileDir','value')
-fileLocation = [os.path.join('../../GBSProjects', *x) for x in fileLocation]
+inputDictionary['fileLocation'] = [os.path.join('../GBSProjects', *x) for x in fileLocation]
 # file type
-fileType = readXmlTag(fileName,'inputFileType','value')
+inputDictionary['fileType'] = readXmlTag(fileName,'inputFileType','value')
 
-outputInterval = readXmlTag(fileName,'timeStep','value')
-outputIntervalUnit = readXmlTag(fileName,'timeStep','unit')
-inputInterval = readXmlTag(fileName,'inputTimeStep','value')
-inputIntervalUnit = readXmlTag(fileName,'inputTimeStep','unit')
+
+
+inputDictionary['outputInterval'] = readXmlTag(fileName,'timeStep','value')
+inputDictionary['outputIntervalUnit'] = readXmlTag(fileName,'timeStep','unit')
+inputDictionary['inputInterval'] = readXmlTag(fileName,'inputTimeStep','value')
+inputDictionary['inputIntervalUnit'] = readXmlTag(fileName,'inputTimeStep','unit')
 
 # get date and time values
-dateColumnName = readXmlTag(fileName,'dateChannel','value')
-dateColumnFormat = readXmlTag(fileName,'dateChannel','format')
-timeColumnName = readXmlTag(fileName,'timeChannel','value')
-timeColumnFormat = readXmlTag(fileName,'timeChannel','format')
-utcOffsetValue = readXmlTag(fileName,'inputUTCOffset','value')
-utcOffsetUnit = readXmlTag(fileName,'inputUTCOffset','unit')
-dst = readXmlTag(fileName,'inputDST','value')
+inputDictionary['dateColumnName'] = readXmlTag(fileName,'dateChannel','value')
+inputDictionary['dateColumnFormat'] = readXmlTag(fileName,'dateChannel','format')
+inputDictionary['timeColumnName'] = readXmlTag(fileName,'timeChannel','value')
+inputDictionary['timeColumnFormat'] = readXmlTag(fileName,'timeChannel','format')
+inputDictionary['utcOffsetValue'] = readXmlTag(fileName,'inputUTCOffset','value')
+inputDictionary['utcOffsetUnit'] = readXmlTag(fileName,'inputUTCOffset','unit')
+inputDictionary['dst'] = readXmlTag(fileName,'inputDST','value')
 flexibleYear = readXmlTag(fileName,'flexibleYear','value')
 # convert string to bool
-flexibleYear = [(x.lower() == 'true') | (x.lower() == 't') for x in flexibleYear]
-
-for idx in range(len(outputInterval)): # there should only be one output interval specified
-    if len(outputIntervalUnit) > 1:
-        outputInterval[idx] += outputIntervalUnit[idx]
+inputDictionary['flexibleYear'] = [(x.lower() == 'true') | (x.lower() == 't') for x in flexibleYear]
+#HOW is a list for outputIntervals handled downstream - should this code ensure there is only one value moving forward instead of creating a list
+#THIS NEEDS TO MOVE TO A FUNCTION. UI does not call runDataImport
+for idx in range(len(inputDictionary['outputInterval'])): # there should only be one output interval specified
+    if len(inputDictionary['outputInterval']) > 1:
+        inputDictionary['outputInterval'][idx] += inputDictionary['outputIntervalUnit'][idx]
     else:
-        outputInterval[idx] += outputIntervalUnit[0]
+        inputDictionary['outputInterval'][idx] += inputDictionary['outputIntervalUnit'][0]
 
-for idx in range(len(inputInterval)):  # for each group of input files
-    if len(inputIntervalUnit) > 1:
-        inputInterval[idx] += inputIntervalUnit[idx]
+for idx in range(len(inputDictionary['inputInterval'])):  # for each group of input files
+    if len(inputDictionary['inputIntervalUnit']) > 1:
+        inputDictionary['inputInterval'][idx] += inputDictionary['inputIntervalUnit'][idx]
     else:
-        inputInterval[idx] += inputIntervalUnit[0]
+        inputDictionary['inputInterval'][idx] += inputDictionary['inputIntervalUnit'][0]
 
 
 # get data units and header names
-from getUnits import getUnits
-headerNames, componentUnits, componentAttributes, componentNames, newHeaderNames = getUnits(Village,setupDir)
+inputDictionary['headerNames'], inputDictionary['componentUnits'], inputDictionary['componentAttributes'],inputDictionary['componentNames'], inputDictionary['newHeaderNames'] = getUnits(Village,setupDir)
 
 # read time series data, combine with wind data if files are seperate.
-from readDataFile import readDataFile
-# iterate through all sets of input files
-for idx in range(len(fileLocation)):
-    df0, listOfComponents0= readDataFile(fileType[idx],fileLocation[idx],fileType[idx],headerNames[idx],newHeaderNames[idx],componentUnits[idx],componentAttributes[idx], dateColumnName[idx], dateColumnFormat[idx], timeColumnName[idx], timeColumnFormat[idx], utcOffsetValue[idx], utcOffsetUnit[0], dst[idx]) # dataframe with time series information. replace header names with column names
-    if idx == 0: # initiate data frames if first iteration, otherwise append
-        df = df0
-        listOfComponents = listOfComponents0
-    else:
-        # check if on average more than a year difference between new dataset and existing
-        meanTimeNew = np.mean(df0.DATE)
-        meanTimeOld = np.mean(df.DATE)
-        # round to the nearest number of year difference
-        yearDiff = np.round((meanTimeNew - meanTimeOld) / YEARSECONDS)
-        # if the difference is greater than a year between datasets to be merged, see if can change the year on one
-        if abs(yearDiff) >= 0:
-            # if can change the year on the new data
-            if flexibleYear[idx]:
-                # find the number of years to add or subtract
-                df0.DATE = df0.DATE - yearDiff*YEARSECONDS
-            # otherwise, check if can adjust the existing dataframe
-            elif all(flexibleYear[:idx]):
-                df.DATE = df.DATE + yearDiff*YEARSECONDS
-
-        df = df.append(df0)
-        listOfComponents.extend(listOfComponents0)
-
-# order by datetime
-df = df.sort_values(['DATE']).reset_index(drop=True)
-# find rows with identical dates and combine rows, keeping real data and discarding nans in columns
-dupDate = df.DATE[df.DATE.duplicated()]
-
-for date in dupDate: # for each duplicate row
-    # find with same index
-    sameIdx = df.index[df.DATE == date]
-    # for each column, find first non-nan value, if one
-    for col in df.columns:
-        # first good value
-        goodIdx = df.loc[sameIdx,col].first_valid_index()
-        if goodIdx != None:
-            df.loc[sameIdx[0], col]= df.loc[goodIdx, col]
-    # remove duplicate columns
-    df = df.drop(sameIdx[1:])
-
-
-# remove duplicates in list of components
-listOfComponents = list(set(listOfComponents))
+df, listOfComponents = mergeInputs(inputDictionary)
 
 # now fix the bad data
 from fixBadData import fixBadData
-df_fixed = fixBadData(df,setupDir,listOfComponents,inputInterval)
+df_fixed = fixBadData(df,setupDir,listOfComponents,inputDictionary['inputInterval'])
 
 # check the fixed data with the old data
 # plot data, display statistical differences (min, max, mean std difference etc)
 
 # fix the intervals
 from fixDataInterval import fixDataInterval
-df_fixed_interval = fixDataInterval(df_fixed,outputInterval)
+df_fixed_interval = fixDataInterval(df_fixed,inputDictionary['outputInterval'])
 
 d = {}
 for c in listOfComponents:
