@@ -3,7 +3,7 @@ from PyQt5 import QtWidgets, QtCore, QtGui
 
 class gridFromXML(QtWidgets.QHBoxLayout):
     def __init__(self, parent,soup, fields = [],write=False):
-        super().__init__(parent)
+        super().__init__()
         self.fields = fields
         #soup is from the xml file that was read in
         self.soup = soup

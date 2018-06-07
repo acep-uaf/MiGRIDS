@@ -41,7 +41,7 @@ class FormOptimize(QtWidgets.QWidget):
         return
 
     def fillButtonBlock(self):
-        buttonLayout = QtWidgets.QHBoxLayout(self)
+        buttonLayout = QtWidgets.QHBoxLayout()
 
         runButton = makeButtonBlock(self, self.startOptimize, text='START', icon=None, hint='Start optimization process')
         stopButton = makeButtonBlock(self, None, text='STOP', icon=None, hint='Stop optimization process')

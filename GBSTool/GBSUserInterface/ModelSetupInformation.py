@@ -36,8 +36,8 @@ class ModelSetupInformation:
         #TODO make dynamic based on WizardTree names
         self.functionDictionary = {'project':self.assignProject,
                                    'inputFileFormatvalue':[self.assignInputFileFormat,SetupTag.assignValue],
-                                   'windFileDirvalue':[self.assignWindFileDir,SetupTag.assignValue],
-                                   'hydroFileDirvalue':[self.assignHydroFileDir,SetupTag.assignValue],
+                                   #'windFileDirvalue':[self.assignWindFileDir,SetupTag.assignValue],
+                                   #'hydroFileDirvalue':[self.assignHydroFileDir,SetupTag.assignValue],
                                    'inputFileDirvalue':[self.assignInputFileDir,SetupTag.assignValue],
                                    'inputFileTypevalue':[self.assignInputFileType, SetupTag.assignValue],
                                    'dateChannelformat':[self.assignDateChannel,SetupTag.assignFormat],
@@ -61,12 +61,13 @@ class ModelSetupInformation:
 
 
         #empty values
+        self.componentFolder = ''
         self.components =[]
         self.project =''
         self.data = None
         self.inputFileDir = SetupTag('inputFileDir')
-        self.windFileDir = SetupTag('windFileDir')
-        self.hydroFileDir = SetupTag('hydroFileDir')
+        #self.windFileDir = SetupTag('windFileDir')
+        #self.hydroFileDir = SetupTag('hydroFileDir')
         self.inputFileType = SetupTag('inputFileType')
         self.inputFileFormat= SetupTag('inputFileFormat')
         self.dateChannel = SetupTag('dateChannel')
