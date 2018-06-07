@@ -207,16 +207,17 @@ def readWindData(fileDir, columnNames, useNames,componentUnits, dateColumnName, 
                     #add the channel
                     addChannel(channel, h, combinedHeader, channel)
 
+    # scale and offset already seem to be applied.
    #scale and offset info for each channel are in combinedHeader
-    for k in combinedHeader.keys():
-        columns_to_scale = [x for x in df.columns if x[0:len(k)] == k]
-        for c in columns_to_scale:
-            if combinedHeader[k]['Scale_Factor'] != '0':
-               print(k)
-               print(c)
-               print(combinedHeader[k]['Scale_Factor'])
-               if np.issubdtype(df[c],np.number):
-                   df[c] = df[c] * float(combinedHeader[k]['Scale_Factor']) + float(combinedHeader[k]['Offset'])
+    #for k in combinedHeader.keys():
+    #    columns_to_scale = [x for x in df.columns if x[0:len(k)] == k]
+    #   for c in columns_to_scale:
+    #        if combinedHeader[k]['Scale_Factor'] != '0':
+    #           print(k)
+    #           print(c)
+    #           print(combinedHeader[k]['Scale_Factor'])
+    #           if np.issubdtype(df[c],np.number):
+    #               df[c] = df[c] * float(combinedHeader[k]['Scale_Factor']) + float(combinedHeader[k]['Offset'])
 
     def createNetCDF(df, increment):
         # create a netcdf file

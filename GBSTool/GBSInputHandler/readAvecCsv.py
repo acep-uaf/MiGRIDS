@@ -55,6 +55,8 @@ def readAvecCsv(fileName,fileLocation,columnNames,useNames,componentUnits, dateC
                 break
         if gotHeader is False:
             raise ValueError('Input column names were not found in the CSV file.')
+    else:
+        df.columns = columnNamesFromCSV
     '''
     # remove non numeric rows
     df[columnNames[0]] = df[columnNames[0]].apply(pd.to_numeric,errors='coerce') # convert to numeric, non numeric set to NaN

@@ -105,14 +105,10 @@ def fixBadData(df, setupDir, ListOfComponents, sampleInterval):
    # scale data based on units and offset in the component xml file
    data.scaleData(ListOfComponents)
 
-   # TODO: remove after testign
-   plt.plot(data.fixed.total_p)
-   plt.plot(data.fixed.load0P)
 
-   '''
-    # replace out of bounds component values before we use these data to replace missing data
-    for c in ListOfComponents:
-        if c.component_name.lower()[-1:] == 'p':
+   # replace out of bounds component values before we use these data to replace missing data
+   for c in ListOfComponents:
+       if c.component_name.lower()[-1:] == 'p':
            # seperate the component name and attribute. Eg 'wtg10WS' becomes 'wtg10' which is the component name. The use of
            # c.component_name is a bit of a misnomer in the Component class
            componentName = c.component_name[0:len(c.component_name) - len(c.attribute)]
@@ -126,11 +122,7 @@ def fixBadData(df, setupDir, ListOfComponents, sampleInterval):
                    print('no column named %s' % c.component_name)
            except FileNotFoundError:
                print('Descriptor xml for %s not found' % c.component_name)
-    '''
 
-    # TODO: remove after testign
-   plt.plot(data.fixed.total_p)
-   plt.plot(data.fixed.load0P)
 
    # recalculate total_p, data gaps will sum to 0.
    data.totalPower()

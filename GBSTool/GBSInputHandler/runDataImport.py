@@ -12,6 +12,7 @@ from tkinter import filedialog
 import tkinter as tk
 import pandas as pd
 import numpy as np
+import pickle
 
 # CONSTANTS
 YEARSECONDS = 31536000 # seconds in a non-leap Year
@@ -38,8 +39,7 @@ fileLocation = [os.path.join('../../GBSProjects', *x) for x in fileLocation]
 # file type
 fileType = readXmlTag(fileName,'inputFileType','value')
 
-outputInterval = readXmlTag(fileName,'timeStep','value')
-outputIntervalUnit = readXmlTag(fileName,'timeStep','unit')
+outputInterval = readXmlTag(fileName,'timeStep','value')[0] + readXmlTag(fileName,'timeStep','unit')[0]
 inputInterval = readXmlTag(fileName,'inputTimeStep','value')
 inputIntervalUnit = readXmlTag(fileName,'inputTimeStep','unit')
 
@@ -54,12 +54,6 @@ dst = readXmlTag(fileName,'inputDST','value')
 flexibleYear = readXmlTag(fileName,'flexibleYear','value')
 # convert string to bool
 flexibleYear = [(x.lower() == 'true') | (x.lower() == 't') for x in flexibleYear]
-
-for idx in range(len(outputInterval)): # there should only be one output interval specified
-    if len(outputIntervalUnit) > 1:
-        outputInterval[idx] += outputIntervalUnit[idx]
-    else:
-        outputInterval[idx] += outputIntervalUnit[0]
 
 for idx in range(len(inputInterval)):  # for each group of input files
     if len(inputIntervalUnit) > 1:
@@ -123,6 +117,9 @@ listOfComponents = list(set(listOfComponents))
 # now fix the bad data
 from fixBadData import fixBadData
 df_fixed = fixBadData(df,setupDir,listOfComponents,inputInterval)
+# pickle df
+os.chdir(setupDir)
+pickle.dump(df_fixed, open("df_fixed.p","wb"))
 
 # check the fixed data with the old data
 # plot data, display statistical differences (min, max, mean std difference etc)
