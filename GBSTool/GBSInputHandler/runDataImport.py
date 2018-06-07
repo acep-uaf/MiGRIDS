@@ -10,13 +10,16 @@
 # get input data to run the functions to import data into the project
 from tkinter import filedialog
 import tkinter as tk
+
 import os
 from GBSAnalyzer.DataRetrievers.readXmlTag import readXmlTag
 from GBSInputHandler.getUnits import getUnits
-
+from GBSInputHandler.fixBadData import fixBadData
+from GBSInputHandler.fixDataInterval import fixDataInterval
+from GBSInputHandler.dataframe2netcdf import dataframe2netcdf
 from GBSInputHandler.mergeInputs import mergeInputs
 
-
+import pickle
 
 #print('Select the xml project setup file')
 root = tk.Tk()
@@ -48,6 +51,7 @@ inputDictionary['outputIntervalUnit'] = readXmlTag(fileName,'timeStep','unit')
 inputDictionary['inputInterval'] = readXmlTag(fileName,'inputTimeStep','value')
 inputDictionary['inputIntervalUnit'] = readXmlTag(fileName,'inputTimeStep','unit')
 
+
 # get date and time values
 inputDictionary['dateColumnName'] = readXmlTag(fileName,'dateChannel','value')
 inputDictionary['dateColumnFormat'] = readXmlTag(fileName,'dateChannel','format')
@@ -58,6 +62,7 @@ inputDictionary['utcOffsetUnit'] = readXmlTag(fileName,'inputUTCOffset','unit')
 inputDictionary['dst'] = readXmlTag(fileName,'inputDST','value')
 flexibleYear = readXmlTag(fileName,'flexibleYear','value')
 # convert string to bool
+
 inputDictionary['flexibleYear'] = [(x.lower() == 'true') | (x.lower() == 't') for x in flexibleYear]
 #HOW is a list for outputIntervals handled downstream - should this code ensure there is only one value moving forward instead of creating a list
 #THIS NEEDS TO MOVE TO A FUNCTION. UI does not call runDataImport
@@ -70,9 +75,8 @@ for idx in range(len(inputDictionary['outputInterval'])): # there should only be
 for idx in range(len(inputDictionary['inputInterval'])):  # for each group of input files
     if len(inputDictionary['inputIntervalUnit']) > 1:
         inputDictionary['inputInterval'][idx] += inputDictionary['inputIntervalUnit'][idx]
-    else:
-        inputDictionary['inputInterval'][idx] += inputDictionary['inputIntervalUnit'][0]
 
+flexibleYear = [(x.lower() == 'true') | (x.lower() == 't') for x in flexibleYear]
 
 # get data units and header names
 inputDictionary['headerNames'], inputDictionary['componentUnits'], inputDictionary['componentAttributes'],inputDictionary['componentNames'], inputDictionary['newHeaderNames'] = getUnits(Village,setupDir)
@@ -81,20 +85,22 @@ inputDictionary['headerNames'], inputDictionary['componentUnits'], inputDictiona
 df, listOfComponents = mergeInputs(inputDictionary)
 
 # now fix the bad data
-from fixBadData import fixBadData
 df_fixed = fixBadData(df,setupDir,listOfComponents,inputDictionary['inputInterval'])
+
+# pickle df
+os.chdir(setupDir)
+pickle.dump(df_fixed, open("df_fixed.p","wb"))
 
 # check the fixed data with the old data
 # plot data, display statistical differences (min, max, mean std difference etc)
 
 # fix the intervals
-from fixDataInterval import fixDataInterval
 df_fixed_interval = fixDataInterval(df_fixed,inputDictionary['outputInterval'])
 
 d = {}
 for c in listOfComponents:
     d[c.component_name] = c.toDictionary()
 # now convert to a netcdf
-from dataframe2netcdf import dataframe2netcdf
+
 dataframe2netcdf(df_fixed_interval.fixed, d)
 # save ncfile in folder `ModelInputData' in the path ../GBSProjects/[VillageName]/InputData/TimeSeriesData/

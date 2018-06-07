@@ -18,7 +18,7 @@
     <S units = 'kVA' scale="1" offset="0" datatype = 'int32' />
 
     <!-- wind speed-->
-    <WS units="m/s" scale="1" offset="0" datatype="int32"/>
+    <WS units="m/s" scale="1000" offset="0" datatype="int32"/>
 
     <!-- Storage temperature-->
     <Tstorage units="K" scale="1000000" offset="0" datatype="int32"/>

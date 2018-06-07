@@ -139,11 +139,6 @@ def fixBadData(df, setupDir, ListOfComponents, sampleInterval):
        except FileNotFoundError:
            print('Descriptor xml for %s not found' % c)
 
-
-    # TODO: remove after testign
-   plt.plot(data.fixed.total_p)
-   plt.plot(data.fixed.load0P)
-
    # recalculate total_p, data gaps will sum to 0.
    data.totalPower()
    
@@ -198,7 +193,7 @@ def fixBadData(df, setupDir, ListOfComponents, sampleInterval):
 # supporting functions for fixBadData
 
 def attributeFromColumn(columnHeading):
-    match = re.match(r"([a-z]+)([0-9]+)([A-Z]+", columnHeading, re.I)
+    match = re.match(r"([a-z]+)([0-9]+)([A-Z]+)", columnHeading, re.I)
     if match:
         attribute = match.group(3)
         return attribute

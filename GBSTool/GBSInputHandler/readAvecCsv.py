@@ -37,7 +37,7 @@ def readAvecCsv(fileName,fileLocation,columnNames,useNames,componentUnits, dateC
     #------------------- load the file -----------------------------
     df = pd.read_csv(fileName) # read as a data frame
     # TODO: REMOVE THIS, FOR TESTING ONLY
-    df = df.drop(df.index[range(1000,len(df))])
+    #df = df.drop(df.index[range(1000,len(df))])
     # check and see if the df column names match the input specification.
     # TODO: throw a catch in here in case it does not find the headers
     gotHeader = False
