@@ -28,12 +28,28 @@ from GBSOptimizer.OptimizationBoundaryCalculators.getOptimizationBoundaries impo
 
 class optimize:
     '''
-    TODO: document this
+    Main class of the optimization engine. This creates an object with all major pieces of optimization contained.
+
+    The constructor sets up much of the initial steps, such as selecting shorter data streams to work with, estimating
+    the interval for energy storage power and energy capacity to search for a solution in (if this bounding is desired).
+
+    The 'doOptimization' method executes the actual optimization routine (based on the selected configuration). The
+    results from each iteration are written to a separate folder for later analysis.
     '''
 
     def __init__(self, projectName, inputArgs):
         '''
-        Constructor: does all necessary setup for the optimization itself.
+        Constructor: does all necessary setup for the optimization itself:
+        1) it loads the configuration file optimizerCongfig<ProjectName>.xml and distributes required information to
+            pertinent variables.
+        2) it reads the base case for reference values and to retrieve immutable data streams (firmLoadP)
+        3) it determines the boundaries of the search space (for power and energy capacity, or as directed in the
+            config) for the optimization algorithms.
+        4) it finds shorter time-series representative of the data set to run faster simulations on. The method used is
+            based on the configuration file.
+        5) it calculates the base case's performnce with respect to the optimization objective given in the
+            configuration [Note, this is not strictly required for optimization, except that some meta data may be
+            retrieve in this step that later is used in the fitness calculations of actual simulation results.
 
         :param projectName: [String] name of the project, used to locate project folder tree within the GBSProject
             folder structure
@@ -44,6 +60,9 @@ class optimize:
         self.thisPath = os.path.dirname(os.path.realpath(__file__))
         self.projectName = projectName
         self.rootProjectPath = os.path.join(self.thisPath, '../../GBSProjects/', self.projectName) # root path to project files relative to this file location
+
+        # Pull in inputArgs for potential later processing
+        self.inputArgs = inputArgs
 
         # Load configuration from optimizerConfig<ProjectName>.xml
         configFileName = 'optimizerConfig' + self.projectName + '.xml'
