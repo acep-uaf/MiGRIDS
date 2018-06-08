@@ -225,7 +225,7 @@ class SetsTableBlock(QtWidgets.QGroupBox):
         self.endDate = setInfo.get('date_end')
         self.getDefaultDates(start=self.startDate, end=self.endDate)
         #fillSetInfo the widget values
-        wids = self.findChildren(QtWidgets.QWidget)
+
         self.setDateSelectorProperties(self.findChild(QtWidgets.QDateEdit, 'startDate'))
         self.setDateSelectorProperties(self.findChild(QtWidgets.QDateEdit, 'endDate'),False)
         self.findChild(QtWidgets.QDateEdit, 'startDate').setDateRange(start, end)

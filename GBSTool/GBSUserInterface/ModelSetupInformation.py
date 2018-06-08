@@ -66,8 +66,7 @@ class ModelSetupInformation:
         self.project =''
         self.data = None
         self.inputFileDir = SetupTag('inputFileDir')
-        #self.windFileDir = SetupTag('windFileDir')
-        #self.hydroFileDir = SetupTag('hydroFileDir')
+
         self.inputFileType = SetupTag('inputFileType')
         self.inputFileFormat= SetupTag('inputFileFormat')
         self.dateChannel = SetupTag('dateChannel')
@@ -162,22 +161,19 @@ class ModelSetupInformation:
 
     def assignInputTimeStep(self, m, v):
         self.inputTimeStep.assign(m, v)
+    def assignRunTimesteps(self,m,v):
+        self.runTimesteps.assign(m,v)
 
     def assignTimeStep(self, m, v):
         self.timeStep.assign(m, v)
 
-    def assignWindFileDir(self,m,v):
-        self.windFileDir.assign(m,v)
-
-    def assignHydroFileDir(self,m,v):
-        self.hydroFileDir.assign(m,v)
-
+    #TODO change to list
     def assignInputFileDir(self,m,v):
         self.inputFileDir.assign(m,v)
-
+    #TODO change to list
     def assignDateChannel(self, m,v):
         self.dateChannel.assign(m,v)
-
+    #TODO change to list
     def assignTimeChannel(self, m, v):
         self.timeChannel.assign(m, v)
 

@@ -39,7 +39,7 @@ def dataframe2netcdf(df,components,saveLocation=''):
         rootgrp.createDimension('time', None)  # create dimension for all called time
         # create the time variable
         rootgrp.createVariable('time', df.dtypes[column], 'time')  # create a var using the varnames
-        rootgrp.variables['time'][:] = np.array(df[df.columns.values[0]])  # fill with values
+        rootgrp.variables['time'][:] = np.array(df.index.astype(np.int64)//10**9)  # fill with values
         # create the value variable
         rootgrp.createVariable('value', df.dtypes[column], 'time')  # create a var using the varnames
         rootgrp.variables['value'][:] = np.array(df[component])  # fill with values

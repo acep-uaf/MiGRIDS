@@ -50,7 +50,7 @@ class MainForm(QtWidgets.QMainWindow):
         self.data = [
             ('Setup', [
                 ('Input Files',[]),
-                ('Format',[]),
+                ('File Input',[]),
                 ('Environment',[]),
                 ('Components',[])
             ]),
@@ -65,7 +65,7 @@ class MainForm(QtWidgets.QMainWindow):
             ])
         ]
         self.focusObjects = {'Input Files':FormSetup.functionForCreateButton,
-                             'Format':'format',
+                             'File Input':'fileInput',
                              'Environment':'environment',
                              'Components':'components',
 
@@ -118,7 +118,7 @@ class MainForm(QtWidgets.QMainWindow):
            focusObject = self.focusObjects[name]
 
            if type(focusObject) is str:
-
+               childs = self.pageBlock.currentWidget().findChildren(QtWidgets.QWidget)
                focusWidget = self.pageBlock.currentWidget().findChild(QtWidgets.QWidget,focusObject)
                focusWidget.setFocus(True)
            else:

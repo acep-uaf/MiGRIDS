@@ -3,7 +3,7 @@ class Component:
     """A class with access to the generic characteristics of a component."""
 
     def __init__(self,  **kwargs):
-        self.component_name = kwargs.get('component_name')
+        self.column_name = kwargs.get('component_name')
         self.original_field_name=kwargs.get('original_field_name')
         self.units = kwargs.get('units')
         self.offset = kwargs.get('offset')
@@ -21,10 +21,10 @@ class Component:
         #if the datatype is an integer it becomes a float with 0 decimal places
 
         if self.datatype[0:3] == 'int':
-            df[self.component_name] = round(df[self.component_name].astype('float'), 0)
+            df[self.column_name] = round(df[self.column_name].astype('float'), 0)
         else:
             #otherwise it is the specified datatype
-            df[self.component_name] = df[self.component_name].astype(self.datatype)
+            df[self.column_name] = df[self.column_name].astype(self.datatype)
         return df
 
     # Component, dictionary -> dictionary
