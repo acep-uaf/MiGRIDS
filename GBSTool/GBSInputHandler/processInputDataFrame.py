@@ -19,7 +19,10 @@ def processInputDataFrame(df, columnNames, useNames, dateColumnName, dateColumnF
 
     # convert data columns to numeric
     for idx, col in enumerate(columnNames):
-        df[col] = df[col].apply(pd.to_numeric, errors='coerce')
+        try:
+            df[col] = df[col].apply(pd.to_numeric, errors='coerce')
+        except:
+            df[col] = df[col.replace('_',' ')].apply(pd.to_numeric, errors='coerce')
         # change col name to the desired name
         df = df.rename(columns={col:useNames[idx]})
 

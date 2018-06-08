@@ -165,11 +165,11 @@ class DataClass:
             mean = np.mean(df[TOTALP])
             std = np.std(df[TOTALP])
         
-            dfd[(df[TOTALP] < mean - stdNum * std) | (df[TOTALP] > mean + stdNum * std)] = None
+            df[(df[TOTALP] < mean - stdNum * std) | (df[TOTALP] > mean + stdNum * std)] = None
              # replace values with linear interpolation from surrounding values
-             df = df.interpolate()
-        self.totalPower()
-        return
+            df = df.interpolate()
+       self.totalPower()
+       return
 
     # DataClass -> null
     # fills values for all components for time blocks when data collection was offline
@@ -177,7 +177,7 @@ class DataClass:
     # ecolumns are replaced individually
     def fixOfflineData(self,column):
         for df in self.fixed:
-            if self.truncate not None:
+            if self.truncate is not None:
                 df_to_fix = df[self.truncate[0]:self.truncate[1]]
             else:
                 df_to_fix = df
@@ -185,7 +185,7 @@ class DataClass:
             if len(df_to_fix) > 1:
                 # find offline time blocks
                 #if we are working with totalp 
-                if column = TOTALP:
+                if column == TOTALP:
                     groups = df.groupby(df['grouping'], as_index=True)
                 else:
                     groups = df.groupby(df['_'.join([column,'grouping'])], as_index=True)
@@ -223,9 +223,9 @@ class DataClass:
             df.loc[min(missing.index):max(missing.index), component] = replacement[component].values
         return df
     
-#DataFrame, String -> Boolean
-#return true if a column does not contain any values
-   def isempty(self, df,column):
-       if sum(df[column]) == 0:
-           return True
-       return False
+   #DataFrame, String -> Boolean
+   #return true if a column does not contain any values
+    def isempty(self, df,column):
+        if sum(df[column]) == 0:
+            return True
+        return False
