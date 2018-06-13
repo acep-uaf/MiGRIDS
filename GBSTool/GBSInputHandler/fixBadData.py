@@ -86,12 +86,6 @@ def fixBadData(df, setupDir, ListOfComponents, sampleInterval):
    sampleIntervalTimeDelta = [pd.to_timedelta(s) for s in sampleInterval]
    data = DataClass(df, max(sampleIntervalTimeDelta))
 
-   # identifies whether or not the component is a source
-   # xml file -> boolean    
-   def isSource(descriptorXML):
-      if getValue(descriptorxml, "type") =='source' OR sinksource:
-          return True
-      return False
     
    # data gaps are filled with NA's to be filled later
    data.checkDataGaps()
@@ -103,9 +97,7 @@ def fixBadData(df, setupDir, ListOfComponents, sampleInterval):
  
    # replace out of bounds component values before we use these data to replace missing data
    for c in ListOfComponents:
-##   TODO load can be identified by 'load' and component is attribute p but not load
-       # seperate the component name and attribute. Eg 'wtg10WS' becomes 'wtg10' which is the component name. The use of
-       # c.column_name is a bit of a misnomer in the Component class
+
        componentName = componentNameFromColumn(c.column_name)
        attribute = attributeFromColumn(c.column_name)
        descriptorxmlpath = os.path.join(setupDir, '..', 'Components', ''.join([componentName, DESCXML]))
@@ -117,7 +109,7 @@ def fixBadData(df, setupDir, ListOfComponents, sampleInterval):
                if attribute == 'P':
                    checkMinMaxPower(c, data.fixed, descriptorxml, data.baddata)
                    #if source is true in the xml the column name gets added to the powerColums list
-                   if isSource(descriptorxml): ##what about batteries
+                   if componentName[0:4] != 'load':
                        powerColumns.append(c.column_name)
                    else:
                        loads.append(c.column_name)
