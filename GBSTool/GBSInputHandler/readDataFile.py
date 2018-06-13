@@ -62,7 +62,6 @@ def readDataFile(inputFileType,fileLocation,fileType,columnNames,useNames,compon
     elif inputFileType.lower() == 'met':
         fileDict, df = readWindData(fileLocation,columnNames,useNames,componentUnits, dateColumnName, dateColumnFormat, timeColumnName, timeColumnFormat, utcOffsetValue, utcOffsetUnit, dst)
         
- 
     
     # convert units
     if np.all(componentUnits != None):

@@ -5,40 +5,51 @@
 def getReplacement(df, indices, component=None):
     import logging
     import pandas as pd
-    from GBSInputHandler.fixBadData import linearFix, dataReplace
 
-    # index,range in same units as index, dataframe, dataframe, index
+    #returns the first valid index for the block to be used as replacement
+    # index,range in same units as index, dataframe, dataframe, index -> index
     def getReplacementStart(dtStart, timeRange, entiredf, missingdf, directMatch=None):
+     
         # if there is a match then stop looking,
         # otherwise increment the search window by a year and look again
         # start is the index of our first missing record
-        start = min(missingdf.index)
+        start = missingdf.first_valid_index()
+        duration = (missingdf.last_valid_index()- missingdf.first_valid_index())
         # searchBlock is the portion of the dataframe that we will search for a match in
         searchBlock = entiredf.loc[dtStart: dtStart + timeRange]
         # restrict the search to only matching days of the week and time of day
         searchBlock = searchBlock[(searchBlock.index.to_datetime().dayofweek == start.dayofweek)]
         searchBlock = searchBlock.between_time((start + pd.Timedelta(hours=3)).time(),
                                                (start - pd.Timedelta(hours=3)).time())
-
+        
+        def cycleYear(dt, dtStart,matchYear = True):
+            t = dt + pd.DateOffset(years=1)
+            if (t.year == dtStart.year) & (matchYear == True):
+               return t
+            else:
+               cycleYear(t,dtStart,matchYear)
+                
         # find the match in the searchBlock as long as it isn't empty
         if not searchBlock.empty:
             # order by proximity
-
             searchBlock['newtime'] = pd.Series(searchBlock.index.to_datetime(), searchBlock.index).apply(
                 lambda dt: dt.replace(year=start.year))
 
             searchBlock['timeapart'] = searchBlock['newtime'] - start
+            
             sortedSearchBlock = searchBlock.sort_values('timeapart')
             # if replacment is long enough return indices, otherwise move on
             blockLength = entiredf[min(sortedSearchBlock.index):max(sortedSearchBlock.index)][::-1].rolling(
-                len(missingdf)).count()[::-1]
+                offset=duration).diff()[::-1]
 
             # a matching record is one that is the same day of the week, similar time of day and has enough
             # valid records following it to fill the empty block
 
-            directMatch = blockLength[blockLength == len(missingdf)].first_valid_index()
+            directMatch = blockLength[blockLength == duration].first_valid_index()
         # move the search window to the following year
-        dtStart = dtStart + pd.DateOffset(years=1)
+        #if the missing timeframe is greater than 2 weeks don't search the current year
+        
+        dtStart = cycleYear(dtStart, start,duration >=pd.Timedelta('14 days'))
         searchBlock = entiredf[dtStart: dtStart + timeRange]
         # if we found a match return its index otherwise look again
         if directMatch is not None:
@@ -53,25 +64,23 @@ def getReplacement(df, indices, component=None):
     # dataframe, index, dataframe, string -> null
     # replaces a block of data and logs the indeces as bad records
     def replaceRecords(entiredf, dtStart, missingdf, strcomponent):
-        window = len(missingdf)
+        window = missingdf.last_valid_index() - missingdf.first_valid_index()
         #this is the replacement block
-        replacement = entiredf[dtStart:][0:window]
-        addin = " scaled values from "
-
-        dataReplace(entiredf, missingdf, replacement, strcomponent)
-
+        replacement = entiredf[dtStart:][:window]
         logging.info("replaced inline values %s through %s with %s %s through %s."
-                     % (str(min(missingdf.index)), str(max(missingdf.index)), addin, str(min(replacement.index)),
+                     % (str(min(missingdf.index)), str(max(missingdf.index)), str(min(replacement.index)),
                         str(max(replacement.index))))
-        return
+
+        return entiredf, missingdf, replacement, strcomponent
+
 
     # dataframe -> index, timedelta
     # returns the a window of time that should be searched for replacement values depending on the
     # amount of time covered in the missing block
     def getMoveAndSearch(missingdf):
-
+        
         # for large missing blocks of data we use a larger possible search range
-        if (missingdf.index.max(0) - missingdf.index.min(0)) >= pd.Timedelta('1 days'):
+        if (missingdf.index.max() - missingdf.index.min()) >= pd.Timedelta('1 days'):
             initialMonths = 2
             timeRange = pd.DateOffset(months=4)
         else:

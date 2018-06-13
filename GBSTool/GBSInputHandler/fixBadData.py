@@ -76,78 +76,94 @@ def fixBadData(df, setupDir, ListOfComponents, sampleInterval):
        else:
            value = 0
        return value
-
-   filename = os.path.join(setupDir + '../../TimeSeriesData', 'BadData.log')
+   
+   #filename = os.path.join(setupDir + '../../TimeSeriesData', 'BadData.log')
+   filename = os.path.join(setupDir, 'BadData.log')
    logging.basicConfig(filename=filename, level=logging.DEBUG, format='%(asctime)s %(message)s')
-
+    
    # create DataClass object to store raw, fixed, and summery outputs
    # use the largest sample interval for the data class
-   sampleIntervalTimeDelta = pd.to_timedelta(sampleInterval)
+   sampleIntervalTimeDelta = [pd.to_timedelta(s) for s in sampleInterval]
    data = DataClass(df, max(sampleIntervalTimeDelta))
-   # empty list of Components to be filled
-   componentList = []
-   
-   # create a list of power columns (column names ending in p)
-   powerColumns = []
-   eColumns = []
-   for c in ListOfComponents:
-       componentList.append(c.column_name)
-       attribute = attributeFromColumn(c.column_name)
-       if attribute == 'P':
-           powerColumns.append(c.column_name)
-       elif attribute in ['WS','HS','IR']:
-           eColumns.append(c.column_name)
-           
-   # store the power column list in the DataClass
-   data.powerComponents = powerColumns
+
+   # identifies whether or not the component is a source
+   # xml file -> boolean    
+   def isSource(descriptorXML):
+      if getValue(descriptorxml, "type") =='source' OR sinksource:
+          return True
+      return False
+    
    # data gaps are filled with NA's to be filled later
    data.checkDataGaps()
-   # total power is the sum of values in all the power components
-   data.totalPower()
-
-   # identify when the entire system was offline - not collecting any data for more than 2 time intervals.
-   # grouping column is the id of groups of rows where total_p value is repeated over more that 2 timesteps
-   data.fixed['grouping'] = 0
-   data.fixed['grouping'] = isInline(data.fixed['total_p'])
-   
-   #these are the offline groupings for e-columns 
-   for e in data.ecolumns:
-       data.fixed['_'.join([e,'grouping'])] = isInline(data.fixed[e])
-       
-   # scale data based on units and offset in the component xml file
-   data.scaleData(ListOfComponents)
-
-   # TODO: remove after testign
-   plt.plot(data.fixed.total_p)
-   plt.plot(data.fixed.load0P)
-
-
+  
+  # create a list of power columns
+   powerColumns = []
+   eColumns = []
+   loads=[]
+ 
    # replace out of bounds component values before we use these data to replace missing data
-   for c in data.powerComponents:
-
+   for c in ListOfComponents:
+##   TODO load can be identified by 'load' and component is attribute p but not load
        # seperate the component name and attribute. Eg 'wtg10WS' becomes 'wtg10' which is the component name. The use of
        # c.column_name is a bit of a misnomer in the Component class
-       componentName = componentNameFromColumn(c)
+       componentName = componentNameFromColumn(c.column_name)
+       attribute = attributeFromColumn(c.column_name)
        descriptorxmlpath = os.path.join(setupDir, '..', 'Components', ''.join([componentName, DESCXML]))
        try:
            descriptorxml = ET.parse(descriptorxmlpath)
 
            try:
-               checkMinMaxPower(c, data.fixed, descriptorxml, data.baddata)
+               #if it has a p attribute it is either a powercomponent or a load and has a min/max value
+               if attribute == 'P':
+                   checkMinMaxPower(c, data.fixed, descriptorxml, data.baddata)
+                   #if source is true in the xml the column name gets added to the powerColums list
+                   if isSource(descriptorxml): ##what about batteries
+                       powerColumns.append(c.column_name)
+                   else:
+                       loads.append(c.column_name)
+                       
+               elif attribute in ['WS','HS','IR']:
+                   eColumns.append(c.column_name)       
            except KeyError:
                print('no column named %s' % c)
        except FileNotFoundError:
-           print('Descriptor xml for %s not found' % c)
-
+           print('Descriptor xml for %s not found' % c.column_name)
+   # store the power column list in the DataClass
+   data.powerComponents = powerColumns
+   data.eColumns = eColumns
+   data.loads = loads
+   
    # recalculate total_p, data gaps will sum to 0.
    data.totalPower()
-   
-   # replace the 0's with values from elsewhere in the dataset
-   # TODO: this needs to be implemnted to allow multiple data channels
-   
-   
-   data.fixOfflineData()
-
+  
+   # identify when the entire system was offline - not collecting any data for more than 2 time intervals.
+   # grouping column is the id of groups of rows where total_p value is repeated over more that 2 timesteps
+   for i,df in enumerate(data.fixed):
+       #df =  df.fillna(-99999)
+       df = df.replace(np.nan, -99999)
+       
+       df['grouping'] = 0
+       df['grouping'] = isInline(df[TOTALP])
+       print(df.head())
+       #these are the offline groupings for e-columns 
+       for e in data.ecolumns:
+           df['_'.join([e,'grouping'])] = 0
+           df['_'.join([e,'grouping'])] = isInline(df[e])
+       
+       #replace offline data for loads       
+       for l in data.loads:
+           df['_'.join([l,'grouping'])] = 0
+           df['_'.join([l,'grouping'])] = isInline(df[l]) 
+       data.fixed[i] = df
+       
+   #replace offline data for total power sources
+   data.fixOfflineData(TOTALP)
+   data.fixOfflineData(data.eColumns)
+   data.fixOfflineData(data.loads)
+           
+   # scale data based on units and offset in the component xml file
+   data.scaleData(ListOfComponents)      
+ 
    #reads the component descriptor files and
    #returns True if none of the components have isFrequencyReference=1 and
    #isVoltageSource = True
@@ -202,7 +218,7 @@ def attributeFromColumn(columnHeading):
 def componentNameFromColumn(columnHeading):
     match = re.match(r"([a-z]+)([0-9]+)", columnHeading, re.I)
     if match:
-        name = match
+        name = match.group()
         return name 
     return
 
@@ -253,16 +269,4 @@ def getNext(i, l, step):
         return getNext((i + step), l, step)
 
 
-# dataframe, dataframe, dataframe, string -> dataframe
-# replaces a subset of data in a series with another subset of data of the same length from the same series
-# if component is total_p then replaces all columns with replacement data
-def dataReplace(df, missing, replacement, component=None):
-    '''replaces the values in one dataframe with those from another'''
-    
-    #TODO only replace powercomponents. 
-    if component == 'total_p':
-        df.loc[min(missing.index):max(missing.index)] = replacement.values
-    else:
-        df.loc[min(missing.index):max(missing.index), component] = replacement[component].values
-    return df
 

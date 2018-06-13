@@ -75,18 +75,26 @@ for idx in range(len(inputDictionary['outputInterval'])): # there should only be
 for idx in range(len(inputDictionary['inputInterval'])):  # for each group of input files
     if len(inputDictionary['inputIntervalUnit']) > 1:
         inputDictionary['inputInterval'][idx] += inputDictionary['inputIntervalUnit'][idx]
-
-flexibleYear = [(x.lower() == 'true') | (x.lower() == 't') for x in flexibleYear]
-
+    else:
+        inputDictionary['inputInterval'][idx] += inputDictionary['inputIntervalUnit'][0]
 # get data units and header names
-inputDictionary['headerNames'], inputDictionary['componentUnits'], inputDictionary['componentAttributes'],inputDictionary['componentNames'], inputDictionary['newHeaderNames'] = getUnits(Village,setupDir)
+inputDictionary['headerNames'], inputDictionary['componentUnits'], \
+inputDictionary['componentAttributes'],inputDictionary['componentNames'], inputDictionary['newHeaderNames'] = getUnits(Village,setupDir)
 
 # read time series data, combine with wind data if files are seperate.
 df, listOfComponents = mergeInputs(inputDictionary)
+os.chdir(setupDir)
+out = open("df_raw.pkl","wb")
+pickle.dump(df,out )
+out.close()
+out = open("component.pkl","wb")
+pickle.dump(listOfComponents,out)
+out.close()
+
 
 # now fix the bad data
 df_fixed = fixBadData(df,setupDir,listOfComponents,inputDictionary['inputInterval'])
-
+'''
 # pickle df
 os.chdir(setupDir)
 pickle.dump(df_fixed, open("df_fixed.p","wb"))
@@ -102,5 +110,5 @@ for c in listOfComponents:
     d[c.component_name] = c.toDictionary()
 # now convert to a netcdf
 
-dataframe2netcdf(df_fixed_interval.fixed, d)
+dataframe2netcdf(df_fixed_interval.fixed, d)'''
 # save ncfile in folder `ModelInputData' in the path ../GBSProjects/[VillageName]/InputData/TimeSeriesData/

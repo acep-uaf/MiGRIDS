@@ -13,6 +13,7 @@ class Component:
         self.type = kwargs.get('type')
         self.attribute =kwargs.get('attribute')
         self.filepath = kwargs.get('filepath')
+        self.source = kwargs.get('source')
 
         self.tags=kwargs.get('tags')
 

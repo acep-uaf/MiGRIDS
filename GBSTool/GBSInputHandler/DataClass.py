@@ -1,9 +1,9 @@
 # DataClass is object with raw_data, fixed_data,baddata dictionary, and system characteristics.
-from GBSTool.GBSInputHandler.identifyGenColumns import identifyGenColumns
+from GBSInputHandler.identifyGenColumns import identifyGenColumns
 import pandas as pd
-from GBSTool.GBSInputHandler.isInline import isInline
-from GBSTool.GBSInputHandler.badDictAdd import badDictAdd
-from GBSTool.GBSInputHandler.getReplacements import getReplacement
+from GBSInputHandler.isInline import isInline
+from GBSInputHandler.badDictAdd import badDictAdd
+from GBSInputHandler.getReplacements import getReplacement
 from matplotlib.backends.backend_pdf import PdfPages
 import matplotlib as plt
 import pickle
@@ -20,17 +20,21 @@ class DataClass:
     def __init__(self, raw_df, sampleInterval,truncate=None,maxMissing=MAXMISSING):
         if len(raw_df) > 0:
             self.raw = raw_df.copy()
+             
             #self.fixed is a list of dataframes derived from raw_df split whenever a gap in data greater than maxmissing occurs           
-            self.fixed = self.splitDataFrame(pd.DataFrame(raw_df.copy(), raw_df.index, raw_df.columns),maxMissing)
-            print('Created %d dataframes that will be evaluated.' %len(self.fixed))
-            # give the fixed data a time index to work with - assumes this is in the first column
-            time_index = pd.to_datetime(self.fixed.iloc[:, 0], unit='s')
-
-            self.fixed = self.fixed.drop(self.fixed.columns[0], axis=1)
-            self.fixed.index = time_index
+            self.fixed = [pd.DataFrame(raw_df.copy(), raw_df.index, raw_df.columns)]
+            
+            # all dataframes passed from readData will have a datetime column named DATE
+            for c,df in enumerate(self.fixed):
+                df.index = pd.to_datetime(df['DATE'], unit='s')
+                df = df.drop('DATE', axis=1)
+                
+                self.fixed[c] = df
         else:
             self.raw = pd.DataFrame()
-            self.fixed = pd.DataFrame()
+            self.rawCopy = pd.DataFrame()
+            self.fixed = [pd.DataFrame()]
+        print(self.fixed[0].head())
         self.timeInterval = sampleInterval
         self.powerComponents = []
         self.ecolumns = []
@@ -44,18 +48,17 @@ class DataClass:
     
     #DataFrame, timedelta ->listOfDataFrame
     #splits a dataframe where data is missing that exceeds maxMissing
-    def splitDataFrame(self,df, m):
-        df = df.sort_index(0, ascending=True)
-        df['timeDiff'] = pd.Series(pd.to_datetime(df.index, unit='s'), df.index).diff()
-        df['gaps'] = df['timeDiff'].apply(lambda x: 1 if x > pd.to_timedelta(m) else 0).cumsum()
-        #these are the dataframe groups
-        groups = df.groupby('gaps',as_index=True)
-        d=[]
-        for name, group in groups:
-            group = group.drop('gaps', axis = 1)
-            group = group.drop('timeDiff', axis = 1)
-            d.append(group)
-        return d
+    def splitDataFrame(self, indices):
+        newlist = []
+        for df in self.fixed:
+            df1 = df[:min(indices)]
+            df2 = df[max(indices):]
+            if len(df1) > 0:
+                newlist.append(df1)
+            if len(df2) > 0:
+                newlist.append(df2)
+        self.fixed = newlist
+        return
     
     # DataClass -> null
     # summarizes raw and fixed data and print resulting dataframe descriptions
@@ -134,7 +137,7 @@ class DataClass:
             timeDiff = timeDiff[timeDiff > 2 * pd.to_timedelta(self.timeInterval)]
             # fill the gaps with NA
             for i in timeDiff.index:
-                resample_df = self.fixed.loc[:i][-2:]
+                resample_df = df.loc[:i][-2:]
                 resample_df = resample_df.resample(self.timeInterval).mean()
                 df = df.append(resample_df[:-1])
                 df = df.sort_index(0, ascending=True)
@@ -174,35 +177,45 @@ class DataClass:
     # DataClass -> null
     # fills values for all components for time blocks when data collection was offline
     # power components are summed and replaced together
+    # load columns are replaced individually
     # ecolumns are replaced individually
     def fixOfflineData(self,column):
         for df in self.fixed:
+            #df_to_fix is the dataset that gets filled in (out of bands records are excluded)
             if self.truncate is not None:
                 df_to_fix = df[self.truncate[0]:self.truncate[1]]
             else:
                 df_to_fix = df
-            #if there is still data in the dataframe after we have truncated it to the specified interval replace bad data
+            #if there is still data in the dataframe after we have truncated it 
+            # to the specified interval replace bad data
             if len(df_to_fix) > 1:
                 # find offline time blocks
-                #if we are working with totalp 
+                #if we are working with totalp gets grouped by totalp
                 if column == TOTALP:
                     groups = df.groupby(df['grouping'], as_index=True)
                 else:
+                    #otherwise groups represent grouping for a specific columns
                     groups = df.groupby(df['_'.join([column,'grouping'])], as_index=True)
     
                 logging.info('%d blocks of time consisting of %d rows of data are offline and are being replaced' % (
                     len(groups), len(df[pd.isnull(df[column])])))
                 # record the offline records in our baddata dictionary
-                badDictAdd(TOTALP,
+                badDictAdd(column,
                        self.baddata, '2.Offline',
                        df[pd.isnull(df[column])].index.tolist())
                 #replace the bad data values with None
-                df[column].replace(-999, None)
+                df[column].replace(-99999, None)
                 # based on our list of bad groups of data, replace the values
                 for name, group in groups:
-                    if (len(group) > 3) | (min(group[column]) == 0):
-                        #replacements can come from all of the input data not just the subsetted portion
-                        getReplacement(self.fixed, group.index, column)
+                    if (len(group) > 3) | (min(group[column]) < 0):
+                        #replacements can come from all of the input data not just the
+                        #subsetted portion
+                        #if no replacement and duration is longer than MAXMISSING False is returned
+                        try:
+                            self.dataReplace(getReplacement(pd.concat(self.fixed), group.index, column))
+                            # a type error is returned if getReplacement returns False)
+                        except (TypeError):
+                            self.splitDataFrame(group.index)
         return
 
     # dataframe, dataframe, dataframe, string -> dataframe
@@ -212,15 +225,17 @@ class DataClass:
         '''replaces the values in one dataframe with those from another'''
         
         #if ecolumns are empty they will get replaced along with power components, otherwise they will remain as they were.
-        if component == TOTOALP:
+        if component == TOTALP:
             columnsToReplace = self.powerComponents 
+            #only replace environment columns if there is no data in them
             for e in self.ecolumns:
-                if isempty(e):
+                if self.isempty(e):
                     columnsToReplace.append(e)
-            
-            df.loc[min(missing.index):max(missing.index), columnsToReplace] = replacement[columnsToReplace].values
         else:
-            df.loc[min(missing.index):max(missing.index), component] = replacement[component].values
+            columnsToReplace = component
+        df = df.join(replacement, how = 'outer',left_index = True, right_index=True, suffixes=('','replacement'))
+        df.loc[min(missing.index):max(missing.index), columnsToReplace] = df.loc[min(missing.index):max(missing.index),['replacement'.join(c) for c in columnsToReplace]]
+        
         return df
     
    #DataFrame, String -> Boolean
@@ -229,3 +244,10 @@ class DataClass:
         if sum(df[column]) == 0:
             return True
         return False
+    
+    def truncateDate(self):
+        if self.truncate is not None:
+            for df in self.fixed:
+                df = df[self.truncate[0]:self.truncate[1]]
+                if len(df) < 1:
+                    self.fixed.remove(df)

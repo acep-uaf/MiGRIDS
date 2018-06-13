@@ -61,6 +61,16 @@ def mergeInputs(inputDictionary):
                 df.loc[sameIdx[0], col]= df.loc[goodIdx, col]
         # remove duplicate columns
         df = df.drop(sameIdx[1:])
-     # remove duplicates in list of components   
-    #listOfComponents = list(set(listOfComponents)))
-    return df, listOfComponents
+     # remove duplicates in list of components - can't have columns of the same name in the dataframe  
+     
+    def uniqueList(startList,outList):
+        if len(startList) <= 0:
+            return outList
+        else:
+            if startList[0].column_name not in [n.column_name for n in outList]:
+                outList.append(startList[0])
+            return uniqueList(startList[1:],outList)
+        
+    l = uniqueList(listOfComponents,[])
+    
+    return df, l
