@@ -2,13 +2,61 @@
 # TODO PERFORMANCE  slowest part of module because iterates through every missing interval
 # dataframe, list of indices, string -> Boolean
 # returns true if a replacement was made, false if it was not
-def getReplacement(df, indices, component=None):
+def getReplacement(df, indices, columnsToReplace):
     import logging
     import pandas as pd
+    import numpy as np
+    from scipy import stats
+    #constants
+    # list of indices, dataframe, component -> dataframe
+    # modifies the existing values in a dataframe using linear interpolation
+    def linearFix(index_list, df, component):
+        for i in index_list:
+            index = getIndex(df[component], i)
+            x = (pd.to_timedelta(pd.Series(df.index.to_datetime()))).dt.total_seconds().astype(int)
+            x.index = pd.to_datetime(df.index, unit='s')
+            y = df[component]
+            value = linearEstimate(x[[min(index), max(index) + 1]],
+                                   y[[min(index), max(index)]], x.loc[i])
+            df.loc[i, component] = value
+        return df
+
+
+    # integer, Series, integer -> index
+    # returns the closest valid index to i
+    def getNext(i, l, step):
+        if ((i + step) < 0) | ((i + step) >= len(l)):
+            step = step * -2
+            return getNext(i, l, step)
+        elif not np.isnan(l[i + step]):
+            return i + step
+        else:
+            return getNext((i + step), l, step)
+
+    
+    # Series, index -> list of indices
+    # returns the closest 2 indices of valid values to i, i can range from 0 to len(df)
+    def getIndex(y, i):
+        base = y.index.get_loc(i)
+        # check if base is an int or array, use first value if its a list
+        if isinstance(base, list):
+            base = base[0]
+        mask = pd.Index([base]).union(pd.Index([getNext(base, y, -1)])).union(pd.Index([getNext(base, y, 1)]))
+        # remove the original value from mask
+        mask = mask.drop(base)
+        return mask
+    
+    
+    # numeric array, numeric array, Integer -> numeric
+    # returns a linear estimated value for a given t value
+    # x is array of x values (time), y is array of y values (power), t is x value to predict for.
+    def linearEstimate(x, y, t):
+        k = stats.linregress(x, y)
+        return k.slope * t + k.intercept
 
     #returns the first valid index for the block to be used as replacement
     # index,range in same units as index, dataframe, dataframe, index -> index
-    def getReplacementStart(dtStart, timeRange, entiredf, missingdf, directMatch=None):
+    def getReplacementStart(dtStart, timeRange, entiredf, missingdf, columnsToEvaluate, directMatch=None):
      
         # if there is a match then stop looking,
         # otherwise increment the search window by a year and look again
@@ -21,13 +69,19 @@ def getReplacement(df, indices, component=None):
         searchBlock = searchBlock[(searchBlock.index.to_datetime().dayofweek == start.dayofweek)]
         searchBlock = searchBlock.between_time((start + pd.Timedelta(hours=3)).time(),
                                                (start - pd.Timedelta(hours=3)).time())
+        group_name = missingdf['_'.join([columnsToEvaluate,'grouping'])][0]
+        column = '_'.join([columnsToEvaluate,'grouping'])
         
-        def cycleYear(dt, dtStart,matchYear = True):
-            t = dt + pd.DateOffset(years=1)
-            if (t.year == dtStart.year) & (matchYear == True):
-               return t
+        searchBlock = searchBlock[searchBlock[column] != group_name]
+        
+        #if the missing time frame is less than 2 weeks matchyear can be set to false
+        # datetime, datetime, Boolean -> datetime
+        def cycleYear(dt, dtStart, smallBlock = True):            
+            t = dt + pd.DateOffset(years=1)      
+            if (t.year == dtStart.year) & (smallBlock == False):
+               return cycleYear(t,dtStart,smallBlock)
             else:
-               cycleYear(t,dtStart,matchYear)
+               return t
                 
         # find the match in the searchBlock as long as it isn't empty
         if not searchBlock.empty:
@@ -38,19 +92,34 @@ def getReplacement(df, indices, component=None):
             searchBlock['timeapart'] = searchBlock['newtime'] - start
             
             sortedSearchBlock = searchBlock.sort_values('timeapart')
+            print(entiredf.head())
+            #BlockLength series is the indices of valid records in the evaluate column
+            blockLength =  entiredf[min(sortedSearchBlock.index):max(sortedSearchBlock.index)]
+            
+            blockLength = blockLength[columnsToEvaluate].dropna()
+            
+            blockLength = pd.Series(pd.to_datetime(blockLength.index),index = blockLength.index)
+            blockLength = blockLength.apply(lambda dt: longEnough(entiredf,blockLength,dt,duration))
+            #flipped = part_of_df[::-1]
+            #maxyear = max(entiredf.index) + pd.DateOffset(years=5)
+           
+            #flipped.index = maxyear - flipped.index 
             # if replacment is long enough return indices, otherwise move on
-            blockLength = entiredf[min(sortedSearchBlock.index):max(sortedSearchBlock.index)][::-1].rolling(
-                offset=duration).diff()[::-1]
-
+            #blockLength = flipped.rolling(duration).count()
+            #blockLength = blockLength[::-1]
+            #blockLength.index = part_of_df.index
+            #print(blockLength.head())
             # a matching record is one that is the same day of the week, similar time of day and has enough
             # valid records following it to fill the empty block
 
-            directMatch = blockLength[blockLength == duration].first_valid_index()
+            directMatch = blockLength.first_valid_index()
         # move the search window to the following year
         #if the missing timeframe is greater than 2 weeks don't search the current year
-        
-        dtStart = cycleYear(dtStart, start,duration >=pd.Timedelta('14 days'))
+       
+        dtStart = cycleYear(dtStart, start, duration <=pd.Timedelta('14 days'))
+        print(dtStart)
         searchBlock = entiredf[dtStart: dtStart + timeRange]
+        print('searchblock is %d' %len(searchBlock))
         # if we found a match return its index otherwise look again
         if directMatch is not None:
             return directMatch
@@ -58,20 +127,40 @@ def getReplacement(df, indices, component=None):
             # if theere is no where left to search return false
             return False
         else:
+            
             # keep looking on the remainder of the list
-            return getReplacementStart(dtStart, timeRange, entiredf[component], missingdf[component], directMatch)
-
+            return getReplacementStart(dtStart, timeRange, entiredf, missingdf, columnsToEvaluate, directMatch)
+   #returns true if a valid value is present in columnsToEvalueate for the entire duration from dt
+   # dataframe, datetime, timedelta, string -> boolean
+    def longEnough(df1, df2, dt, duration):
+       return len(df1[dt: dt + duration]) == len(df2[dt: dt + duration])
+    # dataframe, dataframe, dataframe, string -> dataframe
+    # replaces a subset of data in a series with another subset of data of the same length from the same series
+    # if component is total_p then replaces all columns with replacement data
+    def dataReplace(df, missing, replacement, columnsToReplace):
+        '''replaces the values in one dataframe with those from another'''
+        #TODO join needs to be based on a column containing time from start record not time index
+        #if ecolumns are empty they will get replaced along with power components, otherwise they will remain as they were.       
+       #re-index the replacement data frame so datetimes match the dataframe's
+        replacement['timediff'] = pd.Series(pd.to_datetime(replacement.index)).diff()
+        replacement.index = replacement['timediff'] + min(df.index)
+        
+        df = df.join(replacement, how = 'outer', rsuffix=('replacement'))
+        df.loc[min(missing.index):max(missing.index), columnsToReplace] = df.loc[min(missing.index):max(missing.index),[c + 'replacement' for c in columnsToReplace]]
+        
+        return df
+    
     # dataframe, index, dataframe, string -> null
     # replaces a block of data and logs the indeces as bad records
-    def replaceRecords(entiredf, dtStart, missingdf, strcomponent):
+    def replaceRecords(entiredf, dtStart, missingdf, columnsToReplace):
         window = missingdf.last_valid_index() - missingdf.first_valid_index()
         #this is the replacement block
-        replacement = entiredf[dtStart:][:window]
-        logging.info("replaced inline values %s through %s with %s %s through %s."
-                     % (str(min(missingdf.index)), str(max(missingdf.index)), str(min(replacement.index)),
-                        str(max(replacement.index))))
-
-        return entiredf, missingdf, replacement, strcomponent
+        replacement = entiredf[dtStart:dtStart + window]
+        print(replacement.head())
+        logging.info("replaced inline values %s through %s with %s through %s."
+                     % (str(min(missingdf.index)), str(max(missingdf.index)), str(min(replacement.index)),str(max(replacement.index))))
+        df= dataReplace(entiredf, missingdf,replacement,columnsToReplace)
+        return df
 
 
     # dataframe -> index, timedelta
@@ -95,17 +184,21 @@ def getReplacement(df, indices, component=None):
     # search start is datetime indicating the start of the block of data to be searched
     # searchRange indicates how big of a block of time to search
     searchStart, searchRange = getMoveAndSearch(missingBlock)
-
+    
     # replacementStart is a datetime indicating the first record in the block of replacementvalues
-    replacementStart = getReplacementStart(searchStart, searchRange, df, missingBlock)
-    if replacementStart:
+    #it is assumed that the first value in columns to Replace is the column that is being evaluated
+    replacementStart = getReplacementStart(searchStart, searchRange, df, missingBlock, columnsToReplace[0])
+    if replacementStart:       
         # replace the bad records
-        replaceRecords(df, replacementStart, missingBlock, component)
-        return True
+        entiredf = replaceRecords(df, replacementStart, missingBlock, columnsToReplace)
+        if len(entiredf) > 0:
+            return True
+        else:
+            return False
     elif len(missingBlock) <= 15:
         # if we didn't find a replacement and its only a few missing records use linear estimation
         index_list = missingBlock.index.tolist()
-        linearFix(index_list, df, component)
+        linearFix(index_list, df, columnsToReplace[0])
         logging.info("No similar data subsets found. Using linear interpolation to replace inline values %s through %s."
                      % (str(min(missingBlock.index)), str(max(missingBlock.index))))
         return True
@@ -113,7 +206,8 @@ def getReplacement(df, indices, component=None):
         logging.info(
             "could not replace values %s through %s." % (str(min(missingBlock.index)), str(max(missingBlock.index))))
         return False
-
+    
+    
 
 
 

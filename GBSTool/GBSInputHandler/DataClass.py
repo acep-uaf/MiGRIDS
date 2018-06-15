@@ -26,8 +26,9 @@ class DataClass:
             
             # all dataframes passed from readData will have a datetime column named DATE
             for c,df in enumerate(self.fixed):
-                df.index = pd.to_datetime(df['DATE'], unit='s')
-                df = df.drop('DATE', axis=1)
+                if 'DATE' in df.columns:
+                    df.index = pd.to_datetime(df['DATE'], unit='s')
+                    df = df.drop('DATE', axis=1)
                 
                 self.fixed[c] = df
         else:
@@ -51,8 +52,8 @@ class DataClass:
     def splitDataFrame(self, indices):
         newlist = []
         for df in self.fixed:
-            df1 = df[:min(indices)]
-            df2 = df[max(indices):]
+            df1 = df[:min(indices)][:-1]
+            df2 = df[max(indices):][1:]
             if len(df1) > 0:
                 newlist.append(df1)
             if len(df2) > 0:
@@ -148,6 +149,7 @@ class DataClass:
     def totalPower(self):
         for df in self.fixed:
             df[TOTALP] = df[self.powerComponents].sum(1)
+            df[TOTALP] = df[TOTALP].replace(0,-99999)
         self.raw[TOTALP] = self.raw[self.powerComponents].sum(1)
         return
 
@@ -180,7 +182,7 @@ class DataClass:
     # load columns are replaced individually
     # ecolumns are replaced individually
     def fixOfflineData(self,column):
-        for df in self.fixed:
+        for i,df in enumerate(self.fixed):
             #df_to_fix is the dataset that gets filled in (out of bands records are excluded)
             if self.truncate is not None:
                 df_to_fix = df[self.truncate[0]:self.truncate[1]]
@@ -189,54 +191,41 @@ class DataClass:
             #if there is still data in the dataframe after we have truncated it 
             # to the specified interval replace bad data
             if len(df_to_fix) > 1:
+                #replacce our temporary na values with actual Nan
+                
                 # find offline time blocks
-                #if we are working with totalp gets grouped by totalp
-                if column == TOTALP:
-                    groups = df.groupby(df['grouping'], as_index=True)
-                else:
-                    #otherwise groups represent grouping for a specific columns
-                    groups = df.groupby(df['_'.join([column,'grouping'])], as_index=True)
+                #get groups based on column specific grouping column
+                groups = df_to_fix.groupby(df['_'.join([column,'grouping'])], as_index=True)
     
                 logging.info('%d blocks of time consisting of %d rows of data are offline and are being replaced' % (
-                    len(groups), len(df[pd.isnull(df[column])])))
+                    len(groups), len(df_to_fix[pd.isnull(df_to_fix[column])])))
                 # record the offline records in our baddata dictionary
                 badDictAdd(column,
                        self.baddata, '2.Offline',
-                       df[pd.isnull(df[column])].index.tolist())
-                #replace the bad data values with None
-                df[column].replace(-99999, None)
+                       df_to_fix[pd.isnull(df_to_fix[column])].index.tolist())
+                columnsToReplace = [column]
+                
                 # based on our list of bad groups of data, replace the values
                 for name, group in groups:
                     if (len(group) > 3) | (min(group[column]) < 0):
-                        #replacements can come from all of the input data not just the
-                        #subsetted portion
-                        #if no replacement and duration is longer than MAXMISSING False is returned
-                        try:
-                            self.dataReplace(getReplacement(pd.concat(self.fixed), group.index, column))
-                            # a type error is returned if getReplacement returns False)
-                        except (TypeError):
-                            self.splitDataFrame(group.index)
+                        if column == TOTALP:
+                            columnsToReplace= columnsToReplace + self.powerComponents 
+                            
+                            #only replace environment and load columns if there is no data in them
+                            for e in self.ecolumns:
+                                if self.isempty(group,e):
+                                    columnsToReplace.append(e)
+                                    print(columnsToReplace)
+                       #replace the bad data values with None
+                        
+                        if len(columnsToReplace) > 0:  
+                            #replacements can come from all of the input data not just the
+                            #subsetted portion
+                            #if no replacement and duration is longer than MAXMISSING False is returned
+                            if not getReplacement(pd.concat(self.fixed), group.index, columnsToReplace):
+                                # a type error is returned if getReplacement returns False)
+                                self.splitDataFrame(group.index)
         return
-
-    # dataframe, dataframe, dataframe, string -> dataframe
-    # replaces a subset of data in a series with another subset of data of the same length from the same series
-    # if component is total_p then replaces all columns with replacement data
-    def dataReplace(self, df, missing, replacement, component=None):
-        '''replaces the values in one dataframe with those from another'''
-        
-        #if ecolumns are empty they will get replaced along with power components, otherwise they will remain as they were.
-        if component == TOTALP:
-            columnsToReplace = self.powerComponents 
-            #only replace environment columns if there is no data in them
-            for e in self.ecolumns:
-                if self.isempty(e):
-                    columnsToReplace.append(e)
-        else:
-            columnsToReplace = component
-        df = df.join(replacement, how = 'outer',left_index = True, right_index=True, suffixes=('','replacement'))
-        df.loc[min(missing.index):max(missing.index), columnsToReplace] = df.loc[min(missing.index):max(missing.index),['replacement'.join(c) for c in columnsToReplace]]
-        
-        return df
     
    #DataFrame, String -> Boolean
    #return true if a column does not contain any values

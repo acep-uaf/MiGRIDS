@@ -17,7 +17,7 @@ import logging
 import re
 import pandas as pd
 import numpy as np
-from scipy import stats
+
 from GBSInputHandler.DataClass import DataClass
 from GBSInputHandler.isInline import isInline
 from GBSInputHandler.badDictAdd import badDictAdd
@@ -101,25 +101,23 @@ def fixBadData(df, setupDir, ListOfComponents, sampleInterval):
        componentName = componentNameFromColumn(c.column_name)
        attribute = attributeFromColumn(c.column_name)
        descriptorxmlpath = os.path.join(setupDir, '..', 'Components', ''.join([componentName, DESCXML]))
-       try:
-           descriptorxml = ET.parse(descriptorxmlpath)
-
+       #if it has a p attribute it is either a powercomponent or a load and has a min/max value
+       if attribute == 'P':
            try:
-               #if it has a p attribute it is either a powercomponent or a load and has a min/max value
-               if attribute == 'P':
-                   checkMinMaxPower(c, data.fixed, descriptorxml, data.baddata)
-                   #if source is true in the xml the column name gets added to the powerColums list
-                   if componentName[0:4] != 'load':
-                       powerColumns.append(c.column_name)
-                   else:
-                       loads.append(c.column_name)
-                       
-               elif attribute in ['WS','HS','IR']:
-                   eColumns.append(c.column_name)       
-           except KeyError:
-               print('no column named %s' % c)
-       except FileNotFoundError:
-           print('Descriptor xml for %s not found' % c.column_name)
+               descriptorxml = ET.parse(descriptorxmlpath)
+               checkMinMaxPower(c, data.fixed, descriptorxml, data.baddata)
+               #if source is true in the xml the column name gets added to the powerColums list
+               if componentName[0:4] != 'load':
+                   powerColumns.append(c.column_name)
+               else:
+                   loads.append(c.column_name)
+           except FileNotFoundError:
+               print('Descriptor xml for %s not found' % c.column_name)
+               
+       elif attribute in ['WS','HS','IR']:
+           eColumns.append(c.column_name)       
+      
+   
    # store the power column list in the DataClass
    data.powerComponents = powerColumns
    data.eColumns = eColumns
@@ -134,9 +132,9 @@ def fixBadData(df, setupDir, ListOfComponents, sampleInterval):
        #df =  df.fillna(-99999)
        df = df.replace(np.nan, -99999)
        
-       df['grouping'] = 0
-       df['grouping'] = isInline(df[TOTALP])
-       print(df.head())
+       df['_'.join([TOTALP,'grouping'])] = 0
+       df['_'.join([TOTALP,'grouping'])] = isInline(df[TOTALP])
+       
        #these are the offline groupings for e-columns 
        for e in data.ecolumns:
            df['_'.join([e,'grouping'])] = 0
@@ -146,12 +144,17 @@ def fixBadData(df, setupDir, ListOfComponents, sampleInterval):
        for l in data.loads:
            df['_'.join([l,'grouping'])] = 0
            df['_'.join([l,'grouping'])] = isInline(df[l]) 
+       
+       df = df.replace(-99999, np.nan)
        data.fixed[i] = df
        
    #replace offline data for total power sources
-   data.fixOfflineData(TOTALP)
-   data.fixOfflineData(data.eColumns)
-   data.fixOfflineData(data.loads)
+   if len(data.powerComponents) > 0:
+       data.fixOfflineData(TOTALP)
+   for e in data.eColumns:
+        data.fixOfflineData(e)
+    for l in data.loads:
+        data.fixOfflineData(l)
            
    # scale data based on units and offset in the component xml file
    data.scaleData(ListOfComponents)      
@@ -171,7 +174,7 @@ def fixBadData(df, setupDir, ListOfComponents, sampleInterval):
            return True
 
        if c.column_name in data.powerComponents:
-           # TODO: see above
+           
            descriptorxmlpath = os.path.join(setupDir, '..', 'Components', ''.join([componentNameFromColumn(c.column_name), DESCXML]))
            try:
                descriptorxml = ET.parse(descriptorxmlpath)
@@ -213,52 +216,6 @@ def componentNameFromColumn(columnHeading):
         name = match.group()
         return name 
     return
-
-# list of indices, dataframe, component -> dataframe
-# modifies the existing values in a dataframe using linear interpolation
-def linearFix(index_list, df, component):
-    for i in index_list:
-        index = getIndex(df[component], i)
-        x = (pd.to_timedelta(pd.Series(df.index.to_datetime()))).dt.total_seconds().astype(int)
-        x.index = pd.to_datetime(df.index, unit='s')
-        y = df[component]
-        value = linearEstimate(x[[min(index), max(index) + 1]],
-                               y[[min(index), max(index)]], x.loc[i])
-        df.loc[i, component] = value
-    return df
-
-
-# Series, index -> list of indices
-# returns the closest 2 indices of valid values to i, i can range from 0 to len(df)
-def getIndex(y, i):
-    base = y.index.get_loc(i)
-    # check if base is an int or array, use first value if its a list
-    if isinstance(base, list):
-        base = base[0]
-    mask = pd.Index([base]).union(pd.Index([getNext(base, y, -1)])).union(pd.Index([getNext(base, y, 1)]))
-    # remove the original value from mask
-    mask = mask.drop(base)
-    return mask
-
-
-# numeric array, numeric array, Integer -> numeric
-# returns a linear estimated value for a given t value
-# x is array of x values (time), y is array of y values (power), t is x value to predict for.
-def linearEstimate(x, y, t):
-    k = stats.linregress(x, y)
-    return k.slope * t + k.intercept
-
-
-# integer, Series, integer -> index
-# returns the closest valid index to i
-def getNext(i, l, step):
-    if ((i + step) < 0) | ((i + step) >= len(l)):
-        step = step * -2
-        return getNext(i, l, step)
-    elif not np.isnan(l[i + step]):
-        return i + step
-    else:
-        return getNext((i + step), l, step)
 
 
 
