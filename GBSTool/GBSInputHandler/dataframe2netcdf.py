@@ -28,7 +28,7 @@ def dataframe2netcdf(df,components,saveLocation=''):
     os.chdir(saveLocation)
 
     # create a netCDF file for each data column of the data frame containing the timestamps and the data
-    for component in components.keys(): # skip the first column, Date
+    for component in components.keys():
         # get header name from dataframe
 
         column = [c for c,x in enumerate(df.columns.values) if x == component]

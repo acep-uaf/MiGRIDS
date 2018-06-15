@@ -154,7 +154,11 @@ class SystemOperations:
             wtgPimport = min(rePlimit,wfPAvail)
             # amount of wind power used to charge the eess is the minimum of maximum charging power and the difference
             # between available wind power and wind power imported to the grid.
+            # TODO: put condition if to charge ESS here
             wtgPch = min(sum(self.EESS.eesPinAvail),wfPAvail - wtgPimport)
+
+            # TODO: put TES charging here
+
             # dispatch the wind turbines
             self.WF.wtgDispatch(wtgPimport + wtgPch, 0)
             # get the required spinning reserve. Start off with a simple estimate
@@ -168,12 +172,33 @@ class SystemOperations:
             # find the remaining ability of the EESS to supply SRC not supplied by the diesel generators
             eessSrcRequested = max([srcMin[0] - sum(self.PH.genPAvail) + phP, 0])
 
+            # TODO: test the diesel charging of ESS here
+            # for each energy storage unit SOC, find the appropriate diesel charging power based on the scheduled power
+            # get the charging rules for the generators
+            # find the loading on the generators
+            phLoadMax = []
+            for idx, eesSOC in enumerate(self.EESS.eesSOC):
+                #find the SOC
+                genMaxLoad, eesMaxSOC = zip(*self.PH.genMaxDiesCapCharge)
+                # find the lowest max SOC the SOC of the ees is under
+                idxSOC = idxSOC + [np.where(eesMaxSOC > eesSOC)[0]]
+                if len(idxSOC) == 0 :
+                    idxSOC = len(eesMaxSOC)-1
+                # use the max loading of all the EES that the gens are allowed to go to
+                phLoadMax = max(phLoadMax,genMaxLoad[idxSOC])
+
+            # find the increase in loading
+            phPch = max(phLoadMax - phP / sum(self.PH.genPAvail), 0) * sum(self.PH.genPAvail)
+            # only able to charge as much as is left over from being charged from wind power
+            phPch = min(sum(self.EESS.eesPinAvail) - wtgPch, phPch )
+
             # dispatch the eess
-            self.EESS.runEesDispatch(eessDis - wtgPch, 0, eessSrcRequested)
+            self.EESS.runEesDispatch(eessDis - wtgPch - phPch, 0, eessSrcRequested)
             # read what eess managed to do
             eessP = sum(self.EESS.eesP[:])
-            # recalculate generator power
-            phP = P - wtgPimport - max([eessP,0])
+            # recalculate firm generator power required
+            phP = P - wtgPimport - max([eessP,0]) + phPch
+
             # dispatch the generators
             self.PH.genDispatch(phP, 0)
 
@@ -260,7 +285,7 @@ class SystemOperations:
                         eesSchedDischAvail += ees.findPdisAvail(ees.eesDispatchTime, eesSrcScheduledSwitch[index], eesLoss + ees.eesSrcTime*eesSrcScheduledSwitch[index])
 
                 # schedule the generators accordingly
-                self.PH.genSchedule(max([futureLoad - sum(futureWind) ,0]), futureSRC[1] - coveredSRCSwitch, futureSRC[0] - coveredSRCStay,
+                self.PH.genSchedule(futureLoad, sum(futureWind), futureSRC[1] - coveredSRCSwitch, futureSRC[0] - coveredSRCStay,
                                     eesSchedDischAvail, sum(eesSrcAvailMax) - sum(eesSrcScheduledStay))
                 # TODO: incorporate energy storage capabilities and wind power into diesel schedule. First predict
                 # the future amount of wind power. find available SRC from EESS. Accept the amount of predicted wind

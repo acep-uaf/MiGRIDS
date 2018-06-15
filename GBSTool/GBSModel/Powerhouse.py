@@ -96,6 +96,7 @@ class Powerhouse:
         self.genCombinationsLowerLimit = []
         self.genCombinationsPMax = []
         self.genCombinationsFCurve = []
+        self.genMaxDiesCapCharge = []
         for nGen in range(len(self.genIDS)+1): # for all possible numbers of generators
             for subset in itertools.combinations(self.genIDS, nGen): # get all possible combinations with that number
                 self.genCombinationsID.append(subset) # list of lists of gen IDs
@@ -120,6 +121,7 @@ class Powerhouse:
                 self.genCombinationsLowerLimit.append(subsetGenLowerLimit)
                 self.genCombinationsPMax.append(subsetPMax)
                 self.genCombinationsFCurve.append(self.combFuelCurves(subset)) # append fuel curve for this combination
+                self.genMaxDiesCapCharge.append(self.combMaxDiesCapCharge(subset)) # append the max diesel cap charge values for this combination
 
         # Update the current combination online
         for idx, combID in enumerate(self.combinationsID): # for each combination
@@ -159,6 +161,24 @@ class Powerhouse:
             combFuelConsumption = [0]
 
         return list(zip(combFuelPower, list(combFuelConsumption))) # return list of tuples
+
+    # combine max diesel cap charging of ESS for a combination of generators
+    # self - self reference
+    # genIDs - a list of generator objects in the combination
+    # returns a list of tuples (Diesel Max Loading, EESS max state of charge)
+    def combMaxDiesCapCharge(self, genIDs):
+        # for each genID, take the average of maxDiesCapCharge and maxDiesCapChargeE
+         for idx, genID in enumerate(genIDs):
+             if idx == 0:
+                gmdcc = self.generators[self.genIDS.index(genID)].genMaxDiesCapCharge
+                gmdcce = self.generators[self.genIDS.index(genID)].genMaxDiesCapChargeE
+             else:
+                 gmdcc = list((np.array(gmdcc) + np.array(
+                                             [self.generators[self.genIDS.index(genID)].genMaxDiesCapCharge])) / 2)
+                 gmdcce = list((np.array(gmdcce) + np.array(
+                                                 [self.generators[self.genIDS.index(genID)].genMaxDiesCapChargeE])) / 2)
+
+         return list(zip(gmdcce, gmdcc))
 
     # genDispatch class method. Assigns a loading to each online generator and checks if they are inside operating bounds.
     # Inputs:
@@ -210,7 +230,11 @@ class Powerhouse:
     # self - self reference
     # scheduledLoad - the load that the generators will be expected to supply, this is predicted based on previous loading
     # scheduledSRC -  the minimum spinning reserve that the generators will be expected to supply
-    def genSchedule(self, scheduledLoad, scheduledSRCSwitch, scheduledSRCStay, powerAvailToSwitch, powerAvailToStay):
+    def genSchedule(self, futureLoad, futureRE, scheduledSRCSwitch, scheduledSRCStay, powerAvailToSwitch, powerAvailToStay):
+
+        # scheduled load is the difference between load and RE, the min of what needs to be provided by gen or ess
+        scheduledLoad = max([futureLoad - futureRE])
+
         ## first find all generator combinations that can supply the load within their operating bounds
         # find all with capacity over the load and the required SRC
         indCap = np.array([idx for idx, x in enumerate(self.genCombinationsUpperNormalLoading) if x >= scheduledLoad -
@@ -224,7 +248,7 @@ class Powerhouse:
         if len(indCap) == 0:
             indCap = np.array([len(self.genCombinationsUpperNormalLoading)-1])
         # find all with MOL under the load
-        indMOLCap = [idx for idx, x in enumerate(self.genCombinationsMOL[indCap]) if x <= scheduledLoad]
+        indMOLCap = [idx for idx, x in enumerate(self.genCombinationsMOL[indCap]) if x <= futureLoad]
         # ind of in bounds combinations
         indInBounds = indCap[indMOLCap]
         # if there are no gen combinations with a low enough MOL enough to supply, automatically add combination 1,

@@ -178,10 +178,11 @@ def readWindData(fileDir, columnNames, useNames,componentUnits, dateColumnName, 
                             data[n] = None
                     #read the data from each file
                     fileData = readAsData(file, names)
+                    df = pd.concat([df, fileData], axis=0, ignore_index=True)
             if file.name in fileDict.keys():
                 fileDict[file.name]['rows'] = len(fileData)
 
-            df = pd.concat([df, fileData], axis=0, ignore_index=True)
+
 
     df = df.set_index(pd.to_datetime(df[DATETIME]))
     df = df.apply(pd.to_numeric, errors='ignore')
