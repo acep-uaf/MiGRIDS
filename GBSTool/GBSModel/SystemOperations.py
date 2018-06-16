@@ -13,6 +13,7 @@ import numpy as np
 from GBSModel.Demand import Demand
 # from SolarFarm import Solarfarm
 from GBSModel.ElectricalEnergyStorageSystem import ElectricalEnergyStorageSystem
+from GBSModel.ThermalEnergyStorageSystem import ThermalEnergyStorageSystem
 from GBSModel.Powerhouse import Powerhouse
 from GBSModel.Windfarm import Windfarm
 
@@ -24,7 +25,8 @@ class SystemOperations:
                  predictWind = 'predictWind0', getMinSrcFile = 'getMinSrc0',
                  genIDs = [], genStates = [], genDescriptors = [], genDispatch = [],
                  wtgIDs = [], wtgStates = [], wtgDescriptors = [], wtgSpeedFiles = [], wtgDispatch = [],
-                 eesIDs = [], eesStates = [], eesSOCs = [], eesDescriptors = [], eesDispatch = []):
+                 eesIDs = [], eesStates = [], eesSOCs = [], eesDescriptors = [], eesDispatch = [],
+                 tesIDs = [], tesStates = [], tesTs = [], tesDescriptors = [], tesDispatch = []):
         """
         Constructor used for intialization of all sytem components
         :param timeStep: the length of time steps the simulation is run at in seconds.
@@ -107,6 +109,9 @@ class SystemOperations:
         # initiate electrical energy storage system
         if len(eesIDs) != 0:
             self.EESS = ElectricalEnergyStorageSystem(eesIDs, eesSOCs, eesStates, timeStep, eesDescriptors, eesDispatch)
+        # initiate the thermal energy storage system
+        if len(tesIDs) != 0:
+            self.TESS = ThermalEnergyStorageSystem(tesIDs, tesTs, tesStates, timeStep, tesDescriptors, tesDispatch)
         # load the real load
         if len(loadRealFiles) != 0:
             self.DM = Demand(timeStep, loadRealFiles, loadReactiveFiles, runTimeSteps)
@@ -126,6 +131,7 @@ class SystemOperations:
         self.eessP = []
         self.eesPLoss = []
         self.powerhouseP = []
+        self.powerhousePch = []
         self.genP = []
         self.genPAvail = []
         self.eessSrc = []
@@ -176,14 +182,16 @@ class SystemOperations:
             # for each energy storage unit SOC, find the appropriate diesel charging power based on the scheduled power
             # get the charging rules for the generators
             # find the loading on the generators
-            phLoadMax = []
-            for idx, eesSOC in enumerate(self.EESS.eesSOC):
+            phLoadMax = 0
+            for eesSOC in self.EESS.eesSOC:
                 #find the SOC
-                genMaxLoad, eesMaxSOC = zip(*self.PH.genMaxDiesCapCharge)
+                genMaxLoad, eesMaxSOC = zip(*self.PH.genMaxDiesCapCharge[self.PH.onlineCombinationID])
                 # find the lowest max SOC the SOC of the ees is under
-                idxSOC = idxSOC + [np.where(eesMaxSOC > eesSOC)[0]]
+                idxSOC = np.where(np.array(eesMaxSOC) > eesSOC)[0]
                 if len(idxSOC) == 0 :
                     idxSOC = len(eesMaxSOC)-1
+                else:
+                    idxSOC = idxSOC[0]
                 # use the max loading of all the EES that the gens are allowed to go to
                 phLoadMax = max(phLoadMax,genMaxLoad[idxSOC])
 
@@ -196,7 +204,7 @@ class SystemOperations:
             self.EESS.runEesDispatch(eessDis - wtgPch - phPch, 0, eessSrcRequested)
             # read what eess managed to do
             eessP = sum(self.EESS.eesP[:])
-            # recalculate firm generator power required
+            # recalculate generator power required
             phP = P - wtgPimport - max([eessP,0]) + phPch
 
             # dispatch the generators
@@ -215,6 +223,7 @@ class SystemOperations:
             self.eessP.append(eessP)
             self.eesPLoss.append(self.EESS.eesPloss[:])
             self.powerhouseP.append(phP)
+            self.powerhousePch.append(phPch)
             self.genP.append(self.PH.genP[:])
             self.genPAvail.append(sum(self.PH.genPAvail))
             self.eessSrc.append(self.EESS.eesSRC[:])

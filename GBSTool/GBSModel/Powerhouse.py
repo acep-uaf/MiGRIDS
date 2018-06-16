@@ -170,14 +170,14 @@ class Powerhouse:
         # for each genID, take the average of maxDiesCapCharge and maxDiesCapChargeE
          for idx, genID in enumerate(genIDs):
              if idx == 0:
-                gmdcc = self.generators[self.genIDS.index(genID)].genMaxDiesCapCharge
-                gmdcce = self.generators[self.genIDS.index(genID)].genMaxDiesCapChargeE
+                 gmdcce, gmdcc = zip(*self.generators[self.genIDS.index(genID)].maxDiesCapCharge)
              else:
-                 gmdcc = list((np.array(gmdcc) + np.array(
-                                             [self.generators[self.genIDS.index(genID)].genMaxDiesCapCharge])) / 2)
-                 gmdcce = list((np.array(gmdcce) + np.array(
-                                                 [self.generators[self.genIDS.index(genID)].genMaxDiesCapChargeE])) / 2)
-
+                 gmdcce0, gmdcc0 = zip(*self.generators[self.genIDS.index(genID)].maxDiesCapCharge)
+                 gmdcc = list((np.array(gmdcc) + np.array(gmdcc0)) / 2)
+                 gmdcce = list((np.array(gmdcce) + np.array(gmdcce0)) / 2)
+         if len(genIDs) == 0: # for diesel-off scenario
+             gmdcc = [0]
+             gmdcce = [0]
          return list(zip(gmdcce, gmdcc))
 
     # genDispatch class method. Assigns a loading to each online generator and checks if they are inside operating bounds.

@@ -57,8 +57,8 @@ class Generator:
         self.genStartTime = float(genSoup.startTime.get('value')) # amount of time required to start from warm
         self.genStartCost =  float(genSoup.startCost.get('value')) # equivalent cost in kg of diesel to start engine
         # get diesel charging of ESS constraints
-        self.maxDiesCapCharge = float(genSoup.maxDiesCapCharge.mdcc.get('value'))
-        self.maxDiesCapChargeE = float(genSoup.maxDiesCapCharge.e.get('value'))
+        self.maxDiesCapCharge = list(zip([float(x) for x in genSoup.maxDiesCapCharge.e.get('value').split()],
+                                    [float(x) for x in genSoup.maxDiesCapCharge.mdcc.get('value').split()]))
 
         # Handle the fuel curve interpolation
         fuelCurvePPuInpt = genSoup.fuelCurve.pPu.get('value').split()

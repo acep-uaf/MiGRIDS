@@ -64,6 +64,9 @@ def runSimulation(projectSetDir = ''):
     # get the ees dispatch
     eesDispatch = readXmlTag(projectSetupFile,'eesDispatch','value')[0]
 
+    # get the tes dispatch
+    tesDispatch = readXmlTag(projectSetupFile, 'tesDispatch', 'value')[0]
+
     # get the minimum required SRC calculation
     getMinSrcFile = readXmlTag(projectSetupFile, 'getMinSrc', 'value')[0]
 
@@ -106,12 +109,17 @@ def runSimulation(projectSetDir = ''):
         eesStates = []
         eesSRC = []
         eesDescriptors = []
+        tesIDs = []
+        tesT = []
+        tesStates = []
+        tesDescriptors = []
         wtgIDs = []
         wtgStates = []
         wtgDescriptors = []
         genIDs = []
         genStates = []
         genDescriptors = []
+
 
         for cpt in componentNames:  # for each component
             # check if component is a generator
@@ -138,7 +146,8 @@ def runSimulation(projectSetDir = ''):
                               predictLoad = predictLoad, predictWind = predictWind, getMinSrcFile = getMinSrcFile,
                          genIDs = genIDs, genStates = genStates, genDescriptors = genDescriptors, genDispatch = genDispatch,
                          wtgIDs = wtgIDs, wtgStates = wtgStates, wtgDescriptors = wtgDescriptors, wtgSpeedFiles = timeSeriesDir, wtgDispatch = wtgDispatch,
-                         eesIDs = eesIDs, eesStates = eesStates, eesSOCs = eesSOC, eesDescriptors = eesDescriptors, eesDispatch = eesDispatch)
+                         eesIDs = eesIDs, eesStates = eesStates, eesSOCs = eesSOC, eesDescriptors = eesDescriptors, eesDispatch = eesDispatch,
+                         tesIDs = tesIDs, tesTs = tesT, tesStates=tesStates, tesDescriptors=tesDescriptors, tesDispatch=tesDispatch)
         # stop profiler
         # pr0.disable()
         #pr0.print_stats(sort="calls")
@@ -156,6 +165,8 @@ def runSimulation(projectSetDir = ''):
         # save data
         os.chdir(outputDataDir)
         writeNCFile(SO.DM.realTime,SO.powerhouseP,1,0,'kW','powerhousePSet' + str(setNum) + 'Run'+str(runNum)+'.nc') # gen P
+        writeNCFile(SO.DM.realTime, SO.powerhousePch, 1, 0, 'kW',
+                    'powerhousePchSet' + str(setNum) + 'Run' + str(runNum) + '.nc')  # gen Pch
         writeNCFile(SO.DM.realTime, SO.rePlimit, 1, 0, 'kW', 'rePlimitSet' + str(setNum) + 'Run' + str(runNum) + '.nc')  # rePlimit
         writeNCFile(SO.DM.realTime, SO.wfPAvail, 1, 0, 'kW', 'wtgPAvailSet' + str(setNum) + 'Run' + str(runNum) + '.nc')  # wfPAvail
         writeNCFile(SO.DM.realTime, SO.wfPImport, 1, 0, 'kW', 'wtgPImportSet' + str(setNum) + 'Run' + str(runNum) + '.nc')  # wtgPImport

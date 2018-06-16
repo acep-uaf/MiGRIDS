@@ -116,6 +116,12 @@
     The class name in the file must be 'eesDispatch'. Default value is 'eesDispatch0'-->
     <eesDispatch value="eesDispatch0"/>
 
+    <!-- 'tesDispatch' refers to the class that is used to dispatch the thermal energy storage units.  If a user defines their
+    own dispatch, it is the path and filename of the dispatch class used to dispatch the energy storage units.
+    Otherwise, it is the name of the dispatch filename included in the software package. Options include: tesDispatch0.
+    The class name in the file must be 'tesDispatch'. Default value is 'eesDispatch0'-->
+    <tesDispatch value="tesDispatch0"/>
+
     <!-- 'genDispatch' refers to the class that is used to dispatch the generators.  If a user defines their
     own dispatch, it is the path and filename of the dispatch class used to dispatch the generators.
     Otherwise, it is the name of the dispatch filename included in the software package. Options include: genDispatch0.
