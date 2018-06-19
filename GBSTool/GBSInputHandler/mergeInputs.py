@@ -7,6 +7,8 @@ Created on Wed Jun  6 16:59:08 2018
 
 import numpy as np
 from GBSInputHandler.readDataFile import readDataFile
+import os
+import pickle
 import pandas as pd
 import functools
 import operator
@@ -33,6 +35,14 @@ def mergeInputs(inputDictionary):
                                              inputDictionary['timeColumnName'][idx], inputDictionary['timeColumnFormat'][idx], 
                                              inputDictionary['utcOffsetValue'][idx], inputDictionary['utcOffsetUnit'][0], 
                                              inputDictionary['dst'][idx]) # dataframe with time series information. replace header names with column names
+        os.chdir(inputDictionary['fileLocation'][idx])
+        out = open("df_raw.pkl", "wb")
+        pickle.dump(df0, out)
+        out.close()
+        out = open("component.pkl", "wb")
+        pickle.dump(listOfComponents0, out)
+        out.close()
+
         if idx == 0: # initiate data frames if first iteration, otherwise append
             df = df0
             listOfComponents = listOfComponents0

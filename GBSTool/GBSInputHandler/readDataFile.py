@@ -33,7 +33,7 @@ def readDataFile(inputFileType,fileLocation,fileType,columnNames,useNames,compon
         componentAttributes = [componentAttributes]
 
     ###### go to directory with time series data is located #######
-    here = os.getcwd()
+    here = os.path.dirname(os.path.realpath(__file__))
     if fileLocation=='':
         print('Choose directory where input data files are located.')
         import tkinter as tk

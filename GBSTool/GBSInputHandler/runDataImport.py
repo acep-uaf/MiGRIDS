@@ -14,7 +14,7 @@ import tkinter as tk
 import os
 from GBSAnalyzer.DataRetrievers.readXmlTag import readXmlTag
 from GBSInputHandler.getUnits import getUnits
-from GBSInputHandler.fixBadData import fixBadData
+#from GBSInputHandler.fixBadData import fixBadData
 from GBSInputHandler.fixDataInterval import fixDataInterval
 from GBSInputHandler.dataframe2netcdf import dataframe2netcdf
 from GBSInputHandler.mergeInputs import mergeInputs
