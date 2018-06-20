@@ -69,6 +69,7 @@ def mergeInputs(inputDictionary):
             listOfComponents.extend(listOfComponents0)
     
     # order by datetime
+    # TODO: replace this code with faster code from 'testMergAndSortDF.py' in the TestScripts dir
     df = df.sort_values(['DATE']).reset_index(drop=True)
     # find rows with identical dates and combine rows, keeping real data and discarding nans in columns
     dupDate = df.DATE[df.DATE.duplicated()]
