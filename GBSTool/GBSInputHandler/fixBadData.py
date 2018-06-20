@@ -36,34 +36,37 @@ TOTALP = 'total_p'  # the name of the column that contains the sum of power outp
 # returns a DataClass object with raw and cleaned data and powercomponent information
 def fixBadData(df, setupDir, ListOfComponents, sampleInterval):
    '''returns cleaned dataframe'''
-
+   
    # local functions - not used outside fixBadData
 
    # string, dataframe, xml, dictionary -> dataframe, dictionary
    # returns a dictionary of bad values for a given variable and change out of bounds values to Nan in the dataframe
-   def checkMinMaxPower(component, df, descriptorxml, baddata):
+   def checkMinMaxPower(component, dataFrameList, descriptorxml, baddata):
        '''change out of bounds values to be within limits'''
-       # look up possible min/max
-       # if it is a sink, max power is the input, else it is the output
-       if getValue(descriptorxml, "type", False) == "sink":
-           maxPower = getValue(descriptorxml, "PInMaxPa")
-           minPower = getValue(descriptorxml, "POutMaxPa")
-       else:
-           maxPower = getValue(descriptorxml, "POutMaxPa")
-           minPower = getValue(descriptorxml, "PInMaxPa")
-       if (maxPower is not None) & (minPower is not None):
-           try:
-               over = df[component] > maxPower
+       for i, df in enumerate(dataFrameList):
+           
+            # look up possible min/max
+           # if it is a sink, max power is the input, else it is the output
+           if getValue(descriptorxml, "type", False) == "sink":
+               maxPower = getValue(descriptorxml, "PInMaxPa")
+               minPower = getValue(descriptorxml, "POutMaxPa")
+           else:
+               maxPower = getValue(descriptorxml, "POutMaxPa")
+               minPower = getValue(descriptorxml, "PInMaxPa")
+           if (maxPower is not None) & (minPower is not None):
+               try:
+                   over = df[component] > maxPower
+    
+                   under = df[component] < minPower
+                   df[component] = df[component].mask((over | under))
+                   if(len(df[component][pd.isnull(df[component])].index.tolist()) > 0):
+                       badDictAdd(component, baddata, '1.Exceeds Min/Max',
+                               df[component][pd.isnull(df[component])].index.tolist())
+                       dataFrameList[i] = df
+               except KeyError:
+                   print("%s was not found in the dataframe" % component)
 
-               under = df[component] < minPower
-               df[component] = data.fixed[component].mask((over | under))
-               if(len(df[component][pd.isnull(df[component])].index.tolist()) > 0):
-                   badDictAdd(component, baddata, '1.Exceeds Min/Max',
-                           df[component][pd.isnull(df[component])].index.tolist())
-           except KeyError:
-               print("%s was not found in the dataframe" % component)
-
-       return df, baddata
+       return dataFrameList, baddata
 
    # XML, String -> float
    # returns the 'value' at a specific node within an xml file.
@@ -99,13 +102,14 @@ def fixBadData(df, setupDir, ListOfComponents, sampleInterval):
    for c in ListOfComponents:
 
        componentName = componentNameFromColumn(c.column_name)
+       
        attribute = attributeFromColumn(c.column_name)
        descriptorxmlpath = os.path.join(setupDir, '..', 'Components', ''.join([componentName, DESCXML]))
        #if it has a p attribute it is either a powercomponent or a load and has a min/max value
        if attribute == 'P':
            try:
                descriptorxml = ET.parse(descriptorxmlpath)
-               checkMinMaxPower(c, data.fixed, descriptorxml, data.baddata)
+               checkMinMaxPower(c.column_name, data.fixed, descriptorxml, data.baddata)
                #if source is true in the xml the column name gets added to the powerColums list
                if componentName[0:4] != 'load':
                    powerColumns.append(c.column_name)
@@ -121,7 +125,9 @@ def fixBadData(df, setupDir, ListOfComponents, sampleInterval):
    # store the power column list in the DataClass
    data.powerComponents = powerColumns
    data.eColumns = eColumns
+   
    data.loads = loads
+   
    
    # recalculate total_p, data gaps will sum to 0.
    data.totalPower()
@@ -136,7 +142,7 @@ def fixBadData(df, setupDir, ListOfComponents, sampleInterval):
        df['_'.join([TOTALP,'grouping'])] = isInline(df[TOTALP])
        
        #these are the offline groupings for e-columns 
-       for e in data.ecolumns:
+       for e in data.eColumns:
            df['_'.join([e,'grouping'])] = 0
            df['_'.join([e,'grouping'])] = isInline(df[e])
        
@@ -153,7 +159,7 @@ def fixBadData(df, setupDir, ListOfComponents, sampleInterval):
        data.fixOfflineData(TOTALP)
    for e in data.eColumns:
         data.fixOfflineData(e)
-    for l in data.loads:
+   for l in data.loads:
         data.fixOfflineData(l)
            
    # scale data based on units and offset in the component xml file

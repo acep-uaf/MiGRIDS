@@ -35,7 +35,7 @@ class DataClass:
             self.raw = pd.DataFrame()
             self.rawCopy = pd.DataFrame()
             self.fixed = [pd.DataFrame()]
-        print(self.fixed[0].head())
+        
         self.timeInterval = sampleInterval
         self.powerComponents = []
         self.ecolumns = []
@@ -215,8 +215,7 @@ class DataClass:
                             for e in self.ecolumns:
                                 if self.isempty(group,e):
                                     columnsToReplace.append(e)
-                                    print(columnsToReplace)
-                       #replace the bad data values with None
+                                                           #replace the bad data values with None
                         
                         if len(columnsToReplace) > 0:  
                             #replacements can come from all of the input data not just the

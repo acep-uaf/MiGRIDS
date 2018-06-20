@@ -92,7 +92,7 @@ def getReplacement(df, indices, columnsToReplace):
             searchBlock['timeapart'] = searchBlock['newtime'] - start
             
             sortedSearchBlock = searchBlock.sort_values('timeapart')
-            print(entiredf.head())
+            
             #BlockLength series is the indices of valid records in the evaluate column
             blockLength =  entiredf[min(sortedSearchBlock.index):max(sortedSearchBlock.index)]
             
@@ -117,9 +117,9 @@ def getReplacement(df, indices, columnsToReplace):
         #if the missing timeframe is greater than 2 weeks don't search the current year
        
         dtStart = cycleYear(dtStart, start, duration <=pd.Timedelta('14 days'))
-        print(dtStart)
+        
         searchBlock = entiredf[dtStart: dtStart + timeRange]
-        print('searchblock is %d' %len(searchBlock))
+        
         # if we found a match return its index otherwise look again
         if directMatch is not None:
             return directMatch
@@ -156,7 +156,7 @@ def getReplacement(df, indices, columnsToReplace):
         window = missingdf.last_valid_index() - missingdf.first_valid_index()
         #this is the replacement block
         replacement = entiredf[dtStart:dtStart + window]
-        print(replacement.head())
+        
         logging.info("replaced inline values %s through %s with %s through %s."
                      % (str(min(missingdf.index)), str(max(missingdf.index)), str(min(replacement.index)),str(max(replacement.index))))
         df= dataReplace(entiredf, missingdf,replacement,columnsToReplace)

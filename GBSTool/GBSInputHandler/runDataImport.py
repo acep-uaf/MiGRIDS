@@ -93,7 +93,7 @@ out.close()
 
 
 # now fix the bad data
-df_fixed = fixBadData(df,setupDir,listOfComponents,inputDictionary['inputInterval'])
+#df_fixed = fixBadData(df,setupDir,listOfComponents,inputDictionary['inputInterval'])
 '''
 # pickle df
 os.chdir(setupDir)
