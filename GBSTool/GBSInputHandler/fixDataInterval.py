@@ -15,6 +15,7 @@ def fixDataInterval(data, interval):
      the mean of values within the new interval will be generated'''
     import pandas as pd
     import numpy as np
+    import matplotlib.pyplot as plt
 
 
 
@@ -29,26 +30,27 @@ def fixDataInterval(data, interval):
         n = (records / timestep) + 1
         # time constant. This value was empirically determined to result in a mean value between
         tau = records*.2
-
+        tau[tau<1] = 1
 
         #renormalized variables
         # TODO: look at sigma calculation
         # sigma scaled takes into account the difference in STD for different number of samples of data. Given a STD for
         # 1000 data samples (sigma) the mean STD that will be observed is sigmaScaled, base empirically off of 1 second
         # Igiugig data for 1 year.
-        sigmaScaled = sigma * (0.0158*np.log(n)**2 + 0.0356*np.log(n))
+        #sigmaScaled = 0.5 * sigma * (0.0158*np.log(n)**2 + 0.0356*np.log(n))
         #sigmaScaled = sigma
-        sigma_bis = sigmaScaled * np.sqrt(2.0 / n) # adapted from ipython interactive computing visualization cookbook
+        #sigma_bis = sigmaScaled * np.sqrt(2.0 / n) # adapted from ipython interactive computing visualization cookbook
+        sigma_bis = 0.15 * sigma * np.sqrt(2.0/(900*timestep))
         sqrtdt = np.sqrt(timestep)
         # find the 95th percentile of number of steps
-        n95 = int(np.percentile(n,95))
+        n99 = int(np.percentile(n,99))
         # find where over the 95th percentile
-        idxOver95 = np.where(n > n95)
+        idxOver99 = np.where(n > n99)[0]
         #x is the array that will contain the new values
-        x = np.zeros(shape=(len(start), int(n95)))
+        x = np.zeros(shape=(len(start), int(n99)))
 
         # steps is an array of timesteps in seconds with length = max(records)
-        steps = np.arange(0, int(n95)*timestep, timestep)
+        steps = np.arange(0, int(n99)*timestep, timestep)
         # t is the numeric value of the dataframe timestamps
         t = pd.to_timedelta(pd.Series(pd.to_datetime(start.index.values, unit='s'), index=start.index)).dt.total_seconds()
         # intervals is the steps array repeated for every row of time
@@ -57,10 +59,10 @@ def fixDataInterval(data, interval):
         intervals_reshaped = intervals.reshape(len(steps), len(t))
         # TODO: MemoryError here
         tr = t.repeat(len(steps))
-        rs = tr.reshape(len(t), len(steps))
+        rs = tr.values.reshape(len(t), len(steps))
         time_matrix = rs + intervals_reshaped.transpose()
         # put all the times in a single array
-        timeArray = np.concatenate(time_matrix)
+
 
         #the starter value
         x[:, 0] = start
@@ -68,15 +70,26 @@ def fixDataInterval(data, interval):
         mu = start.shift(-1)
         mu.iloc[-1] = mu.iloc[-2]
 
-        for i in range(n95-1):
+        for i in range(n99-1):
             x[:, i + 1] = x[:, i] + timestep * (-(x[:, i] - mu) / tau) + np.multiply(sigma_bis.values * sqrtdt, np.random.randn(len(mu)))
 
+
+
+        # remove extra values to avoid improper mixing of values when sorting
+        for row in range(time_matrix.shape[0]):
+            time_matrix[row,int(n[row]):] = None
+            x[row,int(n[row]):] = None
+
+        timeArray = np.concatenate(time_matrix)
         values = np.concatenate(x)
+        # this can only work as long as fixBadData removes any None values
+        values = values[values != None]
+        timeArray = timeArray[timeArray != None]
 
         # individually calc the rest
-        for idx in idxOver95:
+        for idx in idxOver99:
             # find remaining values to be calculated
-            nRemaining = int(max([n[idx].values[0] - n95, 0]))
+            nRemaining = int(max([n[idx] - n99, 0]))
             # calc remaining values
             x0 = np.zeros(shape = (nRemaining,))
             # first value is last value of array
@@ -92,7 +105,7 @@ def fixDataInterval(data, interval):
             timeArray = np.append(timeArray,time_matrix0)
 
         # TODO: sort values and timeArray by TimeArray
-        tv = zip(timeArray,values)
+        tv = np.array(list(zip(timeArray,values)))
         tv = tv[tv[:,0].argsort()] # sort by timeArray
 
         t, v = zip(*tv)
@@ -112,10 +125,10 @@ def fixDataInterval(data, interval):
         timestep = pd.Timedelta(interval).seconds
 
         #return an array of arrays of values
-        y = getValues(records, start, sigma,timestep)
+        timeArray, values = getValues(records, start, sigma,timestep)
         #steps is an array of timesteps in seconds with length = max(records)
+        '''
         steps = np.arange(0, max(records) + 1, timestep)
-
         #t is the numeric value of the dataframe timestamps
         t = pd.to_timedelta(pd.Series(pd.to_datetime(df.index.values, unit='s'),index=df.index)).dt.total_seconds()
         # test if the index can be interpreted as datetime, if not recognized, convert
@@ -135,70 +148,73 @@ def fixDataInterval(data, interval):
         timeArray = np.concatenate(time_matrix)
         #put all the values in a single array
         values = np.concatenate(y)
-
+        '''
         return timeArray, values
 
-    # df contains the non-upsampled records. Means and standard deviation come from non-upsampled data.
-    df = data.fixed.copy()
+    for idx in range(len(data.fixed)):
+        # df contains the non-upsampled records. Means and standard deviation come from non-upsampled data.
+        df = data.fixed[idx].copy()
 
-    # find non power columns
-    # create a list of non power columns (column names not ending in p)
-    fixColumns = []
-    for col in data.fixed.columns:
-        if col.lower()[-1:] != 'p':
-            fixColumns.append(col)
+        # create a list of individual loads, total of power components and environmental measurements to fix interval on
+        fixColumns = []
+        fixColumns.extend(data.loads)
+        fixColumns.extend(data.eColumns)
+        fixColumns.append('total_p')
 
-    # a list of all non-power columns and the total power. Removes and other power columns
-    fixColumns.append('total_p')
 
-    # up or down sample to our desired interval
-    # down sampling results in averaged values
-    data.fixed = data.fixed.resample(pd.to_timedelta(interval)).mean()
+        # up or down sample to our desired interval
+        # down sampling results in averaged values
+        data.fixed[idx] = data.fixed[idx].resample(pd.to_timedelta(interval[idx])).mean()
 
-    for col in fixColumns:
-        df0 = df[[col]].copy()
-        # remove rows that are nan for this column
-        df0 = df0.dropna()
-        # time interval between consecutive records
-        df0['timediff'] = pd.Series(pd.to_datetime(df0.index, unit='s'), index=df0.index).diff(1).shift(-1)
-        df0['timediff'] = df0['timediff'].fillna(0)
-        # get the median number of steps in a 24 hr perdiod.
-        steps1Day = int(pd.to_timedelta(1, unit='d') / np.median(df0['timediff']))
-        # make sure it is at least 10
-        if steps1Day < 10:
-            steps1Day = 10
+        for col in fixColumns:
+            df0 = df[[col]].copy()
+            # remove rows that are nan for this column, except for the first and last, in order to keep the same first and last
+            # time stamps
+            df0 = pd.concat([df0.iloc[[0]], df0.iloc[1:-2].dropna(), df0.iloc[[-1]]])
+            df0 = df0.bfill()
+            df0 = df0.ffill()
+            # time interval between consecutive records
+            df0['timediff'] = pd.Series(pd.to_datetime(df0.index, unit='s'), index=df0.index).diff(1).shift(-1)
+            df0['timediff'] = df0['timediff'].fillna(0)
+            # get the median number of steps in a 24 hr perdiod.
+            steps1Day = int(pd.to_timedelta(1, unit='d') / np.median(df0['timediff']))
+            # make sure it is at least 10
+            if steps1Day < 10:
+                steps1Day = 10
 
-        # get the total power mean and std
-        # mean total power in 24 hour period
-        df0[col+'_mu'] = df0[col].rolling(steps1Day, 2).mean()
-        # standard deviation
-        df0[col+'_sigma'] = df0[col].rolling(steps1Day, 2).std()
-        # first records get filled with first valid values of mean and standard deviation
-        df0[col+'_mu'] = df0[col+'_mu'].bfill()
-        df0[col+'_sigma'] = df0[col+'_sigma'].bfill()
+            # get the total power mean and std
+            # mean total power in 24 hour period
+            df0[col+'_mu'] = df0[col].rolling(steps1Day, 2).mean()
+            # standard deviation
+            df0[col+'_sigma'] = df0[col].rolling(steps1Day, 2).std()
+            # first records get filled with first valid values of mean and standard deviation
+            df0[col+'_mu'] = df0[col+'_mu'].bfill()
+            df0[col+'_sigma'] = df0[col+'_sigma'].bfill()
 
-        # if the resampled dataframe is bigger fill in new values
-        if len(df0) < len(data.fixed):
-            # t is the time, k is the estimated value
-            t, k = estimateDistribution(df0, interval, col)  # t is number of seconds since 1970
-            simulatedDf = pd.DataFrame({'time': t, 'value': k})
-            simulatedDf = simulatedDf.set_index(
-                pd.to_datetime(simulatedDf['time'] * 1e9))  # need to scale to nano seconds to make datanumber
-            simulatedDf = simulatedDf[~simulatedDf.index.duplicated(keep='last')]
-            # make sure timestamps for both df's are rounded to the same interval in order to join sucessfully
-            data.fixed.index = data.fixed.index.floor(interval)
-            simulatedDf.index = simulatedDf.index.floor(interval)
-            # join the simulated values to the upsampled dataframe by timestamp
-            data.fixed = data.fixed.join(simulatedDf, how='left')
-            # fill na's for total_p with simulated values
-            data.fixed.loc[pd.isnull(data.fixed['total_p']), 'total_p'] = data.fixed['value']
-            # component values get calculated based on the proportion that they made up previously
-            adj_m = data.fixed[data.fixed.columns[0:-1]].div(data.fixed['total_p'], axis=0)
-            adj_m = adj_m.ffill()
-            data.fixed = adj_m.multiply(data.fixed['total_p'], axis=0)
+            # if the resampled dataframe is bigger fill in new values
+            if len(df0) < len(data.fixed[idx]):
+                # t is the time, k is the estimated value
+                t, k = estimateDistribution(df0, interval[idx], col)  # t is number of seconds since 1970
+                simulatedDf = pd.DataFrame({'time': t, 'value': k})
+                simulatedDf = simulatedDf.set_index(
+                    pd.to_datetime(simulatedDf['time'] * 1e9))  # need to scale to nano seconds to make datanumber
+                simulatedDf = simulatedDf[~simulatedDf.index.duplicated(keep='last')]
+                # make sure timestamps for both df's are rounded to the same interval in order to join sucessfully
+                data.fixed[idx].index = data.fixed[idx].index.floor(interval[idx])
+                simulatedDf.index = simulatedDf.index.floor(interval[idx])
+                # join the simulated values to the upsampled dataframe by timestamp
+                data.fixed[idx] = data.fixed[idx].join(simulatedDf, how='left')
+                # fill na's for column with simulated values
+                data.fixed[idx].loc[pd.isnull(data.fixed[idx][col]), col] = data.fixed[idx]['value']
+                # TODO: possibly remove the following commneted out code. This will leave individual power channels unfilled
+                # component values get calculated based on the proportion that they made up previously
+                #adj_m = data.fixed[idx][data.fixed[idx].columns[0:-1]].div(data.fixed[idx][col], axis=0)
+                #adj_m = adj_m.ffill()
+                #data.fixed[idx] = adj_m.multiply(data.fixed[idx]['total_p'], axis=0)
 
-            # get rid of columns added
-            data.fixed = data.fixed.drop('time', 1)
+                # get rid of columns added
+                data.fixed[idx] = data.fixed[idx].drop('value', 1)
+                data.fixed[idx] = data.fixed[idx].drop('time', 1)
 
-    data.removeAnomolies()
+    data.removeAnomolies(stdNum = 5)
     return data

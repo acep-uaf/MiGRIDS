@@ -7,11 +7,23 @@ Created on Wed Jun  6 16:59:08 2018
 
 import numpy as np
 from GBSInputHandler.readDataFile import readDataFile
+import os
+import pickle
+import pandas as pd
+import functools
+import operator
+
 # CONSTANTS
 YEARSECONDS = 31536000 # seconds in a non-leap Year
 #reads input files and merges them into a single dataframe
 #input dictionary must contain a fileLocation attribute, fileType, headerNames, newHeaderNames, componentUnits,
 #Dictionary->DataFrame, List
+
+def avg_datetime(series):
+    dt_min = series.min()
+    deltas = [x-dt_min for x in series]
+    return dt_min + (series - dt_min).mean()
+
 def mergeInputs(inputDictionary):
 
     # iterate through all sets of input files
@@ -23,29 +35,41 @@ def mergeInputs(inputDictionary):
                                              inputDictionary['timeColumnName'][idx], inputDictionary['timeColumnFormat'][idx], 
                                              inputDictionary['utcOffsetValue'][idx], inputDictionary['utcOffsetUnit'][0], 
                                              inputDictionary['dst'][idx]) # dataframe with time series information. replace header names with column names
+        os.chdir(inputDictionary['fileLocation'][idx])
+        out = open("df_raw.pkl", "wb")
+        pickle.dump(df0, out)
+        out.close()
+        out = open("component.pkl", "wb")
+        pickle.dump(listOfComponents0, out)
+        out.close()
+
         if idx == 0: # initiate data frames if first iteration, otherwise append
             df = df0
             listOfComponents = listOfComponents0
         else:
+            # the following code overlaps time series data, which does not necessarily line up, since from diff years
+            # this causes jumps in the time series
+            '''
             # check if on average more than a year difference between new dataset and existing
-            meanTimeNew = np.mean(df0.DATE)
-            meanTimeOld = np.mean(df.DATE)
+            meanTimeNew = avg_datetime(df0.DATE)
+            meanTimeOld = avg_datetime(df.DATE)
             # round to the nearest number of year difference
-            yearDiff = np.round((meanTimeNew - meanTimeOld) / YEARSECONDS)
+            yearDiff = np.round((meanTimeNew - meanTimeOld).days/365)
             # if the difference is greater than a year between datasets to be merged, see if can change the year on one
             if abs(yearDiff) >= 0:
                 # if can change the year on the new data
                 if inputDictionary['flexibleYear'][idx]:
                     # find the number of years to add or subtract
-                    df0.DATE = df0.DATE - yearDiff*YEARSECONDS
+                    df0.DATE = df0.DATE - pd.to_timedelta(yearDiff, unit='y')
                 # otherwise, check if can adjust the existing dataframe
                 elif all(inputDictionary['flexibleYear'][:idx]):
-                    df.DATE = df.DATE + yearDiff*YEARSECONDS
-    
+                    df.DATE = df.DATE + pd.to_timedelta(yearDiff, unit='y')
+            '''
             df = df.append(df0)
             listOfComponents.extend(listOfComponents0)
     
     # order by datetime
+    # TODO: replace this code with faster code from 'testMergAndSortDF.py' in the TestScripts dir
     df = df.sort_values(['DATE']).reset_index(drop=True)
     # find rows with identical dates and combine rows, keeping real data and discarding nans in columns
     dupDate = df.DATE[df.DATE.duplicated()]

@@ -333,7 +333,7 @@ class ElectricalEnergyStorage:
             return min([self.eesLossMapP[-(dInd + 1)], self.eesPOutMax - kWReserved])
         else:
             # discharging power is simply the stored energy divided by duration
-            return min([self.eesSOC * self.eesEMax / duration, self.eesPOutMax])
+            return max([min([(self.eesSOC * self.eesEMax - kWsReserved)/ duration, self.eesPOutMax - kWReserved]),0])
 
 
     # findLoss returns the expected loss in kWs given a specific power and duration

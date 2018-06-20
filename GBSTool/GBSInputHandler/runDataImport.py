@@ -14,12 +14,16 @@ import tkinter as tk
 import os
 from GBSAnalyzer.DataRetrievers.readXmlTag import readXmlTag
 from GBSInputHandler.getUnits import getUnits
-from GBSInputHandler.fixBadData import fixBadData
+#from GBSInputHandler.fixBadData import fixBadData
 from GBSInputHandler.fixDataInterval import fixDataInterval
 from GBSInputHandler.dataframe2netcdf import dataframe2netcdf
 from GBSInputHandler.mergeInputs import mergeInputs
+import pandas as pd
+from GBSInputHandler.DataClass import DataClass
+import sys
 
 import pickle
+import matplotlib.pyplot as plt
 
 #print('Select the xml project setup file')
 root = tk.Tk()
@@ -40,7 +44,7 @@ inputDictionary = {}
 #if multiple files specified look for raw_wind directory
 # input a list of subdirectories under the GBSProjects directory
 fileLocation = readXmlTag(fileName,'inputFileDir','value')
-inputDictionary['fileLocation'] = [os.path.join('../GBSProjects', *x) for x in fileLocation]
+inputDictionary['fileLocation'] = [os.path.join('../../GBSProjects', *x) for x in fileLocation]
 # file type
 inputDictionary['fileType'] = readXmlTag(fileName,'inputFileType','value')
 
@@ -82,7 +86,15 @@ inputDictionary['headerNames'], inputDictionary['componentUnits'], \
 inputDictionary['componentAttributes'],inputDictionary['componentNames'], inputDictionary['newHeaderNames'] = getUnits(Village,setupDir)
 
 # read time series data, combine with wind data if files are seperate.
-df, listOfComponents = mergeInputs(inputDictionary)
+#df, listOfComponents = mergeInputs(inputDictionary)
+
+# TODO: read from pickle for testing purposes
+os.chdir(setupDir)
+os.chdir('../TimeSeriesData/RawData')
+inFile = open("raw_df.pkl","rb")
+df = pickle.load(open("raw_df.pkl","rb"))
+inFile.close()
+
 os.chdir(setupDir)
 out = open("df_raw.pkl","wb")
 pickle.dump(df,out )
@@ -92,23 +104,37 @@ pickle.dump(listOfComponents,out)
 out.close()
 
 
+# TODO: this replaces the fixBadData until it is ready
+# create DataClass object to store raw, fixed, and summery outputs
+# use the largest sample interval for the data class
+ sampleIntervalTimeDelta = [pd.to_timedelta(s) for s in inputDictionary['inputInterval']]
+df_fixed = DataClass(df, max(sampleIntervalTimeDelta))
+df_fixed.eColumns = ['wtg0WS']
+df_fixed.loads = ['load0P','load1P']
+df_fixed.powerComponents = []
+df_fixed.totalPower()
+df_fixed.fixed[0].load0P[df_fixed.fixed[0].load0P<0] = None
+
 # now fix the bad data
 #df_fixed = fixBadData(df,setupDir,listOfComponents,inputDictionary['inputInterval'])
-'''
+
 # pickle df
 os.chdir(setupDir)
 pickle.dump(df_fixed, open("df_fixed.p","wb"))
 
-# check the fixed data with the old data
-# plot data, display statistical differences (min, max, mean std difference etc)
+
 
 # fix the intervals
 df_fixed_interval = fixDataInterval(df_fixed,inputDictionary['outputInterval'])
+
+# pickle df
+os.chdir(setupDir)
+pickle.dump(df_fixed_interval, open("df_fixed_interval.p","wb"))
 
 d = {}
 for c in listOfComponents:
     d[c.component_name] = c.toDictionary()
 # now convert to a netcdf
 
-dataframe2netcdf(df_fixed_interval.fixed, d)'''
+dataframe2netcdf(df_fixed_interval.fixed, d)
 # save ncfile in folder `ModelInputData' in the path ../GBSProjects/[VillageName]/InputData/TimeSeriesData/

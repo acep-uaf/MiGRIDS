@@ -36,9 +36,10 @@ def processInputDataFrame(df, columnNames, useNames, dateColumnName, dateColumnF
     df['DATE'] = df['DATE'] - pd.to_timedelta(utcOffsetValue + utcOffsetUnit)
     #
     # TODO: we will need to deal with daylight savings
+    # TODO: remove conversion of date to num
     # convert to int64 convert to Unix time
-    index = pd.DatetimeIndex(df.DATE)
-    df.DATE = index.astype(np.int64)//10**9 # convert from microseconds to seconds since base time
+    #index = pd.DatetimeIndex(df.DATE)
+    #df.DATE = index.astype(np.int64)//10**9 # convert from microseconds to seconds since base time
 
     # order by datetime
     df = df.sort_values(['DATE']).reset_index(drop=True)
