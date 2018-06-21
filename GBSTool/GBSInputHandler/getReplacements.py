@@ -142,7 +142,7 @@ def getReplacement(df, indices, columnsToReplace):
         #TODO join needs to be based on a column containing time from start record not time index
         #if ecolumns are empty they will get replaced along with power components, otherwise they will remain as they were.       
        #re-index the replacement data frame so datetimes match the dataframe's
-        replacement['timediff'] = pd.Series(pd.to_datetime(replacement.index)).diff()
+        replacement.iloc[:,'timediff'] = pd.Series(pd.to_datetime(replacement.index)).diff()
         replacement.index = replacement['timediff'] + min(df.index)
         
         df = df.join(replacement, how = 'outer', rsuffix=('replacement'))

@@ -78,7 +78,7 @@ class DataClass:
     # with data from a matching time of day (same as offline values)
     def fixGen(self, componentList):
         gencolumns = identifyGenColumns(componentList)
-        for df in self.fixed:
+        for i,df in enumerate(self.fixed):
             df['gentotal'] = df[gencolumns].sum(1)
             df['grouping'] = isInline(df['gentotal'])
             groups = df.groupby(df['grouping'], as_index=True)
@@ -93,9 +93,10 @@ class DataClass:
             df.gentotal.replace(0, np.nan)
             for name, group in groups:
                 if min(group.gentotal) == 0:
-                    getReplacement(self.fixed, group.index, gencolumns)
+                    getReplacement(df, group.index, gencolumns)
     
             df = df.drop('gentotal', 1)
+            self.fixed[i] = df
         return
 
     # list, string -> pdf
