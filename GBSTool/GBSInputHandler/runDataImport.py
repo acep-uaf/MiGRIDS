@@ -84,16 +84,16 @@ for idx in range(len(inputDictionary['inputInterval'])):  # for each group of in
 # get data units and header names
 inputDictionary['headerNames'], inputDictionary['componentUnits'], \
 inputDictionary['componentAttributes'],inputDictionary['componentNames'], inputDictionary['newHeaderNames'] = getUnits(Village,setupDir)
-
+print(inputDictionary)
 # read time series data, combine with wind data if files are seperate.
-#df, listOfComponents = mergeInputs(inputDictionary)
+df, listOfComponents = mergeInputs(inputDictionary)
 
 # TODO: read from pickle for testing purposes
-os.chdir(setupDir)
+'''os.chdir(setupDir)
 os.chdir('../TimeSeriesData/RawData')
 inFile = open("raw_df.pkl","rb")
 df = pickle.load(open("raw_df.pkl","rb"))
-inFile.close()
+inFile.close()'''
 
 os.chdir(setupDir)
 out = open("df_raw.pkl","wb")
@@ -107,7 +107,7 @@ out.close()
 # TODO: this replaces the fixBadData until it is ready
 # create DataClass object to store raw, fixed, and summery outputs
 # use the largest sample interval for the data class
- sampleIntervalTimeDelta = [pd.to_timedelta(s) for s in inputDictionary['inputInterval']]
+'''sampleIntervalTimeDelta = [pd.to_timedelta(s) for s in inputDictionary['inputInterval']]
 df_fixed = DataClass(df, max(sampleIntervalTimeDelta))
 df_fixed.eColumns = ['wtg0WS']
 df_fixed.loads = ['load0P','load1P']
@@ -137,4 +137,4 @@ for c in listOfComponents:
 # now convert to a netcdf
 
 dataframe2netcdf(df_fixed_interval.fixed, d)
-# save ncfile in folder `ModelInputData' in the path ../GBSProjects/[VillageName]/InputData/TimeSeriesData/
+# save ncfile in folder `ModelInputData' in the path ../GBSProjects/[VillageName]/InputData/TimeSeriesData/'''
