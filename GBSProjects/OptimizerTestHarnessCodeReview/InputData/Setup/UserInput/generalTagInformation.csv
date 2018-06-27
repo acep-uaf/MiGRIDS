@@ -1,0 +1,13 @@
+Tag1,Tag2,Tag3,Tag4,Tag5,Attribute,Value
+dateChannel,,,,,value,DATE
+dateChannel,,,,,format,ordinal
+timeChannel,,,,,value,TIME
+timeChannel,,,,,format,excel
+realLoadChannel,,,,,value,Village_Load
+realLoadChannel,,,,,unit,kW
+inputFileFormat,,,,,value,AVEC
+inputFileType,,,,,value,CSV
+timeStep,,,,,value,30
+timeStep,,,,,unit,s
+inputFileDir,,,,,value,Cheva  InputData TimeSeriesData RawData
+project,,,,,name,OptimizerTestHarness

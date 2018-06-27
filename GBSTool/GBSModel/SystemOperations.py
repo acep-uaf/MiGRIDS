@@ -178,27 +178,28 @@ class SystemOperations:
             # find the remaining ability of the EESS to supply SRC not supplied by the diesel generators
             eessSrcRequested = max([srcMin[0] - sum(self.PH.genPAvail) + phP, 0])
 
-            # TODO: test the diesel charging of ESS here
-            # for each energy storage unit SOC, find the appropriate diesel charging power based on the scheduled power
-            # get the charging rules for the generators
-            # find the loading on the generators
-            phLoadMax = 0
-            for eesSOC in self.EESS.eesSOC:
-                #find the SOC
-                genMaxLoad, eesMaxSOC = zip(*self.PH.genMaxDiesCapCharge[self.PH.onlineCombinationID])
-                # find the lowest max SOC the SOC of the ees is under
-                idxSOC = np.where(np.array(eesMaxSOC) > eesSOC)[0]
-                if len(idxSOC) == 0 :
-                    idxSOC = len(eesMaxSOC)-1
-                else:
-                    idxSOC = idxSOC[0]
-                # use the max loading of all the EES that the gens are allowed to go to
-                phLoadMax = max(phLoadMax,genMaxLoad[idxSOC])
-
-            # find the increase in loading
-            phPch = max(phLoadMax - phP / sum(self.PH.genPAvail), 0) * sum(self.PH.genPAvail)
-            # only able to charge as much as is left over from being charged from wind power
-            phPch = min(sum(self.EESS.eesPinAvail) - wtgPch, phPch )
+            # find the increase in loading allowed to charge the diesel generator
+            if sum(self.PH.genPAvail) == 0:
+                phPch = 0
+            else:
+                # for each energy storage unit SOC, find the appropriate diesel charging power based on the scheduled power
+                # get the charging rules for the generators
+                # find the loading on the generators
+                phLoadMax = 0
+                for eesSOC in self.EESS.eesSOC:
+                    # find the SOC
+                    genMaxLoad, eesMaxSOC = zip(*self.PH.genMaxDiesCapCharge[self.PH.onlineCombinationID])
+                    # find the lowest max SOC the SOC of the ees is under
+                    idxSOC = np.where(np.array(eesMaxSOC) > eesSOC)[0]
+                    if len(idxSOC) == 0:
+                        idxSOC = len(eesMaxSOC) - 1
+                    else:
+                        idxSOC = idxSOC[0]
+                    # use the max loading of all the EES that the gens are allowed to go to
+                    phLoadMax = max(phLoadMax, genMaxLoad[idxSOC])
+                phPch = max(phLoadMax - phP / sum(self.PH.genPAvail), 0) * sum(self.PH.genPAvail)
+                # only able to charge as much as is left over from being charged from wind power
+                phPch = min(sum(self.EESS.eesPinAvail) - wtgPch, phPch )
 
             # dispatch the eess
             self.EESS.runEesDispatch(eessDis - wtgPch - phPch, 0, eessSrcRequested)
@@ -276,8 +277,8 @@ class SystemOperations:
                 else:
                     coveredSRCStay = 0
                     coveredSRCSwitch = 0
-                    eesSrcScheduledStay = 0
-                    eesSrcScheduledSwitch = 0
+                    eesSrcScheduledStay = [0]*len(eesSrcAvailMax)
+                    eesSrcScheduledSwitch = [0]*len(eesSrcAvailMax)
 
                 # get the ability of the energy storage system to supply the load by discharging, on top of the RE it is
                 # covering with SRC

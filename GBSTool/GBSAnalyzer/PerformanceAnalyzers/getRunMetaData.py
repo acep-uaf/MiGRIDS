@@ -31,6 +31,8 @@ def getRunMetaData(projectSetDir,runs):
 
         # load the total powerhouse output
         genPStats, genP, ts = loadResults('powerhousePSet'+str(setNum)+'Run'+str(runNum)+'.nc')
+        # load the total powerhouse charging of eess
+        genPchStats, genPch, ts = loadResults('powerhousePchSet' + str(setNum) + 'Run' + str(runNum) + '.nc')
         # get generator power available stats
         genPAvailStats, genPAvail, ts = loadResults('genPAvailSet'+str(setNum)+'Run' + str(runNum) + '.nc')
 
@@ -44,7 +46,10 @@ def getRunMetaData(projectSetDir,runs):
         genLoadingMin = np.min(genLoading)
 
         # calculate total generator energy delivered in kWh
-        genPTot = genPStats[4]/3600
+        genPTot = (genPStats[4] - genPchStats[4])/3600
+
+        # calculate total generator energy delivered in kWh
+        genPch = (genPchStats[4]) / 3600
 
         # calculate generator switching
         genSw = np.count_nonzero(np.diff(genPAvail))
@@ -104,7 +109,7 @@ def getRunMetaData(projectSetDir,runs):
         else:
             df = pd.read_sql_query('select * from Results',conn)
         # add row for this run
-        df.loc[runNum] = [genPTot,0,genSw,genLoadingMean,0,wtgPImportTot,wtgPspillTot,wtgPchTot,eessPdisTot,eessPchTot,eessSRCTot]
+        df.loc[runNum] = [genPTot,genPch,genSw,genLoadingMean,None,wtgPImportTot,wtgPspillTot,wtgPchTot,eessPdisTot,eessPchTot,eessSRCTot]
         df.to_sql('Results', conn, if_exists="replace", index=False)  # write to table compAttributes in db
         conn.close()
         df.to_csv('Set' + str(setNum) + 'Results.csv') # save a csv version
