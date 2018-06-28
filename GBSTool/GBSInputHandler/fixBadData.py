@@ -21,7 +21,7 @@ import numpy as np
 from GBSInputHandler.DataClass import DataClass
 from GBSInputHandler.isInline import isInline
 from GBSInputHandler.badDictAdd import badDictAdd
-import matplotlib.pyplot as plt
+
 
 
 # constants
@@ -151,7 +151,7 @@ def fixBadData(df, setupDir, ListOfComponents, sampleInterval):
            df['_'.join([l,'grouping'])] = 0
            df['_'.join([l,'grouping'])] = isInline(df[l]) 
        
-       df = df.replace(-99999, np.nan)
+       
        data.fixed[i] = df
        
    #replace offline data for total power sources
@@ -160,6 +160,7 @@ def fixBadData(df, setupDir, ListOfComponents, sampleInterval):
    for e in data.eColumns:
         data.fixOfflineData(e)
    for l in data.loads:
+
         data.fixOfflineData(l)
            
    # scale data based on units and offset in the component xml file
