@@ -1,0 +1,9 @@
+componentName,PInMaxPa,QInMaxPa,POutMaxPa,QOutMaxPa,isVoltageSource
+gen1,0,0,505,,1
+gen2,0,0,499,,1
+gen3,0,0,824,,1
+wtg1,0,45,100,45,0
+wtg2,0,45,100,45,0
+wtg3,0,45,100,45,0
+wtg4,0,45,100,45,0
+tes1,50,0,0,0,0

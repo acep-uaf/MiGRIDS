@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Project: GBS Tool -->
+<!-- Author: Dr. Marc Mueller-Stoffels, marc@denamics.com -->
+<!-- Date: October 5, 2017 -->
+<!-- License: MIT License (see LICENSE file of this package for more information -->
+<!-- This file describes a generic load -->
+<!-- Root tag is 'component' -->
+<component name="load0">
+ <!-- Declaration of inheritance -->
+ <childOf>
+  componentDescriptorInterface
+ </childOf>
+ <!-- 'type' always is 'sink' even if small discharge from inductances or capacitances is possible -->
+ <type value="sink"/>
+ <!-- NOTICE: NON-MODIFIED PARENT TAGS ARE NOT SHOWN, THEY SHOULD BE INHERITED FROM THE PARENT -->
+ <!-- Load specific items -->
+ <!-- `isDiscrete' determines if the load levels are continuous or discrete. If TRUE, load levels are discrete. -->
+ <!-- Default value is TRUE -->
+ <isDiscrete value="False"/>
+ <!-- `discreteLoadLevels` gives the available load steps for real <p> and reactive <q>. If the attribute `pqIdpnt` -->
+ <!-- is TRUE, the real and reactive power steps are independent from each other. Otherwise tuples of p and q always -->
+ <!-- have to be switched together -->
+ <discreteLoadLevels pqIdpnt="TRUE">
+  <p unit="kW" value="0"/>
+  <q unit="kvar" value="0"/>
+  <p unit="kW" value="0"/>
+  <q unit="kvar" value="0"/>
+ </discreteLoadLevels>
+ <!-- `switchTime` describes the typical time from receiving a control signal at the load to a change in load level -->
+ <!-- in milliseconds. Default is 1000 ms.-->
+ <switchTime unit="ms" value="1000"/>
+ <!-- `switchTimeDev` describes the typical deviation from 'switchTime' in ms. Default is 500 ms. -->
+ <switchTimeDev unit="ms" value="500"/>
+ <PInMaxPa unit="kW" value="1000.0">
+  <!-- 'PInMaxPa' is the maximum real power the unit can receive from the grid, should be 0 if source. Units: kW -->
+ </PInMaxPa>
+ <QInMaxPa unit="kvar" value="nan">
+  <!-- 'QInMax' is the maximum reactive power the unit can receive from the grid, should be 0 if source. Units. kvar -->
+ </QInMaxPa>
+ <POutMaxPa unit="kW" value="0">
+  <!-- 'POutMaxPa' is the maximum real power the unit can deliver to the grid. Should be 0 if sink. Units: kW -->
+ </POutMaxPa>
+ <QOutMaxPa unit="kvar" value="nan">
+  <!-- 'QOutMaxPa' is the maximum reactive power the unit can deliver to the grid. Should be 0 if sink. Units: kvar -->
+ </QOutMaxPa>
+ <isVoltageSource value="0.0">
+  <!-- 'isVoltageSource' describes the capability of the component to regulate vars. -->
+ </isVoltageSource>
+ <isFrequencyReference value="FALSE">
+  <!-- 'isFrequencyReference' describes the units capability to be the frequency reference of the the grid. -->
+ </isFrequencyReference>
+ <isLoadFollowing value="FALSE">
+  <!-- 'isLoadFollowing' describes the capability of a unit to ramp up or down to mitigate demand or non-load following -->
+  <!-- production induced frequency or voltage issues -->
+ </isLoadFollowing>
+ <isCurtailable value="FALSE">
+  <!-- 'isCurtailable' describes if the unit can reduce and clamp power output below available resource based on -->
+  <!-- a control signal -->
+ </isCurtailable>
+ <isThreePhase value="TRUE">
+  <!-- 'isThreePhase' is TRUE if the unit is a three or four-wire three-phase unit. Default value is TRUE. -->
+ </isThreePhase>
+ <isDelta value="TRUE">
+  <!-- 'isDelta' defines if the unit is Delta of Wye connected. Default is TRUE. -->
+ </isDelta>
+ <acConnectionType unit="NONE" value="0">
+  <!-- 'acConnectionType' value defines how the unit is connected to the grid, i.e., on which phases, if the neutral -->
+  <!-- is present, is the neutral grounded, etc. See the documentation for available values. Default value is 0. -->
+  <!-- Units attribute ALWAYS is NONE, it is here for consistency only. -->
+ </acConnectionType>
+ <dcConnectionType unit="NONE" value="0">
+  <!-- `dcConnectionType` describes the type of DC connection used, if any. Default is 0, which means no DC connection. -->
+  <!-- Units are NONE, as this is just a key (see Wiki for more info). -->
+ </dcConnectionType>
+ <VAcNom unit="V" value="480">
+  <!-- `VAcNom` describes the nominal connection voltage to the grid. Default is 480 VAC. Units are V. -->
+ </VAcNom>
+ <faultCurrent>
+  <!-- 'faultCurrent' Is the ammount of fault current that can be supplied  per ms.
+    Fault current units are in P.U. of nameplate current and are described by the tuple 'iPu'.
+    Fault current values are defined for the number of ms they can be sustained, described by the tuple 'ms'
+    (16.7 ms per 60 Hz cycle). -->
+  <!-- Default is 1 PU at 5 cycles (84 ms), ie no fault current capability. -->
+  <ms unit="ms" value="84"/>
+  <iPu unit="pu" value="1"/>
+ </faultCurrent>
+ <overLoad>
+  <!-- 'overLoad' Is the amount of over load that can be supplied per hour.
+    Over load units are in P.U. of nameplate power and are specified by the number of hours they can
+    operate at. It is described by the tuples 'hr' (time with units hours) and 'pPu' (P.U. of nameplate capacity). -->
+  <!-- Default is 1 PU for 1 second, ie no over load capability. -->
+  <hr unit="hr" value="1"/>
+  <pPu unit="pu" value="1"/>
+ </overLoad>
+ <maxMeanLoad24HrPu unit="pu" value="1">
+  <!-- 'maxMeanLoad24HrPu' Is the the maximum average loading the component is rated for in a 24 hour period.
+    For example, for diesel generators, this rating is different for Prime, Standby and Continuous rated engines and
+    between manufacturers. The ISO-8528-1 specification for a Prime generator is 0.7.-->
+  <!-- Units: P.U.. Default is 1, i.e. it can operate at 100% capacity constantly.  -->
+ </maxMeanLoad24HrPu>
+ <heatingPowerRequirement>
+  <!-- 'heatingPowerRequirement' is the thermal power required to keep the component warm, if required. For example
+    diesel generators in hot standby need to be heated. It is described by three tuples: 'tempAmb' is the ambient (outdoor)
+    temperature in Kelvin. 'tempHeatingMin' is the minimum temperature required for the heating fluid used to heat the
+    component. 'pt' is the thermal power consumption in kW. This will be supplied by whatever excess heat is
+    available -->
+  <!-- Default is one data point at 298 degree K of 0 kW.   -->
+  <tempAmb unit="K" value="298"/>
+  <tempHeatingMin unit="K" value="298"/>
+  <pt unit="kW" value="0"/>
+ </heatingPowerRequirement>
+ <heatRecovery>
+  <!-- 'heatRecovery' describes the usable heat that comes off of the component per power output.  -->
+  <!-- It is described by the tuples 'pPu' (power), 'pt' (thermal power) and 'temp' (the temperature of the heat exchange
+    fluid) Units for power are P.U. of nameplate power capacity, for heat output are thermal kW (not electric) and for
+    temperature are Kelvin. Default is to have a data point at 0 and 1 P.U. power output of no heat recovery and at room
+    temperature. -->
+  <pPu unit="pu" value="0 1"/>
+  <pt unit="kW" value="0 0"/>
+  <temp unit="K" value="298 298"/>
+ </heatRecovery>
+</component>
+<!-- EOF -->

@@ -43,14 +43,14 @@ def fixDataInterval(data, interval):
         sigma_bis = 0.15 * sigma * np.sqrt(2.0/(900*timestep))
         sqrtdt = np.sqrt(timestep)
         # find the 95th percentile of number of steps
-        n99 = int(np.percentile(n,99))
+        n95 = int(np.percentile(n,95))
         # find where over the 95th percentile
-        idxOver99 = np.where(n > n99)[0]
+        idxOver95 = np.where(n > n95)[0]
         #x is the array that will contain the new values
-        x = np.zeros(shape=(len(start), int(n99)))
+        x = np.zeros(shape=(len(start), int(n95)))
 
         # steps is an array of timesteps in seconds with length = max(records)
-        steps = np.arange(0, int(n99)*timestep, timestep)
+        steps = np.arange(0, int(n95)*timestep, timestep)
         # t is the numeric value of the dataframe timestamps
         t = pd.to_timedelta(pd.Series(pd.to_datetime(start.index.values, unit='s'), index=start.index)).dt.total_seconds()
         # intervals is the steps array repeated for every row of time
@@ -70,7 +70,7 @@ def fixDataInterval(data, interval):
         mu = start.shift(-1)
         mu.iloc[-1] = mu.iloc[-2]
 
-        for i in range(n99-1):
+        for i in range(n95-1):
             x[:, i + 1] = x[:, i] + timestep * (-(x[:, i] - mu) / tau) + np.multiply(sigma_bis.values * sqrtdt, np.random.randn(len(mu)))
 
 
@@ -87,9 +87,9 @@ def fixDataInterval(data, interval):
         timeArray = timeArray[timeArray != None]
 
         # individually calc the rest
-        for idx in idxOver99:
+        for idx in idxOver95:
             # find remaining values to be calculated
-            nRemaining = int(max([n[idx] - n99, 0]))
+            nRemaining = int(max([n[idx] - n95, 0]))
             # calc remaining values
             x0 = np.zeros(shape = (nRemaining,))
             # first value is last value of array
