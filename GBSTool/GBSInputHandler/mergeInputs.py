@@ -28,7 +28,7 @@ def mergeInputs(inputDictionary):
 
     # iterate through all sets of input files
     for idx in range(len(inputDictionary['fileLocation'])):
-        print(inputDictionary)
+
         df0, listOfComponents0 = readDataFile(inputDictionary['fileType'][idx],inputDictionary['fileLocation'][idx],inputDictionary['fileType'][idx],
                                              inputDictionary['headerNames'][idx],inputDictionary['newHeaderNames'][idx],inputDictionary['componentUnits'][idx],
                                              inputDictionary['componentAttributes'][idx], 
@@ -36,13 +36,14 @@ def mergeInputs(inputDictionary):
                                              inputDictionary['timeColumnName'][idx], inputDictionary['timeColumnFormat'][idx], 
                                              inputDictionary['utcOffsetValue'][idx], inputDictionary['utcOffsetUnit'][0], 
                                              inputDictionary['dst'][idx]) # dataframe with time series information. replace header names with column names
-        os.chdir(inputDictionary['fileLocation'][idx])
+        #This slows down the import significantly
+        '''os.chdir(inputDictionary['fileLocation'][idx])
         out = open("df_raw.pkl", "wb")
         pickle.dump(df0, out)
         out.close()
         out = open("component.pkl", "wb")
         pickle.dump(listOfComponents0, out)
-        out.close()
+        out.close()'''
 
         if idx == 0: # initiate data frames if first iteration, otherwise append
             df = df0
