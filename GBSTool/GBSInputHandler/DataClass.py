@@ -78,25 +78,26 @@ class DataClass:
     # with data from a matching time of day (same as offline values)
     def fixGen(self, componentList):
         gencolumns = identifyGenColumns(componentList)
-        for i,df in enumerate(self.fixed):
-            df['gentotal'] = df[gencolumns].sum(1)
-            df['grouping'] = isInline(df['gentotal'])
-            groups = df.groupby(df['grouping'], as_index=True)
-    
-            logging.info('%d blocks of time consisting of %d rows of data are offline and are being replaced' % (
-                len(groups), len(df[pd.isnull(df.total_p)])))
-            # record the offline records in our baddata dictionary
-            badDictAdd('gen',
-                       self.baddata, '2.Generator offline',
-                       df[df.gentotal==0].index.tolist())
-    
-            df.gentotal.replace(0, np.nan)
-            for name, group in groups:
-                if min(group.gentotal) == 0:
-                    getReplacement(df, group.index, gencolumns)
-    
-            df = df.drop('gentotal', 1)
-            self.fixed[i] = df
+        if len(gencolumns) > 0:
+            for i,df in enumerate(self.fixed):
+                df['gentotal'] = df[gencolumns].sum(1)
+                df['grouping'] = isInline(df['gentotal'])
+                groups = df.groupby(df['grouping'], as_index=True)
+        
+                logging.info('%d blocks of time consisting of %d rows of data are offline and are being replaced' % (
+                    len(groups), len(df[pd.isnull(df.total_p)])))
+                # record the offline records in our baddata dictionary
+                badDictAdd('gen',
+                           self.baddata, '2.Generator offline',
+                           df[df.gentotal==0].index.tolist())
+        
+                df.gentotal.replace(0, np.nan)
+                for name, group in groups:
+                    if min(group.gentotal) == 0:
+                        getReplacement(df, group.index, gencolumns)
+        
+                df = df.drop('gentotal', 1)
+                self.fixed[i] = df
         return
 
     # list, string -> pdf
@@ -186,7 +187,7 @@ class DataClass:
         for i,df in enumerate(self.fixed):
             #df_to_fix is the dataset that gets filled in (out of bands records are excluded)
             if self.truncate is not None:
-                df_to_fix = df[self.truncate[0]:self.truncate[1]]
+                df_to_fix = df.loc[self.truncate[0]:self.truncate[1]]
             else:
                 df_to_fix = df
             #if there is still data in the dataframe after we have truncated it 
@@ -196,35 +197,37 @@ class DataClass:
                 
                 # find offline time blocks
                 #get groups based on column specific grouping column
-                groups = df_to_fix.groupby(df['_'.join([column,'grouping'])], as_index=True)
-    
-                logging.info('%d blocks of time consisting of %d rows of data are offline and are being replaced' % (
+                groups = df_to_fix.groupby('_'.join([column,'grouping']), as_index=True).filter(lambda x: (len(x) >=3) & (min(x[column] < 0))).groupby('_'.join([column,'grouping']))
+                df_to_fix = df_to_fix.replace(-99999, np.nan)
+                '''logging.info('%d blocks of time consisting of %d rows of data are offline and are being replaced' % (
                     len(groups), len(df_to_fix[pd.isnull(df_to_fix[column])])))
                 # record the offline records in our baddata dictionary
                 badDictAdd(column,
                        self.baddata, '2.Offline',
                        df_to_fix[pd.isnull(df_to_fix[column])].index.tolist())
+                '''
+                
                 columnsToReplace = [column]
                 
                 # based on our list of bad groups of data, replace the values
                 for name, group in groups:
-                    if (len(group) > 3) | (min(group[column]) < 0):
-                        if column == TOTALP:
-                            columnsToReplace= columnsToReplace + self.powerComponents 
-                            
-                            #only replace environment and load columns if there is no data in them
-                            for e in self.ecolumns:
-                                if self.isempty(group,e):
-                                    columnsToReplace.append(e)
-                                                           #replace the bad data values with None
+                    
+                    if column == TOTALP:
+                        columnsToReplace= columnsToReplace + self.powerComponents 
                         
-                        if len(columnsToReplace) > 0:  
-                            #replacements can come from all of the input data not just the
-                            #subsetted portion
-                            #if no replacement and duration is longer than MAXMISSING False is returned
-                            if not getReplacement(pd.concat(self.fixed), group.index, columnsToReplace):
-                                # a type error is returned if getReplacement returns False)
-                                self.splitDataFrame(group.index)
+                        #only replace environment and load columns if there is no data in them
+                        for e in self.eColumns:
+                            if self.isempty(group,e):
+                                columnsToReplace.append(e)
+                                                       #replace the bad data values with None
+                    
+                    if len(columnsToReplace) > 0:  
+                        #replacements can come from all of the input data not just the
+                        #subsetted portion
+                        #if no replacement and duration is longer than MAXMISSING False is returned
+                        if not getReplacement(pd.concat(self.fixed), group.index, columnsToReplace):
+                            # a type error is returned if getReplacement returns False)
+                            self.splitDataFrame(group.index)
         return
     
    #DataFrame, String -> Boolean

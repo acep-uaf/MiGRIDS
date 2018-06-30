@@ -4,8 +4,8 @@ import numpy as np
 
 def avg_datetime(series):
     dt_min = series.min()
-    deltas = [x-dt_min for x in series]
-    return dt_min + (series - dt_min).mean()
+    #deltas = [x-dt_min for x in series]
+    return dt_min + np.sum((series - dt_min) / len(series))
 
 def adjustColumnYear(df):
 

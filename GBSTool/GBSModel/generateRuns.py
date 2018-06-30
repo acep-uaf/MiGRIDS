@@ -41,7 +41,9 @@ def generateRuns(projectSetDir):
 
     valSplit = [] # list of lists of attribute values
     for val in compValue: # iterate through all comonent attributes
-        valSplit.append(val.split(',')) # split according along commas
+        if not isinstance(val,list): # readXmlTag will return strings or lists, depending if there are commas. we need lists.
+            val = [val]
+        valSplit.append(val) # split according along commas
 
     # get all possible combinations of the attribute values
     runValues = list(itertools.product(*valSplit))

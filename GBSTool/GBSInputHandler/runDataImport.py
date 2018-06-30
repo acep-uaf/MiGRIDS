@@ -10,7 +10,6 @@
 # get input data to run the functions to import data into the project
 from tkinter import filedialog
 import tkinter as tk
-
 import os
 from GBSAnalyzer.DataRetrievers.readXmlTag import readXmlTag
 from GBSInputHandler.getUnits import getUnits
@@ -21,9 +20,9 @@ from GBSInputHandler.mergeInputs import mergeInputs
 import pandas as pd
 from GBSInputHandler.DataClass import DataClass
 import sys
-
 import pickle
 import matplotlib.pyplot as plt
+from GBSInputHandler.adjustColumnYear import adjustColumnYear
 
 #print('Select the xml project setup file')
 root = tk.Tk()
@@ -113,7 +112,34 @@ df_fixed.eColumns = ['wtg0WS']
 df_fixed.loads = ['load0P','load1P']
 df_fixed.powerComponents = []
 df_fixed.totalPower()
-df_fixed.fixed[0].load0P[df_fixed.fixed[0].load0P<0] = None
+df_fixed.fixed[0].load0P[df_fixed.fixed[0].load0P<200] = None
+df_fixed.fixed[0].load0P[df_fixed.fixed[0].load0P>1000] = None
+# adjust the column years
+df_fixed.fixed[0] = adjustColumnYear(df_fixed.fixed[0])
+# only take year the year 2014 from load0P
+load0P0 = df_fixed.fixed[0][['load0P']].copy()
+load0P1 = df_fixed.fixed[0][['load0P']].copy()
+# remove not in 2015 and not early months
+load0P0.load0P[(load0P0.index.year != 2015) | [x not in [0,1,2,3] for x in load0P0.index.month] ] = None
+load0P0.index = load0P0.index - pd.to_timedelta(1, unit='y') # change to 2014
+# remove not in 2014 and not late months
+load0P1.load0P[(load0P1.index.year != 2014) | [x in [0,1,2,3] for x in load0P1.index.month] ] = None
+# append
+load0P = load0P0.append(load0P1)
+load0P = load0P.dropna()
+# drop load0P from dataframe
+df_fixed.fixed[0].drop('load0P',axis=1, inplace= True)
+df_fixed.fixed[0] = pd.concat([df_fixed.fixed[0],load0P],axis=1)
+# drop non 2014 from load1P
+df_fixed.fixed[0].load1P[df_fixed.fixed[0].index.year != 2014] = None
+# save 2015 for wind speed, convert to 2014 and recombine
+wtg0WS = df_fixed.fixed[0][['wtg0WS']].copy()
+wtg0WS[wtg0WS.index.year != 2015] = None
+wtg0WS.dropna()
+df_fixed.fixed[0].drop('wtg0WS', axis = 1, inplace= True)
+df_fixed.fixed[0] = pd.concat([df_fixed.fixed[0], wtg0WS], axis=1)
+df_fixed.fixed[0].dropna(how = 'all',inplace=True)
+
 
 # now fix the bad data
 #df_fixed = fixBadData(df,setupDir,listOfComponents,inputDictionary['inputInterval'])
@@ -122,7 +148,15 @@ df_fixed.fixed[0].load0P[df_fixed.fixed[0].load0P<0] = None
 os.chdir(setupDir)
 pickle.dump(df_fixed, open("df_fixed.p","wb"))
 
+'''
 
+os.chdir(setupDir)
+inFile = open("df_fixed.p","rb")
+df_fixed = pickle.load(inFile)
+inFile.close()
+inFile = open("component.pkl","rb")
+listOfComponents = pickle.load(inFile)
+inFile.close()
 
 # fix the intervals
 df_fixed_interval = fixDataInterval(df_fixed,inputDictionary['outputInterval'])
