@@ -211,8 +211,7 @@ class DataClass:
                 
                 # based on our list of bad groups of data, replace the values
                 for name, group in groups:
-                    if len(group) > 30:
-                        print('big group')
+                    
                     if column == TOTALP:
                         columnsToReplace= columnsToReplace + self.powerComponents 
                         

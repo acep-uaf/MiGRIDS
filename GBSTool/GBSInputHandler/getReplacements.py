@@ -63,8 +63,7 @@ def getReplacement(df, indices, columnsToReplace):
         # start is the index of our first missing record
         start = missingdf.first_valid_index()
         duration = (missingdf.last_valid_index()- missingdf.first_valid_index())
-        if duration >=pd.Timedelta('14 days'):
-            print('big block')
+
         # searchBlock is the portion of the dataframe that we will search for a match in
         searchBlock = entiredf.loc[dtStart: dtStart + timeRange]
         # restrict the search to only matching days of the week and time of day
@@ -102,17 +101,7 @@ def getReplacement(df, indices, columnsToReplace):
             
             blockLength = pd.Series(pd.to_datetime(blockLength.index),index = blockLength.index)
             blockLength = blockLength.apply(lambda dt: longEnough(entiredf,blockLength,dt,duration))
-            #flipped = part_of_df[::-1]
-            #maxyear = max(entiredf.index) + pd.DateOffset(years=5)
-           
-            #flipped.index = maxyear - flipped.index 
-            # if replacment is long enough return indices, otherwise move on
-            #blockLength = flipped.rolling(duration).count()
-            #blockLength = blockLength[::-1]
-            #blockLength.index = part_of_df.index
-            #print(blockLength.head())
-            # a matching record is one that is the same day of the week, similar time of day and has enough
-            # valid records following it to fill the empty block
+
 
             directMatch = blockLength.first_valid_index()
         # move the search window to the following year
