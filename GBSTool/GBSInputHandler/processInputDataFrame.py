@@ -6,6 +6,7 @@ def processInputDataFrame(df, columnNames, useNames, dateColumnName, dateColumnF
 
     # find Date column
     # convert the date to datetime
+    # TODO this is taking a very long time to run - several hours for 1 year long file
     if dateColumnFormat == 'infer':
         df['DATE'] = df[dateColumnName].apply(pd.to_datetime,infer_datetime_format=True, errors='coerce')
         # remove rows that did not work

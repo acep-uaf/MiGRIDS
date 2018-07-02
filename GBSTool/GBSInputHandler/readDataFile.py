@@ -66,9 +66,7 @@ def readDataFile(inputFileType,fileLocation,fileType,columnNames,useNames,compon
     # convert units
     if np.all(componentUnits != None):
         # initiate lists
-        units = [None] * len(componentUnits)
-        scale = [None] * len(componentUnits)
-        offset = [None] * len(componentUnits)
+
         listOfComponents = []
         if componentAttributes != None:
             for i in range(len(componentUnits)): #for each channel make a component object

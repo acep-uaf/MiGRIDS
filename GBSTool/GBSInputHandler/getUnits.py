@@ -8,7 +8,7 @@ def getUnits(projectName,projectDir):
     # projectName is the name of the project *type string*
     # projectDir is the directory where the project setup xml file is located
     import os
-    print(os.getcwd())
+
     # general imports
 
     from GBSAnalyzer.DataRetrievers.readXmlTag import readXmlTag
