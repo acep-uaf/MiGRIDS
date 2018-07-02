@@ -8,9 +8,13 @@
 # this is run after the project files have been initiated (initiateProject.py) and filled (fillProjectData.py)
 
 # get input data to run the functions to import data into the project
+import sys
+import os
+here = os.path.dirname(os.path.realpath(__file__))
+sys.path.append(os.path.join(here,".."))
+
 from tkinter import filedialog
 import tkinter as tk
-import os
 from GBSAnalyzer.DataRetrievers.readXmlTag import readXmlTag
 from GBSInputHandler.getUnits import getUnits
 #from GBSInputHandler.fixBadData import fixBadData
@@ -19,17 +23,21 @@ from GBSInputHandler.dataframe2netcdf import dataframe2netcdf
 from GBSInputHandler.mergeInputs import mergeInputs
 import pandas as pd
 from GBSInputHandler.DataClass import DataClass
-import sys
 import pickle
 import cProfile
-import matplotlib.pyplot as plt
+import bisect
+import copy
+#import matplotlib.pyplot as plt
 from GBSInputHandler.adjustColumnYear import adjustColumnYear
 
+
+fileName = os.path.join(here,"../../GBSProjects/StMary/InputData/Setup/StMarySetup.xml")
+
 #print('Select the xml project setup file')
-root = tk.Tk()
-root.withdraw()
-root.attributes('-topmost',1)
-fileName = filedialog.askopenfilename()
+#root = tk.Tk()
+#root.withdraw()
+#root.attributes('-topmost',1)
+#fileName = filedialog.askopenfilename()
 # get the setup Directory
 
 setupDir = os.path.dirname(fileName)
@@ -138,8 +146,9 @@ wtg0WS.dropna()
 wtg0WS.index = wtg0WS.index - pd.to_timedelta(1, unit='y') # change to 2014
 df_fixed.fixed[0].drop('wtg0WS', axis = 1, inplace= True)
 df_fixed.fixed[0] = pd.concat([df_fixed.fixed[0], wtg0WS], axis=1)
-df_fixed.fixed[0].total_p.loc[df_fixed.fixed[0].index[df_fixed.fixed[0].total_p == -99999]] = None
 df_fixed.fixed[0].dropna(how = 'all',inplace=True)
+
+
 # now fix the bad data
 #df_fixed = fixBadData(df,setupDir,listOfComponents,inputDictionary['inputInterval'])
 
@@ -159,24 +168,52 @@ inFile.close()
 
 df_fixed.fixed[0].load1P.loc[df_fixed.fixed[0].index[df_fixed.fixed[0].load1P < 150]] = None
 
-#df_fixed.fixed[0] = df_fixed.fixed[0].iloc[5000000:5500000]
+# split into weeks
+startDate = df_fixed.fixed[0].index[0]
+endDate = df_fixed.fixed[0].index[-1]
+pickledFileNames = []
+while startDate < endDate:
+    df_seg = copy.deepcopy(df_fixed) # copy to make a segment
+    # take one week
+    stopDateInd = bisect.bisect_left(df_seg.fixed[0].index, startDate + pd.to_timedelta(3,'d'))
+    stopDateInd = min(stopDateInd,len(df_seg.fixed[0])-1)
+    stopDate = df_seg.fixed[0].index[stopDateInd]
+    df_seg.fixed[0] = df_seg.fixed[0].loc[startDate:stopDate]
+    # fix the intervals
+    # code profiler
+    #pr0 = cProfile.Profile()
+    #pr0.enable()
+    df_seg_interval = fixDataInterval(df_seg, inputDictionary['outputInterval'])
+    print('Finished week of ' + startDate.strftime("%Y-%m-%d"))
+    # stop profiler
+    #pr0.disable()
+    #pr0.print_stats(sort="calls")
+    # pickle df
+    os.chdir(setupDir)
+    pickledFileNames = pickledFileNames + ["df_seg_strftime"+startDate.strftime("%Y-%m-%d")+"_"+stopDate.strftime("%Y-%m-%d")+".p"]
+    out = open(pickledFileNames[-1], "wb")
+    pickle.dump(df_seg_interval.fixed[0], out)
+    out.close()
+    print('Finished week of '+startDate.strftime("%Y-%m-%d"))
+    # update counters
+    newStartDateInd = min(stopDateInd+1,len(df_fixed.fixed[0].index)-1)
+    startDate = df_fixed.fixed[0].index[newStartDateInd]
 
-# fix the intervals
-# code profiler
-pr0 = cProfile.Profile()
-pr0.enable()
-df_fixed_interval = fixDataInterval(df_fixed,inputDictionary['outputInterval'])
-# stop profiler
-pr0.disable()
-pr0.print_stats(sort="calls")
 
-# pickle df
-os.chdir(setupDir)
-pickle.dump(df_fixed_interval, open("df_fixed_interval.p","wb"))
+# load and append all
+for idx, pfn in enumerate(pickledFileNames):
+    inFile = open(pfn, "rb")
+    df0 = pickle.load(inFile)
+    inFile.close()
+    if idx == 0:
+        df_fixed_interval = df0
+    else:
+        df_fixed_interval = df_fixed_interval.append(df0)
+
 
 d = {}
 for c in listOfComponents:
-    d[c.column_name] = c.toDictionary()
+    d[c.component_name] = c.toDictionary()
 # now convert to a netcdf
 
 dataframe2netcdf(df_fixed_interval.fixed[0], d)

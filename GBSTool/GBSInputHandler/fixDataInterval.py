@@ -40,7 +40,7 @@ def fixDataInterval(data, interval):
         #sigmaScaled = 0.5 * sigma * (0.0158*np.log(n)**2 + 0.0356*np.log(n))
         #sigmaScaled = sigma
         #sigma_bis = sigmaScaled * np.sqrt(2.0 / n) # adapted from ipython interactive computing visualization cookbook
-        sigma_bis = 0.15 * sigma * np.sqrt(2.0/(900*timestep))
+        sigma_bis = 0.4 * sigma * np.sqrt(2.0/(900*timestep))
         sqrtdt = np.sqrt(timestep)
         # find the 95th percentile of number of steps
         n95 = int(np.percentile(n,95))
@@ -171,8 +171,15 @@ def fixDataInterval(data, interval):
             # remove rows that are nan for this column, except for the first and last, in order to keep the same first and last
             # time stamps
             df0 = pd.concat([df0.iloc[[0]], df0.iloc[1:-2].dropna(), df0.iloc[[-1]]])
-            df0 = df0.bfill()
-            df0 = df0.ffill()
+            # get first and last non nan indecies
+            idx0 = df0[col].first_valid_index()
+            if idx0 != None:
+                df0[col][0] = df0[col][idx0]
+            idx1 = df0[col].last_valid_index()
+            if idx1 != None:
+                df0[col][-1] = df0[col][idx1]
+            #df0 = df0.bfill()
+            #df0 = df0.ffill()
             # time interval between consecutive records
             df0['timediff'] = pd.Series(pd.to_datetime(df0.index, unit='s'), index=df0.index).diff(1).shift(-1)
             df0['timediff'] = df0['timediff'].fillna(0)
