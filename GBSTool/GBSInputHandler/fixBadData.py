@@ -21,7 +21,7 @@ import numpy as np
 from GBSInputHandler.DataClass import DataClass
 from GBSInputHandler.isInline import isInline
 from GBSInputHandler.badDictAdd import badDictAdd
-
+from GBSInputHandler.adjustColumnYear import adjustColumnYear
 
 
 # constants
@@ -89,7 +89,12 @@ def fixBadData(df, setupDir, ListOfComponents, sampleInterval):
    sampleIntervalTimeDelta = [pd.to_timedelta(s) for s in sampleInterval]
    data = DataClass(df, max(sampleIntervalTimeDelta))
 
-    
+   #before we check for bad data we need to give the input dataframe maximum time overlap
+   for i,df in enumerate(data.fixed):
+       df = adjustColumnYear(df)
+       data.fixed[i] = df
+   print(data.fixed[0].head())
+   print(data.fixed[0].tail())
    # data gaps are filled with NA's to be filled later
    data.checkDataGaps()
   
@@ -168,7 +173,7 @@ def fixBadData(df, setupDir, ListOfComponents, sampleInterval):
  
    #reads the component descriptor files and
    #returns True if none of the components have isFrequencyReference=1 and
-   #isVoltageSource = True
+
    def dieselNeeded(myIterator, setupDir):
        def get_next(myiter):
            try:
