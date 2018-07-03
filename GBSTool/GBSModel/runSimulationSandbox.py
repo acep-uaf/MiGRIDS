@@ -3,4 +3,4 @@ from runSimulation0 import runSimulation
 import sys
 import os
 here = os.path.dirname(os.path.realpath(__file__))
-runSimulation(here + '/../../GBSProjects/OptimizerTestHarnessCodeReview/OutputData/Set1')
+runSimulation(here + '/../../GBSProjects/StMary/OutputData/Set0')

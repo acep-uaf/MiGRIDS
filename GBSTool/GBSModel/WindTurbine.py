@@ -19,6 +19,7 @@ from GBSModel.getSeriesIndices import getSeriesIndices
 import numpy as np
 from scipy.interpolate import interp1d
 from distutils.util import strtobool
+from GBSAnalyzer.DataWriters.writeNCFile import writeNCFile
 
 class WindTurbine:
     """
@@ -110,8 +111,18 @@ class WindTurbine:
             wtgSoup.recalculateWtgPAvail.get('value'))  # bool whether to recalculate wind power from wind speeds
         self.wtgMinSrcCover = float(wtgSoup.minSrcCover.get('value'))  # the minimum SRC required as PU of current import
 
-        # Handle the fuel curve interpolation
-        if self.wtgRecalculateWtgPAvail:
+
+        # check if there are wind power files in the wind speed directory
+        windSpeedFile = os.path.join(windSpeedDir,'wtg'+str(self.wtgID)+'WS.nc')
+        windPowerFile = os.path.join(windSpeedDir,'wtg'+str(self.wtgID)+'PAvail.nc')
+        # if there are wind power measurements and recalculate is not set
+        if os.path.isfile(windPowerFile) and not self.wtgRecalculateWtgPAvail:
+            # if there is, then read it
+            NCF = readNCFile(windPowerFile)
+            windPower = np.array(NCF.value)*NCF.scale + NCF.offset
+            windTime = NCF.time
+        elif os.path.isfile(windSpeedFile):
+            # get the power curve
             powerCurvePPuInpt = wtgSoup.powerCurveDataPoints.pPu.get('value').split()
             powerCurveWsInpt = wtgSoup.powerCurveDataPoints.ws.get('value').split()
             if len(powerCurvePPuInpt) != len(powerCurveWsInpt):  # check that both input lists are of the same length
@@ -122,25 +133,17 @@ class WindTurbine:
                 powerCurveData.append((float(powerCurveWsInpt[idx]), self.wtgPMax * float(powerCurvePPuInpt[idx])))
             wtgPC = WindPowerCurve()
             wtgPC.powerCurveDataPoints = powerCurveData
-            wtgPC.cutInWindSpeed = float(wtgSoup.cutInWindSpeed.get('value')) # Cut-in wind speed, float, m/s
-            wtgPC.cutOutWindSpeedMin = float(wtgSoup.cutOutWindSpeedMin.get('value')) # Cut-out wind speed min, float, m/s
-            wtgPC.cutOutWindSpeedMax = float(wtgSoup.cutOutWindSpeedMax.get('value')) # Cut-out wind speed max, float, m/s
-            wtgPC.POutMaxPa = self.wtgPMax # Nameplate power, float, kW
+            wtgPC.cutInWindSpeed = float(wtgSoup.cutInWindSpeed.get('value'))  # Cut-in wind speed, float, m/s
+            wtgPC.cutOutWindSpeedMin = float(
+                wtgSoup.cutOutWindSpeedMin.get('value'))  # Cut-out wind speed min, float, m/s
+            wtgPC.cutOutWindSpeedMax = float(
+                wtgSoup.cutOutWindSpeedMax.get('value'))  # Cut-out wind speed max, float, m/s
+            wtgPC.POutMaxPa = self.wtgPMax  # Nameplate power, float, kW
             wtgPC.cubicSplineCurveEstimator()
             self.wtgPowerCurve = wtgPC.powerCurveInt
-
-        # check if there are wind power files in the wind speed directory
-        windSpeedFile = os.path.join(windSpeedDir,'wtg'+str(self.wtgID)+'WS.nc')
-        windPowerFile = os.path.join(windSpeedDir,'wtg'+str(self.wtgID)+'PAvail.nc')
-        if os.path.isfile(windPowerFile) and not self.wtgRecalculateWtgPAvail:
-            # if there is, then read it
-            NCF = readNCFile(windPowerFile)
-            windPower = np.array(NCF.value)*NCF.scale + NCF.offset
-            windTime = NCF.time
-        elif os.path.isfile(windSpeedFile):
             # read wind speed file
             NCF = readNCFile(windSpeedFile)
-            windSpeed = np.array(NCF.value) * NCF.scale + NCF.offset
+            windSpeed = (np.array(NCF.value) - NCF.offset) / NCF.scale
             windTime = NCF.time
             # check if any nan values
             if any(np.isnan(NCF.time)) or any(np.isnan(NCF.value)):
@@ -161,7 +164,7 @@ class WindTurbine:
             # get wind power
             windPower = self.getWP(PCpower,PCws,windSpeed, wtgPC.wsScale)
             # save nc file to avoid having to calculate for future simulations
-            #writeNCFile(NCF.time[:], windPower, 1, 0, 'kW', os.path.join(windSpeedDir,'wtg'+str(self.wtgID)+'WP.nc'))
+            writeNCFile(NCF.time[:], windPower, 1, 0, 'kW', os.path.join(windSpeedDir,'wtg'+str(self.wtgID)+'WP.nc'))
         else:
             raise ValueError('There is no wind speed file in the specified directory.')
 

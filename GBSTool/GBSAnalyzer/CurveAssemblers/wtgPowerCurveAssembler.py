@@ -161,13 +161,8 @@ class WindPowerCurve:
         # 0 m/s and in this case we carry it out to twice the maximum cut-out wind speed, with a step size depending on
         # the range of wind speeds observed.
 
-        # check the cut out value of ws is less than 10 m/s. If this is the case, use a higher scaling to achieve better
-        # resolution in the power curve. This is usefull when using the wind turbine class for hydro kinetic turbines.
-
-        if self.cutOutWindSpeedMax < 10:
-            self.wsScale = 100
-        else:
-            self.wsScale = 10
+        # TODO: this should be pulled from defaults
+        self.wsScale = 1000
 
         windSpeeds = np.arange(0, self.cutOutWindSpeedMax*2, 1/self.wsScale)
 
