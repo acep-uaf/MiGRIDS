@@ -44,6 +44,9 @@ def mergeInputs(inputDictionary):
         out = open("component.pkl", "wb")
         pickle.dump(listOfComponents0, out)
         out.close()'''
+        # set index as DATE
+        df0.drop_duplicates('DATE', inplace=True)
+        df0.set_index('DATE', inplace=True)
 
         if idx == 0: # initiate data frames if first iteration, otherwise append
             df = df0
@@ -67,11 +70,39 @@ def mergeInputs(inputDictionary):
                 elif all(inputDictionary['flexibleYear'][:idx]):
                     df.DATE = df.DATE + pd.to_timedelta(yearDiff, unit='y')
             '''
-            df = df.append(df0)
+
+            #df = df.append(df0)
+            # concat, so that duplicate rows are combined and duplicate columns remain seperate
+            df = pd.concat([df, df0], axis=1, join='outer')
             listOfComponents.extend(listOfComponents0)
     
     # order by datetime
-    # TODO: replace this code with faster code from 'testMergAndSortDF.py' in the TestScripts dir
+    # merge duplicate columns
+    # get all column names
+    allCol = np.array(df.columns)
+    allCol.dtype = 'object'  # if headers all single characters, it will cause replace col to fail later becuase of data type
+    # get duplicate columns
+    dupCol = []
+    for col in allCol:
+        if (len(np.where(allCol == col)[0]) > 1) & (col not in dupCol):
+            dupCol = dupCol + [col]
+
+    # dupCol = allCol[allCol.duplicated()] # this will have multiples of duplicate columns if more than 3
+
+    for dc in dupCol:  # for each column with the same name
+        # fill in first duplicate column with first non nan value
+        df[dc] = df[dc].bfill(axis=1)
+
+        # remove duplicate columns, keeping the first one
+        # find all columns named this
+        dcIdx = np.where(allCol == dc)[0]
+        # rename columns
+        allCol[dcIdx[1:]] = 'RemoveCol'
+        df.columns = allCol
+        df.drop('RemoveCol', axis=1, inplace=True)
+        allCol = np.array(df.columns)
+        allCol.dtype = 'object'
+    '''
     df = df.sort_values(['DATE']).reset_index(drop=True)
     # find rows with identical dates and combine rows, keeping real data and discarding nans in columns
     dupDate = df.DATE[df.DATE.duplicated()]
@@ -88,7 +119,7 @@ def mergeInputs(inputDictionary):
         # remove duplicate columns
         df = df.drop(sameIdx[1:])
      # remove duplicates in list of components - can't have columns of the same name in the dataframe  
-     
+     '''
     def uniqueList(startList,outList):
         if len(startList) <= 0:
             return outList
@@ -98,5 +129,5 @@ def mergeInputs(inputDictionary):
             return uniqueList(startList[1:],outList)
         
     l = uniqueList(listOfComponents,[])
-    
+
     return df, l

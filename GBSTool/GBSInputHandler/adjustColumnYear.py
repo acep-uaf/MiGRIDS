@@ -4,8 +4,9 @@ import numpy as np
 
 def avg_datetime(series):
     dt_min = series.min()
-    #deltas = [x-dt_min for x in series]
-    return dt_min + np.sum((series - dt_min) / len(series))
+    dt_max = series.max()
+    #return dt_min + np.sum((series - dt_min) / len(series))
+    return (dt_max-dt_min)/2 + dt_min
 
 def adjustColumnYear(df):
 
@@ -20,12 +21,14 @@ def adjustColumnYear(df):
     # if difference from overall mean date is more than one year, scale by closest number of years
 
     for idx, col in enumerate(df.columns):
+
         yearDiff = np.round((meanDate[idx] - meanDateOverall).days / 365)
         # if the difference is greater than a year
         if np.abs(yearDiff) > 0:
             df0 = df[[col]].copy()
             df0.dropna()
-            df0.index = df0.index - pd.to_timedelta(yearDiff, unit='y')
+            # note that pd.to_timedelta(1,unit='y') is 365 days 05:49:12 .... because of leap years. Need to use days instead
+            df0.index = df0.index - pd.to_timedelta(yearDiff*365, unit='d')
             df.drop(col,axis=1,inplace=True)
             df = pd.concat([df, df0], axis=1)
             df.dropna(how = 'all',inplace=True)
