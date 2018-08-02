@@ -27,9 +27,10 @@ def getDataSubsets(dataframe, method):
     # Method selector
     if method == 'RE-load-one-week':
         # FUTUREFEATURE: the individual methods should be moved into separate files for ease of editing. The getDataSubsets file should just serve as the interface.
+
+        # TODO set correct window size based on actual data time steps and desired data subset length
         # Window size: one week in seconds
-        # TODO revert to week in seconds after prototyping
-        wdwSize = 60*60  #60*60*24*7
+        wdwSize = 60*60*24#*7
 
         # Get rolling one week load averages. We assume that time units are seconds here.
         # just for convenience and readability we'll pull the dataframe apart
@@ -46,7 +47,7 @@ def getDataSubsets(dataframe, method):
 
         # Inspect length of time vector to determine if there is at least one week of record
         timeLength = time[-1:] - time[0]
-        print(timeLength[timeLength.index.max()])
+        #print(timeLength[timeLength.index.max()])
         if timeLength[timeLength.index.max()] < 60*60*24*7:
             warnings.warn('Input samples are less than one week long. Data reduction with RE-load-one-week method not possible. Full data set will be used.')
 
