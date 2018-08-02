@@ -16,7 +16,8 @@ def getOptimizationBoundaries(boundaryMethod, time, firmLoadP, varLoadP, firmGen
     Interface to dispatch specific OptimizationBoundaryCalculators as specified in BoundaryMethod. Passes back the
     suggested boundaries for ESS power and energy capacity.
 
-    :param boundaryMethod: sets the calculation method used. Currently, only valid input is 'variableSRC'.
+    :param boundaryMethod: sets the calculation method used. Currently, valid inputs are 'variableSRC',
+        and 'noBoundaries'. See configuration documentation for more details.
     :type boundaryMethod: str
     :param time: Input time series, is uniform for all power input time series.
     :type time: pd.Series
@@ -48,6 +49,14 @@ def getOptimizationBoundaries(boundaryMethod, time, firmLoadP, varLoadP, firmGen
         minESSPPa, maxESSPPa, minESSEPa, maxESSEPa = \
             calcSRCMethodBoundaries(time, firmLoadP, varLoadP, firmGenP, varGenP, otherConstraints)
 
+    # If 'noBoundaries' is specified the minima are set to zeros and the maxima are set to infinity.
+    elif boundaryMethod == 'noBoundaries':
+        # TODO test the infinity values are handled properly throughout the code.
+        minESSPPa = 0
+        minESSEPa = 0
+        maxESSPPa = float('Inf')
+        maxESSEPa = float('Inf')
+
     # FUTUREFEATURE: Add other boundary calculators below.
     # elif boundaryMethod == otherBoundary calculator:
 
@@ -56,6 +65,6 @@ def getOptimizationBoundaries(boundaryMethod, time, firmLoadP, varLoadP, firmGen
         raise UserWarning(
             'Unknown method, %s, for optimization boundary calculation specified. Defaulting to variable SRC method.',
             boundaryMethod)
-        minESSPPa, maxESSPPa, minESSEPa, maxESSEPa = calcSRCMethodBoundaries(time, firmLoadP, varLoadP, firmGenP, varGenP, otherConstraints)
+        #minESSPPa, maxESSPPa, minESSEPa, maxESSEPa = calcSRCMethodBoundaries(time, firmLoadP, varLoadP, firmGenP, varGenP, otherConstraints)
 
     return minESSPPa, maxESSPPa, minESSEPa, maxESSEPa
