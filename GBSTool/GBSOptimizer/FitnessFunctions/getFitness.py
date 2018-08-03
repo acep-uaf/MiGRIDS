@@ -119,28 +119,37 @@ def weightedRawFitness(rawFitness, inputDataWeights, otherInformation):
 
     snippetNum = otherInformation['snippetNum'][0]
 
-    # for the loadBins (corresponding raw fitnesses are 0 through 2)
-    loadFitnesses = inputDataWeights.loadBins.value_counts().sort_index()
-    weightedFitness = rawFitness.copy()
+    # check first if the inputDataWeights df is empty, if that is the case, the data for the simulations was not reduced
+    # and no weighting is necessary
+    if not inputDataWeights.empty:
+        # for the loadBins (corresponding raw fitnesses are 0 through 2)
+        loadFitnesses = inputDataWeights.loadBins.value_counts().sort_index()
+        weightedFitness = rawFitness.copy()
 
-    for indx in range(0, int(round(snippetNum/2))):
-        # to avoid situations where not all bins have a count, we have to check if our iteration index is in the df index
-        if indx in loadFitnesses.index:
-            weightedFitness['fitness' + str(indx)][0] = loadFitnesses.loc[indx] * rawFitness['fitness' + str(indx)][0]
-        else:
-            weightedFitness['fitness' + str(indx)][0] = 0
+        for indx in range(0, int(round(snippetNum/2))):
+            # to avoid situations where not all bins have a count, we have to check if our iteration index is in the df index
+            if indx in loadFitnesses.index:
+                weightedFitness['fitness' + str(indx)][0] = loadFitnesses.loc[indx] * rawFitness['fitness' + str(indx)][0]
+            else:
+                weightedFitness['fitness' + str(indx)][0] = 0
 
-    varGenFitnesses = inputDataWeights.varGenBins.value_counts().sort_index()
-    for indx in range(int(round(snippetNum/2)), int(round(snippetNum))):
-        # to avoid situations where not all bins have a count, we have to check if our iteration index is in the df index
-        if indx-3 in varGenFitnesses.index:
-            weightedFitness['fitness' + str(indx)][0] = varGenFitnesses.loc[indx-3] * rawFitness['fitness' + str(indx)][0]
-        else:
-            weightedFitness['fitness' + str(indx)][0] = 0
+        varGenFitnesses = inputDataWeights.varGenBins.value_counts().sort_index()
+        for indx in range(int(round(snippetNum/2)), int(round(snippetNum))):
+            # to avoid situations where not all bins have a count, we have to check if our iteration index is in the df index
+            if indx-3 in varGenFitnesses.index:
+                weightedFitness['fitness' + str(indx)][0] = varGenFitnesses.loc[indx-3] * rawFitness['fitness' + str(indx)][0]
+            else:
+                weightedFitness['fitness' + str(indx)][0] = 0
 
-    totNumBins = loadFitnesses.sum() + varGenFitnesses.sum()
+        totNumBins = loadFitnesses.sum() + varGenFitnesses.sum()
 
-    return weightedFitness.divide(totNumBins).sum().sum()
+        fitness = weightedFitness.divide(totNumBins).sum().sum()
+
+    # if the input data was not reduced, no weights are applied, but the fitness is just summed up
+    else:
+        fitness = rawFitness.sum().sum()
+
+    return fitness
 
 
 def getTestFitness(otherInformation):
