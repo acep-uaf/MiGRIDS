@@ -54,7 +54,7 @@
             <maxMargin value="1.10"><!-- The margin put on the maximum power calculated as a fraction. --> </maxMargin>
         </variableSRCConfig>
     </optimizationEnvelopeEstimator>
-    <dataReductionMethod value="RE-load-one-week" choices="RE-load-one-week">
+    <dataReductionMethod value="RE-load-one-week" choices="RE-load-one-week noReduction">
         <!-- Choices of methods used to reduce the long time series, in order to reduce algorithm run time. Only one
                 method is implemented thus far. -->
     </dataReductionMethod>
