@@ -45,6 +45,16 @@
  <!-- 'eesSrcTime' is the minimum amount of time that the ess must be able to discharge for at the current level of
       SRC that it is supplying. Units are in seconds. Default is 120 s.  -->
  <eesSrcTime unit="s" value="120"/>
+ <eesUnderSrcLimit value="500" unit="kWs">
+    <!-- 'eesUnderSrcLimit' describes the maximum energy measured under the required SRC that is allowed before raising a flag.
+    Units are in kWs. It is measured over the past period of time indicated by
+     eesUnderSrcTime. -->
+    <!-- Default value is 500 kW*s. -->
+    </eesUnderSrcLimit>
+ <eesUnderSrcTime value="300" unit="s">
+    <!-- 'eesUnderSrcTime' is the amount of time that eesUnderSrcLimit is measured over. -->
+    <!-- Default value is 300. Units are s. -->
+ </eesUnderSrcTime>
  <!-- 'eesDispatchTime' is the minimum amount of time that the ESS must be able to supply the load for in order to
     be considered as an active discharge option in the diesel schedule. Units are in seconds. Default is 1800 s (0.5 hours).   -->
  <eesDispatchTime unit="s" value="1800"/>

@@ -106,7 +106,7 @@ class WindTurbine:
         self.wtgQMax = float(wtgSoup.QOutMaxPa.get('value'))  # Nameplate capacity [kvar]
         self.wtgCheckWindTime = float(wtgSoup.checkWindTime.get('value'))  # time to check spilled wind power over
         self.wtgSpilledWindLimit = float(
-            wtgSoup.spilledWindLimit.get('value'))  # time to check spilled wind power over
+            wtgSoup.spilledWindLimit.get('value'))  # the PU limit of spilled power before a flag is set
         self.wtgRecalculateWtgPAvail = strtobool(
             wtgSoup.recalculateWtgPAvail.get('value'))  # bool whether to recalculate wind power from wind speeds
         self.wtgMinSrcCover = float(wtgSoup.minSrcCover.get('value'))  # the minimum SRC required as PU of current import
@@ -114,7 +114,7 @@ class WindTurbine:
 
         # check if there are wind power files in the wind speed directory
         windSpeedFile = os.path.join(windSpeedDir,'wtg'+str(self.wtgID)+'WS.nc')
-        windPowerFile = os.path.join(windSpeedDir,'wtg'+str(self.wtgID)+'PAvail.nc')
+        windPowerFile = os.path.join(windSpeedDir,'wtg'+str(self.wtgID)+'WP.nc')
         # if there are wind power measurements and recalculate is not set
         if os.path.isfile(windPowerFile) and not self.wtgRecalculateWtgPAvail:
             # if there is, then read it
@@ -205,32 +205,41 @@ class WindTurbine:
 
     def checkOperatingConditions(self):
         if self.wtgState == 2: # if running online
-            self.wtgPAvail = self.windPower[min([self.step,len(self.windPower)-1])]
             self.wtgRunTimeAct += self.timeStep
             self.wtgRunTimeTot += self.timeStep
 
             # update spilled wind power time series
             self.wtgSpilledWind.append(max([self.wtgPAvail-self.wtgP, 0]))
             # get the spilled wind power in checkWindPowerTime
+
+            self.wtgSpilledWindCum = sum(self.wtgSpilledWind[-int(self.wtgCheckWindTime/self.timeStep):])*self.timeStep
+            '''
             # if the spilled length of time measured spilled wind power over is less than the check time
             if len(self.wtgSpilledWind) > int(self.wtgCheckWindTime/self.timeStep):
-                self.wtgSpilledWindCum = self.wtgSpilledWindCum + self.wtgSpilledWind[-1]- self.wtgSpilledWind[-int(self.wtgCheckWindTime/self.timeStep)]
+                self.wtgSpilledWindCum = self.wtgSpilledWindCum + self.wtgSpilledWind[-1]*self.timeStep- self.wtgSpilledWind[-int(self.wtgCheckWindTime/self.timeStep)]
             else:
-                self.wtgSpilledWindCum = self.wtgSpilledWindCum + self.wtgSpilledWind[-1]
-
+                self.wtgSpilledWindCum = self.wtgSpilledWindCum + self.wtgSpilledWind[-1]*self.timeStep
+            '''
             # if enough wind spilled, set flag
-            if (self.wtgSpilledWindCum > self.wtgSpilledWindLimit) and (self.wtgSpilledWind[-1] > 0):
+            if (self.wtgSpilledWindCum > self.wtgSpilledWindLimit*self.wtgPMax) and (self.wtgSpilledWind[-1] > 0):
                 self.wtgSpilledWindFlag = True
+            else:
+                self.wtgSpilledWindFlag = False
 
         elif self.wtgState == 1: # if starting up
-            self.wtgPAvail = 0 # not available to produce power yet
-            self.wtgQAvail = 0
             self.wtgStartTimeAct += self.timeStep
             self.wtgRunTimeAct = 0 # reset run time counter
         else: # if off
             # no power available and reset counters
-            self.wtgPAvail = 0
-            self.wtgQAvail = 0
             self.wtgStartTimeAct = 0
             self.wtgRunTimeAct = 0
         self.step += 1 # increment which step we are on
+
+
+    def getWtgPAvail(self, idx):
+        if self.wtgState == 2:  # if running online
+            self.wtgPAvail = self.windPower[idx]
+            self.wtgQAvail = 0
+        else:
+            self.wtgPAvail = 0
+            self.wtgQAvail = 0

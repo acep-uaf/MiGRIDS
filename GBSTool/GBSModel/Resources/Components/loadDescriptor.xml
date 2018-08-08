@@ -32,6 +32,8 @@
     <switchTime value="1000" unit="ms"/>
     <!-- `switchTimeDev` describes the typical deviation from 'switchTime' in ms. Default is 500 ms. -->
     <switchTimeDev value="500" unit="ms" />
-
+    <!-- `minSRC` is the fraction of the load that is the minimum coverage of Spinning Reserve required when this load
+    is supplied in the grid. Default is 0.15 units are PU. -->
+    <minSRC value="0.15" unit="pu" />
 </component>
 <!-- EOF -->

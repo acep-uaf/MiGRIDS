@@ -4,9 +4,12 @@
 # License: MIT License (see LICENSE file of this package for more information)
 
 import os
+import sys
+here = os.path.dirname(os.path.realpath(__file__))
+sys.path.append(os.path.join(here,".."))
 import sqlite3
 # add to sys path
-import sys
+
 import tkinter as tk
 from tkinter import filedialog
 
@@ -70,12 +73,21 @@ def runSimulation(projectSetDir = ''):
     # get the minimum required SRC calculation
     getMinSrcFile = readXmlTag(projectSetupFile, 'getMinSrc', 'value')[0]
 
+    getMinSrcInputFile = os.path.join(projectSetDir, 'Setup',
+                                       projectName + 'Set' + str(setNum) + getMinSrcFile[0].upper() + getMinSrcFile[
+                                                                                                       1:] + 'Inputs.xml')
+
     # get the components to run
     componentNames = readXmlTag(projectSetupFile, 'componentNames', 'value')
 
     # get the load profile to run
     loadProfileFile = readXmlTag(projectSetupFile, 'loadProfileFile', 'value')[0]
     loadProfileFile = os.path.join(timeSeriesDir,loadProfileFile)
+
+    # get the RE dispatch
+    reDispatchFile = readXmlTag(projectSetupFile, 'reDispatch', 'value')[0]
+
+    reDispatchInputFile = os.path.join(projectSetDir, 'Setup', projectName + 'Set' + str(setNum) + reDispatchFile[0].upper() + reDispatchFile[1:] + 'Inputs.xml')
 
     # TODO
     # get the gen dispatch
@@ -119,6 +131,7 @@ def runSimulation(projectSetDir = ''):
         genIDs = []
         genStates = []
         genDescriptors = []
+        loadDescriptors = []
 
 
         for cpt in componentNames:  # for each component
@@ -133,17 +146,25 @@ def runSimulation(projectSetDir = ''):
                 eesStates += [2]
                 eesSRC += [0]
                 eesSOC += [0]
+            elif 'tes' in cpt.lower():  # or if energy storage
+                tesDescriptors += [os.path.join(runCompDir, cpt.lower() + 'Set' + str(setNum) + 'Run' + str(runNum) + 'Descriptor.xml')]
+                tesIDs += [cpt[3:]]
+                tesT += [295]
+                tesStates += [2]
             elif 'wtg' in cpt.lower():  # or if wind turbine
                 wtgDescriptors += [os.path.join(runCompDir, cpt.lower() + 'Set' + str(setNum) + 'Run' + str(runNum) + 'Descriptor.xml')]
                 wtgIDs += [cpt[3:]]
                 wtgStates += [2]
+            elif 'load' in cpt.lower():  # or if wind turbine
+                loadDescriptors += [os.path.join(runCompDir, cpt.lower() + 'Set' + str(setNum) + 'Run' + str(
+                    runNum) + 'Descriptor.xml')]
 
         # initiate the system operations
         # code profiler
         # pr0 = cProfile.Profile()
         # pr0.enable()
         SO = SystemOperations(timeStep = timeStep, runTimeSteps = runTimeSteps, loadRealFiles = loadProfileFile, loadReactiveFiles = [],
-                              predictLoad = predictLoad, predictWind = predictWind, getMinSrcFile = getMinSrcFile,
+                              predictLoad = predictLoad, loadDescriptor = loadDescriptors, predictWind = predictWind, getMinSrcFile = getMinSrcFile, getMinSrcInputFile = getMinSrcInputFile, reDispatchFile = reDispatchFile, reDispatchInputsFile = reDispatchInputFile,
                          genIDs = genIDs, genStates = genStates, genDescriptors = genDescriptors, genDispatch = genDispatch,
                          wtgIDs = wtgIDs, wtgStates = wtgStates, wtgDescriptors = wtgDescriptors, wtgSpeedFiles = timeSeriesDir, wtgDispatch = wtgDispatch,
                          eesIDs = eesIDs, eesStates = eesStates, eesSOCs = eesSOC, eesDescriptors = eesDescriptors, eesDispatch = eesDispatch,
@@ -175,11 +196,14 @@ def runSimulation(projectSetDir = ''):
         writeNCFile(SO.DM.realTime, SO.srcMin, 1, 0, 'kW', 'srcMinSet' + str(setNum) + 'Run' + str(runNum) + '.nc')  # srcMin
         writeNCFile(SO.DM.realTime, SO.eessDis, 1, 0, 'kW', 'eessDisSet' + str(setNum) + 'Run' + str(runNum) + '.nc')  # eesDis
         writeNCFile(SO.DM.realTime, SO.eessP, 1, 0, 'kW', 'eessPSet' + str(setNum) + 'Run' + str(runNum) + '.nc')
+        writeNCFile(SO.DM.realTime, SO.tesP, 1, 0, 'kW', 'tessP' + str(setNum) + 'Run' + str(runNum) + '.nc') # tessP
         writeNCFile(SO.DM.realTime, SO.genPAvail, 1, 0, 'kW', 'genPAvailSet' + str(setNum) + 'Run' + str(runNum) + '.nc')  # genPAvail
         writeNCFile(SO.DM.realTime, SO.onlineCombinationID, 1, 0, 'NA', 'onlineCombinationIDSet' + str(setNum) + 'Run' + str(runNum) + '.nc')  # onlineCombinationID
         writeNCFile(SO.DM.realTime, SO.underSRC, 1, 0, 'kW', 'underSRCSet' + str(setNum) + 'Run' + str(runNum) + '.nc')  # underSRC
-        writeNCFile(SO.DM.realTime, SO.outOfNormalBounds, 1, 0, 'kW', 'outOfNormalBoundsSet' + str(setNum) + 'Run' + str(runNum) + '.nc')  # outOfNormalBounds
-        writeNCFile(SO.DM.realTime, SO.futureLoad, 1, 0, 'kW',
+        writeNCFile(SO.DM.realTime, SO.outOfNormalBounds, 1, 0, 'bool', 'outOfNormalBoundsSet' + str(setNum) + 'Run' + str(runNum) + '.nc')  # outOfNormalBounds
+        writeNCFile(SO.DM.realTime, SO.wfSpilledWindFlag, 1, 0, 'bool',
+                    'wfSpilledWindFlagSet' + str(setNum) + 'Run' + str(runNum) + '.nc')  # wfSpilledWindFlag
+        writeNCFile(SO.DM.realTime, SO.futureLoadList, 1, 0, 'kW',
                     'futureLoad' + str(setNum) + 'Run' + str(runNum) + '.nc')  # future Load predicted
         writeNCFile(SO.DM.realTime, SO.futureSRC, 1, 0, 'kW',
                     'futureSRC' + str(setNum) + 'Run' + str(runNum) + '.nc')  # future SRC predicted
@@ -225,7 +249,7 @@ def runSimulation(projectSetDir = ''):
                         'wtg' + str(SO.WF.wtgIDS[idx]) + 'PSet' + str(setNum) + 'Run' + str(runNum) + '.nc')
 
         # future wind predicted
-        for idx, fw in enumerate(zip(*SO.futureWind)):  # for each wtg
+        for idx, fw in enumerate(zip(*SO.futureWindList)):  # for each wtg
             writeNCFile(SO.DM.realTime, fw, 1, 0, 'kW',
                         'wtg' + str(SO.WF.wtgIDS[idx]) + 'FutureWind' + str(setNum) + 'Run' + str(runNum) + '.nc')
 

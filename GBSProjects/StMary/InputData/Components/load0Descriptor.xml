@@ -119,5 +119,9 @@
   <pt unit="kW" value="0 0"/>
   <temp unit="K" value="298 298"/>
  </heatRecovery>
+
+ <!-- `minSRC` is the fraction of the load that is the minimum coverage of Spinning Reserve required when this load
+  is supplied in the grid. Default is 0.15 units are PU. -->
+  <minSRC value="0.15" unit="pu" />
 </component>
 <!-- EOF -->

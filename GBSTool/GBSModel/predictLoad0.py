@@ -12,6 +12,8 @@ class predictLoad:
     def __init__(self):
         self.futureLoad = 0
 
-    def predictLoad(self, prevLoadProfile,time):
-        # simple calculation, return the mean of the last 5 min load
-        self.futureLoad = np.mean(prevLoadProfile[-300:])
+    def predictLoad(self, SO):
+        # simple calculation, return the mean of the last 1 hour load
+        startIdx = max(SO.idx - int(3600/SO.timeStep), 0)
+        stopIdx = SO.idx+1
+        self.futureLoad = np.mean(SO.DM.realLoad[startIdx:stopIdx])

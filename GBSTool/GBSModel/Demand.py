@@ -6,7 +6,7 @@
 
 import numpy as np
 from scipy.interpolate import interp1d
-
+from bs4 import BeautifulSoup as Soup
 from GBSAnalyzer.DataRetrievers.readNCFile import readNCFile
 # imports
 from GBSModel.getSeriesIndices import getSeriesIndices
@@ -15,7 +15,7 @@ from GBSModel.getSeriesIndices import getSeriesIndices
 class Demand:
 
     # Constuctor
-    def __init__(self, timeStep, loadRealFiles, loadReactiveFiles = [], runTimeSteps = 'all'):
+    def __init__(self, timeStep, loadRealFiles, loadDescriptor, loadReactiveFiles = [], runTimeSteps = 'all', ):
         """
         Constructors used for initialization of load profiles
         :param timeStep: the time step in seconds that the simulation will be run at
@@ -37,6 +37,20 @@ class Demand:
         else:
             self.reactiveTime = np.array([])
             self.reactiveLoad = np.array([])
+
+        self.loadDescriptorParser(loadDescriptor[0]) # currently can only handle one load
+
+    def loadDescriptorParser(self, loadDescriptor):
+        # read xml file
+        loadDescriptorFile = open(loadDescriptor, "r")
+        loadDescriptorXml = loadDescriptorFile.read()
+        loadDescriptorFile.close()
+        loadSoup = Soup(loadDescriptorXml, "xml")
+
+        # Dig through the tree for the required data
+        self.loadName = loadSoup.component.get('name')
+        self.loadPMax = float(loadSoup.PInMaxPa.get('value'))  # maximum load
+        self.minSRC = float(loadSoup.minSRC.get('value'))  # min required SRC as fraction of load
 
     def loadLoadFiles(self,loadFiles, isReal = True):
         # read the real load in
@@ -62,6 +76,7 @@ class Demand:
             time, load = self.checkNCFile(ncFile)
         # interpolate wind power according to the desired timestep
         f = interp1d(time, load)
+        #TODO: cannot assume the timestep is 1 sec
         num = int(len(time) / self.timeStep)
         timeNew = np.linspace(time[0], time[-1], num)
         loadNew = f(timeNew)

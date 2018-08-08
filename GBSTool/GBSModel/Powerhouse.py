@@ -189,15 +189,24 @@ class Powerhouse:
         # dispatch
         if self.genDispatchType == 1: # if proportional loading
             # make sure to update genPAvail and genQAvail before
-            loadingP = newGenP / np.sum(self.genPAvail) # this is the PU loading of each generator
-            loadingQ = newGenQ / np.sum(self.genQAvail)  # this is the PU loading of each generator
-            # cycle through each gen and update with new P and Q
-            for idx in range(len(self.genIDS)):
-                self.generators[idx].genP = loadingP * self.generators[idx].genPAvail
-                self.generators[idx].genQ = loadingQ * self.generators[idx].genQAvail
-                # update the local variable that keeps track of generator power
-                self.genP[idx] = self.generators[idx].genP
-                self.genQ[idx] = self.generators[idx].genQ
+            # check if no diesel generators online. still assign power, this will be flagged as a power outage
+            if sum(self.genPAvail)==0:
+                for idx in range(len(self.genIDS)):
+                    self.generators[idx].genP = newGenP/len(self.genIDS)
+                    self.generators[idx].genQ = newGenQ/len(self.genIDS)
+                    # update the local variable that keeps track of generator power
+                    self.genP[idx] = self.generators[idx].genP
+                    self.genQ[idx] = self.generators[idx].genQ
+            else:
+                loadingP = newGenP / max(np.sum(self.genPAvail),1) # this is the PU loading of each generator. max with 1 for 0 capacity instance
+                loadingQ = newGenQ / max(np.sum(self.genQAvail),1)  # this is the PU loading of each generator
+                # cycle through each gen and update with new P and Q
+                for idx in range(len(self.genIDS)):
+                    self.generators[idx].genP = loadingP * self.generators[idx].genPAvail
+                    self.generators[idx].genQ = loadingQ * self.generators[idx].genQAvail
+                    # update the local variable that keeps track of generator power
+                    self.genP[idx] = self.generators[idx].genP
+                    self.genQ[idx] = self.generators[idx].genQ
         else:
             print('The generator dispatch is not supported. ')
 
@@ -230,7 +239,8 @@ class Powerhouse:
     # self - self reference
     # scheduledLoad - the load that the generators will be expected to supply, this is predicted based on previous loading
     # scheduledSRC -  the minimum spinning reserve that the generators will be expected to supply
-    def genSchedule(self, futureLoad, futureRE, scheduledSRCSwitch, scheduledSRCStay, powerAvailToSwitch, powerAvailToStay):
+    # schedWithFuelCons -  minimize fuel consumption in the scheduling of generators. If false, it will schedule the combination with the lowest MOL
+    def genSchedule(self, futureLoad, futureRE, scheduledSRCSwitch, scheduledSRCStay, powerAvailToSwitch, powerAvailToStay,underSRC, minimizeFuel = False):
 
         # scheduled load is the difference between load and RE, the min of what needs to be provided by gen or ess
         scheduledLoad = max([futureLoad - futureRE])
@@ -241,9 +251,11 @@ class Powerhouse:
                            powerAvailToSwitch + scheduledSRCSwitch])
         # check if the current online combination is capable of supplying the projected load minus the power available to
         # help the current generator combination stay online
-        if self.onlineCombinationID not in indCap and \
-                        self.genCombinationsUpperNormalLoading[self.onlineCombinationID] >= scheduledLoad + scheduledSRCStay - powerAvailToStay:
-            indCap = np.append(indCap,self.onlineCombinationID)
+        if self.onlineCombinationID not in indCap and not any(self.outOfNormalBounds) and not underSRC: # keep current generating combingation in the mix unless has gone out of bounds for allotted amount
+                        #self.genCombinationsUpperNormalLoading[self.onlineCombinationID] >= scheduledLoad + scheduledSRCStay - powerAvailToStay:
+            # do not add the current generating option if it is diesel-off and it does not have enough SRC
+            #if not((self.onlineCombinationID == 0) and underSRC):
+                indCap = np.append(indCap,self.onlineCombinationID)
         # if there are no gen combinations large enough to supply, automatically add largest (last combination)
         if len(indCap) == 0:
             indCap = np.array([len(self.genCombinationsUpperNormalLoading)-1])
@@ -254,7 +266,7 @@ class Powerhouse:
         # if there are no gen combinations with a low enough MOL enough to supply, automatically add combination 1,
         # which is to smallest generator combination without turning off the generators
         if len(indInBounds) == 0:
-            indInBounds = np.array([1])
+            indInBounds = np.array([indCap[0]])
 
         ## then check how long it will take to switch to any of the combinations online
         turnOnTime = []
@@ -294,30 +306,38 @@ class Powerhouse:
                 SwitchTime = max(SwitchTime, turnOffTime[self.genIDS.index(genID)]) # check if there is a higher turn off time
             timeToSwitch.append(SwitchTime)
 
-            # get the generator fuel consumption at this loading for this combination
-            FCpower, FCcons = zip(*self.genCombinationsFCurve[idx]) # separate out the consumptio n and power
-            # check if this is the online combination. If so, use the power available to stay online to calculate the
-            # the load required by the generator
-            if idx == self.onlineCombinationID:
-                useScheduledLoad = int(max([scheduledLoad - powerAvailToStay, self.genCombinationsMOL[idx]]))
-            else:
-                useScheduledLoad = int(max([scheduledLoad - powerAvailToSwitch, self.genCombinationsMOL[idx]]))
-            indFCcons = getIntListIndex(useScheduledLoad,FCpower)
+            if minimizeFuel:
+                # get the generator fuel consumption at this loading for this combination
+                FCpower, FCcons = zip(*self.genCombinationsFCurve[idx]) # separate out the consumptio n and power
+                # check if this is the online combination. If so, use the power available to stay online to calculate the
+                # the load required by the generator
+                if idx == self.onlineCombinationID:
+                    useScheduledLoad = int(max([scheduledLoad - powerAvailToStay, self.genCombinationsMOL[idx]]))
+                else:
+                    useScheduledLoad = int(max([scheduledLoad - powerAvailToSwitch, self.genCombinationsMOL[idx]]))
+                indFCcons = getIntListIndex(useScheduledLoad,FCpower)
 
-            fuelCons.append(FCcons[indFCcons])
-            # TODO: Add cost of switching generators
+                fuelCons.append(FCcons[indFCcons])
+                # TODO: Add cost of switching generators
+
+
 
         ## bring the best option that can be switched immediatley, if any
         # if the most efficient option can't be switched, start warming up generators
         # order fuel consumptions
-        indSort = np.argsort(fuelCons)
+        if minimizeFuel:
+            indSort = np.argsort(fuelCons)
+        else:
+            indSort = np.argsort(self.genCombinationsMOL[indInBounds])
 
         # if the most efficient can be switched on now, switch to it
         if timeToSwitch[indSort[0]] <= 0:
-            self.switchGenComb(genSwOn[indSort[0]], genSwOff[indSort[0]])  # switch generators
             # update online generator combination
             self.onlineCombinationID = self.combinationsID[indInBounds[indSort[0]]]
             self.switchGenComb(genSwOn[indSort[0]], genSwOff[indSort[0]])  # switch generators
+            for idx in range(len(self.genIDS)):
+                # update genPAvail
+                self.generators[idx].checkOperatingConditions()
         # otherwise, start or continue warming up generators for most efficient combination
         else:
             self.startGenComb(genSwOn[indSort[0]])

@@ -108,3 +108,10 @@ class Windfarm:
         else:
             raise ValueError('The wind turbine dispatch is not supported. ')
 
+
+    # get the available wind power for each wind turbine
+    def getWtgPAvail(self, idx):
+        for wtgIdx, wtg in enumerate(self.windTurbines):
+            wtg.getWtgPAvail(idx)
+            self.wtgPAvail[wtgIdx] = wtg.wtgPAvail
+

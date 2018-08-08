@@ -41,8 +41,7 @@ class ThermalEnergyStorageSystem:
         # Operational data
         self.tesT = list(tesT)
         self.tesStates = list(tesStates)
-        self.tesPinAvail = []
-        self.tesPoutAvail = []
+        self.tesPAvail = []
         self.tesPloss = []
         self.tesP = [0] * len(self.tesT)
 
@@ -53,10 +52,9 @@ class ThermalEnergyStorageSystem:
             self.thermalEnergyStorageUnits.append(ThermalEnergyStorage(tesID, tesT[idx], tesStates[idx], timeStep, tesDescriptor[idx]))
 
             # Initial operating values
-            self.tesPinAvail.append(self.thermalEnergyStorageUnits[idx].tesPinAvail)
-            self.tesPoutAvail.append(self.thermalEnergyStorageUnits[idx].tesPoutAvail)
+            self.tesPAvail.append(self.thermalEnergyStorageUnits[idx].tesPinAvail)
             self.tesPloss.append(self.thermalEnergyStorageUnits[idx].tesPloss)
-            self.outOfBounds.append(self.thermalEnergyStorageUnits[idx].outOfBoundsReal)
+            self.outOfBounds.append(self.thermalEnergyStorageUnits[idx].outOfBounds)
 
             # total power and energy capacities
             self.tesPInMax += self.thermalEnergyStorageUnits[idx].tesPInMax
@@ -73,17 +71,21 @@ class ThermalEnergyStorageSystem:
         modFileName, modFileExt = os.path.splitext(modFile)
         # import module
         dispatchModule = importlib.import_module(modFileName)
-        self.tesDispatch = dispatchModule.tesDispatch
+        self.tesDispatch = dispatchModule.tesDispatch()
 
     def runTesDispatch(self, newP):
-        self.tesDispatch(self, newP)
+        self.tesDispatch.tesDispatch(self, newP)
         # check the operating conditions of tes, update counters
         for idx, tes in enumerate(self.thermalEnergyStorageUnits):
             tes.checkOperatingConditions()
             self.tesP[idx] = tes.tesP
             self.tesT[idx] = tes.tesT
             self.tesStates[idx] = tes.tesState
-            self.tesPinAvail[idx] = tes.tesPinAvail
-            self.tesPoutAvail[idx] = tes.tesPoutAvail
+            self.tesPAvail[idx] = tes.tesPinAvail
             self.tesPloss[idx] = tes.tesPloss
             self.outOfBounds[idx] = tes.outOfBounds
+
+    def checkOperatingConditions(self):
+        for tes in self.thermalEnergyStorageUnits:
+            if tes.tesP > tes.tesPInMax:
+                tes.outOfBounds = 1

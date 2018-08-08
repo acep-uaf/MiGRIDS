@@ -71,6 +71,65 @@ def generateRuns(projectSetDir):
             value = val
             writeXmlTag(setupFile, tag, attr, value)
 
+        # make changes to the re dispatch input file, only if initializing the setup dir for this set. This avoids over
+        # writing information
+        # get the reDispatchInputsFile
+        reDispatch = readXmlTag(setupFile, 'reDispatch', 'value')[0]
+        reDispatchInputsFile = os.path.join(projectDir, 'InputData', 'Setup', projectName + reDispatch[0].upper() + reDispatch[1:] + 'Inputs.xml')
+
+        # get the RE dispatch inputs for this set of simulations
+        reDispatchInputsTag = readXmlTag(projectName + 'Set' + str(setNum) + 'Attributes.xml',
+                              ['reDispatchInputAttributeValues', 'reDispatchInputTag'], 'value')
+        reDispatchInputAttr = readXmlTag(projectName + 'Set' + str(setNum) + 'Attributes.xml',
+                               ['reDispatchInputAttributeValues', 'reDispatchInputAttr'], 'value')
+        reDispatchInputValue = readXmlTag(projectName + 'Set' + str(setNum) + 'Attributes.xml',
+                                ['reDispatchInputAttributeValues', 'reDispatchInputValue'],
+                                'value')
+
+        # copy the reDispatchInput xml file to this simulation set directory and make the specified changes
+        setReDispatchInputFile = os.path.join(projectSetDir, 'Setup', projectName + 'Set' + str(setNum) + reDispatch[0].upper() + reDispatch[1:] + 'Inputs.xml')
+        # copy reDispatchInput file
+        copyfile(reDispatchInputsFile, setReDispatchInputFile)
+        # make the cbanges to it defined in projectSetAttributes
+        for idx, val in enumerate(reDispatchInputValue):  # iterate through all re dispatch attribute values
+            tag = reDispatchInputsTag[idx].split('.')
+            attr = reDispatchInputAttr[idx]
+            value = val
+            writeXmlTag(setReDispatchInputFile, tag, attr, value)
+
+        # make changes to the genMinSRC input file,
+        # get the reDispatchInputsFile
+        getMinSRC = readXmlTag(setupFile, 'getMinSrc', 'value')[0]
+        getMinSRCInputsFile = os.path.join(projectDir, 'InputData', 'Setup',
+                                            projectName + getMinSRC[0].upper() + getMinSRC[1:] + 'Inputs.xml')
+
+        # get the RE dispatch inputs for this set of simulations
+        getMinSRCInputsTag = readXmlTag(projectName + 'Set' + str(setNum) + 'Attributes.xml',
+                                         ['getMinSRCInputAttributeValues', 'getMinSRCInputTag'], 'value')
+        getMinSRCInputAttr = readXmlTag(projectName + 'Set' + str(setNum) + 'Attributes.xml',
+                                         ['getMinSRCInputAttributeValues', 'getMinSRCInputAttr'], 'value')
+        getMinSRCInputValue = readXmlTag(projectName + 'Set' + str(setNum) + 'Attributes.xml',
+                                          ['getMinSRCInputAttributeValues', 'getMinSRCInputValue'],
+                                          'value')
+
+        # copy the reDispatchInput xml file to this simulation set directory and make the specified changes
+        setGetMinSRCInputFile = os.path.join(projectSetDir, 'Setup',
+                                              projectName + 'Set' + str(setNum) + getMinSRC[
+                                                  0].upper() + getMinSRC[1:] + 'Inputs.xml')
+        # copy getMinSRCInput file
+        copyfile(getMinSRCInputsFile, setGetMinSRCInputFile)
+        # make the cbanges to it defined in projectSetAttributes
+        for idx, val in enumerate(getMinSRCInputValue):  # iterate through all re dispatch attribute values
+            tag = getMinSRCInputsTag[idx].split('.')
+            attr = getMinSRCInputAttr[idx]
+            value = val
+            writeXmlTag(setGetMinSRCInputFile, tag, attr, value)
+
+
+
+
+
+
     # get the components to be run
     components = readXmlTag(setupFile, 'componentNames', 'value')
 
