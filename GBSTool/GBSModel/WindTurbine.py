@@ -213,13 +213,7 @@ class WindTurbine:
             # get the spilled wind power in checkWindPowerTime
 
             self.wtgSpilledWindCum = sum(self.wtgSpilledWind[-int(self.wtgCheckWindTime/self.timeStep):])*self.timeStep
-            '''
-            # if the spilled length of time measured spilled wind power over is less than the check time
-            if len(self.wtgSpilledWind) > int(self.wtgCheckWindTime/self.timeStep):
-                self.wtgSpilledWindCum = self.wtgSpilledWindCum + self.wtgSpilledWind[-1]*self.timeStep- self.wtgSpilledWind[-int(self.wtgCheckWindTime/self.timeStep)]
-            else:
-                self.wtgSpilledWindCum = self.wtgSpilledWindCum + self.wtgSpilledWind[-1]*self.timeStep
-            '''
+
             # if enough wind spilled, set flag
             if (self.wtgSpilledWindCum > self.wtgSpilledWindLimit*self.wtgPMax) and (self.wtgSpilledWind[-1] > 0):
                 self.wtgSpilledWindFlag = True
