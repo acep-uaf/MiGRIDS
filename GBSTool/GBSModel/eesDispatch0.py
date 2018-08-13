@@ -73,12 +73,16 @@ class eesDispatch:
         # if there is no src capability, set to zero
         if sum(PsrcAvail) <= 0 :
             SrcRatio = 0
+            # if not energy storage capability of supplying SRC, still distribute SRC to energy storage units. This will
+            # force an under SRC flag and initiate the diesel schedule.
+            for idx, ees in enumerate(eess.electricalEnergyStorageUnits):
+                ees.setSRC(newSRC / len(eess.electricalEnergyStorageUnits))
         else:
             # SrcRatio is not limited to 1, so can over assign SRC, this will lead to underSRC flag being raised.
             SrcRatio = newSRC / sum(PsrcAvail)  # the fraction of available SRC power assigned to each ees
-        # set the SRC for each ees and find available remaining power
-        for idx, ees in enumerate(eess.electricalEnergyStorageUnits):
-            ees.setSRC(PsrcAvail[idx] * SrcRatio)
+            # set the SRC for each ees and find available remaining power
+            for idx, ees in enumerate(eess.electricalEnergyStorageUnits):
+                ees.setSRC(PsrcAvail[idx] * SrcRatio)
 
 
 

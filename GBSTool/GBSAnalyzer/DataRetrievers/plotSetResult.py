@@ -8,7 +8,9 @@ import pandas as pd
 import itertools
 import matplotlib.pyplot as plt
 
-def plotSetResult(plotRes,plotAttr, projectSetDir = '', otherAttr = [],otherAttrVal = [], baseSet = '', baseRun = '', subtractFromBase = True):
+def plotSetResult(plotRes,plotAttr, projectSetDir = '', otherAttr = [],otherAttrVal = [], baseSet = '', baseRun = '',
+                  subtractFromBase = True, removeSingleOtherAttr = True, alwaysUseMarkers = False,
+                  plotAttrName = '', otherAttrNames = []):
     '''
     plot a single result for a set of simulations
     :param plotRes: the database column header of the variable to plot.
@@ -17,6 +19,8 @@ def plotSetResult(plotRes,plotAttr, projectSetDir = '', otherAttr = [],otherAttr
     :param otherAttrVal: The values of the 'otherAttr' to plot. It should be given as a list of lists, corresponding to otherAttr.
     :param baseCaseRunDir: the run directory of the base case scenario.
     :param subtractFromBase: This is True if results are to be subtracted from the basecase. False for the reverse.
+    :param plotAttrName: the desired x axis label
+    :param otherAttrNames: a dict of the other attribute variable names that will go in the legend and the names desired to be used in the legend
     :return: Nothing
     '''
     if projectSetDir == '':
@@ -110,6 +114,11 @@ def plotSetResult(plotRes,plotAttr, projectSetDir = '', otherAttr = [],otherAttr
     # group according to other columns
     otherColumns = columns.copy()
     otherColumns.remove(plotAttr)
+    # check if input and output ess power are listed
+    if 'ees0.POutMaxPa.value' in otherColumns and 'ees0.PInMaxPa.value' in otherColumns:
+        # if they are, and they are identical, remove one.
+        if all(dfAttr['ees0.POutMaxPa.value'] == dfAttr['ees0.PInMaxPa.value']):
+            otherColumns.remove('ees0.PInMaxPa.value')
     legendValues = []
     legendNames = []
     legendIndices = []
@@ -122,48 +131,68 @@ def plotSetResult(plotRes,plotAttr, projectSetDir = '', otherAttr = [],otherAttr
     legendMarkers = []
     legendLineStyles = []
     for idx, otherCol in enumerate(otherColumns):
-        if any(dfAttr[otherCol] != dfAttr[plotAttr]) and otherCol.lower() != 'started':  # make sure not identical (this is an option when setting values of 2 different attributes
-            legendNames.append(otherCol)  # add col name to legend names
-            uniqueValues = np.unique(dfAttr[otherCol])  # unique values of this column
-            # check if it can be converted to a float
-            try:
-                # convert to float and sort uniqueValues
-                uniqueValues = np.sort([float(x) for x in uniqueValues])
-            except ValueError:
-                # do nothing
-                uniqueValues = uniqueValues
-            legendValues.append(list(uniqueValues))  # add the value that correspond to the legend name
-            # linestyles
-            # get indices of unique values
-            indVal = []
-            # check if uniqueValues are float. If so, convert attribute values to float to compare
-            if isinstance(uniqueValues[0],float):
-                attrVal = [float(x) for x in dfAttr[otherCol]]
-            else:
-                attrVal = dfAttr[otherCol]
+        if any(dfAttr[otherCol] != dfAttr[plotAttr]) and otherCol.lower() != 'started' and otherCol.lower() != 'finished':  # make sure not identical (this is an option when setting values of 2 different attributes
 
-            for uniqueVal in uniqueValues:
-                indVal.append(dfAttr.index[attrVal == uniqueVal].tolist())
-            legendIndices.append(indVal)
-            # append linestyles and marker styles
-            if idx%2 != 0: # odd numbers, markers
-                # get marker indices that wrap around when they reach the end of the list of markers
-                indMarker0 = []
-                for idxM in range(len(uniqueValues)):
-                    indMarker0.append(indMarker + (idxM % len(markers)))
-                legendMarkers.append(markers[indMarker0])
-                indMarker = indMarker + 1 % len(markers)
-                # append empty list for line styles, indicates does not control which kind of style
-                legendLineStyles.append(['']*len(uniqueValues))
-            else: # even numbers, line styles
-                # get line indices that wrap around when they reach the end of the list of lineStyles
-                indLineStyle0 = []
-                for idxL in range(len(uniqueValues)):
-                    indLineStyle0.append(indLineStyle + (idxL % len(lineStyles)))
-                legendLineStyles.append(lineStyles[indLineStyle0])
-                indLineStyle = indLineStyle + 1 % len(lineStyles)
-                # append empty list for markers, indicates does not control which kind of marker
-                legendMarkers.append(['']*len(uniqueValues))
+            uniqueValues = np.unique(dfAttr[otherCol])  # unique values of this column
+            # do not add other legend entries if they only have one value and the setting says so.
+            if not(removeSingleOtherAttr and len(uniqueValues) == 1):
+                if otherCol in otherAttrNames.keys():
+                    legendNames.append(otherAttrNames[otherCol])
+                else:
+                    legendNames.append(otherCol)  # add col name to legend names
+                # check if it can be converted to a float
+                try:
+                    # convert to float and sort uniqueValues
+                    uniqueValues = np.sort([float(x) for x in uniqueValues])
+                except ValueError:
+                    # do nothing
+                    uniqueValues = uniqueValues
+                legendValues.append(list(uniqueValues))  # add the value that correspond to the legend name
+                # linestyles
+                # get indices of unique values
+                indVal = []
+                # check if uniqueValues are float. If so, convert attribute values to float to compare
+                if isinstance(uniqueValues[0],float):
+                    attrVal = [float(x) for x in dfAttr[otherCol]]
+                else:
+                    attrVal = dfAttr[otherCol]
+
+                for uniqueVal in uniqueValues:
+                    indVal.append(dfAttr.index[attrVal == uniqueVal].tolist())
+                legendIndices.append(indVal)
+                # append linestyles and marker styles
+                if alwaysUseMarkers:
+                    # get marker indices that wrap around when they reach the end of the list of markers
+                    indMarker0 = []
+                    for idxM in range(len(uniqueValues)):
+                        indMarker0.append(indMarker + (idxM % len(markers)))
+                    legendMarkers.append(markers[indMarker0])
+                    indMarker = indMarker + 1 % len(markers)
+                    # get line indices that wrap around when they reach the end of the list of lineStyles
+                    indLineStyle0 = []
+                    for idxL in range(len(uniqueValues)):
+                        indLineStyle0.append(indLineStyle + (idxL % len(lineStyles)))
+                    legendLineStyles.append(lineStyles[indLineStyle0])
+                    indLineStyle = indLineStyle + 1 % len(lineStyles)
+                else:
+                    if idx%2 != 0: # odd numbers, markers
+                        # get marker indices that wrap around when they reach the end of the list of markers
+                        indMarker0 = []
+                        for idxM in range(len(uniqueValues)):
+                            indMarker0.append(indMarker + (idxM % len(markers)))
+                        legendMarkers.append(markers[indMarker0])
+                        indMarker = indMarker + 1 % len(markers)
+                        # append empty list for line styles, indicates does not control which kind of style
+                        legendLineStyles.append(['']*len(uniqueValues))
+                    else: # even numbers, line styles
+                        # get line indices that wrap around when they reach the end of the list of lineStyles
+                        indLineStyle0 = []
+                        for idxL in range(len(uniqueValues)):
+                            indLineStyle0.append(indLineStyle + (idxL % len(lineStyles)))
+                        legendLineStyles.append(lineStyles[indLineStyle0])
+                        indLineStyle = indLineStyle + 1 % len(lineStyles)
+                        # append empty list for markers, indicates does not control which kind of marker
+                        legendMarkers.append(['']*len(uniqueValues))
 
     # find common indices for each combination of other columm values
     possibleCombValues = list(itertools.product(*legendValues))
@@ -201,8 +230,18 @@ def plotSetResult(plotRes,plotAttr, projectSetDir = '', otherAttr = [],otherAttr
         idxSort = np.argsort(xPlot).tolist()
         # marker and linestyles
         marker = possibleCombMarkers[idx][0]
-        lineStyle = possibleCombLineStyles[idx][1]
-        plt.plot(xPlot.iloc[idxSort], yPlot.iloc[idxSort], marker = marker, linestyle = lineStyle )
+        lineStyle = possibleCombLineStyles[idx][0]
+        if marker == '':
+            if lineStyle == '':
+                plt.plot(xPlot.iloc[idxSort], yPlot.iloc[idxSort])
+            else:
+                plt.plot(xPlot.iloc[idxSort], yPlot.iloc[idxSort], linestyle=lineStyle)
+        else:
+            if lineStyle == '':
+                plt.plot(xPlot.iloc[idxSort], yPlot.iloc[idxSort], marker=marker)
+            else:
+                plt.plot(xPlot.iloc[idxSort], yPlot.iloc[idxSort], marker = marker, linestyle=lineStyle)
+
 
     if baseSet != '' and baseRun != '': # if base case was used
         if subtractFromBase:
@@ -212,7 +251,10 @@ def plotSetResult(plotRes,plotAttr, projectSetDir = '', otherAttr = [],otherAttr
     else:
         plt.ylabel(plotRes)
     # TODO: grab x label values from component descriptor, or..?
-    plt.xlabel(plotAttr)
+    if plotAttrName != '':
+        plt.xlabel(plotAttrName)
+    else:
+        plt.xlabel(plotAttr)
     plt.legend(legendText)
     #plt.show()
     otherAttrText = ''

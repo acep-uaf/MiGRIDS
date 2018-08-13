@@ -6,9 +6,9 @@
 import importlib.util
 import os
 import sys
-
+import xml.etree.ElementTree as ET
 import numpy as np
-
+from bs4 import BeautifulSoup as Soup
 # from ThermalSystem import ThermalSystem
 from GBSModel.Demand import Demand
 # from SolarFarm import Solarfarm
@@ -21,8 +21,8 @@ from GBSModel.Windfarm import Windfarm
 class SystemOperations:
     # System Variables
     # Generation and dispatch resources
-    def __init__(self, timeStep = 1, runTimeSteps = 'all', loadRealFiles = [], loadReactiveFiles = [], predictLoad = 'predictLoad1',
-                 predictWind = 'predictWind0', getMinSrcFile = 'getMinSrc0',
+    def __init__(self, timeStep = 1, runTimeSteps = 'all', loadRealFiles = [], loadReactiveFiles = [], predictLoad = 'predictLoad1', loadDescriptor = [],
+                 predictWind = 'predictWind0', getMinSrcFile = 'getMinSrc0', getMinSrcInputFile = 'getMinSrc0Inputs', reDispatchFile = 'reDispatch0', reDispatchInputsFile = 'reDispatchInputs0',
                  genIDs = [], genStates = [], genDescriptors = [], genDispatch = [],
                  wtgIDs = [], wtgStates = [], wtgDescriptors = [], wtgSpeedFiles = [], wtgDispatch = [],
                  eesIDs = [], eesStates = [], eesSOCs = [], eesDescriptors = [], eesDispatch = [],
@@ -96,8 +96,60 @@ class SystemOperations:
         modFileName, modFileExt = os.path.splitext(modFile)
         # import module
         A = importlib.import_module(modFileName)
-        self.getMinSrc = A.getMinSrc
-        #self.getMinSrc = getMinSrc.getMinSrc()
+        # get the inputs
+        rdi = open(getMinSrcInputFile, "r")
+        getMinSrcInputsXml = rdi.read()
+        rdi.close()
+        getMinSrcInputsSoup = Soup(getMinSrcInputsXml, "xml")
+
+        # get all tags
+        elemList = []
+        xmlTree = ET.parse(getMinSrcInputFile)
+        for elem in xmlTree.iter():
+            elemList.append(elem.tag)
+
+        # create Dict of tag names and values (not including root)
+        getMinSrcInputs = {}
+        for elem in elemList[1:]:
+            getMinSrcInputs[elem] = float(getMinSrcInputsSoup.find(elem).get('value'))
+
+        # check if inputs for initializing reDispatch
+        if len(getMinSrcInputs) == 0:
+            self.getMinSrc = A.getMinSrc()
+        else:
+            self.getMinSrc = A.getMinSrc(getMinSrcInputs)
+
+        # import renewable energy dispatch
+        modPath, modFile = os.path.split(reDispatchFile)
+        # if located in a different directory, add to sys path
+        if len(modPath) != 0:
+            sys.path.append(modPath)
+        # split extension off of file
+        modFileName, modFileExt = os.path.splitext(modFile)
+        # import module
+        A = importlib.import_module(modFileName)
+        # get the inputs
+        rdi = open(reDispatchInputsFile, "r")
+        reDispatchInputsXml = rdi.read()
+        rdi.close()
+        reDispatchInputsSoup = Soup(reDispatchInputsXml, "xml")
+
+        # get all tags
+        elemList = []
+        xmlTree = ET.parse(reDispatchInputsFile)
+        for elem in xmlTree.iter():
+            elemList.append(elem.tag)
+
+        # create Dict of tag names and values (not including root)
+        reDispatchInputs = {}
+        for elem in elemList[1:]:
+            reDispatchInputs[elem] = float(reDispatchInputsSoup.find(elem).get('value'))
+
+        # check if inputs for initializing reDispatch
+        if len(reDispatchInputs) == 0:
+            self.reDispatch = A.reDispatch()
+        else:
+            self.reDispatch = A.reDispatch(reDispatchInputs)
 
         # initiate generator power house
         # TODO: seperate genDispatch from power house, put as input
@@ -114,7 +166,7 @@ class SystemOperations:
             self.TESS = ThermalEnergyStorageSystem(tesIDs, tesTs, tesStates, timeStep, tesDescriptors, tesDispatch)
         # load the real load
         if len(loadRealFiles) != 0:
-            self.DM = Demand(timeStep, loadRealFiles, loadReactiveFiles, runTimeSteps)
+            self.DM = Demand(timeStep, loadRealFiles, loadDescriptor, loadReactiveFiles, runTimeSteps)
 
         # save local variables
         self.timeStep = timeStep
@@ -139,42 +191,37 @@ class SystemOperations:
         self.wfPAvail = []
         self.wtgPAvail = []
         self.rePlimit = []
+        self.tesP = []
+        self.wfPset = []
         # record for trouble shooting purposes
-        self.futureLoad = [0]*len(self.DM.realLoad)
-        self.futureWind = [[0]*len(self.WF.windTurbines)] * len(self.DM.realLoad)
+        self.futureLoadList = [0]*len(self.DM.realLoad)
+        self.futureWindList = [[0]*len(self.WF.windTurbines)] * len(self.DM.realLoad)
         self.futureSRC = [0] * len(self.DM.realLoad)
         self.underSRC = [0]*len(self.DM.realLoad)
         self.outOfNormalBounds = [0]*len(self.DM.realLoad)
+        self.wfSpilledWindFlag = [0]*len(self.DM.realLoad)
         self.genStartTime = []
         self.genRunTime = []
         self.onlineCombinationID = []
 
         # FUTUREFEATURE: run through parts of the year at a time and save the output.
-        for idx, P in enumerate(self.DM.realLoad): #self.DM.realLoad: # for each real load
-            ## Dispatch units
+        for self.idx, self.P in enumerate(self.DM.realLoad): #self.DM.realLoad: # for each real load
+
             # get available wind power
-            wfPAvail = sum(self.WF.wtgPAvail)
-            # the maximum amount of power that can be imported from renewable resources
-            rePlimit = max([P - sum(self.PH.genMolAvail),0])
-            # amount of imported wind power
-            wtgPimport = min(rePlimit,wfPAvail)
-            # amount of wind power used to charge the eess is the minimum of maximum charging power and the difference
-            # between available wind power and wind power imported to the grid.
-            # TODO: put condition if to charge ESS here
-            wtgPch = min(sum(self.EESS.eesPinAvail),wfPAvail - wtgPimport)
+            # FUTUREFEATURE: do the same for solar etc.
+            self.WF.getWtgPAvail(self.idx)
 
-            # TODO: put TES charging here
+            # dispatch the renewable energy
+            self.reDispatch.reDispatch(self)
 
-            # dispatch the wind turbines
-            self.WF.wtgDispatch(wtgPimport + wtgPch, 0)
             # get the required spinning reserve. Start off with a simple estimate
-            srcMin = self.getMinSrc(self.WF.wtgP, self.WF.wtgMinSrcCover, self.DM.realLoad[:idx+1], self.timeStep)
+            self.getMinSrc.getMinSrc(self)
+            srcMin = [self.getMinSrc.minSrcToStay, self.getMinSrc.minSrcToSwitch]
 
-            #srcMin = 100 + wtgPimport
             # discharge the eess to cover the difference between load and generation
-            eessDis = min([max([P - wtgPimport - sum(self.PH.genPAvail),0]),sum(self.EESS.eesPoutAvail)])
+            eessDis = min([max([self.P - self.reDispatch.wfPimport - sum(self.PH.genPAvail),0]),sum(self.EESS.eesPoutAvail)])
             # get the diesel power output, the difference between demand and supply
-            phP = P - wtgPimport - eessDis
+            phP = self.P - self.reDispatch.wfPimport - eessDis
             # find the remaining ability of the EESS to supply SRC not supplied by the diesel generators
             eessSrcRequested = max([srcMin[0] - sum(self.PH.genPAvail) + phP, 0])
 
@@ -199,26 +246,30 @@ class SystemOperations:
                     phLoadMax = max(phLoadMax, genMaxLoad[idxSOC])
                 phPch = max(phLoadMax - phP / sum(self.PH.genPAvail), 0) * sum(self.PH.genPAvail)
                 # only able to charge as much as is left over from being charged from wind power
-                phPch = min(sum(self.EESS.eesPinAvail) - wtgPch, phPch )
+                phPch = min(sum(self.EESS.eesPinAvail) - self.reDispatch.wfPch, phPch )
 
             # dispatch the eess
-            self.EESS.runEesDispatch(eessDis - wtgPch - phPch, 0, eessSrcRequested)
+            self.EESS.runEesDispatch(eessDis - self.reDispatch.wfPch - phPch, 0, eessSrcRequested)
             # read what eess managed to do
             eessP = sum(self.EESS.eesP[:])
             # recalculate generator power required
-            phP = P - wtgPimport - max([eessP,0]) + phPch
+            phP = self.P - self.reDispatch.wfPimport - max([eessP,0]) + phPch
 
             # dispatch the generators
             self.PH.genDispatch(phP, 0)
 
             # record values
-            self.rePlimit.append(rePlimit)
-            self.wfPAvail.append(wfPAvail) # wind farm p avail
+            if hasattr(self, 'TESS'): # check if thermal energy storage in the simulation
+                self.tesP.append(sum(self.TESS.tesP))  # thermal energy storage power
+            else:
+                self.tesP.append(0)
+            self.rePlimit.append(self.reDispatch.rePlimit)
+            self.wfPAvail.append(sum(self.WF.wtgPAvail[:])) # wind farm p avail
             self.wtgPAvail.append(self.WF.wtgPAvail[:]) # list of wind turbines  p avail
-            self.wfPImport.append(wtgPimport) #
+            self.wfPImport.append(self.reDispatch.wfPimport) #
             self.wtgP.append(self.WF.wtgP)
-            self.wfPch.append(wtgPch)
-            self.wfPTot.append(wtgPch+wtgPimport)
+            self.wfPch.append(self.reDispatch.wfPch)
+            self.wfPTot.append(self.reDispatch.wfPch+self.reDispatch.wfPimport)
             self.srcMin.append(srcMin[0])
             self.eessDis.append(eessDis)
             self.eessP.append(eessP)
@@ -245,12 +296,12 @@ class SystemOperations:
                     any(self.WF.wtgSpilledWindFlag):
                 # predict what load will be
                 # the previous 24 hours. 24hr * 60min/hr * 60sec/min = 86400 sec.
-                self.predictLoad.predictLoad(self.DM.realLoad[:idx+1], self.DM.realTime[idx])
-                futureLoad = self.predictLoad.futureLoad
+                self.predictLoad.predictLoad(self)
+                self.futureLoad = self.predictLoad.futureLoad
 
                 # predict what the wind will be
-                self.predictWind.predictWind(self.WF.wtgPAvail, self.DM.realTime[idx])
-                futureWind = self.predictWind.futureWind
+                self.predictWind.predictWind(self)
+                self.futureWind = self.predictWind.futureWind
 
                 # TODO: add other RE
 
@@ -263,10 +314,11 @@ class SystemOperations:
                 # find the required capacity of the diesel generators
                 # how much SRC can EESS cover? This can be subtracted from the load that the diesel generators must be
                 # able to supply
-                if sum(futureWind) > futureLoad: # if wind is greater than load, scale back to equal the load
-                    ratio = futureLoad/sum(futureWind)
-                    futureWind = [x*ratio for x in futureWind]
-                futureSRC = self.getMinSrc(futureWind, self.WF.wtgMinSrcCover, futureLoad, self.timeStep)
+                if sum(self.futureWind) > self.futureLoad: # if wind is greater than load, scale back to equal the load
+                    ratio = self.futureLoad/sum(self.futureWind)
+                    self.futureWind = [x*ratio for x in self.futureWind]
+                self.getMinSrc.getMinSrc(self, calcFuture=True)
+                futureSRC = [self.getMinSrc.minSrcToStay, self.getMinSrc.minSrcToSwitch]
                 # check if available SRC from EES is zero, to avoid dividing by zero
                 if sum(eesSrcAvailMax) > 0:
                     coveredSRCStay = min([sum(eesSrcAvailMax), futureSRC[0]])
@@ -295,20 +347,22 @@ class SystemOperations:
                         eesSchedDischAvail += ees.findPdisAvail(ees.eesDispatchTime, eesSrcScheduledSwitch[index], eesLoss + ees.eesSrcTime*eesSrcScheduledSwitch[index])
 
                 # schedule the generators accordingly
-                self.PH.genSchedule(futureLoad, sum(futureWind), futureSRC[1] - coveredSRCSwitch, futureSRC[0] - coveredSRCStay,
-                                    eesSchedDischAvail, sum(eesSrcAvailMax) - sum(eesSrcScheduledStay))
+                self.PH.genSchedule(self.futureLoad, sum(self.futureWind), futureSRC[1] - coveredSRCSwitch, futureSRC[0] - coveredSRCStay,
+                                    eesSchedDischAvail, sum(eesSrcAvailMax) - sum(eesSrcScheduledStay), any(self.EESS.underSRC))
                 # TODO: incorporate energy storage capabilities and wind power into diesel schedule. First predict
                 # the future amount of wind power. find available SRC from EESS. Accept the amount of predicted wind
                 # power that can be covered by ESS (likely some scaling needed to avoid switching too much)
 
                 # record for trouble shooting purposes
-                self.futureLoad[idx] = futureLoad
-                self.futureWind[idx] = futureWind
-                self.futureSRC[idx] = futureSRC[0]
+                if any(self.WF.wtgSpilledWindFlag):
+                    self.wfSpilledWindFlag[self.idx] = 1
+                self.futureLoadList[self.idx] = self.futureLoad
+                self.futureWindList[self.idx] = self.futureWind
+                self.futureSRC[self.idx] = futureSRC[0]
                 if any(self.EESS.underSRC):
-                    self.underSRC[idx] = 1
+                    self.underSRC[self.idx] = 1
                 if any(self.PH.outOfNormalBounds):
-                    self.outOfNormalBounds[idx] = 1
+                    self.outOfNormalBounds[self.idx] = 1
 
 
 

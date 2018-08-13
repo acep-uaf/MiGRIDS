@@ -23,7 +23,7 @@
  <!-- 'componentNames' is a tuple of the names of components in the grid. Acceptable names must start with corresponding
      names to the component descriptor files, including: 'Gen', 'Wtg', 'Inv', 'Tes', 'Ees' and 'ControlledLoad'. For example 'Gen1',
       'Gen2', 'Wtg1',... -->
- <componentNames value="gen0 gen1 gen2 wtg0 ees0 load0"/>
+ <componentNames value="gen0 gen1 gen2 wtg0 ees0 load0 tes0"/>
  <!-- 'componentChannels' describes the input data channels corresponding to grid components to read into the simulation.
     The tuple 'headerName' is the names or indices of the columns in the input data files. The component names are the names
     in the componentDescriptor files. 'componentAttribute' describes what was measured and what the units were. For example,
@@ -80,7 +80,7 @@
  <runTimeSteps value="all"/>
  <!-- 'loadProfileFile' is the filename of the load profile that is saved in
     ProjectDirectory/InputData/TimeSeries/Processed. The default value is 'load0.nc'. -->
- <loadProfileFile value="load0P.nc"/>
+ <loadProfileFile value="load2P.nc"/>
  <!-- 'predictLoad' refers to the function that is used to predict the load. If a user defines their own load
     predicting function, it is the path and filename of the function used to predict short term (several hours) future
     load. Otherwise, it is the name of the dispatch filename included in the software package. Options include:
@@ -113,6 +113,11 @@
     Otherwise, it is the name of the dispatch filename included in the software package. Options include: wtgDispatch0.
     The class name in the file must be 'wtgDispatch'. Default value is 'wtgDispatch0'-->
  <wtgDispatch value="wtgDispatch0"/>
+ <!-- 'reDispatch' refers to the class that is used to dispatch all renewable energy sources into the grid.  If a
+    user defines their own dispatch, it is the path and filename of the dispatch class used to dispatch the RE.
+    Otherwise, it is the name of the dispatch filename included in the software package. Options include: reDispatch0.
+    The class name in the file must be 'reDispatch'. Default value is 'wtgDispatch0'-->
+ <reDispatch value="reDispatch0"/>
  <!-- 'getMinSrc' refers to the class that is used to calculate the minimum required spinning reserve capacity. If
     the user defines their own calculation, it is the path and the filename of the class with the src calculation.
     Otherwise, it is the name of the filename included in the software package. Options include: getMinSrc0. The class

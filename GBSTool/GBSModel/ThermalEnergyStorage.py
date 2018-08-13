@@ -51,7 +51,7 @@ class ThermalEnergyStorage:
         self.tesPOutMax = float(tesSoup.POutMaxPa.get('value'))  # max discharging power
         self.tesPInMax = float(tesSoup.PInMaxPa.get('value'))  # max charging power
         self.tesEMax = float(
-            tesSoup.ratedDuration.get('value')) * self.tesPOutMax  # the maximum energy capacity of the EES in kWs
+            tesSoup.ratedDuration.get('value')) * self.tesPInMax  # the maximum energy capacity of the EES in kWs
         self.thermalCapacity = float(tesSoup.thermalCapacity.get('value'))  # thermalCapacity
         self.thermalConductanceInsulation = float(tesSoup.thermalConductanceInsulation.get('value'))  # thermalConductanceInsulation
         self.thermalConductanceExchanger = float(tesSoup.thermalConductanceExchanger.get('value'))  # thermalConductanceExchanger
@@ -66,6 +66,9 @@ class ThermalEnergyStorage:
         # maximum charge or discharge power. This creates charging and discharging curves that exponentially approach full
         # and zero charge.
         self.tesChargeRate = float(tesSoup.chargeRate.get('value'))
+        self.setPointResponseRampRate = float(tesSoup.setPointResponseRampRate.get('value'))
+        self.setPoint = float(tesSoup.setPoint.get('value'))
+
 
     def checkOperatingConditions(self):
         """
@@ -75,58 +78,17 @@ class ThermalEnergyStorage:
         :return:
         """
         if self.tesState == 2:  # if running online
-            # find the loss at the current power and SOC state
-            self.tesPloss = self.findLoss(self.tesP, self.timeStep)
-            # update the SOC
-            self.tesT = min([max([self.tesT - (self.tesP + self.tesPloss) * self.timeStep / self.tesEMax, 0]), 1])
-            # find the available real power (reactive is set to max)
-            self.tesPinAvail = self.findPchAvail(self.timeStep)
-            self.tesPoutAvail = self.findPdisAvail(self.timeStep, 0, 0)
-
-            # check if not enough SRC
-            # if self.tesMinSrcE > self.tesSOC*self.tesEMax or self.tesSRC > (self.tesPoutAvail - self.tesP):
-            # tesPsrcAvail is updated in the dispatch.
-            if self.tesPsrcAvail < self.tesSRC:
-                self.underSRC = True
-            else:
-                self.underSRC = False
-
+            self.tesPinAvail = self.tesPInMax
             # check to make sure the current power output or input is not greater than the maximum allowed.
-            if (self.tesP > self.tesPoutAvail) | (self.tesP < -self.tesPinAvail):
-                self.outOfBoundsReal = True
+            if self.tesP > self.tesPinAvail:
+                self.outOfBounds = True
             else:
-                self.outOfBoundsReal = False
-            if (self.tesQ > self.tesQoutAvail) | (self.tesQ < -self.tesQinAvail):
-                self.outOfBoundsReactive = True
-            else:
-                self.outOfBoundsReactive = False
+                self.outOfBounds = False
 
-            self.tesRunTimeAct += self.timeStep
-            self.tesRunTimeTot += self.timeStep
         elif self.tesState == 1:  # if starting up
             self.tesPinAvail = 0  # not available to produce power yet
-            self.tesPinAvail_1 = 0
-            self.tesQinAvail = 0
-            self.tesPoutAvail = 0  # not available to produce power yet
-            self.tesQoutAvail = 0
-            self.tesPoutAvailOverSrc = 0
-            self.tesPoutAvailOverSrc_1 = 0
-            self.tesStartTimeAct += self.timeStep
-            self.tesRunTimeAct = 0  # reset run time counter
-            self.underSRC = False
-            self.outOfBoundsReal = False
-            self.outOfBoundsReactive = False
+            self.outOfBounds = False
         else:  # if off
             # no power available and reset counters
             self.tesPinAvail = 0  # not available to produce power yet
-            self.tesPinAvail_1 = 0
-            self.tesQinAvail = 0
-            self.tesPoutAvail = 0  # not available to produce power yet
-            self.tesQoutAvail = 0
-            self.tesPoutAvailOverSrc = 0
-            self.tesPoutAvailOverSrc_1 = 0
-            self.tesStartTimeAct = 0
-            self.tesRunTimeAct = 0
-            self.underSRC = False
-            self.outOfBoundsReal = False
-            self.outOfBoundsReactive = False
+            self.outOfBounds = False

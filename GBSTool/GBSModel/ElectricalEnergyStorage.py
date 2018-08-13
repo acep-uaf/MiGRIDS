@@ -62,6 +62,7 @@ class ElectricalEnergyStorage:
         self.eesPoutAvail = 0
         self.eesQoutAvail = self.eesQOutMax
         self.underSRC = 0
+        self.prevUnderSrc = []
         self.outOfBoundsReal = 0
         self.outOfBoundsReactive = 0
         self.eesPoutAvailOverSrc = 0
@@ -100,6 +101,12 @@ class ElectricalEnergyStorage:
             self.eesEMax = 1
         # the amount of time in seconds that the EES must be able to discharge for at current level of SRC being provided
         self.eesSrcTime = float(eesSoup.eesSrcTime.get('value'))
+
+        # the amount of time over which under SRC operation if recorded to see if go over limit eesUnderSrcLimit
+        self.eesUnderSrcTime = float(eesSoup.eesUnderSrcTime.get('value'))
+        # the limit in kW*s over essUnderSrcTime before underSRC flag is set.
+        self.eesUnderSrcLimit = float(eesSoup.eesUnderSrcLimit.get('value'))
+
         # 'eesDispatchTime' is the minimum amount of time that the ESS must be able to supply the load for in order to
         # be considered as an active discharge option in the diesel schedule.
         self.eesDispatchTime = float(eesSoup.eesDispatchTime.get('value'))
@@ -211,7 +218,13 @@ class ElectricalEnergyStorage:
             # find the available real power (reactive is set to max)
             self.eesPinAvail = self.findPchAvail(self.timeStep)
             self.eesPoutAvail = self.findPdisAvail(self.timeStep, 0, 0)
-
+            # get the percent of the request SRC that is not being supplied.
+            self.prevUnderSrc.append(max(self.eesSRC - self.eesPsrcAvail,0))
+            # check if has operated more than eesUnderSrcLimit under the minimum SRC over the past eesUnderSrcTime
+            if sum(self.prevUnderSrc[-round(self.eesUnderSrcTime / self.timeStep):])*self.timeStep > self.eesUnderSrcLimit:
+                self.underSRC = True
+            else:
+                self.underSRC = False
             ''' calculate these as needed in dispatch 
             # given the SRC required from the EES, find the maximum power available for a minimum of 1 timestep
             
@@ -226,13 +239,6 @@ class ElectricalEnergyStorage:
             self.eesPoutAvailOverSrc = self.findPdisAvail(self.timeStep,self.eesSRC,self.eesMinSrcE)
             self.eesPoutAvailOverSrc_1 = self.findPdisAvail(self.eesPoutAvail_1_time, self.eesSRC, self.eesMinSrcE)
             '''
-            # check if not enough SRC
-            #if self.eesMinSrcE > self.eesSOC*self.eesEMax or self.eesSRC > (self.eesPoutAvail - self.eesP):
-            # eesPsrcAvail is updated in the dispatch.
-            if self.eesPsrcAvail < self.eesSRC:
-                self.underSRC = True
-            else:
-                self.underSRC = False
 
             # check to make sure the current power output or input is not greater than the maximum allowed.
             if (self.eesP > self.eesPoutAvail) | (self.eesP < -self.eesPinAvail):

@@ -174,7 +174,7 @@ class DataClass:
         
             df[(df[TOTALP] < mean - stdNum * std) | (df[TOTALP] > mean + stdNum * std)] = None
              # replace values with linear interpolation from surrounding values
-            df = df.interpolate()
+            #df = df.interpolate()
        self.totalPower()
        return
 

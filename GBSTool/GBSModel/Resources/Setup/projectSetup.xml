@@ -134,6 +134,12 @@
     The class name in the file must be 'wtgDispatch'. Default value is 'wtgDispatch0'-->
     <wtgDispatch value="wtgDispatch0"/>
 
+    <!-- 'reDispatch' refers to the class that is used to dispatch all renewable energy sources into the grid.  If a
+    user defines their own dispatch, it is the path and filename of the dispatch class used to dispatch the RE.
+    Otherwise, it is the name of the dispatch filename included in the software package. Options include: reDispatch0.
+    The class name in the file must be 'reDispatch'. Default value is 'wtgDispatch0'-->
+    <reDispatch value="reDispatch0"/>
+
     <!-- 'getMinSrc' refers to the class that is used to calculate the minimum required spinning reserve capacity. If
     the user defines their own calculation, it is the path and the filename of the class with the src calculation.
     Otherwise, it is the name of the filename included in the software package. Options include: getMinSrc0. The class
