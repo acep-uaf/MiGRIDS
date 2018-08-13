@@ -25,7 +25,7 @@ def calcSRCMethodBoundaries(time, firmLoadP, varLoadP, firmGenP, varGenP, otherC
     :type firmGenP: pd.Series
     :param varGenP: Variable generation real power time series, i.e., all non-load following generation.
     :type varGenP: pd.Series
-    :param otherConstraints: [minDynSRC, minDuration, minPercent, maxPercent, maxMargin]
+    :param otherConstraints: [constraintStrengthStr, minDynSRC, minDuration, minPercent, maxPercent, maxMargin]
         minDynSRC is a fraction
         minDuration is a time in seconds
         minPercent is a reference to a percentile as a fraction
@@ -44,11 +44,12 @@ def calcSRCMethodBoundaries(time, firmLoadP, varLoadP, firmGenP, varGenP, otherC
     '''
 
     # Handle conversion of inputs contained in `otherConstraints` to usable numbers
-    minDynSRC = float(otherConstraints[0])
-    minDuration = int(otherConstraints[1])
-    minPercent = float(otherConstraints[2])
-    maxPercent = float(otherConstraints[3])
-    maxMargin = float(otherConstraints[4])
+    constraintStrengthStr = str(otherConstraints[0]) # TODO do something with this setting - tight vs relaxed constraining
+    minDynSRC = float(otherConstraints[1])
+    minDuration = int(otherConstraints[2])
+    minPercent = float(otherConstraints[3])
+    maxPercent = float(otherConstraints[4])
+    maxMargin = float(otherConstraints[5])
 
 
     # Calculate SRC time series -> SRC always has to be either the minDynSRC fraction of current demand, or the
