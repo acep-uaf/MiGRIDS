@@ -126,4 +126,4 @@ def getBasecase(projectName, rootProjectPath):
 
 
     # Return the calculated channels
-    return time, firmLoadP, varLoadP, firmGenP, varGenP, allGenP
+    return time, firmLoadP, varLoadP, firmGenP, varGenP, allGenP, components
