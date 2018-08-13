@@ -32,7 +32,6 @@ def getDataSubsets(dataframe, method, otherInputs):
         datasubsets , databins = getDataSubsetsRELoadOneWeek(dataframe, otherInputs)
 
     # If noReduction is selected just return the input dataframe and an empty databins frame
-    # TODO check that this is handled correctly in the fitness calculators, particularly the weightedRawFitness
     # retrieval.
     elif method == 'noReduction':
         datasubsets = dataframe
