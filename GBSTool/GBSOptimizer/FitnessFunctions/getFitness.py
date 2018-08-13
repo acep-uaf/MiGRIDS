@@ -37,6 +37,8 @@ def getMinFuelUtilizationFitness(rootProjectPath, inputDataFrame, otherInformati
     fuelCurveDataPoints = pd.DataFrame(index=genFleet,
                                             columns=['fuelCurve_pPu', 'fuelCurve_massFlow', 'POutMaxPa'])
 
+    # Retrieve the fuel curves for the generators involved
+    # TODO: this is redundant to do every iteration, this data should be assembled once and passed on to this method via the otherInformation input.
     for genString in genFleet:
         genPath = os.path.join(rootProjectPath, 'OutputData/', setPath, 'Run0/Components/',
                                genString + setName + 'Run0Descriptor.xml')
@@ -99,7 +101,9 @@ def getMaxREContributionFitness(inputDataFrame, otherInformation):
                 varGenP = varGenP + inputDataFrame[col]
 
         subFitness = getPrimaryREContribution(time, firmLoadP, firmGenP, varGenP)
-        rawFitness['fitness' + str(snippetIdx)] = pd.Series(subFitness)
+        # TODO the following inverting of values was moved from a previous spot, this needs to be tested.
+        # in the next step we'll write 1/subfitness, as the optimizer searches for minima.
+        rawFitness['fitness' + str(snippetIdx)] = 1/pd.Series(subFitness)
 
     return rawFitness
 
@@ -211,27 +215,26 @@ def getFitness(fitnessMethod, rootProjectPath, inputDataFrame, inputDataWeights,
         e.g., renewable energy penetration, but something related.
     '''
 
-    # T ODO remove this override in release.
+    # TESTING remove below override for release.
     # fitnessMethod = 'testFunction'
 
     # Fitness method selection
     if fitnessMethod == 'minFuelUtilization':
         rawFitness = getMinFuelUtilizationFitness(rootProjectPath, inputDataFrame, otherInformation)
-        fitness = weightedRawFitness(rawFitness, inputDataWeights, otherInformation)
+
     elif fitnessMethod == 'maxREContribution':
         rawFitness = getMaxREContributionFitness(inputDataFrame, otherInformation)
-        invFitness = weightedRawFitness(rawFitness, inputDataWeights, otherInformation)
-        # Since we're running a minimization algorithm, we need to flip this
-        if invFitness == 0:
-            fitness = np.inf
-        else:
-            fitness = 1/invFitness
+
     elif fitnessMethod == 'testFunction':
         # Just for testing algorithms NOT CONNECTED TO ACTUAL SIMULATION RESULTS
-        fitness = getTestFitness(otherInformation)
+        rawFitness = getTestFitness(otherInformation)
+        inputDataWeights = pd.DataFrame([])
 
         # Note: this one doesn't need to call weightedRawFitness() as no simulations were actually run.
     else:
         raise ImportError('Selected optimization objective, %s, is unknown.', fitnessMethod)
+
+    # Calculate the weighted fitness from the input weights, and the raw fitness.
+    fitness = weightedRawFitness(rawFitness, inputDataWeights, otherInformation)
 
     return fitness
