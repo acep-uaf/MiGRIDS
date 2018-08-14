@@ -55,7 +55,7 @@ class Generator:
         self.checkLoadingTime = float(genSoup.checkLoadingTime.get('value'))
         # Helper variable to find the first index (from the back) in the lists keeping track of previous loading,
         # molDifference and normalUpperDifference in checkOperatingConditions
-        self.checkLoadTimeIdx = -round(self.checkLoadingTime / self.timeStep)
+        self.checkLoadTimeIdx = -round(self.checkLoadingTime / self.timeStep) + 1
         self.genRunTimeMin = float(genSoup.minRunTime.get('value')) # minimum diesel run time
         self.genStartTime = float(genSoup.startTime.get('value')) # amount of time required to start from warm
         self.genStartCost =  float(genSoup.startCost.get('value')) # equivalent cost in kg of diesel to start engine
@@ -131,11 +131,8 @@ class Generator:
         if self.genState == 2:
             ######### Check for out of bound operation ################
             # update the list of previous loadings and remove the oldest one
-            self.prevLoading.append(self.genP)
             # limit the list to required length
-            # first reverse order, then take checkLoadingTime of points and reverse back again
-            # number of data points is (seconds required)/(# seconds per data point)
-            self.prevLoading = self.prevLoading[self.checkLoadTimeIdx:]
+            self.prevLoading = self.prevLoading[self.checkLoadTimeIdx:] + [self.genP]
 
             ### Check the MOL constraint ###
             '''
@@ -145,8 +142,7 @@ class Generator:
             self.underMol = sum([num for num in molDifference if num > 0]) * self.timeStep
             '''
             # try faster check
-            self.molDifference.append(max([self.genMol - self.genP,0]))
-            self.molDifference = self.molDifference[-self.checkLoadTimeIdx:]
+            self.molDifference = self.molDifference[self.checkLoadTimeIdx:] + [max([self.genMol - self.genP,0])]
             self.underMol = sum(self.molDifference)*self.timeStep
 
             ### Check the upper normal loading limit ###
@@ -156,9 +152,11 @@ class Generator:
             # the amount of energy that has been operated above genUpperNormalLoading in checkLoadingTime
             self.overGenUpperNormalLoading = sum([num for num in normalUpperDifference if num > 0]) * self.timeStep
             '''
+
             # try faster check
-            self.normalUpperDifference.append(max([self.genP - self.genUpperNormalLoading, 0]))
-            self.normalUpperDifference = self.normalUpperDifference[-self.checkLoadTimeIdx:]
+            self.normalUpperDifference = self.normalUpperDifference[self.checkLoadTimeIdx:] + [
+                max([self.genP - self.genUpperNormalLoading, 0])]
+            # try faster check
             self.overGenUpperNormalLoading = sum(self.normalUpperDifference) * self.timeStep
 
             ### Check if out of bounds operation, then flag outOfNormalBounds ###
@@ -225,7 +223,6 @@ class Generator:
             else:
                 self.outOfNormalBounds = False
                 self.outOfBounds = False
-
 
 
 
