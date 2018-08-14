@@ -92,9 +92,9 @@ class Generator:
         self.genRunTimeAct = 0  # Run time since last start [s]
         self.genRunTimeTot = 0  # Cummulative run time since model start [s]
         self.genStartTimeAct = 0  # the amount of time spent warming up
-        self.prevLoading = [] # a list of the last x seconds of loading on the diesel generator, updated with checkOperatingConditions()
-        self.molDifference = [] # a list of the last x seconds with the amount operated below MOL
-        self.normalUpperDifference = [] # a list of the last x seconds with the amount operated above normalUpperLimit
+        self.prevLoading = [0] # a list of the last x seconds of loading on the diesel generator, updated with checkOperatingConditions()
+        self.molDifference = [0] # a list of the last x seconds with the amount operated below MOL
+        self.normalUpperDifference = [0] # a list of the last x seconds with the amount operated above normalUpperLimit
 
         # Write initial values to internal variables.
         self.genID = genID  # internal id used in Powerhouse for tracking generator objects. *type int*
@@ -141,9 +141,10 @@ class Generator:
             # the amount of energy that has been operated below MOL in checkLoadingTime
             self.underMol = sum([num for num in molDifference if num > 0]) * self.timeStep
             '''
-            # try faster check
+            # try faster check - see issue #113 and #114 for explanation
+            molDifference0 = self.molDifference[0]
             self.molDifference = self.molDifference[self.checkLoadTimeIdx:] + [max([self.genMol - self.genP,0])]
-            self.underMol = sum(self.molDifference)*self.timeStep
+            self.underMol = self.underMol - (molDifference0 - self.molDifference[-1])*self.timeStep
 
             ### Check the upper normal loading limit ###
             '''
@@ -153,11 +154,13 @@ class Generator:
             self.overGenUpperNormalLoading = sum([num for num in normalUpperDifference if num > 0]) * self.timeStep
             '''
 
-            # try faster check
+            # try faster check -  see issue #113 and #114 for explanation
+            normalUpperDifference0 = self.normalUpperDifference[0]
             self.normalUpperDifference = self.normalUpperDifference[self.checkLoadTimeIdx:] + [
                 max([self.genP - self.genUpperNormalLoading, 0])]
             # try faster check
-            self.overGenUpperNormalLoading = sum(self.normalUpperDifference) * self.timeStep
+            self.overGenUpperNormalLoading = self.overGenUpperNormalLoading - \
+                                             (normalUpperDifference0 - self.normalUpperDifference[-1]) * self.timeStep
 
             ### Check if out of bounds operation, then flag outOfNormalBounds ###
             # under MOL by specified amount and currently under
@@ -223,6 +226,5 @@ class Generator:
             else:
                 self.outOfNormalBounds = False
                 self.outOfBounds = False
-
 
 
