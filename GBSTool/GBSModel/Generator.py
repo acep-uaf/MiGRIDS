@@ -53,6 +53,9 @@ class Generator:
         self.genUpperLimit = float(genSoup.upperLimit.get('value'))*self.genPMax
         # the amount of time in seconds that the loading on the diesel generators is monitored for
         self.checkLoadingTime = float(genSoup.checkLoadingTime.get('value'))
+        # Helper variable to find the first index (from the back) in the lists keeping track of previous loading,
+        # molDifference and normalUpperDifference in checkOperatingConditions
+        self.checkLoadTimeIdx = -round(self.checkLoadingTime / self.timeStep)
         self.genRunTimeMin = float(genSoup.minRunTime.get('value')) # minimum diesel run time
         self.genStartTime = float(genSoup.startTime.get('value')) # amount of time required to start from warm
         self.genStartCost =  float(genSoup.startCost.get('value')) # equivalent cost in kg of diesel to start engine
@@ -132,7 +135,7 @@ class Generator:
             # limit the list to required length
             # first reverse order, then take checkLoadingTime of points and reverse back again
             # number of data points is (seconds required)/(# seconds per data point)
-            self.prevLoading = self.prevLoading[-round(self.checkLoadingTime/self.timeStep):]
+            self.prevLoading = self.prevLoading[self.checkLoadTimeIdx:]
 
             ### Check the MOL constraint ###
             '''
@@ -143,7 +146,7 @@ class Generator:
             '''
             # try faster check
             self.molDifference.append(max([self.genMol - self.genP,0]))
-            self.molDifference = self.molDifference[-round(self.checkLoadingTime / self.timeStep):]
+            self.molDifference = self.molDifference[-self.checkLoadTimeIdx:]
             self.underMol = sum(self.molDifference)*self.timeStep
 
             ### Check the upper normal loading limit ###
@@ -155,7 +158,7 @@ class Generator:
             '''
             # try faster check
             self.normalUpperDifference.append(max([self.genP - self.genUpperNormalLoading, 0]))
-            self.normalUpperDifference = self.normalUpperDifference[-round(self.checkLoadingTime / self.timeStep):]
+            self.normalUpperDifference = self.normalUpperDifference[-self.checkLoadTimeIdx:]
             self.overGenUpperNormalLoading = sum(self.normalUpperDifference) * self.timeStep
 
             ### Check if out of bounds operation, then flag outOfNormalBounds ###
