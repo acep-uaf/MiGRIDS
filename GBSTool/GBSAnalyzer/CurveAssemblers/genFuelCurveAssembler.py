@@ -104,7 +104,8 @@ class GenFuelCurve:
 
         # To pull an array of values from the cubic spline, we need to setup a power level array. This sensibly starts at
         # 0 kW and in this case we carry it out to the (rounded) overload power level, with a step size of 1 kW.
-        powerLevels = np.arange(0, int(self.genOverloadPMax), loadStep)
+        powerLevels = np.linspace(0, int(self.genOverloadPMax), round(self.genOverloadPMax/loadStep))
+
         # With power level vector setup, we can extract values from the cubic spline of each power level point.
         fuelConsumption = cs(powerLevels)
 
