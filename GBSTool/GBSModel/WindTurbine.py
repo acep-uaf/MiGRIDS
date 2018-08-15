@@ -15,6 +15,7 @@ from GBSAnalyzer.CurveAssemblers.wtgPowerCurveAssembler import WindPowerCurve
 from bisect import bisect_left
 from GBSAnalyzer.DataRetrievers.readNCFile import readNCFile
 from GBSModel.getIntListIndex import getIntListIndex
+from GBSModel.getIntListIndex import  getIntDictKey
 from GBSModel.getSeriesIndices import getSeriesIndices
 import numpy as np
 from scipy.interpolate import interp1d
@@ -91,7 +92,6 @@ class WindTurbine:
 
         :return:
         """
-
         print(wtgDescriptor)
 
         # read xml file
@@ -114,7 +114,7 @@ class WindTurbine:
 
         # check if there are wind power files in the wind speed directory
         windSpeedFile = os.path.join(windSpeedDir,'wtg'+str(self.wtgID)+'WS.nc')
-        windPowerFile = os.path.join(windSpeedDir,'wtg'+str(self.wtgID)+'WP.nc')
+        windPowerFile = os.path.join(windSpeedDir,'wtg'+str(self.wtgID)+'PAvail.nc')
         # if there are wind power measurements and recalculate is not set
         if os.path.isfile(windPowerFile) and not self.wtgRecalculateWtgPAvail:
             # if there is, then read it
@@ -164,7 +164,7 @@ class WindTurbine:
             # get wind power
             windPower = self.getWP(PCpower,PCws,windSpeed, wtgPC.wsScale)
             # save nc file to avoid having to calculate for future simulations
-            writeNCFile(NCF.time[:], windPower, 1, 0, 'kW', os.path.join(windSpeedDir,'wtg'+str(self.wtgID)+'WP.nc'))
+            writeNCFile(NCF.time[:], windPower, 1, 0, 'kW', os.path.join(windSpeedDir,'wtg'+str(self.wtgID)+'PAvail.nc'))
         else:
             raise ValueError('There is no wind speed file in the specified directory.')
 
@@ -183,12 +183,15 @@ class WindTurbine:
     # PCpower is the corresonding power in kW
     # windSpeed is a list of windspeeds in m/s
     def getWP(self,PCpower,PCws,windSpeed, wsScale):
-        windPower = []
-        for WS in windSpeed:
+        windPower = len(windSpeed)*[None]
+        PCwsDict = dict(zip(PCws,range(len(PCws))))
+        minPCwsDict = min(PCwsDict.keys())
+        maxPCwsDict = max(PCwsDict.keys())
+        for wsIdx, WS in enumerate(windSpeed):
             # get the index of the wind speed
-            idx = getIntListIndex(WS*wsScale,PCws)
+            idx = getIntDictKey(WS*wsScale,PCwsDict, minPCwsDict, maxPCwsDict)
             # append the corresponding wind power
-            windPower.append(PCpower[idx])
+            windPower[wsIdx] = PCpower[idx]
         return windPower
 
 
