@@ -189,7 +189,9 @@ class Powerhouse:
         if self.genDispatchType == 1: # if proportional loading
             # make sure to update genPAvail and genQAvail before
             # check if no diesel generators online. still assign power, this will be flagged as a power outage
-            if sum(self.genPAvail)==0:
+            # Helper sum
+            sumGenPAvail = sum(self.genPAvail)
+            if sumGenPAvail == 0:
                 for idx in range(len(self.genIDS)):
                     self.generators[idx].genP = newGenP/len(self.genIDS)
                     self.generators[idx].genQ = newGenQ/len(self.genIDS)
@@ -197,11 +199,7 @@ class Powerhouse:
                     self.genP[idx] = self.generators[idx].genP
                     self.genQ[idx] = self.generators[idx].genQ
             else:
-                #print('************************')
-                #print(type(self.genPAvail))
-                #print(len(self.genPAvail))
-                #print('************************')
-                loadingP = newGenP / max(sum(self.genPAvail),1) # this is the PU loading of each generator. max with 1 for 0 capacity instance
+                loadingP = newGenP / max(sumGenPAvail, 1) # this is the PU loading of each generator. max with 1 for 0 capacity instance
                 loadingQ = newGenQ / max(sum(self.genQAvail),1)  # this is the PU loading of each generator
                 # cycle through each gen and update with new P and Q
                 for idx in range(len(self.genIDS)):
