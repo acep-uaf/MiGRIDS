@@ -219,7 +219,10 @@ class SystemOperations:
             srcMin = [self.getMinSrc.minSrcToStay, self.getMinSrc.minSrcToSwitch]
 
             # discharge the eess to cover the difference between load and generation
-            eessDis = min([max([self.P - self.reDispatch.wfPimport - sum(self.PH.genPAvail),0]),sum(self.EESS.eesPoutAvail)])
+            if hasattr(self, 'EESS'):
+                eessDis = min([max([self.P - self.reDispatch.wfPimport - sum(self.PH.genPAvail),0]),sum(self.EESS.eesPoutAvail)])
+            else:
+                eessDis = min([max([self.P - self.reDispatch.wfPimport - sum(self.PH.genPAvail), 0]),0])
             # get the diesel power output, the difference between demand and supply
             phP = self.P - self.reDispatch.wfPimport - eessDis
             # find the remaining ability of the EESS to supply SRC not supplied by the diesel generators
@@ -292,8 +295,8 @@ class SystemOperations:
 
             ## If conditions met, schedule units
             # check if out of bounds opperation
-            if any(self.EESS.underSRC) or any(self.EESS.outOfBoundsReal) or any(self.PH.outOfNormalBounds) or \
-                    any(self.WF.wtgSpilledWindFlag):
+            if True in self.EESS.underSRC or True in self.EESS.outOfBoundsReal or True in self.PH.outOfNormalBounds or \
+                    True in self.WF.wtgSpilledWindFlag:
                 # predict what load will be
                 # the previous 24 hours. 24hr * 60min/hr * 60sec/min = 86400 sec.
                 self.predictLoad.predictLoad(self)
@@ -354,14 +357,14 @@ class SystemOperations:
                 # power that can be covered by ESS (likely some scaling needed to avoid switching too much)
 
                 # record for trouble shooting purposes
-                if any(self.WF.wtgSpilledWindFlag):
+                if True in self.WF.wtgSpilledWindFlag:
                     self.wfSpilledWindFlag[self.idx] = 1
                 self.futureLoadList[self.idx] = self.futureLoad
                 self.futureWindList[self.idx] = self.futureWind
                 self.futureSRC[self.idx] = futureSRC[0]
-                if any(self.EESS.underSRC):
+                if True in self.EESS.underSRC:
                     self.underSRC[self.idx] = 1
-                if any(self.PH.outOfNormalBounds):
+                if True in self.PH.outOfNormalBounds:
                     self.outOfNormalBounds[self.idx] = 1
 
 

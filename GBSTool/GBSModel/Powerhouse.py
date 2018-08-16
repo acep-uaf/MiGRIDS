@@ -85,7 +85,6 @@ class Powerhouse:
             self.genUpperNormalLoading.append(self.generators[idx].genUpperNormalLoading)  # the genUpperNormalLoading of each generator
             self.genUpperLimit.append(self.generators[idx].genUpperLimit) # the upper limit of each generator
             self.genLowerLimit.append(self.generators[idx].genLowerLimit) # the lower limit of each generator
-
         # Create a list of all possible generator combination ID, MOL, upper normal loading, upper limit and lower limit
         # these will be used to schedule the diesel generators
         self.combinationsID = range(2**len(self.genIDS)) # the IDs of the generator combinations
@@ -198,8 +197,12 @@ class Powerhouse:
                     self.genP[idx] = self.generators[idx].genP
                     self.genQ[idx] = self.generators[idx].genQ
             else:
-                loadingP = newGenP / max(np.sum(self.genPAvail),1) # this is the PU loading of each generator. max with 1 for 0 capacity instance
-                loadingQ = newGenQ / max(np.sum(self.genQAvail),1)  # this is the PU loading of each generator
+                #print('************************')
+                #print(type(self.genPAvail))
+                #print(len(self.genPAvail))
+                #print('************************')
+                loadingP = newGenP / max(sum(self.genPAvail),1) # this is the PU loading of each generator. max with 1 for 0 capacity instance
+                loadingQ = newGenQ / max(sum(self.genQAvail),1)  # this is the PU loading of each generator
                 # cycle through each gen and update with new P and Q
                 for idx in range(len(self.genIDS)):
                     self.generators[idx].genP = loadingP * self.generators[idx].genPAvail
@@ -249,9 +252,10 @@ class Powerhouse:
         # find all with capacity over the load and the required SRC
         indCap = np.array([idx for idx, x in enumerate(self.genCombinationsUpperNormalLoading) if x >= scheduledLoad -
                            powerAvailToSwitch + scheduledSRCSwitch])
+
         # check if the current online combination is capable of supplying the projected load minus the power available to
         # help the current generator combination stay online
-        if self.onlineCombinationID not in indCap and not any(self.outOfNormalBounds) and not underSRC: # keep current generating combingation in the mix unless has gone out of bounds for allotted amount
+        if self.onlineCombinationID not in indCap and not (True in self.outOfNormalBounds) and not underSRC: # keep current generating combingation in the mix unless has gone out of bounds for allotted amount
                         #self.genCombinationsUpperNormalLoading[self.onlineCombinationID] >= scheduledLoad + scheduledSRCStay - powerAvailToStay:
             # do not add the current generating option if it is diesel-off and it does not have enough SRC
             #if not((self.onlineCombinationID == 0) and underSRC):
@@ -315,7 +319,7 @@ class Powerhouse:
                     useScheduledLoad = int(max([scheduledLoad - powerAvailToStay, self.genCombinationsMOL[idx]]))
                 else:
                     useScheduledLoad = int(max([scheduledLoad - powerAvailToSwitch, self.genCombinationsMOL[idx]]))
-                indFCcons = getIntListIndex(useScheduledLoad,FCpower)
+                indFCcons = getIntListIndex(useScheduledLoad, FCpower)
 
                 fuelCons.append(FCcons[indFCcons])
                 # TODO: Add cost of switching generators
