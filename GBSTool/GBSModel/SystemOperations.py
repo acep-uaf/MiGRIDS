@@ -240,7 +240,7 @@ class SystemOperations:
                 phLoadMax = 0
                 for eesSOC in self.EESS.eesSOC:
                     # find the SOC
-                    genMaxLoad, eesMaxSOC = zip(*self.PH.genMaxDiesCapCharge[self.PH.onlineCombinationID])
+                    eesMaxSOC, genMaxLoad  = zip(*self.PH.genMaxDiesCapCharge[self.PH.onlineCombinationID])
                     # find the lowest max SOC the SOC of the ees is under
                     idxSOC = np.where(np.array(eesMaxSOC) > eesSOC)[0]
                     if len(idxSOC) == 0:

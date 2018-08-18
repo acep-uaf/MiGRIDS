@@ -105,7 +105,7 @@ def runSimulation(projectSetDir = ''):
         except: # there are no more simulations left to run
             break
         # set started value to 1 to indicate starting the simulations
-        df['started'][runNum] = 1
+        df.at[runNum, 'started'] = 1
         df.to_sql('compAttributes', conn, if_exists="replace", index=False)  # write to table compAttributes in db
         conn.close()
         # Go to run directory and run

@@ -75,7 +75,6 @@ class WindTurbine:
         self.wtgRunTimeAct = 0  # Run time since last start [s]
         self.wtgRunTimeTot = 0  # Cummulative run time since model start [s]
         self.wtgStartTimeAct = 0 # time spent starting up since last start [s]
-        self.step = 0 # this keeps track of which step in the time series we are on
         self.wtgSpilledWind = [] # time series of spilled wind power
         self.wtgSpilledWindCum = 0 # amount of spilled wind power in last wtgCheckWindPowerTime seconds
         self.wtgSpilledWindFlag = False # indicates over spilled wind power limit
@@ -230,7 +229,6 @@ class WindTurbine:
             # no power available and reset counters
             self.wtgStartTimeAct = 0
             self.wtgRunTimeAct = 0
-        self.step += 1 # increment which step we are on
 
 
     def getWtgPAvail(self, idx):
