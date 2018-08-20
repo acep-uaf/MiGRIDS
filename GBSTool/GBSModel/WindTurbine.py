@@ -114,7 +114,7 @@ class WindTurbine:
 
         # check if there are wind power files in the wind speed directory
         windSpeedFile = os.path.join(windSpeedDir,'wtg'+str(self.wtgID)+'WS.nc')
-        windPowerFile = os.path.join(windSpeedDir,'wtg'+str(self.wtgID)+'PAvail.nc')
+        windPowerFile = os.path.join(windSpeedDir,'wtg'+str(self.wtgID)+'WP.nc')
         # if there are wind power measurements and recalculate is not set
         if os.path.isfile(windPowerFile) and not self.wtgRecalculateWtgPAvail:
             # if there is, then read it
@@ -164,7 +164,7 @@ class WindTurbine:
             # get wind power
             windPower = self.getWP(PCpower,PCws,windSpeed, wtgPC.wsScale)
             # save nc file to avoid having to calculate for future simulations
-            writeNCFile(NCF.time[:], windPower, 1, 0, 'kW', os.path.join(windSpeedDir,'wtg'+str(self.wtgID)+'PAvail.nc'))
+            writeNCFile(NCF.time[:], windPower, 1, 0, 'kW', os.path.join(windSpeedDir,'wtg'+str(self.wtgID)+'WP.nc'))
         else:
             raise ValueError('There is no wind speed file in the specified directory.')
 
@@ -192,6 +192,7 @@ class WindTurbine:
             idx = getIntDictKey(WS*wsScale,PCwsDict, minPCwsDict, maxPCwsDict)
             # append the corresponding wind power
             windPower[wsIdx] = PCpower[idx]
+        print(windPower)
         return windPower
 
 
