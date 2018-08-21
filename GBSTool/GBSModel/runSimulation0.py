@@ -201,6 +201,8 @@ def runSimulation(projectSetDir = ''):
         writeNCFile(SO.DM.realTime, SO.onlineCombinationID, 1, 0, 'NA', 'onlineCombinationIDSet' + str(setNum) + 'Run' + str(runNum) + '.nc')  # onlineCombinationID
         writeNCFile(SO.DM.realTime, SO.underSRC, 1, 0, 'kW', 'underSRCSet' + str(setNum) + 'Run' + str(runNum) + '.nc')  # underSRC
         writeNCFile(SO.DM.realTime, SO.outOfNormalBounds, 1, 0, 'bool', 'outOfNormalBoundsSet' + str(setNum) + 'Run' + str(runNum) + '.nc')  # outOfNormalBounds
+        writeNCFile(SO.DM.realTime, SO.outOfEfficientBounds, 1, 0, 'bool',
+                    'outOfEfficientBoundsSet' + str(setNum) + 'Run' + str(runNum) + '.nc')  # outOfEfficientBounds
         writeNCFile(SO.DM.realTime, SO.wfSpilledWindFlag, 1, 0, 'bool',
                     'wfSpilledWindFlagSet' + str(setNum) + 'Run' + str(runNum) + '.nc')  # wfSpilledWindFlag
         writeNCFile(SO.DM.realTime, SO.futureLoadList, 1, 0, 'kW',

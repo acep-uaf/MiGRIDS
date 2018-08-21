@@ -43,7 +43,9 @@ class Powerhouse:
         self.genDispatchType = 1  # generator dispatch to use, 1 for proportional
         self.outOfNormalBounds = []
         self.outOfBounds = []
+        self.outOfEfficientBounds = []
         self.genMol = []
+        self.genMel = []
         self.genUpperNormalLoading = []
         self.genUpperLimit = []
         self.genLowerLimit = []
@@ -58,6 +60,8 @@ class Powerhouse:
 
         # the minimum power output based on MOL
         self.genMolAvail = []
+        # the minimum efficient power output based on MEL
+        self.genMelAvail = []
         """
 
         :param genIDS:
@@ -79,9 +83,12 @@ class Powerhouse:
             self.genPAvail += [self.generators[idx].genPAvail]
             self.genQAvail += [self.generators[idx].genQAvail]
             self.genMolAvail += [self.generators[idx].genMolAvail]
+            self.genMelAvail += [self.generators[idx].genMelAvail]
             self.outOfNormalBounds.append(self.generators[idx].outOfNormalBounds)
             self.outOfBounds.append(self.generators[idx].outOfBounds)
+            self.outOfEfficientBounds.append(self.generators[idx].outOfEfficientBounds)
             self.genMol.append(self.generators[idx].genMol) # the MOLs of each generator
+            self.genMel.append(self.generators[idx].genMel)
             self.genUpperNormalLoading.append(self.generators[idx].genUpperNormalLoading)  # the genUpperNormalLoading of each generator
             self.genUpperLimit.append(self.generators[idx].genUpperLimit) # the upper limit of each generator
             self.genLowerLimit.append(self.generators[idx].genLowerLimit) # the lower limit of each generator
@@ -90,6 +97,7 @@ class Powerhouse:
         self.combinationsID = range(2**len(self.genIDS)) # the IDs of the generator combinations
         self.genCombinationsID = [] # the gen IDs in each combination
         self.genCombinationsMOL = np.array([])
+        self.genCombinationsMEL = np.array([])
         self.genCombinationsUpperNormalLoading = []
         self.genCombinationsUpperLimit = []
         self.genCombinationsLowerLimit = []
@@ -101,6 +109,7 @@ class Powerhouse:
                 self.genCombinationsID.append(subset) # list of lists of gen IDs
                 # get the minimum normal loading (if all operating at their MOL)
                 subsetMOLPU = 0
+                subsetMELPU = 0
                 subsetGenUpperNormalLoading = 0 # the normal upper loading
                 subsetGenUpperLimit = 0
                 subsetGenLowerLimit = 0
@@ -110,11 +119,14 @@ class Powerhouse:
                 for gen in subset: # for each generator in the combination
                     subsetPMax += self.generators[self.genIDS.index(gen)].genPMax
                     subsetMOLPU = max(subsetMOLPU,self.genMol[self.genIDS.index(gen)]/self.generators[self.genIDS.index(gen)].genPMax) # get the max pu MOL of the generators
+                    subsetMELPU = max(subsetMELPU, self.genMel[self.genIDS.index(gen)] / self.generators[
+                        self.genIDS.index(gen)].genPMax)
                     subsetGenUpperNormalLoading += self.genUpperNormalLoading[self.genIDS.index(gen)]
                     subsetGenUpperLimit += self.genUpperLimit[self.genIDS.index(gen)]
                     subsetGenLowerLimit += self.genLowerLimit[self.genIDS.index(gen)]
 
                 self.genCombinationsMOL = np.append(self.genCombinationsMOL, subsetMOLPU*subsetPMax) # pu MOL * P max =  MOL
+                self.genCombinationsMEL = np.append(self.genCombinationsMEL, subsetMELPU * subsetPMax)
                 self.genCombinationsUpperNormalLoading.append(subsetGenUpperNormalLoading)
                 self.genCombinationsUpperLimit.append(subsetGenUpperLimit)
                 self.genCombinationsLowerLimit.append(subsetGenLowerLimit)
@@ -217,10 +229,12 @@ class Powerhouse:
             # check if out of bounds
             self.outOfNormalBounds[idx] = self.generators[idx].outOfNormalBounds
             self.outOfBounds[idx] = self.generators[idx].outOfBounds
+            self.outOfEfficientBounds[idx] = self.generators[idx].outOfEfficientBounds
             # get available power and minimum loading from each
             self.genPAvail[idx] = self.generators[idx].genPAvail
             self.genQAvail[idx] = self.generators[idx].genQAvail
             self.genMolAvail[idx] = self.generators[idx].genMolAvail
+            self.genMelAvail[idx] = self.generators[idx].genMelAvail
             # get the spinning reserve being supplied by the generators
             #self.genSRC[idx] = self.generators[idx].genPAvail - self.generators[idx].genP
 
@@ -244,7 +258,7 @@ class Powerhouse:
     def genSchedule(self, futureLoad, futureRE, scheduledSRCSwitch, scheduledSRCStay, powerAvailToSwitch, powerAvailToStay,underSRC, minimizeFuel = False):
 
         # scheduled load is the difference between load and RE, the min of what needs to be provided by gen or ess
-        scheduledLoad = max([futureLoad - futureRE])
+        scheduledLoad = max(futureLoad - futureRE,0)
 
         ## first find all generator combinations that can supply the load within their operating bounds
         # find all with capacity over the load and the required SRC
@@ -350,6 +364,9 @@ class Powerhouse:
                 # update online generator combination
                 self.onlineCombinationID = self.combinationsID[indInBounds[indSort[indBest]]]
                 self.switchGenComb(genSwOn[indSort[indBest]],genSwOff[indSort[indBest]]) # switch generators
+                for idx in range(len(self.genIDS)):
+                    # update genPAvail
+                    self.generators[idx].checkOperatingConditions()
 
 
 

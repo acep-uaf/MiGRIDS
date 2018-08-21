@@ -201,6 +201,7 @@ class SystemOperations:
         self.futureSRC = [0] * resultLength
         self.underSRC = [0]*resultLength
         self.outOfNormalBounds = [0]*resultLength
+        self.outOfEfficientBounds = [0] * resultLength
         self.wfSpilledWindFlag = [0]*resultLength
         self.genStartTime = []
         self.genRunTime = []
@@ -272,7 +273,7 @@ class SystemOperations:
             self.wfPAvail[self.idx] = sum(self.WF.wtgPAvail[:]) # wind farm p avail
             self.wtgPAvail[self.idx] = self.WF.wtgPAvail[:] # list of wind turbines  p avail
             self.wfPImport[self.idx] = self.reDispatch.wfPimport #removed append usind self.idx
-            self.wtgP[self.idx] = self.WF.wtgP #removed append, use ind self.idx
+            self.wtgP[self.idx] = self.WF.wtgP[:] #removed append, use ind self.idx
             self.wfPch[self.idx] = self.reDispatch.wfPch #removed append, use ind self.idx
             self.wfPTot[self.idx] = self.reDispatch.wfPch+self.reDispatch.wfPimport
             self.srcMin[self.idx] = srcMin[0]
@@ -298,7 +299,7 @@ class SystemOperations:
             ## If conditions met, schedule units
             # check if out of bounds opperation
             if True in self.EESS.underSRC or True in self.EESS.outOfBoundsReal or True in self.PH.outOfNormalBounds or \
-                    True in self.WF.wtgSpilledWindFlag:
+                    True in self.PH.outOfEfficientBounds or True in self.WF.wtgSpilledWindFlag:
                 # predict what load will be
                 # the previous 24 hours. 24hr * 60min/hr * 60sec/min = 86400 sec.
                 self.predictLoad.predictLoad(self)
@@ -309,6 +310,10 @@ class SystemOperations:
                 self.futureWind = self.predictWind.futureWind
                 # Sum of futureWind is used three times, calc once here
                 sumFutureWind = sum(self.futureWind)
+                if sumFutureWind > self.futureLoad:  # if wind is greater than load, scale back to equal the load
+                    ratio = self.futureLoad / sumFutureWind
+                    self.futureWind = [x * ratio for x in self.futureWind]
+                    sumFutureWind = sum(self.futureWind)
 
                 # TODO: add other RE
 
@@ -321,9 +326,6 @@ class SystemOperations:
                 # find the required capacity of the diesel generators
                 # how much SRC can EESS cover? This can be subtracted from the load that the diesel generators must be
                 # able to supply
-                if sumFutureWind > self.futureLoad: # if wind is greater than load, scale back to equal the load
-                    ratio = self.futureLoad/sumFutureWind
-                    self.futureWind = [x*ratio for x in self.futureWind]
                 self.getMinSrc.getMinSrc(self, calcFuture=True)
                 futureSRC = [self.getMinSrc.minSrcToStay, self.getMinSrc.minSrcToSwitch]
                 # check if available SRC from EES is zero, to avoid dividing by zero
@@ -372,6 +374,8 @@ class SystemOperations:
                     self.underSRC[self.idx] = 1
                 if True in self.PH.outOfNormalBounds:
                     self.outOfNormalBounds[self.idx] = 1
+                if True in self.PH.outOfEfficientBounds:
+                    self.outOfEfficientBounds[self.idx] = 1
 
 
 

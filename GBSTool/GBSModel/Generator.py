@@ -43,6 +43,9 @@ class Generator:
         self.genQMax = float(genSoup.QOutMaxPa.get('value'))  # nameplate capacity kvar
         self.genMol = float(genSoup.mol.get('value')) * self.genPMax # the MOL, normal operation stay above this
         self.underMolLimit = float(genSoup.molLimit.get('value'))*self.genPMax # the maximum energy allowed below MOL in checkLoadingTime period
+        self.genMel = float(genSoup.mel.get('value')) * self.genPMax  # the MEL, efficient operation is above this
+        self.underMelLimit = float(genSoup.melLimit.get(
+            'value')) * self.genPMax  # the maximum energy allowed below MEL in checkLoadingTime period
         # the loading above which normal operation stays below.
         self.genUpperNormalLoading = float(genSoup.upperNormalLoading.get('value'))*self.genPMax
         # the maximum amount of energy allowed above the normal upper limit in a checkLoadingTime period
@@ -94,6 +97,7 @@ class Generator:
         self.genStartTimeAct = 0  # the amount of time spent warming up
         self.prevLoading = [0] # a list of the last x seconds of loading on the diesel generator, updated with checkOperatingConditions()
         self.molDifference = [0] # a list of the last x seconds with the amount operated below MOL
+        self.melDifference = [0]  # a list of the last x seconds with the amount operated below MEL
         self.normalUpperDifference = [0] # a list of the last x seconds with the amount operated above normalUpperLimit
 
         # Write initial values to internal variables.
@@ -105,18 +109,22 @@ class Generator:
         # initiate operating condition flags and timers
         self.outOfBounds = False  # indicates when the generator is operating above the upperLimit (see genDescriptor.xml) or below lowerLimit (see genDescriptor.xml)
         self.outOfNormalBounds = False  # indicates when the generator is operating above upperNormalLoadingLimit or below MOL
+        self.outOfEfficientBounds = False
         self.overGenUpperNormalLoading = 0 # the amount by which the generator has operated above genUpperNormalLoading in the past self.checkLoadingTime
         self.underMol = 0 # the amount by which operating below MOL
+        self.underMel = 0  # the amount by which operating below MEL (minimum efficient operation, set >= MOL)
         self.genDescriptorParser(genDescriptor)
         # update genMolAvail, genPAvail and genQAvail depending on Gstate
         if genState == 2:
             self.genPAvail = self.genPMax # P available is the how much power is avialable online. P max if online, 0 otherwise
             self.genQAvail = self.genQMax
             self.genMolAvail = self.genMol # the lowest loading it can run at
+            self.genMelAvail = self.genMel
         else:
             self.genPAvail = 0
             self.genQAvail = 0
             self.genMolAvail = 0
+            self.genMelAvail = 0
 
     def checkOperatingConditions(self):
         """
@@ -146,6 +154,11 @@ class Generator:
             self.molDifference = self.molDifference[self.checkLoadTimeIdx:] + [max([self.genMol - self.genP,0])]
             self.underMol = self.underMol - (molDifference0 - self.molDifference[-1])*self.timeStep
 
+            ### Check the MEL (minimum economic loading) constraint ###
+            melDifference0 = self.melDifference[0]
+            self.melDifference = self.melDifference[self.checkLoadTimeIdx:] + [max([self.genMel - self.genP, 0])]
+            self.underMel = self.underMel - (melDifference0 - self.melDifference[-1]) * self.timeStep
+
             ### Check the upper normal loading limit ###
             '''
             # subtract genUpperNormalLoading from prevLoading to get over genUpperNormalLoading generation
@@ -163,22 +176,37 @@ class Generator:
                                              (normalUpperDifference0 - self.normalUpperDifference[-1]) * self.timeStep
 
             ### Check if out of bounds operation, then flag outOfNormalBounds ###
-            # under MOL by specified amount and currently under
-            if (self.underMol > self.underMolLimit) & (self.molDifference[-1] > 0):
+            # under MEL by specified amount and currently under
+            if (self.underMel > self.underMelLimit) & (self.melDifference[-1] > 0):
+                self.outOfEfficientBounds = True
+
+                # check if also under MOL
+                if (self.underMol > self.underMolLimit) & (self.molDifference[-1] > 0):
+                    self.outOfNormalBounds = True
+
+                    # check if also under lower limit
+                    # under the min loading
+                    if self.genP < self.genLowerLimit:
+                        self.outOfBounds = True  # special flags for upper and lower bounds, for more immediate action by scheduler
+                    else:
+                        self.outOfBounds = False
+
+                else:
+                    self.outOfNormalBounds = False
+                    self.outOfBounds = False
+            # if not under MEL, check if over normal upper loading
+            elif (self.overGenUpperNormalLoading > self.genUpperNormalLoadingLimit) & (
+                        self.normalUpperDifference[-1] > 0):
                 self.outOfNormalBounds = True
-            # over normal max loading by specified amount and currently over
-            elif (self.overGenUpperNormalLoading > self.genUpperNormalLoadingLimit) & (self.normalUpperDifference[-1] > 0):
-                self.outOfNormalBounds = True
-            # over the max loading
-            elif self.genP > self.genUpperLimit:
-                self.outOfNormalBounds = True
-                self.outOfBounds = True # special flags for upper and lower bounds, for more immediate action by scheduler
-            # under the min loading
-            elif self.genP < self.genLowerLimit:
-                self.outOfNormalBounds = True
-                self.outOfBounds = True # special flags for upper and lower bounds, for more immediate action by scheduler
-            # not out of bounds
+                self.outOfEfficientBounds = False
+                # check if also over upper limit
+                if self.genP > self.genUpperLimit:
+                    self.outOfBounds = True  # special flags for upper and lower bounds, for more immediate action by scheduler
+
+            # not out of any bounds
             else:
+                self.outOfEfficientBounds = False
+                self.outOfBounds = False
                 self.outOfNormalBounds = False
 
             ######## Update runtime timers and available power ##########
@@ -192,6 +220,7 @@ class Generator:
             self.genPAvail = self.genPMax
             self.genQAvail = self.genQMax
             self.genMolAvail = self.genMol  # the lowest loading it can run at
+            self.genMelAvail = self.genMel
 
         elif self.genState == 1: # if running but offline (ie starting up)
             # update timers
@@ -201,6 +230,7 @@ class Generator:
             self.genPAvail = 0
             self.genQAvail = 0
             self.genMolAvail = 0  # the lowest loading it can run at
+            self.genMelAvail = 0
 
             ### Check if out of bounds operation, then flag outOfNormalBounds ###
             if self.genP > 0:
@@ -218,6 +248,7 @@ class Generator:
             self.genPAvail = 0
             self.genQAvail = 0
             self.genMolAvail = 0  # the lowest loading it can run at
+            self.genMelAvail = 0
 
             ### Check if out of bounds operation, then flag outOfNormalBounds ###
             if self.genP > 0:

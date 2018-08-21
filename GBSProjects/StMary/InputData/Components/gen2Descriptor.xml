@@ -44,6 +44,21 @@
      molTime. -->
   <!-- Default value is 1. Units are PU*s. -->
  </molLimit>
+ <mel value="0.5" unit="PU">
+    <!-- 'mel' describes the minimum efficient loading. Minimum Efficient Loading is the lower limit on what the ideal
+     loading on the diesel generator is for efficiency purposes. The diesel generator is allowed to run down to the MOL,
+     which is lower than MEL, in normal operation. However, if it is running below MEL for more than 'melLimit' in the
+     past 'checkLoadingTime', the generator scheduler will look for a more efficient diesel generator combination to run
+     online. Units are in P.U. of nameplate capacity. -->
+    <!-- Default value is 0.5. There are no PU. -->
+    </mel>
+
+    <melLimit value="10" unit="PU*s">
+    <!-- 'melLimit' describes the maximum energy measured under minimum efficient loading allowed before raising a flag.
+    Units are in P.U. of nameplate capacity times seconds. It is measured over the past period of time indicated by
+     checkLoadingTime. -->
+    <!-- Default value is 10. Units are PU*s. -->
+    </melLimit>
  <upperNormalLoading unit="PU" value="0.9">
   <!-- 'upperNormalLoading' describes the the normal upper operating range of the diesel generator. If it operates
      more than the upperNormalLoadingLimit above the upperNormalLoading in the time defined in checkLoadingTime,
