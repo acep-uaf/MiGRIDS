@@ -37,7 +37,7 @@ def generateRuns(projectSetDir):
 
     # check if wind turbine values were varied from base case. If so, will set the 'recalculateWtgPAvail' tag to 1
     # for each wind turbine
-    isWtg = any(['wtg' in x for x in compName])
+    #isWtg = any(['wtg' in x for x in compName])
 
     valSplit = [] # list of lists of attribute values
     for val in compValue: # iterate through all comonent attributes
