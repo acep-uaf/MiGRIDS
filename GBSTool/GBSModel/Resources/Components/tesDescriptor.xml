@@ -47,7 +47,13 @@
       ambient temeperatures. If set to TRUE, a temperature profile saved at ..... will be used. Default if FALSE. -->
     <useAmbientTemperatureProfile value="FALSE" unit="NONE"/>
 
+    <!-- 'setPointResponseRampRate' is the response rate of the renewable energy setpoint for deviations in the power
+     input into the TES from the setpoint power. Units are kW/(kW*s) and the default is 0.1. -->
+    <setPointResponseRampRate value="0.1" unit="kW/(kW*s)"/>
 
+    <!-- 'setPoint' is the desired power input when there is adequate renewable energy online. Units are pu. Defualt is
+     0.5-->
+    <setPoint value="0.5" unit="pu"/>
 
 </component>
 <!-- EOF -->

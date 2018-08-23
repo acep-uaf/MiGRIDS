@@ -1,4 +1,5 @@
 from generateRuns import generateRuns
 import os
 here = os.path.dirname(os.path.realpath(__file__))
-generateRuns(os.path.join(here,"../../GBSProjects/OptimizerTestHarnessCodeReview/OutputData/Set1"))
+generateRuns(os.path.join(here,"../../GBSProjects/StMary/OutputData/Set18"))
+#generateRuns(here + '/../../GBSProjects/ControlProject1/OutputData/SetBaseLine')

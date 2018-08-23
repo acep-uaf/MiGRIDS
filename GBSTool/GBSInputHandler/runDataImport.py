@@ -83,16 +83,16 @@ for idx in range(len(inputDictionary['inputInterval'])):  # for each group of in
 # get data units and header names
 inputDictionary['headerNames'], inputDictionary['componentUnits'], \
 inputDictionary['componentAttributes'],inputDictionary['componentNames'], inputDictionary['newHeaderNames'] = getUnits(Village,setupDir)
-
+print(inputDictionary)
 # read time series data, combine with wind data if files are seperate.
-#df, listOfComponents = mergeInputs(inputDictionary)
+df, listOfComponents = mergeInputs(inputDictionary)
 
 # TODO: read from pickle for testing purposes
-os.chdir(setupDir)
+'''os.chdir(setupDir)
 os.chdir('../TimeSeriesData/RawData')
 inFile = open("raw_df.pkl","rb")
 df = pickle.load(open("raw_df.pkl","rb"))
-inFile.close()
+inFile.close()'''
 
 os.chdir(setupDir)
 out = open("df_raw.pkl","wb")
@@ -106,7 +106,7 @@ out.close()
 # TODO: this replaces the fixBadData until it is ready
 # create DataClass object to store raw, fixed, and summery outputs
 # use the largest sample interval for the data class
- sampleIntervalTimeDelta = [pd.to_timedelta(s) for s in inputDictionary['inputInterval']]
+'''sampleIntervalTimeDelta = [pd.to_timedelta(s) for s in inputDictionary['inputInterval']]
 df_fixed = DataClass(df, max(sampleIntervalTimeDelta))
 df_fixed.eColumns = ['wtg0WS']
 df_fixed.loads = ['load0P','load1P']
@@ -114,7 +114,7 @@ df_fixed.powerComponents = []
 df_fixed.totalPower()
 df_fixed.fixed[0].load0P[df_fixed.fixed[0].load0P<200] = None
 df_fixed.fixed[0].load0P[df_fixed.fixed[0].load0P>1000] = None
-# adjust the column years
+# adjust the column yearsrunDataImport.py
 df_fixed.fixed[0] = adjustColumnYear(df_fixed.fixed[0])
 # only take year the year 2014 from load0P
 load0P0 = df_fixed.fixed[0][['load0P']].copy()
@@ -136,9 +136,14 @@ df_fixed.fixed[0].load1P[df_fixed.fixed[0].index.year != 2014] = None
 wtg0WS = df_fixed.fixed[0][['wtg0WS']].copy()
 wtg0WS[wtg0WS.index.year != 2015] = None
 wtg0WS.dropna()
+wtg0WS.index = wtg0WS.index - pd.to_timedelta(1, unit='y') # change to 2014
 df_fixed.fixed[0].drop('wtg0WS', axis = 1, inplace= True)
 df_fixed.fixed[0] = pd.concat([df_fixed.fixed[0], wtg0WS], axis=1)
+df_fixed.fixed[0].total_p.loc[df_fixed.fixed[0].index[df_fixed.fixed[0].total_p == -99999]] = None
 df_fixed.fixed[0].dropna(how = 'all',inplace=True)
+df_fixed.fixed[0].load1P.loc[df_fixed.fixed[0].index[df_fixed.fixed[0].load1P < 150]] = None
+
+#df_fixed.fixed[0] = df_fixed.fixed[0].iloc[5000000:5500000]
 
 
 # now fix the bad data
@@ -158,6 +163,7 @@ inFile = open("component.pkl","rb")
 listOfComponents = pickle.load(inFile)
 inFile.close()
 
+
 # fix the intervals
 df_fixed_interval = fixDataInterval(df_fixed,inputDictionary['outputInterval'])
 
@@ -167,8 +173,8 @@ pickle.dump(df_fixed_interval, open("df_fixed_interval.p","wb"))
 
 d = {}
 for c in listOfComponents:
-    d[c.component_name] = c.toDictionary()
+    d[c.column_name] = c.toDictionary()
 # now convert to a netcdf
 
 dataframe2netcdf(df_fixed_interval.fixed, d)
-# save ncfile in folder `ModelInputData' in the path ../GBSProjects/[VillageName]/InputData/TimeSeriesData/
+# save ncfile in folder `ModelInputData' in the path ../GBSProjects/[VillageName]/InputData/TimeSeriesData/'''

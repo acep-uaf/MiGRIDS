@@ -37,13 +37,16 @@
              this constraint. Default value is 10000.-->
         </maxESSE>
     </optimizationConstraints>
-    <optimizationEnvelopeEstimator value="variableSRC" mode="tight" choices="variableSRC">
+    <optimizationEnvelopeEstimator value="variableSRC" choices="variableSRC noBoundaries">
         <!-- Various methods to narrow the band of considered ESS configurations can be used. Currently the only
-                implemented method is 'variableSRC'. The attribute 'mode' describes how to reconcile the estimated
-                envelope with the sizing constraints (minESSP/E, maxESSP/E); options are 'tight', which uses the
-                narrower band of values, or 'relaxed' which uses the wider band of values. -->
+                implemented method is 'variableSRC'.
+
+                If the value attribute is set to noBoundaries, the envelop is not constraint.-->
         <variableSRCConfig>
             <!-- Additional configuration passed through to calcSRCMethodBoundaries -->
+            <mode value="tight"> <!-- The attribute 'mode' describes how to reconcile the estimated
+                envelope with the sizing constraints (minESSP/E, maxESSP/E); options are 'tight', which uses the
+                narrower band of values, or 'relaxed' which uses the wider band of values. --></mode>
             <minDynSRC value="0.15"><!-- Fraction of total load that always should be kept as SRC --></minDynSRC>
             <minDuration value="60"><!-- Time in seconds that the GBS has to cover SRC --></minDuration>
             <minPercent value="0.7"><!-- Minimum percentile as a fraction that the GBS has to be able to cover SRC --></minPercent>
@@ -51,7 +54,7 @@
             <maxMargin value="1.10"><!-- The margin put on the maximum power calculated as a fraction. --> </maxMargin>
         </variableSRCConfig>
     </optimizationEnvelopeEstimator>
-    <dataReductionMethod value="RE-load-one-week" choices="RE-load-one-week">
+    <dataReductionMethod value="RE-load-one-week" choices="RE-load-one-week noReduction">
         <!-- Choices of methods used to reduce the long time series, in order to reduce algorithm run time. Only one
                 method is implemented thus far. -->
     </dataReductionMethod>

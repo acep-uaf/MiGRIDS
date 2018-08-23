@@ -8,8 +8,6 @@ import pandas as pd
 
 from GBSAnalyzer.CurveAssemblers.genFuelCurveAssembler import GenFuelCurve
 
-
-# TODO; incorporated interpolationMethod
 def getFuelUse(genAllP, fuelCurveDataPoints, interpolationMethod = 'linear'):
     '''
     Calculates fuel consumption for each generator and time step given.
@@ -46,7 +44,7 @@ def getFuelUse(genAllP, fuelCurveDataPoints, interpolationMethod = 'linear'):
         massFlow = list(map(float, fuelCurveDataPoints['fuelCurve_massFlow'].loc[gen].split()))
         fcDataPnts = list(zip(pPu, massFlow))
         fc = GenFuelCurve()
-        fc.genOverloadPMax = fuelCurveDataPoints['POutMaxPa'].loc[gen]
+        fc.genOverloadPMax = int(float(fuelCurveDataPoints['POutMaxPa'].loc[gen])) #double type cast is necessary to handle string conversion of strings with decimals properly.
         fc.fuelCurveDataPoints = fcDataPnts
         fc.linearCurveEstimator()
 
@@ -70,7 +68,7 @@ def getFuelUse(genAllP, fuelCurveDataPoints, interpolationMethod = 'linear'):
     fuelStats['total'].loc['Fleet'] = fleetSum.sum()
     fuelStats['mean'].loc['Fleet'] = fleetSum.mean()
     fuelStats['std'].loc['Fleet'] = fleetSum.std()
-    fuelStats['median'].loc['Fleet'] = fleetSum.median()
+    #fuelStats['median'].loc['Fleet'] = fleetSum.median() # not available as ndarray.median()
     fuelStats['max'].loc['Fleet'] = fleetSum.max()
 
     return genAllFuelUsed, fuelStats

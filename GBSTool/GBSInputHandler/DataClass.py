@@ -143,7 +143,6 @@ class DataClass:
     # compared to overall data characteristics
     def removeAnomolies(self, stdNum = 3):
         # stdNum is defines how many stds from the mean is acceptable. default is 3, but this may be too tight for some data sets.
-  
         mean = np.mean(self.df[TOTALP])
         std = np.std(self.df[TOTALP])
     
@@ -155,7 +154,8 @@ class DataClass:
     
     def setYearBreakdown(self):
         self.yearBreakdown = yearlyBreakdown(self.df)
-    # Series/DataFrame String, DataFrame/series  -> DataFrame
+        return
+
     # fills values for all components for time blocks when data collection was offline
     # power components are summed and replaced together
     # load columns are replaced individually

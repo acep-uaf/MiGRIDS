@@ -1,8 +1,7 @@
 from GBSInputHandler.readAvecCsv import readAvecCsv
 
 def readAllAvecTimeSeries(fileNames, fileLocation, columnNames, useNames, componentUnits, dateColumnName, dateColumnFormat, timeColumnName, timeColumnFormat, utcOffsetValue, utcOffsetUnit, dst):
-    print(fileNames)
-    print(fileLocation)
+
     df = None
     for i in range(len(fileNames)):  # for each data file
         if i == 0:  # read data file into a new dataframe if first iteration

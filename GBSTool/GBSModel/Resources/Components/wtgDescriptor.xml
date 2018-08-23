@@ -38,8 +38,8 @@
     <checkWindTime value="300" unit="s"/>
     <!-- 'spilledWindLimit' is the amount of spilled wind power that is the limit before a flag is set to initiate
       scheduling new diesel and energy storage units. Units are in PU of nameplate capacity times seconds. It is measured
-      over the period of time indicated by checkWindTime. Default is 60 PU. -->
-    <spilledWindLimit value="60" unit="PU"/>
+      over the period of time indicated by checkWindTime. Default is 60 PU*s. -->
+    <spilledWindLimit value="60" unit="PU*s"/>
     <!-- 'recalculateWtgPAvail' specifies whether to recalculate the available windpower from the base case. Default is False. -->
     <recalculateWtgPAvail value="False" />
     <!-- 'minSrcCover' indicates the minimum precentage of wind power that needs to be covered by SRC. Units are in

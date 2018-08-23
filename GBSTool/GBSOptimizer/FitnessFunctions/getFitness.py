@@ -37,6 +37,8 @@ def getMinFuelUtilizationFitness(rootProjectPath, inputDataFrame, otherInformati
     fuelCurveDataPoints = pd.DataFrame(index=genFleet,
                                             columns=['fuelCurve_pPu', 'fuelCurve_massFlow', 'POutMaxPa'])
 
+    # Retrieve the fuel curves for the generators involved
+    # TODO: this is redundant to do every iteration, this data should be assembled once and passed on to this method via the otherInformation input.
     for genString in genFleet:
         genPath = os.path.join(rootProjectPath, 'OutputData/', setPath, 'Run0/Components/',
                                genString + setName + 'Run0Descriptor.xml')
@@ -99,7 +101,9 @@ def getMaxREContributionFitness(inputDataFrame, otherInformation):
                 varGenP = varGenP + inputDataFrame[col]
 
         subFitness = getPrimaryREContribution(time, firmLoadP, firmGenP, varGenP)
-        rawFitness['fitness' + str(snippetIdx)] = pd.Series(subFitness)
+        # TODO the following inverting of values was moved from a previous spot, this needs to be tested.
+        # in the next step we'll write 1/subfitness, as the optimizer searches for minima.
+        rawFitness['fitness' + str(snippetIdx)] = 1/pd.Series(subFitness)
 
     return rawFitness
 
@@ -119,28 +123,37 @@ def weightedRawFitness(rawFitness, inputDataWeights, otherInformation):
 
     snippetNum = otherInformation['snippetNum'][0]
 
-    # for the loadBins (corresponding raw fitnesses are 0 through 2)
-    loadFitnesses = inputDataWeights.loadBins.value_counts().sort_index()
-    weightedFitness = rawFitness.copy()
+    # check first if the inputDataWeights df is empty, if that is the case, the data for the simulations was not reduced
+    # and no weighting is necessary
+    if not inputDataWeights.empty:
+        # for the loadBins (corresponding raw fitnesses are 0 through 2)
+        loadFitnesses = inputDataWeights.loadBins.value_counts().sort_index()
+        weightedFitness = rawFitness.copy()
 
-    for indx in range(0, int(round(snippetNum/2))):
-        # to avoid situations where not all bins have a count, we have to check if our iteration index is in the df index
-        if indx in loadFitnesses.index:
-            weightedFitness['fitness' + str(indx)][0] = loadFitnesses.loc[indx] * rawFitness['fitness' + str(indx)][0]
-        else:
-            weightedFitness['fitness' + str(indx)][0] = 0
+        for indx in range(0, int(round(snippetNum/2))):
+            # to avoid situations where not all bins have a count, we have to check if our iteration index is in the df index
+            if indx in loadFitnesses.index:
+                weightedFitness['fitness' + str(indx)][0] = loadFitnesses.loc[indx] * rawFitness['fitness' + str(indx)][0]
+            else:
+                weightedFitness['fitness' + str(indx)][0] = 0
 
-    varGenFitnesses = inputDataWeights.varGenBins.value_counts().sort_index()
-    for indx in range(int(round(snippetNum/2)), int(round(snippetNum))):
-        # to avoid situations where not all bins have a count, we have to check if our iteration index is in the df index
-        if indx-3 in varGenFitnesses.index:
-            weightedFitness['fitness' + str(indx)][0] = varGenFitnesses.loc[indx-3] * rawFitness['fitness' + str(indx)][0]
-        else:
-            weightedFitness['fitness' + str(indx)][0] = 0
+        varGenFitnesses = inputDataWeights.varGenBins.value_counts().sort_index()
+        for indx in range(int(round(snippetNum/2)), int(round(snippetNum))):
+            # to avoid situations where not all bins have a count, we have to check if our iteration index is in the df index
+            if indx-3 in varGenFitnesses.index:
+                weightedFitness['fitness' + str(indx)][0] = varGenFitnesses.loc[indx-3] * rawFitness['fitness' + str(indx)][0]
+            else:
+                weightedFitness['fitness' + str(indx)][0] = 0
 
-    totNumBins = loadFitnesses.sum() + varGenFitnesses.sum()
+        totNumBins = loadFitnesses.sum() + varGenFitnesses.sum()
 
-    return weightedFitness.divide(totNumBins).sum().sum()
+        fitness = weightedFitness.divide(totNumBins).sum().sum()
+
+    # if the input data was not reduced, no weights are applied, but the fitness is just summed up
+    else:
+        fitness = rawFitness.sum().sum()
+
+    return fitness
 
 
 def getTestFitness(otherInformation):
@@ -202,27 +215,26 @@ def getFitness(fitnessMethod, rootProjectPath, inputDataFrame, inputDataWeights,
         e.g., renewable energy penetration, but something related.
     '''
 
-    # T ODO remove this override in release.
+    # TESTING remove below override for release.
     # fitnessMethod = 'testFunction'
 
     # Fitness method selection
     if fitnessMethod == 'minFuelUtilization':
         rawFitness = getMinFuelUtilizationFitness(rootProjectPath, inputDataFrame, otherInformation)
-        fitness = weightedRawFitness(rawFitness, inputDataWeights, otherInformation)
+
     elif fitnessMethod == 'maxREContribution':
         rawFitness = getMaxREContributionFitness(inputDataFrame, otherInformation)
-        invFitness = weightedRawFitness(rawFitness, inputDataWeights, otherInformation)
-        # Since we're running a minimization algorithm, we need to flip this
-        if invFitness == 0:
-            fitness = np.inf
-        else:
-            fitness = 1/invFitness
+
     elif fitnessMethod == 'testFunction':
         # Just for testing algorithms NOT CONNECTED TO ACTUAL SIMULATION RESULTS
-        fitness = getTestFitness(otherInformation)
+        rawFitness = getTestFitness(otherInformation)
+        inputDataWeights = pd.DataFrame([])
 
         # Note: this one doesn't need to call weightedRawFitness() as no simulations were actually run.
     else:
         raise ImportError('Selected optimization objective, %s, is unknown.', fitnessMethod)
+
+    # Calculate the weighted fitness from the input weights, and the raw fitness.
+    fitness = weightedRawFitness(rawFitness, inputDataWeights, otherInformation)
 
     return fitness

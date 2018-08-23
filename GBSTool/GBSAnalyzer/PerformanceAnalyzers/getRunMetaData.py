@@ -8,7 +8,7 @@ import glob
 import os
 import sqlite3
 import sys
-
+import re
 import numpy as np
 import pandas as pd
 
@@ -16,15 +16,33 @@ here = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(os.path.join(here, '../../'))
 sys.path.append(here)
 from GBSAnalyzer.DataRetrievers.readNCFile import readNCFile
+from GBSAnalyzer.DataRetrievers.readXmlTag import readXmlTag
 
 
 def getRunMetaData(projectSetDir,runs):
+    # get the set number
+    dir_path = os.path.basename(projectSetDir)
+    setNum = str(dir_path[3:])
+
+    # read the input parameter sql database
+    os.chdir(projectSetDir)
+    conn = sqlite3.connect('set' + str(setNum) + 'ComponentAttributes.db')
+    # get the attributes
+    dfAttr = pd.read_sql_query('select * from compAttributes', conn)
+    conn.close()
+
+    # add columns for results
+    df = pd.DataFrame(
+        columns=['Generator Import kWh', 'Generator Charging kWh', 'Generator Switching', 'Generator Loading',
+                 'Generator Fuel Consumption kg', 'Diesel-off time h', 'Generator Cumulative Run time h', 'Generator Cumulative Capacity Run Time kWh', 'Generator Overloading Time h','Generator Overloading kWh',
+                 'Wind Power Import kWh', 'Wind Power Spill kWh',
+                 'Wind Power Charging kWh', 'Energy Storage Discharge kWh', 'Energy Storage Charge kWh',
+                 'Energy Storage SRC kWh', 'Energy Storage Overloading Time h','Energy Storage Overloading kWh','Thermal Energy Storage Throughput kWh'])
+
+
     for runNum in runs:
         # get run dir
         projectRunDir = os.path.join(projectSetDir,'Run'+str(runNum))
-        # get the set number
-        dir_path = os.path.basename(projectSetDir)
-        setNum = str(dir_path[3:])
 
         # go to dir where output files are saved
         os.chdir(os.path.join(projectRunDir, 'OutputData'))
@@ -34,7 +52,7 @@ def getRunMetaData(projectSetDir,runs):
         # load the total powerhouse charging of eess
         genPchStats, genPch, ts = loadResults('powerhousePchSet' + str(setNum) + 'Run' + str(runNum) + '.nc')
         # get generator power available stats
-        genPAvailStats, genPAvail, ts = loadResults('genPAvailSet'+str(setNum)+'Run' + str(runNum) + '.nc')
+        genPAvailStats, genPAvail, tsGenPAvail = loadResults('genPAvailSet'+str(setNum)+'Run' + str(runNum) + '.nc')
 
         # calculate the average loading while online
         idxOnline = [idx for idx, x in enumerate(genPAvail) if x >0] # the indices of when online
@@ -44,6 +62,33 @@ def getRunMetaData(projectSetDir,runs):
         genLoadingStd = np.std(genLoading)
         genLoadingMax = np.max(genLoading)
         genLoadingMin = np.min(genLoading)
+
+        # get overloading of diesel
+        # get indicies of when diesel generators online
+        idxGenOnline = genPAvail > 0
+        genOverLoadingTime = np.count_nonzero(genP[idxGenOnline]>genPAvail[idxGenOnline]) * ts/3600
+        genLoadingDiff = genP[idxGenOnline] - genPAvail[idxGenOnline]
+        genOverLoadingkWh = sum(genLoadingDiff[genLoadingDiff>0]) * ts / 3600
+
+        # get overloading of the ESS. this is the power requested from the diesel generators when none are online.
+        eessOverLoadingTime = np.count_nonzero(genP[~idxGenOnline]) * ts/3600
+        eessOverLoadingkWh = sum(genP[~idxGenOnline])*ts/3600
+
+        # get the total time spend in diesel-off
+        genTimeOff = np.count_nonzero(genPAvail == 0)* tsGenPAvail / 3600
+
+        # get the total diesel run time
+        genTimeRunTot = 0.
+        genRunTimeRunTotkWh = 0.
+        for genRunTimeFile in glob.glob('gen*RunTime*.nc'):
+            genRunTimeStats, genRunTime, ts = loadResults(genRunTimeFile)
+            genTimeRunTot += np.count_nonzero(genPAvail != 0)* ts / 3600
+            # get the capcity of this generator
+            # first get the gen ID
+            genID = re.search('gen(.*)RunTime',genRunTimeFile).group(1)
+            genPMax = readXmlTag("gen"+genID +"Set"+str(setNum)+"Run"+str(runNum)+"Descriptor.xml", "POutMaxPa",
+                                 "value", fileDir=projectRunDir+"/Components", returnDtype='float')
+            genRunTimeRunTotkWh += (np.count_nonzero(genPAvail != 0)* ts / 3600)*genPMax[0]
 
         # calculate total generator energy delivered in kWh
         genPTot = (genPStats[4] - genPchStats[4])/3600
@@ -59,8 +104,16 @@ def getRunMetaData(projectSetDir,runs):
         wtgPAvailStats, wtgPAvail, ts = loadResults('wtgPAvailSet'+str(setNum)+'Run' + str(runNum) + '.nc')
         wtgPchStats, wtgPch, ts = loadResults('wtgPchSet'+str(setNum)+'Run' + str(runNum) + '.nc')
 
+        # tes
+        # get tess power, if included in simulations
+        if len(glob.glob('ees*SRC*.nc')) > 0:
+            tessPStats, tessP, ts = loadResults('tessP' + str(setNum) + 'Run' + str(runNum) + '.nc')
+            tessPTot = tessPStats[4] / 3600
+        else:
+            tessPStats = [0, 0, 0, 0, 0]
+
         # spilled wind power in kWh
-        wtgPspillTot = (wtgPAvailStats[4] - wtgPImportStats[4] - wtgPchStats[4])/3600
+        wtgPspillTot = (wtgPAvailStats[4] - wtgPImportStats[4] - wtgPchStats[4] - tessPStats[4])/3600
 
         # imported wind power in kWh
         wtgPImportTot = wtgPImportStats[4]/3600
@@ -84,7 +137,12 @@ def getRunMetaData(projectSetDir,runs):
             eesSRCStats, eesSRC, ts = loadResults(eesFile)
             eessSRCTot += eesSRCStats[4]/3600
 
-        # TODO: add gen charging and fuel consumption
+
+
+
+
+
+        # TODO: add gen fuel consumption
         # create df from generator nc files
         # get all gen power files
         '''
@@ -95,7 +153,7 @@ def getRunMetaData(projectSetDir,runs):
                 dfGenP = pd.DataFrame([genTime,genP],columns=['time',str(idx)])
             else:
                 dfGenP[str(idx)] = genP # assign new column 
-            '''
+            
 
         # save into SQL db
         os.chdir(projectSetDir)
@@ -108,13 +166,18 @@ def getRunMetaData(projectSetDir,runs):
             df = pd.DataFrame(columns = ['Generator Import kWh','Generator Charging kWh','Generator Switching','Generator Loading','Generator Fuel Consumption kg','Wind Power Import kWh','Wind Power Spill kWh','Wind Power Charging kWh','Energy Storage Discharge kWh','Energy Storage Charge kWh','Energy Storage SRC kWh'])
         else:
             df = pd.read_sql_query('select * from Results',conn)
+        '''
+
         # add row for this run
-        df.loc[runNum] = [genPTot,genPch,genSw,genLoadingMean,None,wtgPImportTot,wtgPspillTot,wtgPchTot,eessPdisTot,eessPchTot,eessSRCTot]
-        df.to_sql('Results', conn, if_exists="replace", index=False)  # write to table compAttributes in db
-        conn.close()
-        df.to_csv('Set' + str(setNum) + 'Results.csv') # save a csv version
+        df.loc[runNum] = [genPTot,genPch,genSw,genLoadingMean,None,genTimeOff,genTimeRunTot,genRunTimeRunTotkWh,genOverLoadingTime,genOverLoadingkWh,wtgPImportTot,wtgPspillTot,wtgPchTot,eessPdisTot,eessPchTot,eessSRCTot,eessOverLoadingTime,eessOverLoadingkWh,tessPTot]
 
+    dfResult = pd.concat([dfAttr, df], axis=1, join='inner')
 
+    os.chdir(projectSetDir)
+    conn = sqlite3.connect('set' + str(setNum) + 'Results.db')
+    dfResult.to_sql('Results', conn, if_exists="replace", index=False)  # write to table compAttributes in db
+    conn.close()
+    dfResult.to_csv('Set' + str(setNum) + 'Results.csv')  # save a csv version
 
     # get the stats for this variable
 def loadResults(fileName, location = '', returnTimeSeries = False):

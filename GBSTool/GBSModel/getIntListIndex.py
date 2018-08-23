@@ -17,3 +17,32 @@ def getIntListIndex(value, List, stepsize = 1):
     else: # otherwise, find index
         idx = List.index(valueInt)
     return idx
+
+
+
+
+def getIntDictKey(value, valDict, minKeyInDict, maxKeyInDict, stepsize = 1):
+    '''
+    Index lookup from continuous sequential dictionary of integers. In order to use something like the List variable that
+    is the input to getIntListIndex the following conversion (performed outside of loops) can be used
+    valDict = dict(zip(List, range(len(List))). It is also useful to precalculate the min and max value in the Dict
+    (technically the min and max key) at that time to avoid repeated calls to min and max functions, which is costly, as
+    this function is most often called in a loop across a time-series.
+
+    :param value: [float] value to find the index for
+    :param valDict: [dict] integer values for which an index is to be looked up for are the keys to this dict. Indices
+        are returned by valDict[valueInt].
+    :param minValInDict: [int] minimum key in the dictionary. If the input value is lower, the default key assigned is 0
+    :param maxValInDict: [int] maximum key in the dictionary. If the input value is higher, the default key assigned is largest available.
+    :param stepsize: [float] the size of the step between keys in dictionary
+    :return idx: an integer value corresponding to the key in the input dictionary, associated with the looked up value
+    '''
+    valueInt = int(value / stepsize) * stepsize  # convert to interger
+    maxIdx = len(valDict) - 1
+    if valueInt < minKeyInDict:  # if below range, assigne first value
+        idx = 0
+    elif valueInt > maxKeyInDict:  # if above range, assigne last value
+        idx = maxIdx
+    else:  # otherwise, find index
+        idx = valDict[valueInt]
+    return idx

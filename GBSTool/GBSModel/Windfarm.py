@@ -86,8 +86,17 @@ class Windfarm:
         # dispatch
         if self.wtgDispatchType == 1:  # if proportional loading
             # get the loading pu for real and reactive power
-            loadingP = np.nanmin([np.nanmax([newWtgP / np.sum(self.wtgPAvail),0]),1])  # this is the PU loading of each wtg, limited to 1
-            loadingQ = np.nanmin([np.nanmax([newWtgQ / np.sum(self.wtgQAvail),0]) ,1]) # this is the PU loading of each wtg
+            wtgPAvailTot = sum(self.wtgPAvail)
+            if  wtgPAvailTot == 0:
+                loadingP = 0
+            else:
+                loadingP = min([max([newWtgP / wtgPAvailTot, 0]), 1])  # this is the PU loading of each wtg, limited to 1
+
+            wtgQAvailTot = sum(self.wtgQAvail)
+            if wtgQAvailTot == 0:
+                loadingQ = 0
+            else:
+                loadingQ = min([max([newWtgQ / wtgQAvailTot, 0]), 1])  # this is the PU loading of each wtg
             # cycle through each wtg and update with new P and Q
             for idx in range(len(self.wtgIDS)):
                 self.windTurbines[idx].wtgP = loadingP * self.wtgPAvail[idx]
@@ -107,4 +116,11 @@ class Windfarm:
                 self.wtgSpilledWindFlag[idx] = self.windTurbines[idx].wtgSpilledWindFlag
         else:
             raise ValueError('The wind turbine dispatch is not supported. ')
+
+
+    # get the available wind power for each wind turbine
+    def getWtgPAvail(self, idx):
+        for wtgIdx, wtg in enumerate(self.windTurbines):
+            wtg.getWtgPAvail(idx)
+            self.wtgPAvail[wtgIdx] = wtg.wtgPAvail
 

@@ -21,7 +21,7 @@ import numpy as np
 from GBSInputHandler.DataClass import DataClass
 from GBSInputHandler.isInline import isInline
 from GBSInputHandler.badDictAdd import badDictAdd
-
+from GBSInputHandler.adjustColumnYear import adjustColumnYear
 
 
 # constants
@@ -85,6 +85,7 @@ def fixBadData(df, setupDir, ListOfComponents, sampleInterval):
    # use the largest sample interval for the data class
    sampleIntervalTimeDelta = [pd.to_timedelta(s) for s in sampleInterval]
    data = DataClass(df, max(sampleIntervalTimeDelta))
+
   
   # create a list of power columns
    
@@ -158,7 +159,7 @@ def fixBadData(df, setupDir, ListOfComponents, sampleInterval):
        data.df= pd.concat([data.df,reps],axis=1)   
    #reads the component descriptor files and
    #returns True if none of the components have isFrequencyReference=1 and
-   #isVoltageSource = True
+
    def dieselNeeded(myIterator, setupDir):
        def get_next(myiter):
            try:
