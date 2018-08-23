@@ -8,6 +8,7 @@ import sys
 here = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(os.path.join(here,".."))
 import sqlite3
+import time
 # add to sys path
 
 import tkinter as tk
@@ -163,7 +164,7 @@ def runSimulation(projectSetDir = ''):
         # code profiler
         # pr0 = cProfile.Profile()
         # pr0.enable()
-        SO = SystemOperations(timeStep = timeStep, runTimeSteps = runTimeSteps, loadRealFiles = loadProfileFile, loadReactiveFiles = [],
+        SO = SystemOperations(outputDataDir, timeStep = timeStep, runTimeSteps = runTimeSteps, loadRealFiles = loadProfileFile, loadReactiveFiles = [],
                               predictLoad = predictLoad, loadDescriptor = loadDescriptors, predictWind = predictWind, getMinSrcFile = getMinSrcFile, getMinSrcInputFile = getMinSrcInputFile, reDispatchFile = reDispatchFile, reDispatchInputsFile = reDispatchInputFile,
                          genIDs = genIDs, genStates = genStates, genDescriptors = genDescriptors, genDispatch = genDispatch,
                          wtgIDs = wtgIDs, wtgStates = wtgStates, wtgDescriptors = wtgDescriptors, wtgSpeedFiles = timeSeriesDir, wtgDispatch = wtgDispatch,
@@ -185,75 +186,172 @@ def runSimulation(projectSetDir = ''):
 
         # save data
         os.chdir(outputDataDir)
-        writeNCFile(SO.DM.realTime,SO.powerhouseP,1,0,'kW','powerhousePSet' + str(setNum) + 'Run'+str(runNum)+'.nc') # gen P
-        writeNCFile(SO.DM.realTime, SO.powerhousePch, 1, 0, 'kW',
+
+        start_file_write = time.time()
+
+        # Stitch powerhouseP
+        powerhouseP = SO.stitchVariable('powerhouseP')
+        writeNCFile(SO.DM.realTime, powerhouseP,1,0,'kW','powerhousePSet' + str(setNum) + 'Run'+str(runNum)+'.nc') # gen P
+        powerhouseP = None
+
+        # Stitch powerhousePch
+        powerhousePch = SO.stitchVariable('powerhousePch')
+        writeNCFile(SO.DM.realTime, powerhousePch, 1, 0, 'kW',
                     'powerhousePchSet' + str(setNum) + 'Run' + str(runNum) + '.nc')  # gen Pch
-        writeNCFile(SO.DM.realTime, SO.rePlimit, 1, 0, 'kW', 'rePlimitSet' + str(setNum) + 'Run' + str(runNum) + '.nc')  # rePlimit
-        writeNCFile(SO.DM.realTime, SO.wfPAvail, 1, 0, 'kW', 'wtgPAvailSet' + str(setNum) + 'Run' + str(runNum) + '.nc')  # wfPAvail
-        writeNCFile(SO.DM.realTime, SO.wfPImport, 1, 0, 'kW', 'wtgPImportSet' + str(setNum) + 'Run' + str(runNum) + '.nc')  # wtgPImport
-        writeNCFile(SO.DM.realTime, SO.wfPch, 1, 0, 'kW', 'wtgPchSet' + str(setNum) + 'Run' + str(runNum) + '.nc')  # wtgPch
-        writeNCFile(SO.DM.realTime, SO.wfPTot, 1, 0, 'kW', 'wtgPTotSet' + str(setNum) + 'Run' + str(runNum) + '.nc')  # wtgPTot
-        writeNCFile(SO.DM.realTime, SO.srcMin, 1, 0, 'kW', 'srcMinSet' + str(setNum) + 'Run' + str(runNum) + '.nc')  # srcMin
-        writeNCFile(SO.DM.realTime, SO.eessDis, 1, 0, 'kW', 'eessDisSet' + str(setNum) + 'Run' + str(runNum) + '.nc')  # eesDis
-        writeNCFile(SO.DM.realTime, SO.eessP, 1, 0, 'kW', 'eessPSet' + str(setNum) + 'Run' + str(runNum) + '.nc')
-        writeNCFile(SO.DM.realTime, SO.tesP, 1, 0, 'kW', 'tessP' + str(setNum) + 'Run' + str(runNum) + '.nc') # tessP
-        writeNCFile(SO.DM.realTime, SO.genPAvail, 1, 0, 'kW', 'genPAvailSet' + str(setNum) + 'Run' + str(runNum) + '.nc')  # genPAvail
-        writeNCFile(SO.DM.realTime, SO.onlineCombinationID, 1, 0, 'NA', 'onlineCombinationIDSet' + str(setNum) + 'Run' + str(runNum) + '.nc')  # onlineCombinationID
-        writeNCFile(SO.DM.realTime, SO.underSRC, 1, 0, 'kW', 'underSRCSet' + str(setNum) + 'Run' + str(runNum) + '.nc')  # underSRC
-        writeNCFile(SO.DM.realTime, SO.outOfNormalBounds, 1, 0, 'bool', 'outOfNormalBoundsSet' + str(setNum) + 'Run' + str(runNum) + '.nc')  # outOfNormalBounds
-        writeNCFile(SO.DM.realTime, SO.outOfEfficientBounds, 1, 0, 'bool',
+        powerhousePch = None
+
+        # Stitch rePlimit
+        rePlimit = SO.stitchVariable('rePlimit')
+        writeNCFile(SO.DM.realTime, rePlimit, 1, 0, 'kW', 'rePlimitSet' + str(setNum) + 'Run' + str(runNum) + '.nc')  # rePlimit
+        rePlimit = None
+
+        # Stitch wfPAvail
+        wfPAvail = SO.stitchVariable('wfPAvail')
+        writeNCFile(SO.DM.realTime, wfPAvail, 1, 0, 'kW', 'wtgPAvailSet' + str(setNum) + 'Run' + str(runNum) + '.nc')  # wfPAvail
+        wfPAvail = None
+
+        # Stitch wfPImport
+        wfPImport = SO.stitchVariable('wfPImport')
+        writeNCFile(SO.DM.realTime, wfPImport, 1, 0, 'kW', 'wtgPImportSet' + str(setNum) + 'Run' + str(runNum) + '.nc')  # wtgPImport
+        wfPImport = None
+
+        # Stitch wfPch
+        wfPch = SO.stitchVariable('wfPch')
+        writeNCFile(SO.DM.realTime, wfPch, 1, 0, 'kW', 'wtgPchSet' + str(setNum) + 'Run' + str(runNum) + '.nc')  # wtgPch
+        wfPch = None
+
+        # Stitch wfPTot
+        wfPTot = SO.stitchVariable('wfPTot')
+        writeNCFile(SO.DM.realTime, wfPTot, 1, 0, 'kW', 'wtgPTotSet' + str(setNum) + 'Run' + str(runNum) + '.nc')  # wtgPTot
+        wfPTot = None
+
+        # Stitch srcMin
+        srcMin = SO.stitchVariable('srcMin')
+        writeNCFile(SO.DM.realTime, srcMin, 1, 0, 'kW', 'srcMinSet' + str(setNum) + 'Run' + str(runNum) + '.nc')  # srcMin
+        srcMin = None
+
+        # Stitch eessDis and write to disk
+        eessDis = SO.stitchVariable('eessDis')
+        writeNCFile(SO.DM.realTime, eessDis, 1, 0, 'kW', 'eessDisSet' + str(setNum) + 'Run' + str(runNum) + '.nc')  # eesDis
+        eessDis = None
+
+        # Stitch eessP  and write to disk
+        eessP = SO.stitchVariable('eessP')
+        writeNCFile(SO.DM.realTime, eessP, 1, 0, 'kW', 'eessPSet' + str(setNum) + 'Run' + str(runNum) + '.nc')
+        eessP = None
+
+        # Stitch tesP and write to disk
+        tesP = SO.stitchVariable('tesP')
+        writeNCFile(SO.DM.realTime, tesP, 1, 0, 'kW', 'tessP' + str(setNum) + 'Run' + str(runNum) + '.nc') # tessP
+        tesP = None
+
+        # Stitch genPAvail and write to disk
+        genPAvail = SO.stitchVariable('genPAvail')
+        writeNCFile(SO.DM.realTime, genPAvail, 1, 0, 'kW', 'genPAvailSet' + str(setNum) + 'Run' + str(runNum) + '.nc')  # genPAvail
+        genPAvail = None
+
+        # Stitch onlineCombinationID and write to disk
+        onlineCombinationID = SO.stitchVariable('onlineCombinationID')
+        writeNCFile(SO.DM.realTime, onlineCombinationID, 1, 0, 'NA', 'onlineCombinationIDSet' + str(setNum) + 'Run' + str(runNum) + '.nc')  # onlineCombinationID
+        onlineCombinationID = None
+
+        # Stitch underSRC and write to disk
+        underSRC = SO.stitchVariable('underSRC')
+        writeNCFile(SO.DM.realTime, underSRC, 1, 0, 'kW', 'underSRCSet' + str(setNum) + 'Run' + str(runNum) + '.nc')  # underSRC
+        underSRC = None
+
+        # Stitch outOfNormalBounds and write to disk
+        outOfNormalBounds = SO.stitchVariable('outOfNormalBounds')
+        writeNCFile(SO.DM.realTime, outOfNormalBounds, 1, 0, 'bool', 'outOfNormalBoundsSet' + str(setNum) + 'Run' + str(runNum) + '.nc')  # outOfNormalBounds
+        outOfNormalBounds = None
+
+        # Stitch outOfEfficientBounds and write to disk
+        outOfEfficientBounds = SO.stitchVariable('outOfEfficientBounds')
+        writeNCFile(SO.DM.realTime, outOfEfficientBounds, 1, 0, 'bool',
                     'outOfEfficientBoundsSet' + str(setNum) + 'Run' + str(runNum) + '.nc')  # outOfEfficientBounds
-        writeNCFile(SO.DM.realTime, SO.wfSpilledWindFlag, 1, 0, 'bool',
+        outOfEfficientBounds = None
+
+        # Stitch wfSpilledWindFlag and write to disk
+        wfSpilledWindFlag = SO.stitchVariable('wfSpilledWindFlag')
+        writeNCFile(SO.DM.realTime, wfSpilledWindFlag, 1, 0, 'bool',
                     'wfSpilledWindFlagSet' + str(setNum) + 'Run' + str(runNum) + '.nc')  # wfSpilledWindFlag
-        writeNCFile(SO.DM.realTime, SO.futureLoadList, 1, 0, 'kW',
+
+        # Stitch futureLoadList and write to disk
+        futureLoadList = SO.stitchVariable('futureLoadList')
+        writeNCFile(SO.DM.realTime, futureLoadList, 1, 0, 'kW',
                     'futureLoad' + str(setNum) + 'Run' + str(runNum) + '.nc')  # future Load predicted
-        writeNCFile(SO.DM.realTime, SO.futureSRC, 1, 0, 'kW',
+        futureLoadList = None
+
+        # Stitch futureSRC and write to disk
+        futureSRC = SO.stitchVariable('futureSRC')
+        writeNCFile(SO.DM.realTime, futureSRC, 1, 0, 'kW',
                     'futureSRC' + str(setNum) + 'Run' + str(runNum) + '.nc')  # future SRC predicted
+        futureSRC = None
 
         # power each generators
-        for idx, genP in enumerate(zip(*SO.genP)):  # for each generator in the powerhouse
+        genP = SO.stitchVariable('genP')
+        for idx, genP in enumerate(zip(*genP)):  # for each generator in the powerhouse
             writeNCFile(SO.DM.realTime, genP, 1, 0, 's',
                         'gen' + str(SO.PH.genIDS[idx]) + 'PSet' + str(setNum) + 'Run' + str(
                             runNum) + '.nc')
+        genP = None
 
         # start times for each generators
-        for idx, genST in enumerate(zip(*SO.genStartTime)): # for each generator in the powerhouse
+        genStartTime = SO.stitchVariable('genStartTime')
+        for idx, genST in enumerate(zip(*genStartTime)): # for each generator in the powerhouse
             writeNCFile(SO.DM.realTime, genST, 1, 0, 's', 'gen' + str(SO.PH.genIDS[idx]) + 'StartTimeSet' + str(setNum) + 'Run' + str(runNum) + '.nc')  # eessSoc
+        genStartTime = None
 
         # run times for each generators
-        for idx, genRT in enumerate(zip(*SO.genRunTime)):  # for each generator in the powerhouse
+        genRunTime = SO.stitchVariable('genRunTime')
+        for idx, genRT in enumerate(zip(*genRunTime)):  # for each generator in the powerhouse
             writeNCFile(SO.DM.realTime, genRT, 1, 0, 's',
                         'gen' + str(SO.PH.genIDS[idx]) + 'RunTimeSet' + str(setNum) + 'Run' + str(runNum) + '.nc')  #
+        genRunTime = None
 
         # SRC for each ees
-        for idx, eesSRC in enumerate(zip(*SO.eessSrc)):  # for each eess
+        eessSrc = SO.stitchVariable('eessSrc')
+        for idx, eesSRC in enumerate(zip(*eessSrc)):  # for each eess
             writeNCFile(SO.DM.realTime, eesSRC, 1, 0, 'kW',
                         'ees' + str(SO.EESS.eesIDs[idx]) + 'SRCSet' + str(setNum) + 'Run' + str(runNum) + '.nc')  #
+        eessSrc = None
 
         # SOC for each ees
-        for idx, eesSOC in enumerate(zip(*SO.eessSoc)):  # for each eess
+        eessSoc = SO.stitchVariable('eessSoc')
+        for idx, eesSOC in enumerate(zip(*eessSoc)):  # for each eess
             writeNCFile(SO.DM.realTime, eesSOC, 1, 0, 'PU',
                         'ees' + str(SO.EESS.eesIDs[idx]) + 'SOCSet' + str(setNum) + 'Run' + str(runNum) + '.nc')  # eessSoc
+        eessSoc = None
 
         # ees loss
-        for idx, eesLoss in enumerate(zip(*SO.eesPLoss)):  # for each eess
+        eesPLoss = SO.stitchVariable('eesPLoss')
+        for idx, eesLoss in enumerate(zip(*eesPLoss)):  # for each eess
             writeNCFile(SO.DM.realTime, eesLoss, 1, 0, 'kW',
                         'ees' + str(SO.EESS.eesIDs[idx]) + 'LossSet' + str(setNum) + 'Run' + str(runNum) + '.nc')
+        eesPLoss = None
 
         # wtg P avail
-        for idx, wtgPAvail in enumerate(zip(*SO.wtgPAvail)):  # for wtg
+        wtgPAvail = SO.stitchVariable('wtgPAvail')
+        for idx, wtgPAvail in enumerate(zip(*wtgPAvail)):  # for wtg
             writeNCFile(SO.DM.realTime, wtgPAvail, 1, 0, 'kW',
                         'wtg' + str(SO.WF.wtgIDS[idx]) + 'PAvailSet' + str(setNum) + 'Run' + str(runNum) + '.nc')
+        wtgPAvail = None
 
         # wtg P
-        for idx, wtgP in enumerate(zip(*SO.wtgP)):  # for each wtg
+        wtgP = SO.stitchVariable('wtgP')
+        for idx, wtgP in enumerate(zip(*wtgP)):  # for each wtg
             writeNCFile(SO.DM.realTime, wtgP, 1, 0, 'kW',
                         'wtg' + str(SO.WF.wtgIDS[idx]) + 'PSet' + str(setNum) + 'Run' + str(runNum) + '.nc')
+        wtgP = None
 
         # future wind predicted
-        for idx, fw in enumerate(zip(*SO.futureWindList)):  # for each wtg
+        futureWindList = SO.stitchVariable('futureWindList')
+        for idx, fw in enumerate(zip(*futureWindList)):  # for each wtg
             writeNCFile(SO.DM.realTime, fw, 1, 0, 'kW',
                         'wtg' + str(SO.WF.wtgIDS[idx]) + 'FutureWind' + str(setNum) + 'Run' + str(runNum) + '.nc')
+        futureWindList = None
+
+        print('File write operation elapsed time: ' + str(time.time() - start_file_write))
 
         # set the value in the 'finished' for this run to 1 to indicate it is finished.
         conn = sqlite3.connect(
