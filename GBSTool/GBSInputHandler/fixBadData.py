@@ -80,25 +80,15 @@ def fixBadData(df, setupDir, ListOfComponents, sampleInterval):
            value = 0
        return value
    
-   #filename = os.path.join(setupDir + '../../TimeSeriesData', 'BadData.log')
-   filename = os.path.join(setupDir, 'BadData.log')
-   logging.basicConfig(filename=filename, level=logging.DEBUG, format='%(asctime)s %(message)s')
-    
+
    # create DataClass object to store raw, fixed, and summery outputs
    # use the largest sample interval for the data class
    sampleIntervalTimeDelta = [pd.to_timedelta(s) for s in sampleInterval]
    data = DataClass(df, max(sampleIntervalTimeDelta))
 
-   #before we check for bad data we need to give the input dataframe maximum time overlap
-   for i,df in enumerate(data.fixed):
-       df = adjustColumnYear(df)
-       data.fixed[i] = df
-   print(data.fixed[0].head())
-   print(data.fixed[0].tail())
-   # data gaps are filled with NA's to be filled later
-   data.checkDataGaps()
   
   # create a list of power columns
+   
    powerColumns = []
    eColumns = []
    loads=[]
@@ -130,47 +120,43 @@ def fixBadData(df, setupDir, ListOfComponents, sampleInterval):
    # store the power column list in the DataClass
    data.powerComponents = powerColumns
    data.eColumns = eColumns
-   
    data.loads = loads
-   
    
    # recalculate total_p, data gaps will sum to 0.
    data.totalPower()
   
-   # identify when the entire system was offline - not collecting any data for more than 2 time intervals.
-   # grouping column is the id of groups of rows where total_p value is repeated over more that 2 timesteps
-   for i,df in enumerate(data.fixed):
-       #df =  df.fillna(-99999)
-       df = df.replace(np.nan, -99999)
-       
-       df['_'.join([TOTALP,'grouping'])] = 0
-       df['_'.join([TOTALP,'grouping'])] = isInline(df[TOTALP])
-       
-       #these are the offline groupings for e-columns 
-       for e in data.eColumns:
-           df['_'.join([e,'grouping'])] = 0
-           df['_'.join([e,'grouping'])] = isInline(df[e])
-       
-       #replace offline data for loads       
-       for l in data.loads:
-           df['_'.join([l,'grouping'])] = 0
-           df['_'.join([l,'grouping'])] = isInline(df[l]) 
-       
-       
-       data.fixed[i] = df
-       
-   #replace offline data for total power sources
+   #identify groups of missing data
+   #totalp is for all power component columns
+   #ecolumns and load columns are treated individually
    if len(data.powerComponents) > 0:
-       data.fixOfflineData(TOTALP)
-   for e in data.eColumns:
-        data.fixOfflineData(e)
-   for l in data.loads:
+       columns = data.eColumns + data.loads + [TOTALP]
+   else:
+       columns = data.eColumns + data.loads
+  
+   groupings = data.df[columns].apply(lambda c: isInline(c), axis=0) 
 
-        data.fixOfflineData(l)
-           
-   # scale data based on units and offset in the component xml file
-   data.scaleData(ListOfComponents)      
- 
+   data.setYearBreakdown()
+   #replace offline data for total power sources
+   if TOTALP in columns:
+        
+      columnsToReplace= [TOTALP] + data.powerComponents
+      #create a dataframe subset of total p column, grouping column and powercomponent columns
+      
+      #s = data.df[columnsToReplace]
+      #replace the column in the dataframe with cleaned up data
+      reps = data.fixOfflineData(columnsToReplace,groupings[TOTALP])
+      data.df = data.df.drop(reps.columns, axis=1)
+      data.df= pd.concat([data.df,reps],axis=1)   
+
+   #now e and load columns performed individually
+   #nas produced from mismatched file timestamps get ignored during grouping - thus not replaced during fixbaddata
+   
+   #reps = data.df[data.eColumns + data.loads].apply(lambda c: data.fixOfflineData(c,c.name, groupings[c.name]),axis=0)  
+  
+   for c in data.df[data.eColumns + data.loads].columns:
+       reps= data.fixOfflineData([c], groupings[c])
+       data.df = data.df.drop(reps.columns, axis=1)
+       data.df= pd.concat([data.df,reps],axis=1)   
    #reads the component descriptor files and
    #returns True if none of the components have isFrequencyReference=1 and
 
@@ -206,10 +192,12 @@ def fixBadData(df, setupDir, ListOfComponents, sampleInterval):
 
        data.fixGen(powerColumns)
        data.totalPower()
-
-   data.removeAnomolies(5)
+      # scale data based on units and offset in the component xml file
+   data.scaleData(ListOfComponents)      
+   data.splitDataFrame()
+   #data.removeAnomolies(5)
    data.totalPower()
-
+   #break up dataframe where data missing
    return data
 
 
