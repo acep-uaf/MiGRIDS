@@ -16,11 +16,11 @@ class predictWind:
         # prevWindProfile is a list of lists of previous wind power profiles, or a list of estimates of previous wind power
         # simple calculation, return the mean of the last 5 min load
         self.futureWind = []
-        startIdx10min = max(SO.idx - int(600/SO.timeStep),0)
-        stopIdx = SO.idx + 1
+        #startIdx10min = max(SO.idx - int(600/SO.timeStep),0)
+        #stopIdx = SO.idx + 1
         # for each wind turnbine
         for wtg in SO.WF.windTurbines:
             # the future power possible is calculated as the minimum possible power in the past 10 min.
-            fw10min = np.min(wtg.windPower[startIdx10min:stopIdx])
+            fw10min = wtg.windPower10minTrend[SO.masterIdx] #np.min(wtg.windPower[startIdx10min:stopIdx])
             self.futureWind += [fw10min]
 

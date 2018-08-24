@@ -16,4 +16,4 @@ class predictLoad:
         # simple calculation, return the mean of the last 1 hour load
         #startIdx = max(SO.idx - int(3600/SO.timeStep), 0)
         #stopIdx = SO.idx+1
-        self.futureLoad = SO.DM.realLoad1hrTrend[SO.idx] #np.mean(SO.DM.realLoad[startIdx:stopIdx])
+        self.futureLoad = SO.DM.realLoad1hrTrend[SO.masterIdx] #np.mean(SO.DM.realLoad[startIdx:stopIdx])
