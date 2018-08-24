@@ -21,6 +21,7 @@ import numpy as np
 from scipy.interpolate import interp1d
 from distutils.util import strtobool
 from GBSAnalyzer.DataWriters.writeNCFile import writeNCFile
+import pandas as pd
 
 class WindTurbine:
     """
@@ -175,6 +176,9 @@ class WindTurbine:
         # get the indices of the timesteps to simulate
         indRun = getSeriesIndices(self.runTimeSteps, len(windPowerNew))
         self.windPower = windPowerNew[indRun]
+        # Get 10 sec and 10 min trend for wind power
+        self.windPower10sTrend = np.asarray(pd.Series(self.windPower).rolling((int(max([10/self.timeStep,1]))), min_periods=1).mean())
+        self.windPower10minTrend = np.asarray(pd.Series(self.windPower).rolling(int(600/self.timeStep), min_periods=1).mean())
 
     # get wind power available from wind speeds and power curve
     # using integer list indexing is much faster than np.searchsorted
