@@ -22,7 +22,7 @@ class predictWind:
         # for each wind turnbine
         for wtg in SO.WF.windTurbines:
             # the future power production is the minimum of the previous 10 min and the previous 10 seconds
-            fw10min = np.mean(wtg.windPower[startIdx10min:stopIdx])
-            fw10sec = np.mean(wtg.windPower[startIdx10sec:stopIdx])
+            fw10min = wtg.windPower10minTrend[SO.idx]#np.mean(wtg.windPower[startIdx10min:stopIdx])
+            fw10sec = wtg.windPower10sTrend[SO.idx] #np.mean(wtg.windPower[startIdx10sec:stopIdx])
             self.futureWind += [min(fw10min,fw10sec)]
 
