@@ -31,7 +31,7 @@ class getMinSrc:
             self.minSrcToSwitch = self.minSrcToStay * self.minSRCToSwitchRatio
         else:
 
-            meanLastTenMin = SO.DM.realLoadTrend[SO.idx] #np.mean(SO.DM.realLoad[max((SO.idx - int(600/SO.timeStep)), 0):(SO.idx+1)])
+            meanLastTenMin = SO.DM.realLoad10minTrend[SO.idx] #np.mean(SO.DM.realLoad[max((SO.idx - int(600/SO.timeStep)), 0):(SO.idx+1)])
 
             # the minimum src required.
             # remove non firm power from the SRC requirements
