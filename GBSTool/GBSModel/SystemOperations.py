@@ -155,6 +155,15 @@ class SystemOperations:
         else:
             self.reDispatch = A.reDispatch(reDispatchInputs)
 
+        # load the real load
+        if len(loadRealFiles) != 0:
+            self.DM = Demand(timeStep, loadRealFiles, loadDescriptor, loadReactiveFiles, runTimeSteps)
+        else:
+            ValueError('At least one real load time-series file is required.')
+
+        # Length of the load variable determines pre-allocation length for all recorded time series
+        self.lenRealLoad = len(self.DM.realLoad)
+
         # initiate generator power house
         # TODO: seperate genDispatch from power house, put as input
         if len(genIDs) != 0:
@@ -164,13 +173,11 @@ class SystemOperations:
             self.WF = Windfarm(wtgIDs, wtgSpeedFiles, wtgStates, timeStep, wtgDescriptors, runTimeSteps)
         # initiate electrical energy storage system
         if len(eesIDs) != 0:
-            self.EESS = ElectricalEnergyStorageSystem(eesIDs, eesSOCs, eesStates, timeStep, eesDescriptors, eesDispatch)
+            self.EESS = ElectricalEnergyStorageSystem(eesIDs, eesSOCs, eesStates, timeStep, eesDescriptors, eesDispatch, self.lenRealLoad)
         # initiate the thermal energy storage system
         if len(tesIDs) != 0:
             self.TESS = ThermalEnergyStorageSystem(tesIDs, tesTs, tesStates, timeStep, tesDescriptors, tesDispatch)
-        # load the real load
-        if len(loadRealFiles) != 0:
-            self.DM = Demand(timeStep, loadRealFiles, loadDescriptor, loadReactiveFiles, runTimeSteps)
+
 
         # save local variables
         self.timeStep = timeStep
@@ -180,7 +187,7 @@ class SystemOperations:
         
         # Keep track of how many steps are remaining to know if further splits need to anticipated
         # Initially this is the  total number of steps requested to be run
-        remainingSteps = len(self.DM.realLoad)
+        remainingSteps = self.lenRealLoad
         
         # Setup the maximum number of steps before simulations are split and restarted
         # FUTUREFEATURE: this should be configured via _init_ and/or Setup.xml in the future
@@ -188,7 +195,7 @@ class SystemOperations:
 
         # Calculate a helper to pre-allocate all the time-series containers
         if remainingSteps <= self.maxStepsBeforeBreak:
-            resultLength = len(self.DM.realLoad)
+            resultLength = self.lenRealLoad
             self.splitSimDataFlag = False
         else:
             resultLength = self.maxStepsBeforeBreak
@@ -482,7 +489,7 @@ class SystemOperations:
             phPch = min(sum(self.EESS.eesPinAvail) - self.reDispatch.wfPch, phPch)
 
         # dispatch the eess
-        self.EESS.runEesDispatch(eessDis - self.reDispatch.wfPch - phPch, 0, eessSrcRequested)
+        self.EESS.runEesDispatch(eessDis - self.reDispatch.wfPch - phPch, 0, eessSrcRequested, self.masterIdx)
         # read what eess managed to do
         eessP = sum(self.EESS.eesP[:])
         # recalculate generator power required
