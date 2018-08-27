@@ -105,6 +105,7 @@ class WindTurbine:
         self.wtgPMax = float(wtgSoup.POutMaxPa.get('value')) # Nameplate capacity [kW]
         self.wtgQMax = float(wtgSoup.QOutMaxPa.get('value'))  # Nameplate capacity [kvar]
         self.wtgCheckWindTime = float(wtgSoup.checkWindTime.get('value'))  # time to check spilled wind power over
+        self.cumSpilledWindWindow = int(self.wtgCheckWindTime/self.timeStep) # helper to avoid repeated calculation
         self.wtgSpilledWindLimit = float(
             wtgSoup.spilledWindLimit.get('value'))  # the PU limit of spilled power before a flag is set
         self.wtgRecalculateWtgPAvail = strtobool(
@@ -179,6 +180,8 @@ class WindTurbine:
         # Get 10 sec and 10 min trend for wind power
         self.windPower10sTrend = np.asarray(pd.Series(self.windPower).rolling((int(max([10/self.timeStep,1]))), min_periods=1).mean())
         self.windPower10minTrend = np.asarray(pd.Series(self.windPower).rolling(int(600/self.timeStep), min_periods=1).mean())
+        # Pre-allocate spilledWind
+        self.wtgSpilledWind = windPower.copy()
 
     # get wind power available from wind speeds and power curve
     # using integer list indexing is much faster than np.searchsorted
@@ -210,16 +213,16 @@ class WindTurbine:
         else:
             return ind
 
-    def checkOperatingConditions(self):
+    def checkOperatingConditions(self, tIndex):
         if self.wtgState == 2: # if running online
             self.wtgRunTimeAct += self.timeStep
             self.wtgRunTimeTot += self.timeStep
 
             # update spilled wind power time series
-            self.wtgSpilledWind.append(max([self.wtgPAvail-self.wtgP, 0]))
+            self.wtgSpilledWind[tIndex] = max([self.wtgPAvail-self.wtgP, 0])
             # get the spilled wind power in checkWindPowerTime
 
-            self.wtgSpilledWindCum = sum(self.wtgSpilledWind[-int(self.wtgCheckWindTime/self.timeStep):])*self.timeStep
+            self.wtgSpilledWindCum = sum(self.wtgSpilledWind[-self.cumSpilledWindWindow:])*self.timeStep
 
             # if enough wind spilled, set flag
             if (self.wtgSpilledWindCum > self.wtgSpilledWindLimit*self.wtgPMax) and (self.wtgSpilledWind[-1] > 0):
