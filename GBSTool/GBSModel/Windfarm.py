@@ -80,7 +80,7 @@ class Windfarm:
     # self - self reference
     # newWtgP - new total wind turbine real load
     # newWtgQ - new total wind turbine reactive load
-    def wtgDispatch(self, newWtgP, newWtgQ):
+    def wtgDispatch(self, newWtgP, newWtgQ, tIndex):
         # check available power
 
         # dispatch
@@ -110,7 +110,7 @@ class Windfarm:
                 if self.windTurbines[idx].wtgStartTimeAct >= self.windTurbines[idx].wtgStartTime:
                     self.windTurbines[idx].wtgState = 2
                 # update available power and runtimes
-                self.windTurbines[idx].checkOperatingConditions()
+                self.windTurbines[idx].checkOperatingConditions(tIndex)
                 self.wtgPAvail[idx] = self.windTurbines[idx].wtgPAvail
                 self.wtgQAvail[idx] = self.windTurbines[idx].wtgQAvail
                 self.wtgSpilledWindFlag[idx] = self.windTurbines[idx].wtgSpilledWindFlag
