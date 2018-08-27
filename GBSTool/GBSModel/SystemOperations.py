@@ -170,7 +170,7 @@ class SystemOperations:
             self.PH = Powerhouse(genIDs, genStates, timeStep, genDescriptors)
         # initiate wind farm
         if len(wtgIDs) != 0:
-            self.WF = Windfarm(wtgIDs, wtgSpeedFiles, wtgStates, timeStep, wtgDescriptors, runTimeSteps)
+            self.WF = Windfarm(wtgIDs, wtgSpeedFiles, wtgStates, timeStep, wtgDescriptors, self.lenRealLoad, runTimeSteps)
         # initiate electrical energy storage system
         if len(eesIDs) != 0:
             self.EESS = ElectricalEnergyStorageSystem(eesIDs, eesSOCs, eesStates, timeStep, eesDescriptors, eesDispatch, self.lenRealLoad)

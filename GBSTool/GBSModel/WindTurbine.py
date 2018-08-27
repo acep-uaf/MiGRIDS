@@ -52,7 +52,7 @@ class WindTurbine:
 
 
     # Constructor
-    def __init__(self, wtgID, windSpeedDir, wtgState, timeStep, wtgDescriptor, runTimeSteps = 'all'):
+    def __init__(self, wtgID, windSpeedDir, wtgState, timeStep, wtgDescriptor, timeSeriesLength, runTimeSteps = 'all'):
         """
         Constructor used for the initialization of an object within windfarm list of wind turbines.
 
@@ -76,12 +76,12 @@ class WindTurbine:
         self.wtgRunTimeAct = 0  # Run time since last start [s]
         self.wtgRunTimeTot = 0  # Cummulative run time since model start [s]
         self.wtgStartTimeAct = 0 # time spent starting up since last start [s]
-        self.wtgSpilledWind = [] # time series of spilled wind power
+        self.wtgSpilledWind = [0]*timeSeriesLength # time series of spilled wind power
         self.wtgSpilledWindCum = 0 # amount of spilled wind power in last wtgCheckWindPowerTime seconds
         self.wtgSpilledWindFlag = False # indicates over spilled wind power limit
 
         # initiate runtime values
-        self.checkOperatingConditions()
+        self.checkOperatingConditions(0)
 
     def wtgDescriptorParser(self, windSpeedDir, wtgDescriptor):
         """
@@ -181,7 +181,7 @@ class WindTurbine:
         self.windPower10sTrend = np.asarray(pd.Series(self.windPower).rolling((int(max([10/self.timeStep,1]))), min_periods=1).mean())
         self.windPower10minTrend = np.asarray(pd.Series(self.windPower).rolling(int(600/self.timeStep), min_periods=1).mean())
         # Pre-allocate spilledWind
-        self.wtgSpilledWind = windPower.copy()
+        self.wtgSpilledWind = self.windPower.copy()
 
     # get wind power available from wind speeds and power curve
     # using integer list indexing is much faster than np.searchsorted

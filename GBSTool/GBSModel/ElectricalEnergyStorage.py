@@ -68,7 +68,7 @@ class ElectricalEnergyStorage:
         self.eesPoutAvailOverSrc = 0
         self.eesPoutAvailOverSrc_1 = 0
         self.eesPloss = 0
-        self.checkOperatingConditions()
+        self.checkOperatingConditions(0)
 
     # energy storage descriptor parser
     def eesDescriptorParser(self, eesDescriptor):
