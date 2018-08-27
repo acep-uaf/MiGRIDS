@@ -21,7 +21,7 @@ class ElectricalEnergyStorage:
         SystemOperations.py).
         '''
     # Constructor
-    def __init__(self, eesID, eesSOC, eesState, timestep, eesDescriptor):
+    def __init__(self, eesID, eesSOC, eesState, timestep, eesDescriptor, timeSeriesLength):
         """
         Constructor used for intialization of an Energy Storage unit in Energy Storage System class.
         :param eesID: integer for identification of object within Energy Storage System list of ees units.
@@ -62,7 +62,7 @@ class ElectricalEnergyStorage:
         self.eesPoutAvail = 0
         self.eesQoutAvail = self.eesQOutMax
         self.underSRC = 0
-        self.prevUnderSrc = []
+        self.prevUnderSrc = [0]*timeSeriesLength
         self.outOfBoundsReal = 0
         self.outOfBoundsReactive = 0
         self.eesPoutAvailOverSrc = 0
@@ -203,7 +203,7 @@ class ElectricalEnergyStorage:
 
 
 
-    def checkOperatingConditions(self):
+    def checkOperatingConditions(self, tIndex):
         """
         Checks if the ees is operating within defined bounds. Otherwise, triggers the respective (cummulative
             energy) timers.
@@ -219,7 +219,7 @@ class ElectricalEnergyStorage:
             self.eesPinAvail = self.findPchAvail(self.timeStep)
             self.eesPoutAvail = self.findPdisAvail(self.timeStep, 0, 0)
             # get the percent of the request SRC that is not being supplied.
-            self.prevUnderSrc.append(max(self.eesSRC - self.eesPsrcAvail,0))
+            self.prevUnderSrc[tIndex] = max(self.eesSRC - self.eesPsrcAvail,0)
             # check if has operated more than eesUnderSrcLimit under the minimum SRC over the past eesUnderSrcTime
             if sum(self.prevUnderSrc[-round(self.eesUnderSrcTime / self.timeStep):])*self.timeStep > self.eesUnderSrcLimit:
                 self.underSRC = True
