@@ -441,7 +441,7 @@ class SystemOperations:
 
         # get available wind power
         # FUTUREFEATURE: do the same for solar etc.
-        self.WF.getWtgPAvail(self.idx)
+        self.WF.getWtgPAvail(self.masterIdx)
 
         # dispatch the renewable energy
         self.reDispatch.reDispatch(self)
@@ -545,10 +545,10 @@ class SystemOperations:
             # TODO: add other RE
 
             # get the ability of the energy storage system to supply SRC
-            eesSrcAvailMax = []  # the amount of SRC available from all ees units
+            eesSrcAvailMax = [None] * len(self.EESS.electricalEnergyStorageUnits)  # the amount of SRC available from all ees units
             # iterate through all ees and add their available SRC
-            for ees in self.EESS.electricalEnergyStorageUnits:
-                eesSrcAvailMax.append(ees.findPdisAvail(ees.eesSrcTime, 0, 0))
+            for idy, ees in enumerate(self.EESS.electricalEnergyStorageUnits):
+                eesSrcAvailMax[idy] = ees.findPdisAvail(ees.eesSrcTime, 0, 0)
 
             # find the required capacity of the diesel generators
             # how much SRC can EESS cover? This can be subtracted from the load that the diesel generators must be
