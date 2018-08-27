@@ -14,7 +14,7 @@ import os
 
 class ElectricalEnergyStorageSystem:
 
-    def __init__(self, eesIDS, eesSOC, eesStates, timeStep, eesDescriptor, eesDispatch):
+    def __init__(self, eesIDS, eesSOC, eesStates, timeStep, eesDescriptor, eesDispatch, timeSeriesLength):
         """
         Constructor used for intialization of all Energy Storage units in this Energy Storage System.
         :param eesIDS: list of integers for identification of Energy Storage units.
@@ -74,7 +74,7 @@ class ElectricalEnergyStorageSystem:
         # TODO: consider leaving values at ees level, not bringing them to this level if not necessary
         for idx, eesID in enumerate(eesIDS):
             # Initialize EES
-            self.electricalEnergyStorageUnits.append(ElectricalEnergyStorage(eesID, eesSOC[idx], eesStates[idx], timeStep, eesDescriptor[idx]))
+            self.electricalEnergyStorageUnits.append(ElectricalEnergyStorage(eesID, eesSOC[idx], eesStates[idx], timeStep, eesDescriptor[idx], timeSeriesLength))
 
             # Initial operating values
             self.eesPinAvail.append(self.electricalEnergyStorageUnits[idx].eesPinAvail)
@@ -116,11 +116,11 @@ class ElectricalEnergyStorageSystem:
 
 
     # this runs the ees dispatch schedule
-    def runEesDispatch(self, newP, newQ, newSRC):
+    def runEesDispatch(self, newP, newQ, newSRC, tIndex):
         self.eesDispatch(self, newP, newQ, newSRC)
         # check the operating conditions of ees, update counters
         for idx, ees in enumerate(self.electricalEnergyStorageUnits):
-            ees.checkOperatingConditions()
+            ees.checkOperatingConditions(tIndex)
             self.eesP[idx] = ees.eesP
             self.eesQ[idx] = ees.eesQ
             self.eesSOC[idx] = ees.eesSOC
