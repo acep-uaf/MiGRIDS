@@ -101,13 +101,10 @@ class optimize:
                                       self.varGenP, constraints)
 
         # Get the short test time-series
-        # TODO remove following line, which just adjusts time stamps for prototyping prior to release
-        self.time = self.time/1e9
-
         reductionInput = \
             pd.DataFrame({'time':self.time, 'firmLoadP':self.firmLoadP, 'varGenP':self.varGenP})#, index=self.time)
 
-        self.abbrevDatasets, self.abbrevDatasetWeights = getDataSubsets(reductionInput, self.dataReductionMethod)
+        self.abbrevDatasets, self.abbrevDatasetWeights = getDataSubsets(reductionInput, self.dataReductionMethod, otherInputs=[])
 
 
         # Setup optimization runs
@@ -115,6 +112,7 @@ class optimize:
         # Get base case KPI based on optimization objective
         # Any of the following if-branches needs to write to self.basePerformance with the reference KPI based on the
         # optimization objective
+        # Futurefeature: retrieve basePerformance of abbreviated data sets instead of full base case for direct comparability with optimization iteration outputs.
         if self.optimizationObjective == 'maxREContribution':
             # Calculate base case RE contribution
             self.basePerformance = getPrimaryREContribution(self.time, self.firmLoadP, self.firmGenP, self.varGenP)
@@ -161,7 +159,9 @@ class optimize:
 
     def doOptimization(self):
         '''
-        TODO implement and document
+        Interface to dispatch specified optimization algorithm. Returns a value error if the string in self.searchMethod
+        does not match a known optimization method.
+        Currently, only hillClimber is implemented.
         :return:
         '''
 
@@ -178,7 +178,7 @@ class optimize:
 
     def hillClimber(self):
         '''
-        TODO implement and document
+        TODO document
         :return:
         '''
 
@@ -229,6 +229,7 @@ class optimize:
                     setPathList.append(setPath)
                     setNameList.append(setName)
                     # Generate runs
+                    print('Iteration ' + str(iterIdx) + ', Snippet ' + str(sIdx) + ' simulation dispatched.')
                     generateRuns(setPath)
 
                     # Dispatch simulations
