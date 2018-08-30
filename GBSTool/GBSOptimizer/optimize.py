@@ -489,7 +489,7 @@ class optimize:
     def essExists(self):
         '''
         Checks if the system setup already contains one or more ESS components; looks for the largest index of those
-        components, and returns the next available integer as the index for the ESS used in optimization.
+        components, and returns it as the index for the ESS used in optimization.
         :return: essIdx
         '''
         # We also need to determine the unique name for the ess. Normally, this should be ess0. However, in the rare
@@ -511,11 +511,11 @@ class optimize:
             essNum.append(int(num[3:]))
 
         if not essNum:
-            essNumMax = -1
+            essNumMax = 0
         else:
             essNumMax = max(essNum)
 
-        essIdx = essNumMax + 1
+        essIdx = essNumMax
 
         return essIdx
 
