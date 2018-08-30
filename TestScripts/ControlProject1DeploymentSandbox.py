@@ -32,7 +32,7 @@ rootProjectPath = os.path.join(here, '../GBSProjects/', projectName)
 
 # * Create the 'SetAttributes' file from the template and the specific information given
 # Load the template
-setAttributeTemplatePath = os.path.join(here, 'GBSModel/Resources/Setup/projectSetAttributes.xml')
+setAttributeTemplatePath = os.path.join(here, '../GBSTool/GBSModel/Resources/Setup/projectSetAttributes.xml')
 setAttributeTemplateFile = open(setAttributeTemplatePath, 'r')
 setAttributeTemplateFileXML = setAttributeTemplateFile.read()
 setAttributeTemplateFile.close()

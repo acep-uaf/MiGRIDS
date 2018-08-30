@@ -35,7 +35,7 @@ for i in range(1, iterNum):
     runLenghtStr = '0,' + str(i*60*60*24*7)
     # * Create the 'SetAttributes' file from the template and the specific information given
     # Load the template
-    setAttributeTemplatePath = os.path.join(here, 'GBSModel/Resources/Setup/projectSetAttributes.xml')
+    setAttributeTemplatePath = os.path.join(here, '../GBSTool/GBSModel/Resources/Setup/projectSetAttributes.xml')
     setAttributeTemplateFile = open(setAttributeTemplatePath, 'r')
     setAttributeTemplateFileXML = setAttributeTemplateFile.read()
     setAttributeTemplateFile.close()
