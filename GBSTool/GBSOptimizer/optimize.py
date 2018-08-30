@@ -178,11 +178,13 @@ class optimize:
 
     def hillClimber(self):
         '''
-        TODO document
-        :return:
+        Adaptive hill climber method for optimization of EES power and energy capacity.
+
+        :return: nothing - writes to object-wide variables.
         '''
 
         maxIterNumber = int(float(self.optimizationConfig['maxRunNumber']))
+        convergenceRepeatNum = int(float(self.optimizationConfig['convergenceRepeatNum']))
         convergenceFlag = False
 
         # Select starting configuration at random, within the given bounds.
@@ -307,7 +309,7 @@ class optimize:
 
                     # If there's no improvement after X iterations in a row, terminate the algorithm.
                     # NOTE this can mean two things, either that we have achieved convergence, or that we're stuck somewhere
-                    if lastImprovement > 10:
+                    if lastImprovement > convergenceRepeatNum:
                         convergenceFlag = True
                         print('*********************************')
                         print('Terminated at Iteration: ' + str(iterIdx) + ' with fitness: ' + str(self.fitness))
@@ -324,19 +326,37 @@ class optimize:
 
 
 
-    def getNextGuess(self, fl, pBest, eBest, iterNum):
+    def getNextGuess(self, fl, pBest, eBest, iterNumParam):
         '''
-        TODO document
+        This method determines the next values for `essPPa` and `essEPa` that are to be tested in an iteration of the
+        hill climber. It uses the historical fitness values from previous iterations and determines the direction of the
+        steepest gradient away from the best fitness value. It then biases the random selection for new power and energy
+        capacity values in the _opposite_ direction of the steepest gradient with the hope that this is the most likely
+        direction to find a better value pair at. If new selections are outside of the constraints put on the search
+        space, i.e., maximum and minimum power and energy capacities, and/or minimum duration (at the essPPa selected),
+        it corrects selections back to the edges of the search envelope as set by the constraints.
+
+        If the more iterations in the past the best found fitness lies, the stronger the random element in picking new
+        values. The idea being that the algorithm might be stuck and larger jumps might get it unstuck.
+
+        **Note:** this approach to a hill climber was tested with several test functions
+        (found in getFitness.py->getTestFitness). With these test functions the algorithm generally converges well.
+        The caveat is, that recent results seem to suggest that the actual search space for the optimal GBS may not be
+        smooth, while the test cases used smooth test functions. This should be investigated further.
+
         :param fl: fitnessLog
         :param pBest: essPPaBest: current best power guess for GBS
         :param eBest: essEPaBest: current best energy guess for GBS
-        :param fBest: fitnessBest: current best fitness value.
-        :return:
+        :param iterNumParam: [float] parameter describing the randomness of the next value pair selection, fraction of
+        iteration number and count since the last improved fitness value was found.
+        :return: newESSPPa, newESSEPa: [float] new pair of energy and power capacities to run the next iteration with
         '''
 
+        # Reduce the data in fl to the necessary columns and usable values
         fl = fl[['fitness', 'essPPa', 'essEPa']]
         fl = fl.dropna()
 
+        # Parameter used to adjust variability/randomization of next guess
         # TODO make adjustable parameter
         exponent = 0.5
 
@@ -359,8 +379,8 @@ class optimize:
         dx = fl['essPPa'][maxSlopeIdx] - originP
         newCoord = originP - dx
         # Get random down and up variations from the power-coordinate
-        rndDown = (newCoord - self.minESSPPa) * np.random.random_sample()/iterNum**exponent
-        rndUp = (self.maxESSPPa - newCoord)*np.random.random_sample()/iterNum**exponent
+        rndDown = (newCoord - self.minESSPPa) * np.random.random_sample()/iterNumParam**exponent
+        rndUp = (self.maxESSPPa - newCoord)*np.random.random_sample()/iterNumParam**exponent
 
         newESSPPa = float(newCoord - rndDown + rndUp)
 
@@ -379,8 +399,8 @@ class optimize:
         # Note that ess needs to meet minimum duration requirement, so the minimum size is constraint by the currently
         # selected power level.
         currentESSEMin = newESSPPa * (self.minESSEPa/self.minESSPPa)
-        rndDown = (newCoordY - currentESSEMin) * np.random.random_sample() / iterNum**exponent
-        rndUp = (self.maxESSEPa - newCoordY) * np.random.random_sample() / iterNum**exponent
+        rndDown = (newCoordY - currentESSEMin) * np.random.random_sample() / iterNumParam**exponent
+        rndUp = (self.maxESSEPa - newCoordY) * np.random.random_sample() / iterNumParam**exponent
 
         newESSEPa = float(newCoordY - rndDown + rndUp)
 
