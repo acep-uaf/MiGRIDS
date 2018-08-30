@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Project: GBS Tool -->
+<!-- Author: Jeremy VanderMeer, jbvandermeer@alaska.edu-->
+<!-- Date: July 19, 2018 -->
+<!-- License: MIT License (see LICENSE file of this package for more information -->
+
+<!-- This file describes the inputs for the class 'reDispatch0'. -->
+<!-- Root tag is 'reDistpatchName' -->
+<reDistpatchName name = 'reDispatch0'>
+    <!-- 'wfPsetResponseRampRate' is the rate by which the wind farm set point responds to deviations from the set point of the
+     dump laod. Units are kW/(kW*s). Default is 0.25. -->
+    <wfPsetResponseRampRate value = '0.25'/>
+
+    <!-- 'tessPset' is the rate by which the wind farm set point responds to deviations from the set point of the
+     dump laod. Units are kW/(kW*s). Default is 0.25. -->
+    <tessPset value = '0.25'/>
+</reDistpatchName>
+<!-- EOF -->
