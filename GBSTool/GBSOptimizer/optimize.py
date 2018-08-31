@@ -371,7 +371,9 @@ class optimize:
         fl['Slope'] = (fl['fitness'] - originFitness)/fl['Dist']
 
         # Get the difference in power-coordinate DOWN the steepest gradient of the four nearest neighbors
-        if fl.shape[0] < 3:
+        if fl.shape[0] == 1:
+            maxSlopeIdx = fl['slope'].index[0]
+        elif fl.shape[0] < 3:
             maxSlopeIdx = fl['Slope'].idxmax()
         else:
             maxSlopeIdx = fl['Slope'][0:2].idxmax()
