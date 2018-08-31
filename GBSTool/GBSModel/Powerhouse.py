@@ -147,15 +147,15 @@ class Powerhouse:
         # Setup a list of all possible 'loading' values
         # Max combination will be needed during lookups as default value to revert to if there is no list of available
         # combinations for a lookup key, i.e., if the load is greater than the max upper normal loading of any gen comb.
-        self.genCombinationsUpperNormalLoadingMax = max(self.genCombinationsUpperNormalLoading)
+        self.genCombinationsUpperNormalLoadingMaxIdx = int(np.argmax(np.asarray(max(self.genCombinationsUpperNormalLoading))))
         loading = list(range(0, int(max(self.genCombinationsUpperNormalLoading)+1)))
-        self.lkpGenCombinatinsUpperNormalLoading = {}
+        self.lkpGenCombinationsUpperNormalLoading = {}
         for load in loading:
             combList = np.array([], dtype=int)
             for idy, genComb in enumerate(self.genCombinationsUpperNormalLoading):
                 if load <= genComb:
                     np.append(combList, idy)
-            self.lkpGenCombinatinsUpperNormalLoading[load] = combList
+            self.lkpGenCombinationsUpperNormalLoading[load] = combList
 
 
 
@@ -282,7 +282,7 @@ class Powerhouse:
                            #powerAvailToSwitch + scheduledSRCSwitch])
 
         capReq = int(scheduledLoad - powerAvailToSwitch + scheduledSRCSwitch)
-        indCap = self.lkpGenCombinatinsUpperNormalLoading.get(capReq, self.genCombinationsUpperNormalLoadingMax)
+        indCap = np.asarray([self.lkpGenCombinationsUpperNormalLoading.get(capReq, self.genCombinationsUpperNormalLoadingMaxIdx)], dtype=int)
 
         # check if the current online combination is capable of supplying the projected load minus the power available to
         # help the current generator combination stay online
@@ -292,7 +292,7 @@ class Powerhouse:
             #if not((self.onlineCombinationID == 0) and underSRC):
                 indCap = np.append(indCap,self.onlineCombinationID)
         # if there are no gen combinations large enough to supply, automatically add largest (last combination)
-        if len(indCap) == 0:
+        if indCap.size == 0:
             indCap = np.array([len(self.genCombinationsUpperNormalLoading)-1])
         # find all with MOL under the load
         indMOLCap = [idx for idx, x in enumerate(self.genCombinationsMOL[indCap]) if x <= futureLoad]
