@@ -24,8 +24,8 @@ def getDataSubsetsRELoadOneWeek(dataframe, otherInputs):
     """
 
     # Window size: one week in seconds
-    # TODO revert to full length before deployment
-    wdwSize = 60 * 60 * 24 #* 7
+    # NOTE: to run shorter code snippets [faster iterations] you can reduce the window size here.
+    wdwSize = 60 * 60 * 24 * 7
 
     # Get rolling one week load averages. We assume that time units are seconds here.
     # just for convenience and readability we'll pull the dataframe apart
