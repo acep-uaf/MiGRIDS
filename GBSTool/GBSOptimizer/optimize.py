@@ -372,11 +372,11 @@ class optimize:
 
         # Get the difference in power-coordinate DOWN the steepest gradient of the four nearest neighbors
         if fl.shape[0] == 1:
-            maxSlopeIdx = fl['slope'].index[0]
+            maxSlopeIdx = fl['Slope'].astype(float).index[0]
         elif fl.shape[0] < 3:
-            maxSlopeIdx = fl['Slope'].idxmax()
+            maxSlopeIdx = fl['Slope'].astype(float).idxmax()
         else:
-            maxSlopeIdx = fl['Slope'][0:2].idxmax()
+            maxSlopeIdx = fl['Slope'][0:2].astype(float).idxmax()
 
         dx = fl['essPPa'][maxSlopeIdx] - originP
         newCoord = originP - dx
