@@ -7,9 +7,10 @@ from tkinter import filedialog
 import pandas as pd
 import itertools
 import matplotlib.pyplot as plt
+import numbers
 
 def plotSetResult(plotRes,plotAttr, projectSetDir = '', otherAttr = [],otherAttrVal = [], baseSet = '', baseRun = '',
-                  subtractFromBase = True, removeSingleOtherAttr = True, alwaysUseMarkers = False, plotResName = '',
+                  subtractFromBase = 0, removeSingleOtherAttr = True, alwaysUseMarkers = False, plotResName = '',
                   plotAttrName = '', otherAttrNames = []):
     '''
     plot a single result for a set of simulations
@@ -18,7 +19,9 @@ def plotSetResult(plotRes,plotAttr, projectSetDir = '', otherAttr = [],otherAttr
     :param otherAttr: The other component or setup attributes to have fixed values in the plot. If not specified, all values for the attribute will be plotted as multiple lines.
     :param otherAttrVal: The values of the 'otherAttr' to plot. It should be given as a list of lists, corresponding to otherAttr.
     :param baseCaseRunDir: the run directory of the base case scenario.
-    :param subtractFromBase: This is True if results are to be subtracted from the basecase. False for the reverse.
+    :param subtractFromBase:0  - do not subtract or add, but if base case is specified, place at the begining
+# 1 - subtract value from base -> decrease from base case
+# 2 - subtract base from value -> increase from base case
     :param plotAttrName: the desired x axis label
     :param otherAttrNames: a dict of the other attribute variable names that will go in the legend and the names desired to be used in the legend
     :return: Nothing
@@ -58,11 +61,12 @@ def plotSetResult(plotRes,plotAttr, projectSetDir = '', otherAttr = [],otherAttr
             conn.close()
 
             # get the base value
-            yBase = getPlotRes(plotRes, dfBase).loc[baseRun]
-
+            yBase = pd.to_numeric(getPlotRes(plotRes, dfBase).loc[baseRun])
+            xBase = pd.to_numeric(getPlotRes(plotAttr, dfBase).loc[baseRun])
 
     else: # if no base case set
         yBase = 0
+        xBase = 0
 
 
     # load the results dataframe
@@ -224,12 +228,17 @@ def plotSetResult(plotRes,plotAttr, projectSetDir = '', otherAttr = [],otherAttr
         #xIdx = list(combIdx)  # the indicies for x
         #yIdx = [y.index[i] for i in combIdx]
         xPlot = pd.to_numeric(x.loc[combIdx])
+        yPlot = pd.to_numeric(y.loc[combIdx])
 
-        # check if need to subtract from base value, or not. Only if a base case is set.
-        if subtractFromBase and baseSet != '' and baseRun != '':
-            yPlot = yBase - pd.to_numeric(y.loc[combIdx])
-        else:
-            yPlot = pd.to_numeric(y.loc[combIdx]) - yBase
+        # check if need to subtract from base value, or not, or add to begging of series. Only if a base case is set.
+        if subtractFromBase == 1 and baseSet != '' and baseRun != '':
+            yPlot = yBase - yPlot
+        elif subtractFromBase == 2 and baseSet != '' and baseRun != '':
+            yPlot = yPlot - yBase
+        elif subtractFromBase == 0 and baseSet != '' and baseRun != '':
+            xPlot = xPlot.append(pd.Series(pd.to_numeric(xBase)), ignore_index=True)
+            yPlot = yPlot.append(pd.Series(pd.to_numeric(yBase)), ignore_index=True)
+
 
         idxSort = np.argsort(xPlot).tolist()
         # marker and linestyles
@@ -248,10 +257,12 @@ def plotSetResult(plotRes,plotAttr, projectSetDir = '', otherAttr = [],otherAttr
 
 
     if baseSet != '' and baseRun != '': # if base case was used
-        if subtractFromBase:
+        if subtractFromBase == 1:
             plt.ylabel('Reduction in ' + plotResName)
-        else:
+        elif subtractFromBase == 2:
             plt.ylabel('Increase in ' + plotResName)
+        elif subtractFromBase == 0:
+            plt.ylabel(plotResName)
     else:
         plt.ylabel(plotResName)
     # TODO: grab x label values from component descriptor, or..?
@@ -276,10 +287,12 @@ def plotSetResult(plotRes,plotAttr, projectSetDir = '', otherAttr = [],otherAttr
         os.makedirs('figs')
     os.chdir('figs')
     if baseSet != '' and baseRun != '': # if base case was used, different file name
-        if subtractFromBase:
+        if subtractFromBase == 1:
             plt.savefig('Reduction in ' + plotResName + ' vs ' + plotAttr + ' for ' + otherAttrText + '.png')
-        else:
+        elif subtractFromBase == 2:
             plt.savefig('Increase in ' + plotResName + ' vs ' + plotAttr + ' for ' + otherAttrText + '.png')
+        elif subtractFromBase == 0:
+            plt.savefig(plotResName + ' vs ' + plotAttr + ' for ' + otherAttrText + '.png')
     else:
         plt.savefig(plotResName + ' vs ' + plotAttr + ' for ' + otherAttrText + '.png')
 
@@ -290,17 +303,25 @@ def getPlotRes(plotRes,df):
         y = 0
         for pR,op in plotRes.items():
             if op == '+':
-                #y = [x0 + x1 for x0, x1 in zip(y,df[pR])]
-                y = y + df[pR].astype('float')
+                if isinstance(pR,(float,int)):
+                    y = y + pR
+                else:
+                    y = y + df[pR].astype('float')
             elif op == '-':
-                #y = [x0 - x1 for x0, x1 in zip(y, df[pR])]
-                y = y - df[pR].astype('float')
+                if isinstance(pR,(float,int)):
+                    y = y - pR
+                else:
+                    y = y - df[pR].astype('float')
             elif op == '*':
-                #y = [x0 * x1 for x0, x1 in zip(y, df[pR])]
-                y = y * df[pR].astype('float')
+                if isinstance(pR,(float,int)):
+                    y = y * pR
+                else:
+                    y = y * df[pR].astype('float')
             elif op == '/':
-                #y = [x0 / x1 for x0, x1 in zip(y, df[pR])]
-                y = y / df[pR].astype('float')
+                if isinstance(pR,(float,int)):
+                    y = y / pR
+                else:
+                    y = y / df[pR].astype('float')
     else:
         y = df[plotRes]
 

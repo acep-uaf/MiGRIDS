@@ -249,3 +249,5 @@ def plotSetResult(plotRes,plotAttr, projectSetDir = '', otherAttr = [],otherAttr
     else:
         plt.savefig(plotRes + ' vs ' + plotAttr + ' for ' + otherAttrText + '.png')
 
+    plt.close()
+

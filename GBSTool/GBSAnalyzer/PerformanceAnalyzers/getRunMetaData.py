@@ -33,7 +33,7 @@ def getRunMetaData(projectSetDir,runs):
 
     # add columns for results
     df = pd.DataFrame(
-        columns=['Generator Import kWh', 'Generator Charging kWh', 'Generator Switching', 'Generator Loading',
+        columns=['Generator Import kWh', 'Generator Charging kWh', 'Generator Switching', 'Generator Loading', 'Generator Online Capacity',
                  'Generator Fuel Consumption kg', 'Diesel-off time h', 'Generator Cumulative Run time h', 'Generator Cumulative Capacity Run Time kWh', 'Generator Overloading Time h','Generator Overloading kWh',
                  'Wind Power Import kWh', 'Wind Power Spill kWh',
                  'Wind Power Charging kWh', 'Energy Storage Discharge kWh', 'Energy Storage Charge kWh',
@@ -62,6 +62,9 @@ def getRunMetaData(projectSetDir,runs):
         genLoadingStd = np.std(genLoading)
         genLoadingMax = np.max(genLoading)
         genLoadingMin = np.min(genLoading)
+        # the online capacity of diesel generators
+        genCapacity = genPAvail[idxOnline]
+        genCapacityMean = np.mean(genCapacity)
 
         # get overloading of diesel
         # get indicies of when diesel generators online
@@ -82,13 +85,13 @@ def getRunMetaData(projectSetDir,runs):
         genRunTimeRunTotkWh = 0.
         for genRunTimeFile in glob.glob('gen*RunTime*.nc'):
             genRunTimeStats, genRunTime, ts = loadResults(genRunTimeFile)
-            genTimeRunTot += np.count_nonzero(genPAvail != 0)* ts / 3600
+            genTimeRunTot += np.count_nonzero(genRunTime != 0)* ts / 3600
             # get the capcity of this generator
             # first get the gen ID
             genID = re.search('gen(.*)RunTime',genRunTimeFile).group(1)
             genPMax = readXmlTag("gen"+genID +"Set"+str(setNum)+"Run"+str(runNum)+"Descriptor.xml", "POutMaxPa",
                                  "value", fileDir=projectRunDir+"/Components", returnDtype='float')
-            genRunTimeRunTotkWh += (np.count_nonzero(genPAvail != 0)* ts / 3600)*genPMax[0]
+            genRunTimeRunTotkWh += (np.count_nonzero(genRunTime != 0)* ts / 3600)*genPMax[0]
 
         # calculate total generator energy delivered in kWh
         genPTot = (genPStats[4] - genPchStats[4])/3600
@@ -169,7 +172,7 @@ def getRunMetaData(projectSetDir,runs):
         '''
 
         # add row for this run
-        df.loc[runNum] = [genPTot,genPch,genSw,genLoadingMean,None,genTimeOff,genTimeRunTot,genRunTimeRunTotkWh,genOverLoadingTime,genOverLoadingkWh,wtgPImportTot,wtgPspillTot,wtgPchTot,eessPdisTot,eessPchTot,eessSRCTot,eessOverLoadingTime,eessOverLoadingkWh,tessPTot]
+        df.loc[runNum] = [genPTot,genPch,genSw,genLoadingMean,genCapacityMean,None,genTimeOff,genTimeRunTot,genRunTimeRunTotkWh,genOverLoadingTime,genOverLoadingkWh,wtgPImportTot,wtgPspillTot,wtgPchTot,eessPdisTot,eessPchTot,eessSRCTot,eessOverLoadingTime,eessOverLoadingkWh,tessPTot]
 
     dfResult = pd.concat([dfAttr, df], axis=1, join='inner')
 
