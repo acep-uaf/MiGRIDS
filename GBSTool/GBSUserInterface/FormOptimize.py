@@ -80,8 +80,8 @@ class FormOptimize(QtWidgets.QWidget):
         dbHandler = ProjectSQLiteHandler()
         for k in changes.keys():
             #if we return false upldate the existing parameter
-            if not dbHandler.insertRecord(self, 'optimize_input', ['parameter','parameter_value'], [k,changes[k]]):
-                dbHandler.updateRecord(self, 'optimize_input',['parameter'],[k],['parameter_value'],[changes[k]])
+            if not dbHandler.insertRecord('optimize_input', ['parameter','parameter_value'], [k,changes[k]]):
+                dbHandler.updateRecord('optimize_input',['parameter'],[k],['parameter_value'],[changes[k]])
         return
 
 # updates the soup to reflect changes in the form

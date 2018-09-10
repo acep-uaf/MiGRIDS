@@ -34,7 +34,6 @@ class MainForm(QtWidgets.QMainWindow):
         self.setCentralWidget(self.pageBlock)
         # Main title
         self.setWindowTitle('GBS')
-
         # show the form
         self.showMaximized()
 
@@ -140,6 +139,7 @@ class MainForm(QtWidgets.QMainWindow):
     def createPageBlock(self):
         pageBlock = PageBlock()
         return pageBlock
+
 
 class PageBlock(QtWidgets.QTabWidget):
     def __init__(self):

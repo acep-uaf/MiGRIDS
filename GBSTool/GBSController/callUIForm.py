@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 import sys
-from PyQt5 import QtWidgets,QtSql
+from PyQt5 import QtWidgets,QtSql,QtGui,QtCore
 
 
 from GBSUserInterface.FormMain import MainForm
@@ -22,7 +22,7 @@ def callUIForm():
 
     app = QtWidgets.QApplication(sys.argv)
     #start with an empty default database called project_manager
-    
+
     handler = ProjectSQLiteHandler()
     handler.makeDatabase()
 

@@ -111,7 +111,7 @@ class ProjectSQLiteHandler:
                             ])
 
         self.addRefValues('ref_component_type' ,[(0,'wtg', 'windturbine'),
-        (1,'gen', 'diesel generator'), (2,'inv','inverter'),(3,'tes','thermal energy storage'),(4, 'ees','energy storage')])
+        (1,'gen', 'diesel generator'), (2,'inv','inverter'),(3,'tes','thermal energy storage'),(4, 'ees','energy storage'),(5, 'load', 'total load')])
 
         self.addRefValues('ref_power_units',[(0,'W', 'watts'), (1,'kW', 'Kilowatts'),(2,'MW','Megawatts'),
                                              (3, 'var', 'vars'),(4,'kvar','kilovars'),(5,'Mvar','Megavars'),
@@ -136,15 +136,16 @@ class ProjectSQLiteHandler:
         self.cursor.execute("DROP TABLE IF EXISTS components")
         self.cursor.executescript("""CREATE TABLE components
          (_id integer primary key,
+         inputfiledir text,
          original_field_name text,
          component_type text,
-         component_name text unique,
+         component_name text,
          units text,
          scale numeric,
          offset numeric,
          attribute text,
-        
          tags text,
+         
          FOREIGN KEY (component_type) REFERENCES ref_component_type(code),
          FOREIGN KEY (units) REFERENCES ref_universal_units(code),
          FOREIGN KEY (attribute) REFERENCES ref_attributes(code)
@@ -165,7 +166,7 @@ class ProjectSQLiteHandler:
         self.cursor.executescript("""
                 CREATE TABLE IF NOT EXISTS input_files
                 (_id integer primary key,
-                filedypevalue text , 
+                filetypevalue text , 
                 datatype text ,
                 inputfiledir text,
                 timestep text,
@@ -209,6 +210,7 @@ class ProjectSQLiteHandler:
         self.cursor.execute("DROP TABLE IF EXISTS environment")
         self.cursor.executescript("""CREATE TABLE IF NOT EXISTS environment
                  (_id integer primary key,
+                 inputfiledir text,
                  original_field_name text,
                  component_name text unique,
                  units text,
@@ -292,7 +294,7 @@ class ProjectSQLiteHandler:
         import re
         #get the highest component name (biggest number)
         finalName = self.cursor.execute("SELECT component_name FROM components where component_type = '" + componentType + "' ORDER BY component_name DESC").fetchone()
-        if finalName is not None:
+        if finalName[0] is not None:
             finalName=finalName[0]
             #extract the numbers in the name
             count = re.findall(r'\d+',finalName)
@@ -302,6 +304,11 @@ class ProjectSQLiteHandler:
                 count = int(count[0])
                 return count +1
         return 0
+    def dataCheck(self,table):
+        import re
+        #get the highest component name (biggest number)
+        data = self.cursor.execute("SELECT * FROM " + table).fetchall()
+        return data
     #returns a list of column names for a table
     # String -> list
     def getHeaders(self,table):

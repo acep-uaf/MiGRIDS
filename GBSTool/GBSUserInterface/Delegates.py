@@ -71,7 +71,7 @@ class TextDelegate(QtWidgets.QItemDelegate):
 
     def setEditorData(self, editor, index):
         editor.blockSignals(True)
-        if 'autotext1' in self.__dict__.keys():
+        if ('autotext1' in self.__dict__.keys()) & (index.column == 1):
             editor.setText(self.autotext1)
 
         else:
@@ -133,17 +133,21 @@ class RelationDelegate(QtSql.QSqlRelationalDelegate):
             currentRow = tv.indexAt(combo.pos()).row()
 
             #check if there is already a component name
-            currentName = tv.model().data(tv.model().index(currentRow,3))
+            currentName = tv.model().data(tv.model().index(currentRow,4))
             if (currentName == '') | (currentName is None) | (currentName == 'NA') | (currentName[0:3] != self.sender().currentText()):
                 #get the number of components of this type -
                 handler = ProjectSQLiteHandler()
                 i = handler.getTypeCount(self.sender().currentText())
-                handler.closeDatabase()
+                print(handler.dataCheck('components'))
+
                 name = self.sender().currentText() + str(i)
 
-                tv.model().setData(tv.model().index(currentRow,3),name)
+                tv.model().setData(tv.model().index(currentRow,4),name)
+                mm = tv.model()
                 tv.model().submitAll()
                 tv.model().select()
+                print(handler.dataCheck('components'))
+                handler.closeDatabase()
             return
 #QLineEdit that when clicked performs an action
 class ClickableLineEdit(QtWidgets.QLineEdit):
@@ -205,9 +209,9 @@ class ComponentFormOpenerDelegate(QtWidgets.QItemDelegate):
 
             #the project filepath is stored in the model data for the setup portion
             #TODO fix. this works but is ugly and won't work if form changes structure
-            mainForm  = self.parent().parent().parent().parent()
-
-            setupInfo = mainForm.model
+            #mainForm  = self.parent().parent().parent().parent()
+            setupform = self.parent().window().findChild(QtWidgets.QWidget,"setupDialog" )
+            setupInfo = setupform.model
             setupInfo.setupFolder
             componentDir = os.path.join(setupInfo.setupFolder, '../Components')
 

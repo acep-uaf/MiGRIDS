@@ -9,17 +9,61 @@ class SetupTag:
         self.name = n
         self.value = v
 
-    def assignValue(self,v):
-        self.value = v
+    def assignValue(self,v,**kwargs):
+        position = kwargs.get("position")
+        if type(v) is list:
+            if ('value' in self.__dict__.keys()):
+                if (self.value is None) | (self.value == ""):
+                    self.value = v
+                elif (position is not None):
+                       if  (position < len(self.value)):
+                           self.value[position] = v[0]
+                       else:
+                           self.value = self.value + v
+                else:
+                    self.value = self.value + v
+            else:
+                self.value = v
+        return
 
-    def assignUnits(self,v):
-        self.unit = v
+    def assignUnits(self,v,**kwargs):
+        position = kwargs.get("position")
+        if type(v) is list:
+            if ('unit' in self.__dict__.keys()):
+                if (self.unit is None) | (self.unit == ""):
+                    self.unit = v
+                elif (position is not None):
+                    if (position < len(self.value)):
+                        self.value[position] = v[0]
+                    else:
+                        self.value = self.value + v
 
-    def assignFormat(self, v):
-        self.format = v
+                else:
+                    self.unit = self.unit + v
+            else:
+                self.unit = v
 
-    def assign(self,method,v):
-        method(self,v)
+    def assignFormat(self, v,**kwargs):
+        position = kwargs.get("position")
+
+        if type(v) is list:
+            if ('format' in self.__dict__.keys()):
+                if (self.format is None) | (self.format == ""):
+                    self.value = v
+                elif (position is not None):
+                    if (position < len(self.value)):
+                        self.value[position] = v[0]
+                    else:
+                        self.value = self.value + v
+
+                else:
+                    self.format = self.format + v
+            else:
+                self.format = v
+
+    def assign(self,method,v,**kwargs):
+
+        method(self,v,**kwargs)
 
     def getDict(self):
         d = {}
@@ -28,6 +72,13 @@ class SetupTag:
                 d[k] = self.__getattribute__(k)
         return d
 
+def stringToList(v):
+    if type(v) is str:
+        v = v.split()
+    elif type(v) is list:
+        #unfilled list items need to be filled with NA
+        v = [f if f != '' else 'NA' for f in v]
+    return v
 
 class ModelSetupInformation:
 
@@ -65,8 +116,7 @@ class ModelSetupInformation:
         self.components =[]
         self.project =''
         self.data = None
-        self.inputFileDir = SetupTag('inputFileDir')
-
+        self.setupFolder = ''
         self.inputFileType = SetupTag('inputFileType')
         self.inputFileFormat= SetupTag('inputFileFormat')
         self.dateChannel = SetupTag('dateChannel')
@@ -75,6 +125,7 @@ class ModelSetupInformation:
         self.inputFileFormat = SetupTag('inputFileFormat')
         self.inputFileType = SetupTag('inputFileType')
         self.inputTimeStep = SetupTag('inputTimeStep')
+        self.runTimesteps = SetupTag('runTimeStep')
         self.timeStep = SetupTag('timeStep')
         self.inputFileDir = SetupTag('inputFileDir')
         self.componentNames = SetupTag('componentNames')
@@ -90,8 +141,8 @@ class ModelSetupInformation:
     def assignProject(self, name):
 
         self.project = name
-
-        if 'setupFolder' not in self.__dict__.keys():
+#setupFolder is in tags before it gets set.
+        if ('setupFolder' not in self.__dict__.keys()) | (self.setupFolder == ""):
             path = os.path.dirname(__file__)
             self.setupFolder = os.path.join(path, '../../GBSProjects/', self.project, 'InputData/Setup')
         self.componentFolder = os.path.join(self.setupFolder ,'../Components')
@@ -106,88 +157,62 @@ class ModelSetupInformation:
             #make the component
             os.makedirs(self.componentFolder)
 
-    def assignInputFileType(self,m,v):
-        self.inputFileType.assign(m,v)
 
     def assignSetupFolder(self, setupFile):
         import os
         self.setupFolder = os.path.dirname(setupFile)
         self.assignProject(os.path.basename(setupFile[:-9]))
 
-    def assignComponentNames(self, m, v):
-        # string gets split to list
-        if type(v) is str:
-            v = v.split()
-        elif type(v) is list:
-            #unfilled list items need to be filled with NA
-            v = [f if f != '' else 'NA' for f in v]
+    def assignComponentNames(self, m, v,**kwargs):
+        self.componentNames.assign(m,stringToList(v),**kwargs)
 
-        self.componentNames.assign(m,v)
+    def assignComponentName(self, m,v,**kwargs):
+        self.componentName.assign(m, stringToList(v),**kwargs)
 
-    def assignComponentName(self, m,v):
-        # string gets split to list
-        if type(v) is str:
-            v = v.split()
-        elif type(v) is list:
-            #unfilled list items need to be filled with NA
-            v = [f if f != '' else 'NA' for f in v]
-        self.componentName.assign(m, v)
+    def assignHeaderName(self, m, v,**kwargs):
+        self.headerName.assign(m, stringToList(v),**kwargs)
 
-    def assignHeaderName(self, m, v):
-        #string gets split to list
-        if type(v) is str:
-            v = v.split()
-        elif type(v) is list:
-            # unfilled list items need to be filled with NA
-            v = [f if f != '' else 'NA' for f in v]
-        self.headerName.assign(m, v)
+    def assignComponentAttribute(self,m,v,**kwargs):
+        self.componentAttribute.assign(m,stringToList(v),**kwargs)
 
-    def assignComponentAttribute(self,m,v):
-        # string gets split to list
-        if type(v) is str:
-            v = v.split()
-        elif type(v) is list:
-            #unfilled list items need to be filled with NA
-            v = [f if f != '' else 'NA' for f in v]
-        self.componentAttribute.assign(m,v)
+    def assignLoadChannel(self,m,v,**kwargs):
+        self.realLoadChannel.assign(m,stringToList(v),**kwargs)
 
+    def assignInputFileType(self, m, v,**kwargs):
+        self.inputFileType.assign(m, stringToList(v),**kwargs)
 
-    def assignLoadChannel(self,m,v):
-        self.realLoadChannel.assign(m,v)
+    def assignInputFileFormat(self, m,v,**kwargs):
+        self.inputFileFormat.assign(m,stringToList(v),**kwargs)
 
+    def assignInputTimeStep(self, m, v,**kwargs):
+        self.inputTimeStep.assign(m, stringToList(v),**kwargs)
 
-    def assignInputFileFormat(self, m,v):
-        self.inputFileFormat.assign(m,v)
+    def assignRunTimesteps(self,m,v,**kwargs):
+        self.runTimesteps.assign(m,stringToList(v),**kwargs)
 
-    def assignInputTimeStep(self, m, v):
-        self.inputTimeStep.assign(m, v)
-    def assignRunTimesteps(self,m,v):
-        self.runTimesteps.assign(m,v)
+    def assignTimeStep(self, m, v,**kwargs):
+        self.timeStep.assign(m, stringToList(v),**kwargs)
 
-    def assignTimeStep(self, m, v):
-        self.timeStep.assign(m, v)
+    def assignInputFileDir(self,m,v,**kwargs):
+        self.inputFileDir.assign(m,stringToList(v),**kwargs)
 
-    #TODO change to list
-    def assignInputFileDir(self,m,v):
-        self.inputFileDir.assign(m,v)
-    #TODO change to list
-    def assignDateChannel(self, m,v):
-        self.dateChannel.assign(m,v)
-    #TODO change to list
-    def assignTimeChannel(self, m, v):
-        self.timeChannel.assign(m, v)
+    def assignDateChannel(self, m,v,**kwargs):
+        self.dateChannel.assign(m,stringToList(v),**kwargs)
 
+    def assignTimeChannel(self, m, v,**kwargs):
+        self.timeChannel.assign(m, stringToList(v),**kwargs)
 
-    #string, string ->
-    def assign(self, dialog, value):
-
+    #assign value to setup tag attribute
+    #string, string -> None
+    def assign(self, dialog, value,**kwargs):
+        position = kwargs.get("position")
         #if the dialog has a subheading pass the subheading to a SetupTag function
         if dialog in self.functionDictionary.keys():
             method = self.functionDictionary[dialog]
             if type(method) is list:
-                method[0](method[1],value)
+                method[0](method[1],value,position=position)
             else:
-                method(value)
+                method(value,position=position)
 
     #return the file path for a set attribute xml file for a given set
     #String -> String
@@ -231,6 +256,7 @@ class ModelSetupInformation:
             return False
         if not os.path.exists(self.setupFolder):
             return False
+
         # tell the controller to tell the InputHandler to read the xml and set the model values
         handler.inputHandlerToUI(self.setupFolder, self)
 

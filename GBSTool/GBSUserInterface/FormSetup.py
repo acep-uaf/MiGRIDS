@@ -9,6 +9,7 @@ from GBSUserInterface.makeButtonBlock import makeButtonBlock
 from GBSUserInterface.ResultsSetup import  ResultsSetup
 from GBSUserInterface.FormModelRuns import SetsTableBlock
 from GBSUserInterface.Pages import Pages
+from GBSUserInterface.Delegates import ClickableLineEdit
 from GBSUserInterface.FileBlock import FileBlock
 from GBSUserInterface.ProjectSQLiteHandler import ProjectSQLiteHandler
 from GBSUserInterface.ModelSetupInformation import SetupTag
@@ -34,7 +35,8 @@ class FormSetup(QtWidgets.QWidget):
         # the top block is buttons to load setup xml and data files
         self.createButtonBlock()
         windowLayout.addWidget(self.ButtonBlock)
-        self.tabs = Pages(self, 'input1',FileBlock)
+        self.tabs = Pages(self, '1',FileBlock)
+        self.tabs.setDisabled(True)
         #each file type gets its own page to specify formats and headers to include
         # button to create a new set tab
         newTabButton = QtWidgets.QPushButton()
@@ -72,8 +74,6 @@ class FormSetup(QtWidgets.QWidget):
         self.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         #show the form
         self.showMaximized()
-
-
 
     #FormSetup -> QWidgets.QHBoxLayout
     #creates a horizontal button layout to insert in FormSetup
@@ -117,18 +117,21 @@ class FormSetup(QtWidgets.QWidget):
         #s = SetupWizard(self.WizardTree, model, self)
         s = self.WizardTree
         s.exec_()
+        handler = UIToHandler()
+        handler.makeSetup(model)
         #display collected data
+        #returns true if setup info has been entered
         hasSetup = model.feedSetupInfo()
-
         self.projectDatabase = False
         if hasSetup:
-            self.fillData(model)
-            self.topBlock.setEnabled(True)
-            self.environmentBlock.setEnabled(True)
-            self.componentBlock.setEnabled(True)
+            #self.topBlock.setEnabled(True)
+            #self.environmentBlock.setEnabled(True)
+            #self.componentBlock.setEnabled(True)
             #enable the model and optimize pages too
             pages = self.window().findChild(QtWidgets.QTabWidget,'pages')
             pages.enableTabs()
+            self.tabs.setEnabled(True)
+
 
     #searches for and loads existing project data - database, setupxml,descriptors, DataClass pickle
     def functionForLoadButton(self):
@@ -156,10 +159,10 @@ class FormSetup(QtWidgets.QWidget):
 
             # assign setup information to data model
             model.feedSetupInfo()
-            # TODO this needs to be moved to a page block
-            # display data
-            #self.fillData(model)
 
+            #now that setup data is set display it in the form
+            self.displayModelData()
+            print(model.inputFileDir.value)
             # look for an existing data pickle
             handler = UIToHandler()
             #TODO uncomment to load data
@@ -194,7 +197,17 @@ class FormSetup(QtWidgets.QWidget):
             msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
             msg.exec()
         return
-
+    #display data in a setup model in the FormSetup form (fileblocks), creating a tab for each data input directory listed
+    def displayModelData(self):
+        if self.model.inputFileDir.value is not None:
+            #the number of directories listed in inputFileDir indicates how many tabs are required
+            tab_count = len(self.model.inputFileDir.value)
+            #if directories have been entered then replace the first tab and create a tab for each directory #TODO should remove all previous tabs
+            if tab_count > 0:
+                self.tabs.removeTab(0)
+                for i in range(tab_count):
+                    self.newTab(i+1)
+        return
     #TODO make dynamic from list input
     #List -> WizardTree
     def buildWizardTree(self, dlist):
@@ -209,14 +222,15 @@ class FormSetup(QtWidgets.QWidget):
         btn.clicked.connect(self.saveInput)
         return wiztree
 
+    #save the input in the wizard tree to the setup data model
     def saveInput(self):
-        #update sql table
-        #update model info
+        # update sql table
+        # update model info
         model = self.model
         model.assignProject(self.WizardTree.field('project'))
-        model.assignTimeStep(SetupTag.assignValue,self.WizardTree.field('timestep'))
-        model.assignRunTimeSteps(SetupTag.assignValue,self.WizardTree.field('runTimesteps'))
-        print([self.WizardTree.field('timestep'),self.WizardTree.field('runTimesteps')])
+        model.assignTimeStep(SetupTag.assignValue, self.WizardTree.field('timestep'))
+        model.assignRunTimesteps(SetupTag.assignValue, self.WizardTree.field('runTimesteps'))
+
         return
 
     # send input data to the ModelSetupInformation data model
@@ -239,19 +253,21 @@ class FormSetup(QtWidgets.QWidget):
         #needs to come from each page
 
         tabWidget = self.findChild(QtWidgets.QTabWidget)
-        for t in range(tabWidget.count):
+        for t in range(tabWidget.count()):
             page = tabWidget.widget(t)
             # cycle through the input children in the topblock
-            for child in self.topBlock.findChildren((QtWidgets.QLineEdit, QtWidgets.QComboBox)):
+            for child in page.FileBlock.findChildren((QtWidgets.QLineEdit, QtWidgets.QComboBox)):
 
                 if type(child) is QtWidgets.QLineEdit:
                     value = child.text()
-
-                else:
+                elif type(child) is ClickableLineEdit:
+                    value = child.text()
+                elif type(child) is QtWidgets.QComboBox:
                     value = child.itemText(child.currentIndex())
                 #append to appropriate list
-                listx = globals(child.objectName())
-                listx.append(value)
+                attr = child.objectName()
+                model.assign(attr,value,position=page.input-1)
+
 
         # we also need headerNames, componentNames, attributes and units from the component section
             componentView = page.findChild((QtWidgets.QTableView), 'components')
@@ -289,17 +305,17 @@ class FormSetup(QtWidgets.QWidget):
                               attribute=envModel.data(envModel.index(j, 6)),
                               original_field_name=envModel.data(envModel.index(j, 1)))
                 self.model.components.append(c)
-        model.assign('headerNamevalue', headerName)
-        model.assign('componentNamevalue', componentName)
-        model.assign('componentAttributevalue', componentAttribute)
-        model.assign('componentAttributeunit', componentAttributeU)
-        model.assign('componentNamesvalue', componentNames)
-        model.assign('inputFileType', fileType)
-        model.assign('inputFileDir',fileDirectory)
-        model.assign('dateChannelvalue', dateChannel)
-        model.assign('dateChannelformat',dateFormat)
-        model.assign('timeChannelvalue',timeChannel)
-        model.assign('timeChannelformat',timeFormat)
+        # model.assign('headerNamevalue', headerName)
+        # model.assign('componentNamevalue', componentName)
+        # model.assign('componentAttributevalue', componentAttribute)
+        # model.assign('componentAttributeunit', componentAttributeU)
+        # model.assign('componentNamesvalue', componentNames)
+        # model.assign('inputFileType', fileType)
+        # model.assign('inputFileDir',fileDirectory)
+        # model.assign('dateChannelvalue', dateChannel)
+        # model.assign('dateChannelformat',dateFormat)
+        # model.assign('timeChannelvalue',timeChannel)
+        # model.assign('timeChannelformat',timeFormat)
 
     # write data to the ModelSetupInformation data model and generate input xml files for setup and components
     # None->None
@@ -358,21 +374,21 @@ class FormSetup(QtWidgets.QWidget):
     #event triggered when user navigates away from setup page
     #xml data gets written and the ModelSetupInformation attributes get updated
     #Event -> None
-    def leaveEvent(self, event):
+    '''def leaveEvent(self, event):
         # save xmls
         if 'projectFolder' in self.model.__dict__.keys():
             # on leave save the xml files
-            # TODO uncomment
-            #self.sendSetupData()
-            #self.model.writeNewXML()
-            return
+            self.sendSetupData()
+            self.model.writeNewXML()
+            return'''
 
     # close event is triggered when the form is closed
     def closeEvent(self, event):
         #save xmls
         if 'projectFolder' in self.model.__dict__.keys():
-            # on close save the xml files
+
             self.sendSetupData()
+            # on close save the xml files
             self.model.writeNewXML()
 #TODO add progress bar for uploading raw data and generating fixed data pickle
     def addProgressBar(self):
@@ -382,19 +398,21 @@ class FormSetup(QtWidgets.QWidget):
         return self.progress
 
     # add a new file input tab
-    def newTab(self):
+    def newTab(self,i=0):
         # get the set count
         tab_count = self.tabs.count() +1
-        widg = FileBlock(self, 'Input' + str(tab_count))
+        widg = FileBlock(self, tab_count)
         #widg.fillSetInfo()
         self.tabs.addTab(widg, 'Input' + str(tab_count))
-
+        #if its not the default empty tab fill data into form slots
+        if i>0:
+            widg.fillData(self.model,i)
     # calls the specified function connected to a button onClick event
     @QtCore.pyqtSlot()
     def onClick(self, buttonFunction):
         buttonFunction()
 
-
+#classes used for displaying wizard inputs
 class WizardPage(QtWidgets.QWizardPage):
     def __init__(self, inputdict,**kwargs):
         super().__init__()
@@ -436,7 +454,7 @@ class FolderDialog(WizardPage):
         self.input.setObjectName('inputText')
 
         self.button = QtWidgets.QPushButton()
-        self.endDate.setObjectName('loadFile')
+        #self.endDate.setObjectName('loadFile')
 
         box.addWidget(self.inputText)
         box.addWidget(self.loadFile)

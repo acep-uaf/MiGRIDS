@@ -8,39 +8,34 @@ def fillProjectDataFromUI(projectDir, setupInfo):
     here = os.path.dirname(os.path.realpath(__file__))
     sys.path.append(here)
 
-    import pandas as pd
     from writeXmlTag import writeXmlTag
-    from fillProjectComponentData import fillProjectComponentData
-
-
-
 
 
     projectSetup = setupInfo.project + 'Setup.xml'
 
-
-    #get a dictionary of tags from xml
+    #get a dictionary of tags setup info model
     generalSetupInfo = setupInfo.getSetupTags()
 
-    for k in generalSetupInfo.keys():  # for each component
-        #read a components tag info
-        tag = k
+    for k in generalSetupInfo.keys():  # for each key in the model attributes
+        #read key values
+
         for v in generalSetupInfo[k].keys():
             attr = v
             value = generalSetupInfo[k][v]
-            writeXmlTag(projectSetup, tag, attr, value, setupInfo.setupFolder)
+            writeXmlTag(projectSetup, k, attr, value, setupInfo.setupFolder)
 
 
     #look for component descriptor files for all componentName
     componentDir = os.path.join(setupInfo.setupFolder, '../Components')
 
     #component is a string
-    if setupInfo.componentNames.value is not None:
-        for component in setupInfo.componentNames.value: # for each component
+    if (setupInfo.componentNames.value is not None):
+        if (len(setupInfo.componentNames.value) >0):
+            for component in setupInfo.componentNames.value: # for each component
 
-             #if there isn't a component descriptor file create one
-             if not os.path.exists(os.path.join(componentDir, component + 'Descriptor.xml')):
-                 createComponentDescriptor(component, componentDir)
+                 #if there isn't a component descriptor file create one
+                 if not os.path.exists(os.path.join(componentDir, component + 'Descriptor.xml')):
+                     createComponentDescriptor(component, componentDir)
 
 
 

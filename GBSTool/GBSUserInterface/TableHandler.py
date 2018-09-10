@@ -6,19 +6,25 @@ class TableHandler():
         self.parent = parent
     #create a new empty record in the specified table
     #String -> None
-    def functionForNewRecord(self, table):
+    def functionForNewRecord(self, table, **kwargs):
         # add an empty record to the table
 
         # get the model
         tableView = self.parent.findChild((QtWidgets.QTableView), table)
         model = tableView.model()
-        # insert an empty row as the last record
 
+        # insert an empty row as the last record
         model.insertRows(model.rowCount(), 1)
         model.submitAll()
 
-        #this is only for the sets table
+        #this makes the first column editable (set, filedir, ect.)
         tableView.openPersistentEditor(model.index(model.rowCount()-1, 1))
+        #fields are integer column positions
+        fields = kwargs.get('fields')
+        if (len(fields) > 0):
+            values = kwargs.get('values')
+            for i,n in enumerate(fields):
+                tableView.model().setData(model.index(model.rowCount()-1, n), values[i])
     #removes selected records from the table and its underlying sql table
     #String -> None
     def functionForDeleteRecord(self, table):
