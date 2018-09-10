@@ -18,8 +18,8 @@ class UIToHandler():
     #ModelSetupInformation -> None
     def makeSetup(self, setupInfo):
        # write the information to a setup xml
-        # create a mostly blank xml setup file
-        buildProjectSetup(setupInfo.project, setupInfo.setupFolder, setupInfo.componentNames)
+        # create a mostly blank xml setup file, componentNames is a SetupTag class so we need the value
+        buildProjectSetup(setupInfo.project, setupInfo.setupFolder, setupInfo.componentNames.value)
         #fill in project data into the setup xml and create descriptor xmls if they don't exist
         fillProjectData(setupInfo.setupFolder, setupInfo)
         return
@@ -250,6 +250,5 @@ class UIToHandler():
         contents_child = infile_child.read()
         infile_child.close()
         soup = BeautifulSoup(contents_child, 'xml')  # turn into soup
-
 
         return soup
