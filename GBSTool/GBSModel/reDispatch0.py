@@ -30,7 +30,7 @@ class reDispatch:
         # this is the actual output of the wind turbine
         self.wfP = min(wfPAvail,self.wfPset)
         # dispach the wf
-        SO.WF.wtgDispatch(self.wfP,0)
+        SO.WF.wtgDispatch(self.wfP,0, SO.masterIdx)
 
         # the amount used to supply the load is the min of the max allowed and the output
         # the maximum amount of power that can be imported from renewable resources

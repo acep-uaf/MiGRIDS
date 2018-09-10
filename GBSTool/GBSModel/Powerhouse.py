@@ -142,6 +142,22 @@ class Powerhouse:
             if sorted(self.genCombinationsID[idx]) == sorted(onlineGens):
                 self.onlineCombinationID = combID
 
+        # CREATE LOOKUP TABLES FOR GENDISPATCH
+        # UPPER NORMAL LOADING
+        # Setup a list of all possible 'loading' values
+        # Max combination will be needed during lookups as default value to revert to if there is no list of available
+        # combinations for a lookup key, i.e., if the load is greater than the max upper normal loading of any gen comb.
+        self.genCombinationsUpperNormalLoadingMaxIdx = int(np.argmax(np.asarray(self.genCombinationsUpperNormalLoading)))
+        loading = list(range(0, int(max(self.genCombinationsUpperNormalLoading)+1)))
+        self.lkpGenCombinationsUpperNormalLoading = {}
+        for load in loading:
+            combList = np.array([], dtype=int)
+            for idy, genComb in enumerate(self.genCombinationsUpperNormalLoading):
+                if load <= genComb:
+                    combList = np.append(combList, idy)
+            self.lkpGenCombinationsUpperNormalLoading[load] = combList
+
+
 
     # combine fuel curves for a combination of generators
     # self - self reference
@@ -262,8 +278,11 @@ class Powerhouse:
 
         ## first find all generator combinations that can supply the load within their operating bounds
         # find all with capacity over the load and the required SRC
-        indCap = np.array([idx for idx, x in enumerate(self.genCombinationsUpperNormalLoading) if x >= scheduledLoad -
-                           powerAvailToSwitch + scheduledSRCSwitch])
+        #indCap = np.array([idx for idx, x in enumerate(self.genCombinationsUpperNormalLoading) if x >= scheduledLoad -
+                           #powerAvailToSwitch + scheduledSRCSwitch])
+
+        capReq = int(scheduledLoad - powerAvailToSwitch + scheduledSRCSwitch)
+        indCap = np.asarray(self.lkpGenCombinationsUpperNormalLoading.get(capReq, self.genCombinationsUpperNormalLoadingMaxIdx), dtype=int)
 
         # check if the current online combination is capable of supplying the projected load minus the power available to
         # help the current generator combination stay online
@@ -273,33 +292,44 @@ class Powerhouse:
             #if not((self.onlineCombinationID == 0) and underSRC):
                 indCap = np.append(indCap,self.onlineCombinationID)
         # if there are no gen combinations large enough to supply, automatically add largest (last combination)
-        if len(indCap) == 0:
-            indCap = np.array([len(self.genCombinationsUpperNormalLoading)-1])
-        # find all with MOL under the load
-        indMOLCap = [idx for idx, x in enumerate(self.genCombinationsMOL[indCap]) if x <= futureLoad]
-        # ind of in bounds combinations
-        indInBounds = indCap[indMOLCap]
+        if indCap.size == 0:
+            indCap = np.append(indCap,len(self.genCombinationsUpperNormalLoading)-1)
+            indInBounds = indCap
+
+        elif indCap.size == 1:
+            indInBounds = indCap
+
+        else:
+            # find all with MOL under the load
+            indMOLCap = [idx for idx, x in enumerate(self.genCombinationsMOL[indCap]) if x <= futureLoad]
+            # ind of in bounds combinations
+            indInBounds = indCap[indMOLCap]
+
         # if there are no gen combinations with a low enough MOL enough to supply, automatically add combination 1,
         # which is to smallest generator combination without turning off the generators
-        if len(indInBounds) == 0:
+        if indInBounds.size == 0:
             indInBounds = np.array([indCap[0]])
 
+        indInBounds = np.atleast_1d(indInBounds)
+
         ## then check how long it will take to switch to any of the combinations online
-        turnOnTime = []
-        turnOffTime = []
-        for gen in self.generators:
+        lenGenerators = len(self.generators)
+        turnOnTime = [None]*lenGenerators
+        turnOffTime = [None]*lenGenerators
+        for idx, gen in enumerate(self.generators):
             # get the time remaining to turn on each generator
-            turnOnTime.append(gen.genStartTime - gen.genStartTimeAct)
+            turnOnTime[idx] = gen.genStartTime - gen.genStartTimeAct
             # get the time remaining to turn off each generator
-            turnOffTime.append(gen.genRunTimeMin - gen.genRunTimeAct)
+            turnOffTime[idx] = gen.genRunTimeMin - gen.genRunTimeAct
 
         # Go through each potential combination of generators and find which generators need to be switched on and
         # offline for each combination
+        lenIndInBounds = indInBounds.size #len(indInBounds)
         genSwOn = [] # the generators to be switched on for each possible combination
         genSwOff = [] # the generators to be switched off for each possible combination
-        timeToSwitch = [] # the time switch for each in bounds generator combination
-        fuelCons = [] # the predicted fuel consumption for each combination
-        for idx in indInBounds: # for each combination that is in bounds
+        timeToSwitch = [None]*lenIndInBounds # the time switch for each in bounds generator combination
+        fuelCons = [None]*lenIndInBounds # the predicted fuel consumption for each combination
+        for ind, idx in enumerate(np.atleast_1d(indInBounds)): # for each combination that is in bounds
             # inititiate the generators to be switched on for this combination to all generators in the combination
             genSwOn.append(list(self.genCombinationsID[idx]))
             # initiate the generators to be switched off for this combination to all generators currently online
@@ -320,7 +350,7 @@ class Powerhouse:
             SwitchTime = onTime # initiate to max turn on time
             for genID in genSwOff[-1]: # for each generator to be switched off in the current combination
                 SwitchTime = max(SwitchTime, turnOffTime[self.genIDS.index(genID)]) # check if there is a higher turn off time
-            timeToSwitch.append(SwitchTime)
+            timeToSwitch[ind] = SwitchTime
 
             if minimizeFuel:
                 # get the generator fuel consumption at this loading for this combination
@@ -333,7 +363,7 @@ class Powerhouse:
                     useScheduledLoad = int(max([scheduledLoad - powerAvailToSwitch, self.genCombinationsMOL[idx]]))
                 indFCcons = getIntListIndex(useScheduledLoad, FCpower)
 
-                fuelCons.append(FCcons[indFCcons])
+                fuelCons[ind] = FCcons[indFCcons]
                 # TODO: Add cost of switching generators
 
 

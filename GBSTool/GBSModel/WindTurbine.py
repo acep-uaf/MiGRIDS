@@ -21,6 +21,7 @@ import numpy as np
 from scipy.interpolate import interp1d
 from distutils.util import strtobool
 from GBSAnalyzer.DataWriters.writeNCFile import writeNCFile
+import pandas as pd
 
 class WindTurbine:
     """
@@ -51,7 +52,7 @@ class WindTurbine:
 
 
     # Constructor
-    def __init__(self, wtgID, windSpeedDir, wtgState, timeStep, wtgDescriptor, runTimeSteps = 'all'):
+    def __init__(self, wtgID, windSpeedDir, wtgState, timeStep, wtgDescriptor, timeSeriesLength, runTimeSteps = 'all'):
         """
         Constructor used for the initialization of an object within windfarm list of wind turbines.
 
@@ -75,12 +76,12 @@ class WindTurbine:
         self.wtgRunTimeAct = 0  # Run time since last start [s]
         self.wtgRunTimeTot = 0  # Cummulative run time since model start [s]
         self.wtgStartTimeAct = 0 # time spent starting up since last start [s]
-        self.wtgSpilledWind = [] # time series of spilled wind power
+        self.wtgSpilledWind = [0]*timeSeriesLength # time series of spilled wind power
         self.wtgSpilledWindCum = 0 # amount of spilled wind power in last wtgCheckWindPowerTime seconds
         self.wtgSpilledWindFlag = False # indicates over spilled wind power limit
 
         # initiate runtime values
-        self.checkOperatingConditions()
+        self.checkOperatingConditions(0)
 
     def wtgDescriptorParser(self, windSpeedDir, wtgDescriptor):
         """
@@ -104,6 +105,7 @@ class WindTurbine:
         self.wtgPMax = float(wtgSoup.POutMaxPa.get('value')) # Nameplate capacity [kW]
         self.wtgQMax = float(wtgSoup.QOutMaxPa.get('value'))  # Nameplate capacity [kvar]
         self.wtgCheckWindTime = float(wtgSoup.checkWindTime.get('value'))  # time to check spilled wind power over
+        self.cumSpilledWindWindow = int(self.wtgCheckWindTime/self.timeStep) # helper to avoid repeated calculation
         self.wtgSpilledWindLimit = float(
             wtgSoup.spilledWindLimit.get('value'))  # the PU limit of spilled power before a flag is set
         self.wtgRecalculateWtgPAvail = strtobool(
@@ -175,6 +177,11 @@ class WindTurbine:
         # get the indices of the timesteps to simulate
         indRun = getSeriesIndices(self.runTimeSteps, len(windPowerNew))
         self.windPower = windPowerNew[indRun]
+        # Get 10 sec and 10 min trend for wind power
+        self.windPower10sTrend = np.asarray(pd.Series(self.windPower).rolling((int(max([10/self.timeStep,1]))), min_periods=1).mean())
+        self.windPower10minTrend = np.asarray(pd.Series(self.windPower).rolling(int(600/self.timeStep), min_periods=1).mean())
+        # Pre-allocate spilledWind
+        self.wtgSpilledWind = self.windPower.copy()
 
     # get wind power available from wind speeds and power curve
     # using integer list indexing is much faster than np.searchsorted
@@ -206,16 +213,16 @@ class WindTurbine:
         else:
             return ind
 
-    def checkOperatingConditions(self):
+    def checkOperatingConditions(self, tIndex):
         if self.wtgState == 2: # if running online
             self.wtgRunTimeAct += self.timeStep
             self.wtgRunTimeTot += self.timeStep
 
             # update spilled wind power time series
-            self.wtgSpilledWind.append(max([self.wtgPAvail-self.wtgP, 0]))
+            self.wtgSpilledWind[tIndex] = max([self.wtgPAvail-self.wtgP, 0])
             # get the spilled wind power in checkWindPowerTime
 
-            self.wtgSpilledWindCum = sum(self.wtgSpilledWind[-int(self.wtgCheckWindTime/self.timeStep):])*self.timeStep
+            self.wtgSpilledWindCum = sum(self.wtgSpilledWind[-self.cumSpilledWindWindow:])*self.timeStep
 
             # if enough wind spilled, set flag
             if (self.wtgSpilledWindCum > self.wtgSpilledWindLimit*self.wtgPMax) and (self.wtgSpilledWind[-1] > 0):

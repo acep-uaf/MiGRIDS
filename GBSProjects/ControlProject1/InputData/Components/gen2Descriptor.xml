@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Project: GBS Tool -->
+<!-- Author: Jeremy VanderMeer, jbvandermeer@alaska.edu -->
+<!-- Date: September 26, 2017 -->
+<!-- License: MIT License (see LICENSE file of this package for more information -->
+<!-- This file describes a general diesel generator. Specific GEN might require further children. -->
+<!-- Root tag is 'component' -->
+<component name="gen2">
+ <!-- Declaration of inheritance. Parent of this generic diesel generator descriptor should be the interface itself.  -->
+ <childOf>
+  componentDescriptorInterface
+ </childOf>
+ <type value="source">
+  <!-- 'type' is 'source'. -->
+ </type>
+ <!-- NOTICE: NON-MODIFIED PARENT TAGS ARE NOT SHOWN, THEY SHOULD BE INHERITED FROM THE PARENT -->
+ <fuelCurve>
+  <!-- GEN specific parameters -->
+  <!-- 'fuelCurve' describes the fuel consumption of the diesel generator as per its power output, described by tuples -->
+  <!--  'pPu' and 'massFlow' tags. -->
+  <!-- Power should be presented as P.U. of the nameplate real power capacity. Fuel consumption is kg/s -->
+  <!-- Default is to have a data point at 0 and 1 P.U. power output. DEFAULT VALUES REQUIRE CHANGING for this to -->
+  <!-- be sensible. -->
+  <!-- WARNING: massFlow CALCULATED AS 70% OF THAT OF A 499 kW GENSET -->
+  <pPu unit="pu" value="0 0.3 0.5 0.7 0.9 1"/>
+  <massFlow unit="kg/s" value="0.0155 0.0155 0.0155 0.0166 0.0199 0.0221"/>
+ </fuelCurve>
+ <maxDiesCapCharge>
+  <!-- 'maxDiesCapCharge' is the maximum capacity that charging the ESS can increase the diesel loading to. It
+     depends on the state of charge of the ESS. It is defined by the tuple 'mdcc' which is the maximum diesel loading
+     and the tuple 'e' which is the corresponding state of charge of the ESS. Units for 'mdcc' are P.U. of nameplate
+     capacity of the diesel generator. Units for 'e' are P.U. of ESS nameplate energy capacity. Default values for
+     'mdcc' are 0.65, 0.75, 0.85 and 0.9. The corresponding default values for 'soc' are 1, 0.3, 0.1 and 0. -->
+  <mdcc unit="pu" value="0.65 0.75 0.85 0.9"/>
+  <e unit="pu" value="1 0.3 0.1 0"/>
+ </maxDiesCapCharge>
+ <mol unit="PU" value="0.25">
+  <!-- Dispatch Control Parameters -->
+  <!-- 'mol' describes the minimum optimal loading. Units are in P.U. of nameplate capacity. -->
+  <!-- Default value is 0.4. There are no units. -->
+ </mol>
+ <molLimit unit="PU*s" value="1">
+  <!-- 'molLimit' describes the maximum energy measured under minimum optimal loading allowed before raising a flag.
+    Units are in P.U. of nameplate capacity times seconds. It is measured over the past period of time indicated by
+     molTime. -->
+  <!-- Default value is 1. Units are PU*s. -->
+ </molLimit>
+ <mel value="0.5" unit="PU">
+    <!-- 'mel' describes the minimum efficient loading. Minimum Efficient Loading is the lower limit on what the ideal
+     loading on the diesel generator is for efficiency purposes. The diesel generator is allowed to run down to the MOL,
+     which is lower than MEL, in normal operation. However, if it is running below MEL for more than 'melLimit' in the
+     past 'checkLoadingTime', the generator scheduler will look for a more efficient diesel generator combination to run
+     online. Units are in P.U. of nameplate capacity. -->
+    <!-- Default value is 0.5. There are no PU. -->
+    </mel>
+
+    <melLimit value="10" unit="PU*s">
+    <!-- 'melLimit' describes the maximum energy measured under minimum efficient loading allowed before raising a flag.
+    Units are in P.U. of nameplate capacity times seconds. It is measured over the past period of time indicated by
+     checkLoadingTime. -->
+    <!-- Default value is 10. Units are PU*s. -->
+    </melLimit>
+ <upperNormalLoading unit="PU" value="0.9">
+  <!-- 'upperNormalLoading' describes the the normal upper operating range of the diesel generator. If it operates
+     more than the upperNormalLoadingLimit above the upperNormalLoading in the time defined in checkLoadingTime,
+     then a flag is set. -->
+  <!-- Default value is 0.9. Units are PU. -->
+ </upperNormalLoading>
+ <upperNormalLoadingLimit unit="PU*s" value="1">
+  <!-- 'upperNormalLoadingLimit' describes the maximum energy measured over upperNormalLoading allowed before raising
+    a flag. Units are in P.U. of nameplate capacity times seconds. It is measured over the past period of time indicated by
+     checkLoadingTime. -->
+  <!-- Default value is 1. Units are PU*s. -->
+ </upperNormalLoadingLimit>
+ <checkLoadingTime unit="s" value="300">
+  <!-- 'checkLoadingTime' is the amount of time that upperNormalLoadingLimit and molLimit are measured over. -->
+  <!-- Default value is 300. Units are s. -->
+ </checkLoadingTime>
+ <lowerLimit unit="PU" value="0.1">
+  <!-- 'lowerLimit' is the lower loading limit below which a flag is immediately raised. -->
+  <!-- Default value is 0.1. Units are PU. -->
+ </lowerLimit>
+ <upperLimit unit="PU" value="1">
+  <!-- 'upperLimit' is the upper loading limit above which a flag is immediately raised. -->
+  <!-- Default value is 1. Units are PU. -->
+ </upperLimit>
+ <minRunTime unit="s" value="3600">
+  <!-- 'minRunTime' is the minimum amount of time that the diesel generator should run online for before being  -->
+  <!-- brought offline. This will be followed except in situations which require the unit to be brought offline -->
+  <!-- earlier to avoid critical situations. Units: hours. Default is 3600 s (1 hr).  -->
+ </minRunTime>
+ <startTime unit="s" value="30">
+  <!-- 'startTime' is the ammount of time it takes a hot diesel generator to be brought online. This means cranking, -->
+  <!-- synchronizing, connecting and ramping to full load capability. Units: seconds. Default is 30. -->
+ </startTime>
+ <startCost unit="kg" value="0">
+  <!-- 'startCost' is the equivalent of the cost associated with starting the diesel generator in kg of diesel.
+    This is used in the dispatch schedule to decide whether to switch or not. Default is 0. This should be updated to
+    minimize diesel switching. This will be divied by the 'minRunTime' to get an kg/s value that will be added to the
+     predicted fuel consumption of the diesel generators. -->
+ </startCost>
+ <ntaps unit="NONE" value="0">
+  <!-- FIR filter parameters for smoothing the loading on the component by the ESS -->
+  <!-- 'ntaps' is the number of taps used to smooth the loading on the diesel generator. A value of 0 indicates
+     no filtering. Default is 0. -->
+ </ntaps>
+ <PInMaxPa unit="kW" value="nan">
+  <!-- 'PInMaxPa' is the maximum real power the unit can receive from the grid, should be 0 if source. Units: kW -->
+ </PInMaxPa>
+ <QInMaxPa unit="kvar" value="nan">
+  <!-- 'QInMax' is the maximum reactive power the unit can receive from the grid, should be 0 if source. Units. kvar -->
+ </QInMaxPa>
+ <POutMaxPa unit="kW" value="350">
+  <!-- 'POutMaxPa' is the maximum real power the unit can deliver to the grid. Should be 0 if sink. Units: kW -->
+ </POutMaxPa>
+ <QOutMaxPa unit="kvar" value="nan">
+  <!-- 'QOutMaxPa' is the maximum reactive power the unit can deliver to the grid. Should be 0 if sink. Units: kvar -->
+ </QOutMaxPa>
+ <isVoltageSource value="nan">
+  <!-- 'isVoltageSource' describes the capability of the component to regulate vars. -->
+ </isVoltageSource>
+ <isFrequencyReference value="FALSE">
+  <!-- 'isFrequencyReference' describes the units capability to be the frequency reference of the the grid. -->
+ </isFrequencyReference>
+ <isLoadFollowing value="FALSE">
+  <!-- 'isLoadFollowing' describes the capability of a unit to ramp up or down to mitigate demand or non-load following -->
+  <!-- production induced frequency or voltage issues -->
+ </isLoadFollowing>
+ <isCurtailable value="FALSE">
+  <!-- 'isCurtailable' describes if the unit can reduce and clamp power output below available resource based on -->
+  <!-- a control signal -->
+ </isCurtailable>
+ <isThreePhase value="TRUE">
+  <!-- 'isThreePhase' is TRUE if the unit is a three or four-wire three-phase unit. Default value is TRUE. -->
+ </isThreePhase>
+ <isDelta value="TRUE">
+  <!-- 'isDelta' defines if the unit is Delta of Wye connected. Default is TRUE. -->
+ </isDelta>
+ <acConnectionType unit="NONE" value="0">
+  <!-- 'acConnectionType' value defines how the unit is connected to the grid, i.e., on which phases, if the neutral -->
+  <!-- is present, is the neutral grounded, etc. See the documentation for available values. Default value is 0. -->
+  <!-- Units attribute ALWAYS is NONE, it is here for consistency only. -->
+ </acConnectionType>
+ <dcConnectionType unit="NONE" value="0">
+  <!-- `dcConnectionType` describes the type of DC connection used, if any. Default is 0, which means no DC connection. -->
+  <!-- Units are NONE, as this is just a key (see Wiki for more info). -->
+ </dcConnectionType>
+ <VAcNom unit="V" value="480">
+  <!-- `VAcNom` describes the nominal connection voltage to the grid. Default is 480 VAC. Units are V. -->
+ </VAcNom>
+ <faultCurrent>
+  <!-- 'faultCurrent' Is the ammount of fault current that can be supplied  per ms.
+    Fault current units are in P.U. of nameplate current and are described by the tuple 'iPu'.
+    Fault current values are defined for the number of ms they can be sustained, described by the tuple 'ms'
+    (16.7 ms per 60 Hz cycle). -->
+  <!-- Default is 1 PU at 5 cycles (84 ms), ie no fault current capability. -->
+  <ms unit="ms" value="84"/>
+  <iPu unit="pu" value="1"/>
+ </faultCurrent>
+ <overLoad>
+  <!-- 'overLoad' Is the amount of over load that can be supplied per hour.
+    Over load units are in P.U. of nameplate power and are specified by the number of hours they can
+    operate at. It is described by the tuples 'hr' (time with units hours) and 'pPu' (P.U. of nameplate capacity). -->
+  <!-- Default is 1 PU for 1 second, ie no over load capability. -->
+  <hr unit="hr" value="1"/>
+  <pPu unit="pu" value="1"/>
+ </overLoad>
+ <maxMeanLoad24HrPu unit="pu" value="1">
+  <!-- 'maxMeanLoad24HrPu' Is the the maximum average loading the component is rated for in a 24 hour period.
+    For example, for diesel generators, this rating is different for Prime, Standby and Continuous rated engines and
+    between manufacturers. The ISO-8528-1 specification for a Prime generator is 0.7.-->
+  <!-- Units: P.U.. Default is 1, i.e. it can operate at 100% capacity constantly.  -->
+ </maxMeanLoad24HrPu>
+ <heatingPowerRequirement>
+  <!-- 'heatingPowerRequirement' is the thermal power required to keep the component warm, if required. For example
+    diesel generators in hot standby need to be heated. It is described by three tuples: 'tempAmb' is the ambient (outdoor)
+    temperature in Kelvin. 'tempHeatingMin' is the minimum temperature required for the heating fluid used to heat the
+    component. 'pt' is the thermal power consumption in kW. This will be supplied by whatever excess heat is
+    available -->
+  <!-- Default is one data point at 298 degree K of 0 kW.   -->
+  <tempAmb unit="K" value="298"/>
+  <tempHeatingMin unit="K" value="298"/>
+  <pt unit="kW" value="0"/>
+ </heatingPowerRequirement>
+ <heatRecovery>
+  <!-- 'heatRecovery' describes the usable heat that comes off of the component per power output.  -->
+  <!-- It is described by the tuples 'pPu' (power), 'pt' (thermal power) and 'temp' (the temperature of the heat exchange
+    fluid) Units for power are P.U. of nameplate power capacity, for heat output are thermal kW (not electric) and for
+    temperature are Kelvin. Default is to have a data point at 0 and 1 P.U. power output of no heat recovery and at room
+    temperature. -->
+  <pPu unit="pu" value="0 1"/>
+  <pt unit="kW" value="0 0"/>
+  <temp unit="K" value="298 298"/>
+ </heatRecovery>
+</component>
+<!-- EOF -->

@@ -16,7 +16,13 @@ class tesDispatch:
         :param newSRC: new spinning reserve requirement. if set to nan, there is no change in the SRC requirement.
         """
     def tesDispatch(self, TESS, P):
-        loadingP = np.nanmin([np.nanmax([P / np.sum(TESS.tesPAvail), 0]), 1])
+        # Need to check div by zero
+        sumTESSTesPAVail = sum(TESS.tesPAvail)
+        if sumTESSTesPAVail == 0:
+            loadingP = 0
+        else:
+            loadingP = min([P/sumTESSTesPAVail, 1])
+        #loadingP = np.min([np.nanmax([P / np.sum(TESS.tesPAvail), 0]), 1])
         TESS.tesP = [P / len(TESS.tesP)] * len(TESS.tesP)
         for idx in range(len(TESS.tesP)):
             TESS.thermalEnergyStorageUnits[idx].tesP = loadingP * TESS.tesPAvail[idx]

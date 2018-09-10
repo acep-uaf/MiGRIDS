@@ -101,13 +101,10 @@ class optimize:
                                       self.varGenP, constraints)
 
         # Get the short test time-series
-        # TODO remove following line, which just adjusts time stamps for prototyping prior to release
-        self.time = self.time/1e9
-
         reductionInput = \
             pd.DataFrame({'time':self.time, 'firmLoadP':self.firmLoadP, 'varGenP':self.varGenP})#, index=self.time)
 
-        self.abbrevDatasets, self.abbrevDatasetWeights = getDataSubsets(reductionInput, self.dataReductionMethod)
+        self.abbrevDatasets, self.abbrevDatasetWeights = getDataSubsets(reductionInput, self.dataReductionMethod, otherInputs=[])
 
 
         # Setup optimization runs
@@ -115,6 +112,7 @@ class optimize:
         # Get base case KPI based on optimization objective
         # Any of the following if-branches needs to write to self.basePerformance with the reference KPI based on the
         # optimization objective
+        # Futurefeature: retrieve basePerformance of abbreviated data sets instead of full base case for direct comparability with optimization iteration outputs.
         if self.optimizationObjective == 'maxREContribution':
             # Calculate base case RE contribution
             self.basePerformance = getPrimaryREContribution(self.time, self.firmLoadP, self.firmGenP, self.varGenP)
@@ -161,7 +159,9 @@ class optimize:
 
     def doOptimization(self):
         '''
-        TODO implement and document
+        Interface to dispatch specified optimization algorithm. Returns a value error if the string in self.searchMethod
+        does not match a known optimization method.
+        Currently, only hillClimber is implemented.
         :return:
         '''
 
@@ -178,11 +178,13 @@ class optimize:
 
     def hillClimber(self):
         '''
-        TODO implement and document
-        :return:
+        Adaptive hill climber method for optimization of EES power and energy capacity.
+
+        :return: nothing - writes to object-wide variables.
         '''
 
         maxIterNumber = int(float(self.optimizationConfig['maxRunNumber']))
+        convergenceRepeatNum = int(float(self.optimizationConfig['convergenceRepeatNum']))
         convergenceFlag = False
 
         # Select starting configuration at random, within the given bounds.
@@ -229,6 +231,7 @@ class optimize:
                     setPathList.append(setPath)
                     setNameList.append(setName)
                     # Generate runs
+                    print('Iteration ' + str(iterIdx) + ', Snippet ' + str(sIdx) + ' simulation dispatched.')
                     generateRuns(setPath)
 
                     # Dispatch simulations
@@ -306,7 +309,7 @@ class optimize:
 
                     # If there's no improvement after X iterations in a row, terminate the algorithm.
                     # NOTE this can mean two things, either that we have achieved convergence, or that we're stuck somewhere
-                    if lastImprovement > 10:
+                    if lastImprovement > convergenceRepeatNum:
                         convergenceFlag = True
                         print('*********************************')
                         print('Terminated at Iteration: ' + str(iterIdx) + ' with fitness: ' + str(self.fitness))
@@ -323,19 +326,37 @@ class optimize:
 
 
 
-    def getNextGuess(self, fl, pBest, eBest, iterNum):
+    def getNextGuess(self, fl, pBest, eBest, iterNumParam):
         '''
-        TODO document
+        This method determines the next values for `essPPa` and `essEPa` that are to be tested in an iteration of the
+        hill climber. It uses the historical fitness values from previous iterations and determines the direction of the
+        steepest gradient away from the best fitness value. It then biases the random selection for new power and energy
+        capacity values in the _opposite_ direction of the steepest gradient with the hope that this is the most likely
+        direction to find a better value pair at. If new selections are outside of the constraints put on the search
+        space, i.e., maximum and minimum power and energy capacities, and/or minimum duration (at the essPPa selected),
+        it corrects selections back to the edges of the search envelope as set by the constraints.
+
+        If the more iterations in the past the best found fitness lies, the stronger the random element in picking new
+        values. The idea being that the algorithm might be stuck and larger jumps might get it unstuck.
+
+        **Note:** this approach to a hill climber was tested with several test functions
+        (found in getFitness.py->getTestFitness). With these test functions the algorithm generally converges well.
+        The caveat is, that recent results seem to suggest that the actual search space for the optimal GBS may not be
+        smooth, while the test cases used smooth test functions. This should be investigated further.
+
         :param fl: fitnessLog
         :param pBest: essPPaBest: current best power guess for GBS
         :param eBest: essEPaBest: current best energy guess for GBS
-        :param fBest: fitnessBest: current best fitness value.
-        :return:
+        :param iterNumParam: [float] parameter describing the randomness of the next value pair selection, fraction of
+        iteration number and count since the last improved fitness value was found.
+        :return: newESSPPa, newESSEPa: [float] new pair of energy and power capacities to run the next iteration with
         '''
 
+        # Reduce the data in fl to the necessary columns and usable values
         fl = fl[['fitness', 'essPPa', 'essEPa']]
         fl = fl.dropna()
 
+        # Parameter used to adjust variability/randomization of next guess
         # TODO make adjustable parameter
         exponent = 0.5
 
@@ -350,16 +371,18 @@ class optimize:
         fl['Slope'] = (fl['fitness'] - originFitness)/fl['Dist']
 
         # Get the difference in power-coordinate DOWN the steepest gradient of the four nearest neighbors
-        if fl.shape[0] < 3:
-            maxSlopeIdx = fl['Slope'].idxmax()
+        if fl.shape[0] == 1:
+            maxSlopeIdx = fl['Slope'].astype(float).index[0]
+        elif fl.shape[0] < 3:
+            maxSlopeIdx = fl['Slope'].astype(float).idxmax()
         else:
-            maxSlopeIdx = fl['Slope'][0:2].idxmax()
+            maxSlopeIdx = fl['Slope'][0:2].astype(float).idxmax()
 
         dx = fl['essPPa'][maxSlopeIdx] - originP
         newCoord = originP - dx
         # Get random down and up variations from the power-coordinate
-        rndDown = (newCoord - self.minESSPPa) * np.random.random_sample()/iterNum**exponent
-        rndUp = (self.maxESSPPa - newCoord)*np.random.random_sample()/iterNum**exponent
+        rndDown = (newCoord - self.minESSPPa) * np.random.random_sample()/iterNumParam**exponent
+        rndUp = (self.maxESSPPa - newCoord)*np.random.random_sample()/iterNumParam**exponent
 
         newESSPPa = float(newCoord - rndDown + rndUp)
 
@@ -378,8 +401,8 @@ class optimize:
         # Note that ess needs to meet minimum duration requirement, so the minimum size is constraint by the currently
         # selected power level.
         currentESSEMin = newESSPPa * (self.minESSEPa/self.minESSPPa)
-        rndDown = (newCoordY - currentESSEMin) * np.random.random_sample() / iterNum**exponent
-        rndUp = (self.maxESSEPa - newCoordY) * np.random.random_sample() / iterNum**exponent
+        rndDown = (newCoordY - currentESSEMin) * np.random.random_sample() / iterNumParam**exponent
+        rndUp = (self.maxESSEPa - newCoordY) * np.random.random_sample() / iterNumParam**exponent
 
         newESSEPa = float(newCoordY - rndDown + rndUp)
 
@@ -468,7 +491,7 @@ class optimize:
     def essExists(self):
         '''
         Checks if the system setup already contains one or more ESS components; looks for the largest index of those
-        components, and returns the next available integer as the index for the ESS used in optimization.
+        components, and returns it as the index for the ESS used in optimization.
         :return: essIdx
         '''
         # We also need to determine the unique name for the ess. Normally, this should be ess0. However, in the rare
@@ -490,11 +513,11 @@ class optimize:
             essNum.append(int(num[3:]))
 
         if not essNum:
-            essNumMax = -1
+            essNumMax = 0
         else:
             essNumMax = max(essNum)
 
-        essIdx = essNumMax + 1
+        essIdx = essNumMax
 
         return essIdx
 
