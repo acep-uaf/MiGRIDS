@@ -223,6 +223,9 @@ class ElectricalEnergyStorage:
             # check if has operated more than eesUnderSrcLimit under the minimum SRC over the past eesUnderSrcTime
             if sum(self.prevUnderSrc[(tIndex-round(self.eesUnderSrcTime / self.timeStep)):tIndex])*self.timeStep > self.eesUnderSrcLimit:
                 self.underSRC = True
+            # check if the ees is discharging and not able to supply the full SRC requirements. If this is the case, then flag the underSRC flag
+            elif (self.prevUnderSrc[tIndex] > 0) and (self.eesP > 0):
+                self.underSRC = True
             else:
                 self.underSRC = False
             ''' calculate these as needed in dispatch 

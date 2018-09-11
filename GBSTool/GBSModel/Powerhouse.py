@@ -281,7 +281,7 @@ class Powerhouse:
         #indCap = np.array([idx for idx, x in enumerate(self.genCombinationsUpperNormalLoading) if x >= scheduledLoad -
                            #powerAvailToSwitch + scheduledSRCSwitch])
 
-        capReq = int(scheduledLoad - powerAvailToSwitch + scheduledSRCSwitch)
+        capReq = max(int(scheduledLoad - powerAvailToSwitch + scheduledSRCSwitch),0)
         indCap = np.asarray(self.lkpGenCombinationsUpperNormalLoading.get(capReq, self.genCombinationsUpperNormalLoadingMaxIdx), dtype=int)
 
         # check if the current online combination is capable of supplying the projected load minus the power available to

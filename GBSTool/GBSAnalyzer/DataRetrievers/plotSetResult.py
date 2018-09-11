@@ -34,11 +34,12 @@ def plotSetResult(plotRes,plotAttr, projectSetDir = '', otherAttr = [],otherAttr
 
     # get the set number
     dirName = os.path.basename(projectSetDir)
-    try:
-        setNum = int(dirName[3:])
-    except ValueError:
-        print(
-            'The directory name for the simulation set results does not have the correct format. It needs to be \'Setx\' where x is the run number.')
+    setNum = dirName[3:]
+    #try:
+    #    setNum = int(dirName[3:])
+    #except ValueError:
+    #    print(
+    #       'The directory name for the simulation set results does not have the correct format. It needs to be \'Setx\' where x is the run number.')
 
     # get the base case value, if set
     if baseSet != '' and baseRun != '':
