@@ -2,8 +2,9 @@
 #it consists of a navigation tree and pages
 from PyQt5 import QtWidgets, QtCore, QtGui,QtSql
 from GBSUserInterface.ConsoleDisplay import ConsoleDisplay
-from GBSUserInterface.ProjectSQLiteHandler import ProjectSQLiteHandler
+
 from GBSUserInterface.FormSetup import FormSetup
+from GBSUserInterface.switchProject import saveProject
 
 class MainForm(QtWidgets.QMainWindow):
 
@@ -141,10 +142,9 @@ class MainForm(QtWidgets.QMainWindow):
         # copy the project database to the project folder and save xmls
         if 'projectFolder' in setupForm.model.__dict__.keys():
 
-            path = os.path.dirname(__file__)
-            shutil.copy(os.path.join(path, '../project_manager'),
-                        os.path.join(setupForm.model.projectFolder, 'project_manager'))
-            print('Database was saved to %s' % setupForm.model.projectFolder)
+
+            saveProject(setupForm.model.projectFolder)
+
         else:
             # if a project was never set then just close and remove the default database
             os.remove('project_manager')

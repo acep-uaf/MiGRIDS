@@ -65,7 +65,7 @@ class FileBlock(QtWidgets.QGroupBox):
                 self.dbhandler.insertRecord('project'['project_path'],[folderDialog])
             else:
                 self.dbhandler.updateRecord('project','_id',1,['project_path'],[folderDialog])
-            #filter the component and environemnt inupt tables to the current input directory
+            #filter the component and environemnt input tables to the current input directory
             self.filterTables()
         return folderDialog
 

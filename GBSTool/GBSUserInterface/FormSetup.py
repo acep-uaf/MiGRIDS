@@ -13,7 +13,7 @@ from GBSUserInterface.Delegates import ClickableLineEdit
 from GBSUserInterface.FileBlock import FileBlock
 from GBSUserInterface.ProjectSQLiteHandler import ProjectSQLiteHandler
 from GBSUserInterface.ModelSetupInformation import SetupTag
-
+from GBSUserInterface.switchProject import switchProject, saveProject, clearProject
 
 class FormSetup(QtWidgets.QWidget):
     global model
@@ -110,11 +110,10 @@ class FormSetup(QtWidgets.QWidget):
     #FormSetup -> None
     #method to modify FormSetup content
     def functionForCreateButton(self):
-
-        #make a database
-        #s is the 1st dialog box for the setup wizard
-
-        #s = SetupWizard(self.WizardTree, model, self)
+        #if a project is already started save it before starting a new one
+        if (self.model.project != '') | (self.model.project is not None):
+            self.model = switchProject(self.model)
+            model = self.model
         s = self.WizardTree
         s.exec_()
         handler = UIToHandler()
@@ -164,10 +163,10 @@ class FormSetup(QtWidgets.QWidget):
 
             #now that setup data is set display it in the form
             self.displayModelData()
-            print(model.inputFileDir.value)
+
             # look for an existing data pickle
             handler = UIToHandler()
-            #TODO comment to not load data
+
             self.model.data = handler.loadInputData(os.path.join(self.model.setupFolder, self.model.project + 'Setup.xml'))
             if self.model.data is not None:
                 self.updateModelPage(self.model.data)
