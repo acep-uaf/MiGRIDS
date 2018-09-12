@@ -7,13 +7,13 @@ from GBSUserInterface.FormSetup import FormSetup
 
 class MainForm(QtWidgets.QMainWindow):
 
-    def __init__(self):
+    def __init__(self,**kwargs):
         super().__init__()
 
-        self.initUI()
+        self.initUI(**kwargs)
 
-    def initUI(self):
-
+    def initUI(self,**kwargs):
+        self.lastProjectPath = kwargs.get('lastProjectPath')
         self.setObjectName("mainForm")
         self.layoutWidget = QtWidgets.QWidget(self)
 
@@ -151,15 +151,17 @@ class MainForm(QtWidgets.QMainWindow):
 
     #page block contains all the forms
     def createPageBlock(self):
-        pageBlock = PageBlock()
+        pageBlock = PageBlock(lastProjectPath = self.lastProjectPath)
         return pageBlock
 
 
 class PageBlock(QtWidgets.QTabWidget):
-    def __init__(self):
+    def __init__(self,**kwargs):
         super().__init__()
         self.setObjectName('pages')
+        self.lastProjectPath = kwargs.get('lastProjectPath')
         self.initUI()
+
 
     def initUI(self):
         from GBSUserInterface.FormSetup import FormSetup

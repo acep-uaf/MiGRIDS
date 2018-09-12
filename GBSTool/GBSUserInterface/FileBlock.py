@@ -59,8 +59,12 @@ class FileBlock(QtWidgets.QGroupBox):
         if (folderDialog != ''):
             #once selected folderDialog gets set to the input box
             self.findChild(QtWidgets.QWidget, 'inputFileDirvalue').setText(folderDialog)
-            #save the input to the setup data model
+            #save the input to the setup data model and into the database
             self.saveInput()
+            if self.dbhandler.getProjectPath() is None:
+                self.dbhandler.insertRecord('project'['project_path'],[folderDialog])
+            else:
+                self.dbhandler.updateRecord('project','_id',1,['project_path'],[folderDialog])
             #filter the component and environemnt inupt tables to the current input directory
             self.filterTables()
         return folderDialog
@@ -339,7 +343,6 @@ class FileBlock(QtWidgets.QGroupBox):
         self.model.assignDateChannel(SetupTag.assignFormat, self.FileBlock.findChild(QtWidgets.QWidget, 'dateChannelformat').currentText(),position=int(self.input)-1)
         self.model.assignInputFileDir(SetupTag.assignValue, self.FileBlock.findChild(QtWidgets.QWidget,'inputFileDirvalue').text(),position=int(self.input)-1)
         self.model.assignInputFileType(SetupTag.assignValue, self.FileBlock.findChild(QtWidgets.QWidget,'inputFileTypevalue').currentText(),position=int(self.input)-1)
-    #TODO save components if the exist
         self.saveTables()
         return
 

@@ -10,10 +10,13 @@ class ProjectSQLiteHandler:
     def closeDatabase(self):
         self.cursor.close()
         self.connection.close()
+        return
 
-    def getComponents(self):
-        component_tuple = self.cursor.execute("SELECT * FROM components").fetchall()
-        return component_tuple
+    def getProjectPath(self):
+        if self.tableExists('project'):
+            projectPath = self.cursor.execute("select project_path from project").fetchone()
+            if projectPath is not None:
+                return projectPath[0]
 
     def tableExists(self, table):
         try:
@@ -127,6 +130,14 @@ class ProjectSQLiteHandler:
             self.cursor.execute("INSERT INTO ref_units(code, description) SELECT code, description from " + u[0] + " Where code not in (select code from ref_units)")
 
         self.connection.commit()
+        #project table
+        self.cursor.execute("DROP TABLE IF EXISTS project")
+        self.cursor.executescript("""CREATE TABLE project
+        (_id  integer primary key,
+        project_path text,
+        project_name text);""")
+
+        #component table
         self.cursor.execute("DROP TABLE IF EXISTS components")
         self.cursor.executescript("""CREATE TABLE components
          (_id integer primary key,
@@ -251,7 +262,8 @@ class ProjectSQLiteHandler:
             self.cursor.execute("INSERT INTO " + table + "(" + string_fields + ")" + "VALUES (" + string_values + ")", values)
             self.connection.commit()
             return True
-        except:
+        except Exception as e:
+            print(e)
             return False
 
     # updates a single record in a specified table given a field to match, value to match, list of fields to insert values into and a list of values

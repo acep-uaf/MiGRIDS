@@ -24,6 +24,11 @@ def callUIForm():
     #start with an empty default database called project_manager
 
     handler = ProjectSQLiteHandler()
+    #get the name of the last project worked on
+    print(handler.dataCheck('project'))
+    lastProjectPath = handler.getProjectPath()
+
+
     handler.makeDatabase()
     handler.closeDatabase()
 
@@ -32,7 +37,7 @@ def callUIForm():
     db.setDatabaseName('project_manager')
 
     #launch the main form which contains subforms
-    s = MainForm()
+    s = MainForm(lastProjectPath=lastProjectPath)
 
     try:
         sys.exit(app.exec_())

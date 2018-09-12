@@ -20,11 +20,11 @@ class FormSetup(QtWidgets.QWidget):
     model = ModelSetupInformation()
     def __init__(self, parent):
         super().__init__(parent)
-        
+        self.lastProjectPath = parent.lastProjectPath
         self.initUI()
     #initialize the form
     def initUI(self):
-
+        self.dbHandler = ProjectSQLiteHandler()
         self.setObjectName("setupDialog")
 
         self.model = model
@@ -142,11 +142,13 @@ class FormSetup(QtWidgets.QWidget):
 
         if (self.model.project == '') | (self.model.project is None):
             #launch file navigator to identify setup file
-            setupFile = QtWidgets.QFileDialog.getOpenFileName(self,"Select your setup file", None, "*xml" )
+
+            setupFile = QtWidgets.QFileDialog.getOpenFileName(self,"Select your setup file", self.lastProjectPath, "*xml" )
             if (setupFile == ('','')) | (setupFile is None):
                 return
             model.assignSetupFolder(setupFile[0])
-
+            self.dbHandler.insertRecord('project',['project_path'],[setupFile[0]])
+            print(self.dbHandler.dataCheck('project'))
             #Look for an existing component database and replace the default one with it
             if os.path.exists(os.path.join(self.model.projectFolder,'project_manager')):
                 print('An existing project database was found for %s.' %self.model.project)
@@ -165,8 +167,8 @@ class FormSetup(QtWidgets.QWidget):
             print(model.inputFileDir.value)
             # look for an existing data pickle
             handler = UIToHandler()
-            #TODO uncomment to load data
-            #self.model.data = handler.loadInputData(os.path.join(self.model.setupFolder, self.model.project + 'Setup.xml'))
+            #TODO comment to not load data
+            self.model.data = handler.loadInputData(os.path.join(self.model.setupFolder, self.model.project + 'Setup.xml'))
             if self.model.data is not None:
                 self.updateModelPage(self.model.data)
 
@@ -189,8 +191,6 @@ class FormSetup(QtWidgets.QWidget):
                 self.tabs.setEnabled(True)
 
                 print('Loaded %s:' % model.project)
-
-
         else:
             #TODO allow new projects to be loaded without closing window
             msg = QtWidgets.QMessageBox(QtWidgets.QMessageBox.Warning, "Close project", "You need to close the sofware before you load a new project")
@@ -199,14 +199,16 @@ class FormSetup(QtWidgets.QWidget):
         return
     #display data in a setup model in the FormSetup form (fileblocks), creating a tab for each data input directory listed
     def displayModelData(self):
-        if self.model.inputFileDir.value is not None:
-            #the number of directories listed in inputFileDir indicates how many tabs are required
-            tab_count = len(self.model.inputFileDir.value)
-            #if directories have been entered then replace the first tab and create a tab for each directory #TODO should remove all previous tabs
-            if tab_count > 0:
-                self.tabs.removeTab(0)
-                for i in range(tab_count):
-                    self.newTab(i+1)
+        self.tabs.removeTab(0)
+        #the number of directories listed in inputFileDir indicates how many tabs are required
+        tab_count = len(self.model.inputFileDir.value)
+        #if directories have been entered then replace the first tab and create a tab for each directory #TODO should remove all previous tabs
+        if tab_count > 0:
+            self.tabs.removeTab(0)
+            for i in range(tab_count):
+                self.newTab(i+1)
+        else:
+            self.newTab(1)
         return
     #TODO make dynamic from list input
     #List -> WizardTree
@@ -266,7 +268,7 @@ class FormSetup(QtWidgets.QWidget):
                     value = child.itemText(child.currentIndex())
                 #append to appropriate list
                 attr = child.objectName()
-                model.assign(attr,value,position=page.input-1)
+                model.assign(attr,value,position=int(page.input)-1)
 
 
         # we also need headerNames, componentNames, attributes and units from the component section
@@ -360,12 +362,12 @@ class FormSetup(QtWidgets.QWidget):
         defaultEnd = str((pd.to_datetime(data.fixed.index, unit='s')[len(data.fixed.index) - 1]).date())
 
         defaultComponents = ','.join(self.model.componentNames.value)
-        sqlHandler = ProjectSQLiteHandler()
-        sqlHandler.cursor.execute(
+
+        self.dbHandler.cursor.execute(
             "UPDATE setup set date_start = ?, date_end = ?, component_names = ? where set_name = 'default'",
             [defaultStart, defaultEnd, defaultComponents])
-        sqlHandler.connection.commit()
-        sqlHandler.closeDatabase()
+        self.dbHandler.connection.commit()
+
         # tell the model form to fillSetInfo now that there is data
         modelForm = self.window().findChild(SetsTableBlock)
         # start and end are tuples at this point
@@ -390,6 +392,11 @@ class FormSetup(QtWidgets.QWidget):
             self.sendSetupData()
             # on close save the xml files
             self.model.writeNewXML()
+            self.dbHandler.closeDatabase
+        #close the fileblocks
+        for i in range(self.tabs.count()):
+            page = self.tabs.widget(i)
+            page.close()
 #TODO add progress bar for uploading raw data and generating fixed data pickle
     def addProgressBar(self):
         self.progress = QtWidgets.QProgressBar(self)
@@ -411,6 +418,8 @@ class FormSetup(QtWidgets.QWidget):
     @QtCore.pyqtSlot()
     def onClick(self, buttonFunction):
         buttonFunction()
+
+
 
 #classes used for displaying wizard inputs
 class WizardPage(QtWidgets.QWizardPage):
@@ -443,22 +452,6 @@ class WizardPage(QtWidgets.QWizardPage):
 
     def getInput(self):
         return self.input.text()
-
-class FolderDialog(WizardPage):
-    def __init__(self, parent, d):
-        WizardPage(self, parent, d)
-
-    def setInput(self):
-        box = QtWidgets.QHBoxLayout()
-        self.input = QtWidgets.QLineEdit()
-        self.input.setObjectName('inputText')
-
-        self.button = QtWidgets.QPushButton()
-        #self.endDate.setObjectName('loadFile')
-
-        box.addWidget(self.inputText)
-        box.addWidget(self.loadFile)
-        return box
 
 
 class TwoDatesDialog(WizardPage):
@@ -496,8 +489,8 @@ class DropDown(WizardPage):
         return self.breakItems(self.input.itemText(self.input.currentIndex()))
 
     def getItems(self):
-        dbhandler = ProjectSQLiteHandler()
-        items = dbhandler.getCodes(self.d['reftable'])
+
+        items = self.dbHandler.getCodes(self.d['reftable'])
         return items
     def breakItems(self,str):
         item = str.split(' - ')[0]
@@ -527,8 +520,9 @@ class TextWithDropDown(WizardPage):
         strInput = ' '.join([input,item])
         return strInput
     def getItems(self):
-        dbhandler = ProjectSQLiteHandler()
-        items = dbhandler.getCodes(self.d['reftable'])
+        dbHandler = ProjectSQLiteHandler()
+        items = dbHandler.getCodes(self.d['reftable'])
+        dbHandler.closeDatabase()
         return items
 
     def breakItems(self, str):
