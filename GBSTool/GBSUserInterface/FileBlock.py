@@ -375,4 +375,19 @@ class FileBlock(QtWidgets.QGroupBox):
         self.model.assignComponentAttribute(SetupTag.assignUnits,[df['units'].tolist()])
 
     def close(self):
+        if 'projectFolder' in self.model.__dict__.keys():
+            #input to model
+            self.saveInput()
+            #input to database
+            setupFields, setupValues = self.getSetupInfo()
+
+            # update database table
+            if not self.dbhandler.insertRecord('input_files', setupFields, setupValues):
+                self.dbhandler.updateRecord('input_files', ['_id'], [setupFields[0]],
+                                       setupFields[1:],
+                                       setupValues[1:])
+            self.saveTables()
+            # on leave save the xml files
+            self.model.writeNewXML()
+
         self.dbhandler.closeDatabase()
