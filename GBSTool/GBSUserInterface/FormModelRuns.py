@@ -232,6 +232,7 @@ class SetsTableBlock(QtWidgets.QGroupBox):
         self.findChild(QtWidgets.QDateEdit, 'endDate').setDateRange(start, end)
         self.findChild(QtWidgets.QLineEdit,'componentNames').setText(','.join(self.componentDefault))
         self.updateComponentDelegate(self.componentDefault)
+
         return
     #update the component drop down in the set table to include the selected or default components
     def updateComponentDelegate(self,components):

@@ -1,7 +1,8 @@
 #MainForm is the parent for for all sections of the User Interface
 #it consists of a navigation tree and pages
-from PyQt5 import QtWidgets, QtCore, QtGui
+from PyQt5 import QtWidgets, QtCore, QtGui,QtSql
 from GBSUserInterface.ConsoleDisplay import ConsoleDisplay
+from GBSUserInterface.ProjectSQLiteHandler import ProjectSQLiteHandler
 from GBSUserInterface.FormSetup import FormSetup
 
 class MainForm(QtWidgets.QMainWindow):
@@ -132,8 +133,21 @@ class MainForm(QtWidgets.QMainWindow):
         return
 
     def closeEvent(self,event):
-        p = self.findChild(QtWidgets.QWidget,'setupDialog')
-        p.close()
+        import os
+        import shutil
+        setupForm = self.findChild(QtWidgets.QWidget, 'setupDialog')
+        setupForm.closeEvent(event)
+
+        # copy the project database to the project folder and save xmls
+        if 'projectFolder' in setupForm.model.__dict__.keys():
+
+            path = os.path.dirname(__file__)
+            shutil.copy(os.path.join(path, '../project_manager'),
+                        os.path.join(setupForm.model.projectFolder, 'project_manager'))
+            print('Database was saved to %s' % setupForm.model.projectFolder)
+        else:
+            # if a project was never set then just close and remove the default database
+            os.remove('project_manager')
 
     #page block contains all the forms
     def createPageBlock(self):

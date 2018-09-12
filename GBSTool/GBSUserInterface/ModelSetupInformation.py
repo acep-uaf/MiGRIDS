@@ -15,7 +15,9 @@ class SetupTag:
             if ('value' in self.__dict__.keys()):
                 if (self.value is None) | (self.value == ""):
                     self.value = v
-                elif (position is not None):
+                elif len(self.value) < 1:
+                    self.value = v
+                elif (position is not None) & (type(self.value) is list):
                        if  (position < len(self.value)):
                            self.value[position] = v[0]
                        else:
@@ -33,10 +35,10 @@ class SetupTag:
                 if (self.unit is None) | (self.unit == ""):
                     self.unit = v
                 elif (position is not None):
-                    if (position < len(self.value)):
-                        self.value[position] = v[0]
+                    if (position < len(self.unit)):
+                        self.unit[position] = v[0]
                     else:
-                        self.value = self.value + v
+                        self.unit = self.unit + v
 
                 else:
                     self.unit = self.unit + v
@@ -49,12 +51,12 @@ class SetupTag:
         if type(v) is list:
             if ('format' in self.__dict__.keys()):
                 if (self.format is None) | (self.format == ""):
-                    self.value = v
+                    self.format = v
                 elif (position is not None):
-                    if (position < len(self.value)):
-                        self.value[position] = v[0]
+                    if (position < len(self.format)):
+                        self.format[position] = v[0]
                     else:
-                        self.value = self.value + v
+                        self.format = self.format + v
 
                 else:
                     self.format = self.format + v
@@ -87,8 +89,6 @@ class ModelSetupInformation:
         #TODO make dynamic based on WizardTree names
         self.functionDictionary = {'project':self.assignProject,
                                    'inputFileFormatvalue':[self.assignInputFileFormat,SetupTag.assignValue],
-                                   #'windFileDirvalue':[self.assignWindFileDir,SetupTag.assignValue],
-                                   #'hydroFileDirvalue':[self.assignHydroFileDir,SetupTag.assignValue],
                                    'inputFileDirvalue':[self.assignInputFileDir,SetupTag.assignValue],
                                    'inputFileTypevalue':[self.assignInputFileType, SetupTag.assignValue],
                                    'dateChannelformat':[self.assignDateChannel,SetupTag.assignFormat],

@@ -1,3 +1,4 @@
+import pandas as pd
 
 class ProjectSQLiteHandler:
 
@@ -5,13 +6,6 @@ class ProjectSQLiteHandler:
         import sqlite3 as lite
         self.connection = lite.connect(database)
         self.cursor = self.connection.cursor()
-
-
-    def getComponentTableCount(self):
-
-        component_count = len(self.cursor.execute("SELECT * FROM components").fetchall())
-        # return component_count
-        return component_count
 
     def closeDatabase(self):
         self.cursor.close()
@@ -279,7 +273,7 @@ class ProjectSQLiteHandler:
     #String -> String
     def getRefInput(self, tables):
         #table is a list of tables
-        import pandas as pd
+
         # create list of values for a combo box
         valueStrings = []
         for t in tables:
@@ -368,3 +362,18 @@ class ProjectSQLiteHandler:
         codes = (codes['code']).tolist()
 
         return codes
+    #returns a list of components associated with a project
+    def getComponentNames(self,filter):
+        names = self.cursor.execute("Select component_name from components")
+        return list(names)
+    def getComponentsTable(self, filter):
+        print(self.dataCheck("components"))
+        #sql = """select component_name, original_field_name, units,attribute from components where inputfiledir = ({0})"""
+        #sql = sql.format('?', ','.join('?' * len((1))))
+        sql = """select component_name, original_field_name, units,attribute from components where inputfiledir = ?"""
+        #sql = """select component_name, original_field_name, units,attribute from components"""
+        #df = pd.read_sql_query(sql, self.connection)
+        df = pd.read_sql_query(sql,self.connection,params=[filter])
+        sql = """select component_name, original_field_name, units,attribute from environment where inputfiledir = ?"""
+        df.append(pd.read_sql_query(sql,self.connection,params=[filter]))
+        return df

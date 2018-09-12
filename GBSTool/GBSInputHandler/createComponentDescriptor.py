@@ -1,6 +1,7 @@
-#build an empty descriptor file for a single component
+#
+# build an empty descriptor file for a single component
 #fill the descriptor file if a soup object is provided
-#String| string, Soup-> None
+#String string, Soup-> None
 def createComponentDescriptor(component, saveDir, soup = None):
     # componentNames is a list of all components to be included in the simulation
     # saveDir is where the generated component descriptor files will be saved
@@ -9,15 +10,24 @@ def createComponentDescriptor(component, saveDir, soup = None):
     # General Imports
     from bs4 import BeautifulSoup
     import os
+    import re
 
     #get the component descriptor template from the resource folder
     #component descriptor can have parent files that contain additional tags
     here = os.path.dirname(os.path.realpath(__file__))
     componentPath = os.path.join(here, '../GBSModel/Resources/Components')
 
+    def typeOfComponent(c):
+        '''extracts the type of a component from its name
+        :param c [String] the component name which consists of a component type + number'''
+        match = re.match(r"([a-z]+)([0-9]+)", c, re.I)
+        if match:
+            componentType = match.group(1)
+            return componentType
+        return
 
     if soup is None:
-        fileName = os.path.join(componentPath, component[0:3] + 'Descriptor.xml')
+        fileName = os.path.join(componentPath, typeOfComponent(component)+ 'Descriptor.xml')
         with open(fileName, "r") as template:# open
             print('creating from template')
             contents_child = template.read()

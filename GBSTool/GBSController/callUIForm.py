@@ -25,6 +25,7 @@ def callUIForm():
 
     handler = ProjectSQLiteHandler()
     handler.makeDatabase()
+    handler.closeDatabase()
 
     #make the database available to the form models
     db = QtSql.QSqlDatabase.addDatabase('QSQLITE')
@@ -35,6 +36,7 @@ def callUIForm():
 
     try:
         sys.exit(app.exec_())
+
     except:
         print('exiting')
 

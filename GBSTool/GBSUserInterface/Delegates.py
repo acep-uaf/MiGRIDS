@@ -98,6 +98,7 @@ class RelationDelegate(QtSql.QSqlRelationalDelegate):
         #make a combo box if there is a valid relation
         if index.model().relation(index.column()).isValid:
             editor = QtWidgets.QComboBox(parent)
+            #editor.setCurrentIndex(0)
             editor.activated.connect(self.currentIndexChanged)
             return editor
         else:
@@ -138,15 +139,10 @@ class RelationDelegate(QtSql.QSqlRelationalDelegate):
                 #get the number of components of this type -
                 handler = ProjectSQLiteHandler()
                 i = handler.getTypeCount(self.sender().currentText())
-                print(handler.dataCheck('components'))
-
                 name = self.sender().currentText() + str(i)
-
                 tv.model().setData(tv.model().index(currentRow,4),name)
-                mm = tv.model()
                 tv.model().submitAll()
                 tv.model().select()
-                print(handler.dataCheck('components'))
                 handler.closeDatabase()
             return
 #QLineEdit that when clicked performs an action
@@ -204,12 +200,8 @@ class ComponentFormOpenerDelegate(QtWidgets.QItemDelegate):
                                          scale=model.data(model.index(index.row(), 5)),
 
                                  )
+             #the project filepath is stored in the model data for the setup portion
 
-            #componentDict = component.toDictionary()
-
-            #the project filepath is stored in the model data for the setup portion
-            #TODO fix. this works but is ugly and won't work if form changes structure
-            #mainForm  = self.parent().parent().parent().parent()
             setupform = self.parent().window().findChild(QtWidgets.QWidget,"setupDialog" )
             setupInfo = setupform.model
             setupInfo.setupFolder
