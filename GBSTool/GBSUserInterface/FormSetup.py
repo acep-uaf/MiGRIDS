@@ -93,12 +93,14 @@ class FormSetup(QtWidgets.QWidget):
                                  'Create setup XML', None, 'Start the setup wizard to create a new setup file'))
         #force the buttons to the left side of the layout
         hlayout.addStretch(1)
-        hlayout.addStretch(1)
+
         self.ButtonBlock.setLayout(hlayout)
 
         self.ButtonBlock.setSizePolicy(QtWidgets.QSizePolicy.Expanding,QtWidgets.QSizePolicy.Expanding)
-
-        #self.ButtonBlock.setMinimumSize(self.size().width(),self.minimumSize().height())
+        projectTitlewdg = QtWidgets.QLabel()
+        projectTitlewdg.setObjectName('projectTitle')
+        hlayout.addWidget(projectTitlewdg)
+        hlayout.addStretch(1)
         return hlayout
 
     #method -> None
@@ -130,7 +132,7 @@ class FormSetup(QtWidgets.QWidget):
             pages = self.window().findChild(QtWidgets.QTabWidget,'pages')
             pages.enableTabs()
             self.tabs.setEnabled(True)
-
+            self.findChild(QtWidgets.QLabel, 'projectTitle').setText(self.model.project)
 
     #searches for and loads existing project data - database, setupxml,descriptors, DataClass pickle
     def functionForLoadButton(self):
@@ -190,6 +192,7 @@ class FormSetup(QtWidgets.QWidget):
                 self.tabs.setEnabled(True)
 
                 print('Loaded %s:' % model.project)
+            self.findChild(QtWidgets.QLabel, 'projectTitle').setText(self.model.project)
         else:
             #TODO allow new projects to be loaded without closing window
             msg = QtWidgets.QMessageBox(QtWidgets.QMessageBox.Warning, "Close project", "You need to close the sofware before you load a new project")
