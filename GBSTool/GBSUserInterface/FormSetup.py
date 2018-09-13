@@ -113,9 +113,11 @@ class FormSetup(QtWidgets.QWidget):
     #method to modify FormSetup content
     def functionForCreateButton(self):
         #if a project is already started save it before starting a new one
-        if (self.model.project != '') | (self.model.project is not None):
+        if (self.model.project != '') & (self.model.project is not None):
             self.model = switchProject(self.model)
+            global model
             model = self.model
+
         s = self.WizardTree
         s.exec_()
         handler = UIToHandler()
@@ -140,64 +142,64 @@ class FormSetup(QtWidgets.QWidget):
         looks for an existing project database and a pickled data object.'''
         import os
         from GBSUserInterface.replaceDefaultDatabase import replaceDefaultDatabase
+        #if we were already working on a project its state gets saved and  new project is loaded
+        if (self.model.project != '') & (self.model.project is not None):
+            self.model = switchProject(self.model)
+            global model
+            model = self.model
 
-        if (self.model.project == '') | (self.model.project is None):
-            #launch file navigator to identify setup file
+        #launch file navigator to identify setup file
 
-            setupFile = QtWidgets.QFileDialog.getOpenFileName(self,"Select your setup file", self.lastProjectPath, "*xml" )
-            if (setupFile == ('','')) | (setupFile is None):
-                return
-            model.assignSetupFolder(setupFile[0])
-            self.dbHandler.insertRecord('project',['project_path'],[setupFile[0]])
-            print(self.dbHandler.dataCheck('project'))
-            #Look for an existing component database and replace the default one with it
-            if os.path.exists(os.path.join(self.model.projectFolder,'project_manager')):
-                print('An existing project database was found for %s.' %self.model.project)
+        setupFile = QtWidgets.QFileDialog.getOpenFileName(self,"Select your setup file", self.lastProjectPath, "*xml" )
+        if (setupFile == ('','')) | (setupFile is None):
+            return
+        model.assignSetupFolder(setupFile[0])
+        self.dbHandler.insertRecord('project',['project_path'],[setupFile[0]])
+        print(self.dbHandler.dataCheck('project'))
+        #Look for an existing component database and replace the default one with it
+        if os.path.exists(os.path.join(self.model.projectFolder,'project_manager')):
+            print('An existing project database was found for %s.' %self.model.project)
 
-                replaceDefaultDatabase(os.path.join(self.model.projectFolder, 'project_manager'))
-                self.projectDatabase = True
-            else:
-                self.projectDatabase = False
-                print('An existing project database was not found for %s.' % self.model.project)
-
-            # assign setup information to data model
-            model.feedSetupInfo()
-
-            #now that setup data is set display it in the form
-            self.displayModelData()
-
-            # look for an existing data pickle
-            handler = UIToHandler()
-
-            self.model.data = handler.loadInputData(os.path.join(self.model.setupFolder, self.model.project + 'Setup.xml'))
-            if self.model.data is not None:
-                self.updateModelPage(self.model.data)
-
-                #refresh the plot
-                resultDisplay = self.parent().findChild(ResultsSetup)
-                resultDisplay.defaultPlot(self.model.data)
-           # TODO uncomment
-            # return true if sets have been run
-            #setsRun = loadSets(model,self.window())
-            setsRun = False
-
-            #make the data blocks editable if there are no sets already created
-            #if sets have been created then input data is not editable from the interface
-            if setsRun:
-                msg = QtWidgets.QMessageBox(QtWidgets.QMessageBox.Warning, "Analysis in Progress",
-                                            "Analysis results were detected. You cannot edit projected input data after analysis has begun.")
-                msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
-                msg.exec()
-            else:
-                self.tabs.setEnabled(True)
-
-                print('Loaded %s:' % model.project)
-            self.findChild(QtWidgets.QLabel, 'projectTitle').setText(self.model.project)
+            replaceDefaultDatabase(os.path.join(self.model.projectFolder, 'project_manager'))
+            self.projectDatabase = True
         else:
-            #TODO allow new projects to be loaded without closing window
-            msg = QtWidgets.QMessageBox(QtWidgets.QMessageBox.Warning, "Close project", "You need to close the sofware before you load a new project")
+            self.projectDatabase = False
+            print('An existing project database was not found for %s.' % self.model.project)
+
+        # assign setup information to data model
+        model.feedSetupInfo()
+
+        #now that setup data is set display it in the form
+        self.displayModelData()
+
+        # look for an existing data pickle
+        handler = UIToHandler()
+
+        self.model.data = handler.loadInputData(os.path.join(self.model.setupFolder, self.model.project + 'Setup.xml'))
+        if self.model.data is not None:
+            self.updateModelPage(self.model.data)
+
+            #refresh the plot
+            resultDisplay = self.parent().findChild(ResultsSetup)
+            resultDisplay.defaultPlot(self.model.data)
+       # TODO uncomment
+        # return true if sets have been run
+        #setsRun = loadSets(model,self.window())
+        setsRun = False
+
+        #make the data blocks editable if there are no sets already created
+        #if sets have been created then input data is not editable from the interface
+        if setsRun:
+            msg = QtWidgets.QMessageBox(QtWidgets.QMessageBox.Warning, "Analysis in Progress",
+                                        "Analysis results were detected. You cannot edit projected input data after analysis has begun.")
             msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
             msg.exec()
+        else:
+            self.tabs.setEnabled(True)
+
+            print('Loaded %s:' % model.project)
+        self.findChild(QtWidgets.QLabel, 'projectTitle').setText(self.model.project)
+
         return
     #display data in a setup model in the FormSetup form (fileblocks), creating a tab for each data input directory listed
     def displayModelData(self):
