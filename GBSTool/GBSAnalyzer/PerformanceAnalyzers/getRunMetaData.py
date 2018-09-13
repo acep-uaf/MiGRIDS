@@ -11,6 +11,7 @@ import sys
 import re
 import numpy as np
 import pandas as pd
+import pickle
 
 here = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(os.path.join(here, '../../'))
@@ -39,7 +40,8 @@ def getRunMetaData(projectSetDir,runs):
                  'Wind Power Charging kWh', 'Energy Storage Discharge kWh', 'Energy Storage Charge kWh',
                  'Energy Storage SRC kWh', 'Energy Storage Overloading Time h','Energy Storage Overloading kWh','Thermal Energy Storage Throughput kWh'])
 
-
+    genOverLoading = []
+    eessOverLoading = []
     for runNum in runs:
         # get run dir
         projectRunDir = os.path.join(projectSetDir,'Run'+str(runNum))
@@ -71,11 +73,13 @@ def getRunMetaData(projectSetDir,runs):
         idxGenOnline = genPAvail > 0
         genOverLoadingTime = np.count_nonzero(genP[idxGenOnline]>genPAvail[idxGenOnline]) * ts/3600
         genLoadingDiff = genP[idxGenOnline] - genPAvail[idxGenOnline]
+        genOverLoading = genOverLoading + [list(genLoadingDiff[genLoadingDiff>0])]
         genOverLoadingkWh = sum(genLoadingDiff[genLoadingDiff>0]) * ts / 3600
 
         # get overloading of the ESS. this is the power requested from the diesel generators when none are online.
         eessOverLoadingTime = np.count_nonzero(genP[~idxGenOnline]) * ts/3600
         eessOverLoadingkWh = sum(genP[~idxGenOnline])*ts/3600
+        eessOverLoading = eessOverLoading + [list(genP[~idxGenOnline])]
 
         # get the total time spend in diesel-off
         genTimeOff = np.count_nonzero(genPAvail == 0)* tsGenPAvail / 3600
@@ -181,6 +185,29 @@ def getRunMetaData(projectSetDir,runs):
     dfResult.to_sql('Results', conn, if_exists="replace", index=False)  # write to table compAttributes in db
     conn.close()
     dfResult.to_csv('Set' + str(setNum) + 'Results.csv')  # save a csv version
+
+    # make pdfs
+    # generator overloading
+    maxbin = max(max((x for x in genOverLoading if len(x)>0)))
+    minbin = min(min((x for x in genOverLoading if len(x) > 0)))
+    genOverLoadingPdf = [[]]*len(genOverLoading)
+    for idx, gol in enumerate(genOverLoading):
+        genOverLoadingPdf[idx] = np.histogram(gol,10,range=(minbin,maxbin))
+    outfile = open('genOverLoadingPdf.pkl','wb')
+    pickle.dump(genOverLoadingPdf,outfile)
+    outfile.close()
+
+    # eess overloading
+    eessOverLoading
+    maxbin = max(max((x for x in eessOverLoading if len(x) > 0)))
+    minbin = min(min((x for x in eessOverLoading if len(x) > 0)))
+    eessOverLoadingPdf = [[]] * len(eessOverLoading)
+    for idx, eol in enumerate(eessOverLoading):
+        eessOverLoadingPdf[idx] = np.histogram(eol, 10, range=(minbin, maxbin))
+    outfile = open('eessOverLoadingPdf.pkl', 'wb')
+    pickle.dump(eessOverLoadingPdf, outfile)
+    outfile.close()
+
 
     # get the stats for this variable
 def loadResults(fileName, location = '', returnTimeSeries = False):

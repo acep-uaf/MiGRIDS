@@ -301,28 +301,47 @@ def plotSetResult(plotRes,plotAttr, projectSetDir = '', otherAttr = [],otherAttr
 # return the results to be plotted. If it is a list, add together. Otherwise, simply return the result.
 def getPlotRes(plotRes,df):
     if isinstance(plotRes, dict):
-        y = 0
-        for pR,op in plotRes.items():
-            if op == '+':
-                if isinstance(pR,(float,int)):
-                    y = y + pR
+        if 'eqn' in plotRes.keys():
+            # put spaces around each character in equation string to single out variables
+            eqn = ' '
+            for char in plotRes['eqn']:
+                if char.isdigit(): # do not split up numbers
+                    eqn = eqn + char
                 else:
-                    y = y + df[pR].astype('float')
-            elif op == '-':
-                if isinstance(pR,(float,int)):
-                    y = y - pR
-                else:
-                    y = y - df[pR].astype('float')
-            elif op == '*':
-                if isinstance(pR,(float,int)):
-                    y = y * pR
-                else:
-                    y = y * df[pR].astype('float')
-            elif op == '/':
-                if isinstance(pR,(float,int)):
-                    y = y / pR
-                else:
-                    y = y / df[pR].astype('float')
+                    eqn  = eqn + ' ' + char + ' '
+
+            for pR, op in plotRes.items():
+                if pR != 'eqn':
+                    eqn = eqn.replace(' ' + op + ' ', 'df[\''+pR+'\'].astype(float)')
+            try:
+                y = eval(eqn)
+            except:
+                y = pd.DataFrame([np.nan]*df.shape[0])
+
+
+        else:
+            y = 0
+            for pR,op in plotRes.items():
+                if op == '+':
+                    if isinstance(pR,(float,int)):
+                        y = y + pR
+                    else:
+                        y = y + df[pR].astype('float')
+                elif op == '-':
+                    if isinstance(pR,(float,int)):
+                        y = y - pR
+                    else:
+                        y = y - df[pR].astype('float')
+                elif op == '*':
+                    if isinstance(pR,(float,int)):
+                        y = y * pR
+                    else:
+                        y = y * df[pR].astype('float')
+                elif op == '/':
+                    if isinstance(pR,(float,int)):
+                        y = y / pR
+                    else:
+                        y = y / df[pR].astype('float')
     else:
         y = df[plotRes]
 

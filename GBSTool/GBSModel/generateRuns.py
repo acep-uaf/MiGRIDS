@@ -156,20 +156,23 @@ def generateRuns(projectSetDir):
             tag = compTag[idx].split('.')
             attr = compAttr[idx]
             # check if value is a tag in the xml document
-            tryTagAttr = value.split('.') # split into tag and attribute
-            # seperate into tags and attribute. There may be multiple tags
-            tryTag = tryTagAttr[0]
-            for i in tryTagAttr[1:-1]: # if there are any other tag values
-                tryTag = tryTag + '.' + i
-            if tryTag in compTag:
-                tryAttr = tryTagAttr[-1] # the attribute
-                idxTag = [i for i, x in enumerate(compTag) if x == tryTag]
-                idxAttr = [i for i, x in enumerate(compAttr) if x == tryAttr]
-                idxVal = list(set(idxTag).intersection(idxAttr))
-                value = val[idxVal[0]] # choose the first match, if there are multiple
-                a = list(runValuesUpdated[run]) # change values from tuple
-                a[idx] = value
-                runValuesUpdated[run] = tuple(a)
+            tryTagAttr = value.split('.')  # split into tag and attribute
+            if len(tryTagAttr) > 1:
+                # seperate into component, tags and attribute. There may be multiple tags
+                tryComp = tryTagAttr[0]
+                tryTag = tryTagAttr[1]
+                for i in tryTagAttr[2:-1]: # if there are any other tag values
+                    tryTag = tryTag + '.' + i
+                tryAttr = tryTagAttr[-1]  # the attribute
+                if tryComp in compName:
+                    idxComp = [i for i, x in enumerate(compName) if x == tryComp]
+                    idxTag = [i for i, x in enumerate(compTag) if x == tryTag]
+                    idxAttr = [i for i, x in enumerate(compAttr) if x == tryAttr]
+                    idxVal = list(set(idxTag).intersection(idxAttr).intersection(idxComp))
+                    value = val[idxVal[0]] # choose the first match, if there are multiple
+                    a = list(runValuesUpdated[run]) # change values from tuple
+                    a[idx] = value
+                    runValuesUpdated[run] = tuple(a)
 
             writeXmlTag(compFile, tag, attr, value)
 

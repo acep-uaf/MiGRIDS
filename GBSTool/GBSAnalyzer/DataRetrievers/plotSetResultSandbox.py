@@ -12,7 +12,7 @@ plotResValues = {'Generator Import [GWh]':{'Generator Import kWh':'+',1000000:'/
                  'Total Generator Output [GWh]':{'Generator Import kWh':'+', 'Generator Charging kWh':'+',1000000:'/'},
                  'Total Wind Output [GWh]':{'Thermal Energy Storage Throughput kWh':'+', 'Wind Power Import kWh':'+', 'Wind Power Charging kWh':'+',1000000:'/'},
                  'Total Wind Output (Electrical Loads) [GWh]':{'Wind Power Import kWh':'+', 'Wind Power Charging kWh':'+',1000000:'/'},
-                 'GBS Equivalent Cycles':{'Energy Storage Discharge kWh':'+', 'ees0.PInMaxPa.value':'/'},'Mean Individual Online Generator Capacity [kW]':{'Generator Cumulative Capacity Run Time kWh':'+','Generator Cumulative Run time h':'/'}}
+                 'GBS Equivalent Cycles':{'Energy Storage Discharge kWh':'x', 'ees0.PInMaxPa.value':'y', 'ees0.ratedDuration.value':'z', 'eqn':'x/(y*z/3600)'},'Mean Individual Online Generator Capacity [kW]':{'Generator Cumulative Capacity Run Time kWh':'+','Generator Cumulative Run time h':'/'}}
 
 # subtract from base: 0 - do not subtract or add, but if base case is specified, place at the begining
 # 1 - subtract value from base -> decrease from base case
