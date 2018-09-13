@@ -4,7 +4,7 @@
 def makeComponentSoup(component, saveDir):
     import os
     from createComponentDescriptor import createComponentDescriptor
-    from readComponentXML import readComponentXML
+    from GBSUserInterface.readComponentXML import readComponentXML
 
 
     file = os.path.join(saveDir, component + 'Descriptor.xml')

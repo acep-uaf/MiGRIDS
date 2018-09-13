@@ -8,7 +8,7 @@ class EnvironmentTableView(QtWidgets.QTableView):
         self.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         self.resizeColumnsToContents()
 
-        t_boxes = [1, 4, 5,7, 8, 9]
+        t_boxes = [1,2, 5, 6,8, 9, 10]
 
         hidden = 0
 
@@ -17,7 +17,7 @@ class EnvironmentTableView(QtWidgets.QTableView):
         self.setColumnHidden(hidden, True)
 
         #column 2 is the component name. Environment variables need to be tied to an existing component name
-        combos = [2,3,6]
+        combos = [3,4,7]
         for c in combos:
             self.setItemDelegateForColumn(c,RelationDelegate(self,None))
 
@@ -25,14 +25,14 @@ class EnvironmentTableView(QtWidgets.QTableView):
 class EnvironmentTableModel(QtSql.QSqlRelationalTableModel):
     def __init__(self,parent):
         QtSql.QSqlRelationalTableModel.__init__(self, parent)
-        self.header = ['ID','Field','Component Name','Units','Scale',
+        self.header = ['ID','Directory','Field','Component Name','Units','Scale',
                    'Offset','Attribute','Tags']
 
         self.setTable('environment')
         self.setJoinMode(QtSql.QSqlRelationalTableModel.LeftJoin)
-        self.setRelation(6, QtSql.QSqlRelation('ref_env_attributes', 'code', 'code'))
-        self.setRelation(3, QtSql.QSqlRelation('ref_speed_units', 'code', 'code'))
-        self.setRelation(2, QtSql.QSqlRelation('components', 'component_name', 'component_name'))
+        self.setRelation(7, QtSql.QSqlRelation('ref_env_attributes', 'code', 'code'))
+        self.setRelation(4, QtSql.QSqlRelation('ref_speed_units', 'code', 'code'))
+        self.setRelation(3, QtSql.QSqlRelation('components', 'component_name', 'component_name'))
         self.setEditStrategy(QtSql.QSqlTableModel.OnFieldChange)
         self.select()
 

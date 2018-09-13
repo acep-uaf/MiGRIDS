@@ -1,3 +1,4 @@
+import pandas as pd
 
 class ProjectSQLiteHandler:
 
@@ -6,20 +7,16 @@ class ProjectSQLiteHandler:
         self.connection = lite.connect(database)
         self.cursor = self.connection.cursor()
 
-
-    def getComponentTableCount(self):
-
-        component_count = len(self.cursor.execute("SELECT * FROM components").fetchall())
-        # return component_count
-        return component_count
-
     def closeDatabase(self):
         self.cursor.close()
         self.connection.close()
+        return
 
-    def getComponents(self):
-        component_tuple = self.cursor.execute("SELECT * FROM components").fetchall()
-        return component_tuple
+    def getProjectPath(self):
+        if self.tableExists('project'):
+            projectPath = self.cursor.execute("select project_path from project").fetchone()
+            if projectPath is not None:
+                return projectPath[0]
 
     def tableExists(self, table):
         try:
@@ -111,7 +108,7 @@ class ProjectSQLiteHandler:
                             ])
 
         self.addRefValues('ref_component_type' ,[(0,'wtg', 'windturbine'),
-        (1,'gen', 'diesel generator'), (2,'inv','inverter'),(3,'tes','thermal energy storage'),(4, 'ees','energy storage')])
+        (1,'gen', 'diesel generator'), (2,'inv','inverter'),(3,'tes','thermal energy storage'),(4, 'ees','energy storage'),(5, 'load', 'total load')])
 
         self.addRefValues('ref_power_units',[(0,'W', 'watts'), (1,'kW', 'Kilowatts'),(2,'MW','Megawatts'),
                                              (3, 'var', 'vars'),(4,'kvar','kilovars'),(5,'Mvar','Megavars'),
@@ -133,18 +130,27 @@ class ProjectSQLiteHandler:
             self.cursor.execute("INSERT INTO ref_units(code, description) SELECT code, description from " + u[0] + " Where code not in (select code from ref_units)")
 
         self.connection.commit()
+        #project table
+        self.cursor.execute("DROP TABLE IF EXISTS project")
+        self.cursor.executescript("""CREATE TABLE project
+        (_id  integer primary key,
+        project_path text,
+        project_name text);""")
+
+        #component table
         self.cursor.execute("DROP TABLE IF EXISTS components")
         self.cursor.executescript("""CREATE TABLE components
          (_id integer primary key,
+         inputfiledir text,
          original_field_name text,
          component_type text,
-         component_name text unique,
+         component_name text,
          units text,
          scale numeric,
          offset numeric,
          attribute text,
-        
          tags text,
+         
          FOREIGN KEY (component_type) REFERENCES ref_component_type(code),
          FOREIGN KEY (units) REFERENCES ref_universal_units(code),
          FOREIGN KEY (attribute) REFERENCES ref_attributes(code)
@@ -165,7 +171,7 @@ class ProjectSQLiteHandler:
         self.cursor.executescript("""
                 CREATE TABLE IF NOT EXISTS input_files
                 (_id integer primary key,
-                filedypevalue text , 
+                filetypevalue text , 
                 datatype text ,
                 inputfiledir text,
                 timestep text,
@@ -209,6 +215,7 @@ class ProjectSQLiteHandler:
         self.cursor.execute("DROP TABLE IF EXISTS environment")
         self.cursor.executescript("""CREATE TABLE IF NOT EXISTS environment
                  (_id integer primary key,
+                 inputfiledir text,
                  original_field_name text,
                  component_name text unique,
                  units text,
@@ -255,7 +262,8 @@ class ProjectSQLiteHandler:
             self.cursor.execute("INSERT INTO " + table + "(" + string_fields + ")" + "VALUES (" + string_values + ")", values)
             self.connection.commit()
             return True
-        except:
+        except Exception as e:
+            print(e)
             return False
 
     # updates a single record in a specified table given a field to match, value to match, list of fields to insert values into and a list of values
@@ -277,7 +285,7 @@ class ProjectSQLiteHandler:
     #String -> String
     def getRefInput(self, tables):
         #table is a list of tables
-        import pandas as pd
+
         # create list of values for a combo box
         valueStrings = []
         for t in tables:
@@ -292,7 +300,7 @@ class ProjectSQLiteHandler:
         import re
         #get the highest component name (biggest number)
         finalName = self.cursor.execute("SELECT component_name FROM components where component_type = '" + componentType + "' ORDER BY component_name DESC").fetchone()
-        if finalName is not None:
+        if finalName[0] is not None:
             finalName=finalName[0]
             #extract the numbers in the name
             count = re.findall(r'\d+',finalName)
@@ -302,6 +310,11 @@ class ProjectSQLiteHandler:
                 count = int(count[0])
                 return count +1
         return 0
+    def dataCheck(self,table):
+        import re
+        #get the highest component name (biggest number)
+        data = self.cursor.execute("SELECT * FROM " + table).fetchall()
+        return data
     #returns a list of column names for a table
     # String -> list
     def getHeaders(self,table):
@@ -361,3 +374,18 @@ class ProjectSQLiteHandler:
         codes = (codes['code']).tolist()
 
         return codes
+    #returns a list of components associated with a project
+    def getComponentNames(self,filter):
+        names = self.cursor.execute("Select component_name from components")
+        return list(names)
+    def getComponentsTable(self, filter):
+        print(self.dataCheck("components"))
+        #sql = """select component_name, original_field_name, units,attribute from components where inputfiledir = ({0})"""
+        #sql = sql.format('?', ','.join('?' * len((1))))
+        sql = """select component_name, original_field_name, units,attribute from components where inputfiledir = ?"""
+        #sql = """select component_name, original_field_name, units,attribute from components"""
+        #df = pd.read_sql_query(sql, self.connection)
+        df = pd.read_sql_query(sql,self.connection,params=[filter])
+        sql = """select component_name, original_field_name, units,attribute from environment where inputfiledir = ?"""
+        df.append(pd.read_sql_query(sql,self.connection,params=[filter]))
+        return df

@@ -4,6 +4,7 @@ from GBSUserInterface.ProjectSQLiteHandler import ProjectSQLiteHandler
 #subclass of QTableView for displaying set information
 class SetTableView(QtWidgets.QTableView):
     def __init__(self, *args, **kwargs):
+        #column1 is the set column that gets autofilled when we set a text delegate for column 1 in the table
         self.column1 = kwargs.get('column1')
         QtWidgets.QTableView.__init__(self, *args)
         self.setSizePolicy(QtWidgets.QSizePolicy.Expanding,QtWidgets.QSizePolicy.Expanding)

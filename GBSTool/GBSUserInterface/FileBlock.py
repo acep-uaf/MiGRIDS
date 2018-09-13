@@ -8,12 +8,16 @@ from GBSUserInterface.Delegates import ClickableLineEdit
 from GBSUserInterface.gridLayoutSetup import setupGrid
 from GBSController.UIToHandler import UIToHandler
 from GBSUserInterface.makeButtonBlock import makeButtonBlock
+from GBSUserInterface.TableHandler import TableHandler
+from GBSUserInterface.ModelSetupInformation import SetupTag
+
 from PyQt5 import QtWidgets,QtCore
 # The file block is a group of widgets for entering file specific inputs
 #its parent is FormSetup
 class FileBlock(QtWidgets.QGroupBox):
     def __init__(self, parent, input):
         super().__init__(parent)
+        #integer -> FileBlock
         self.init(input)
 
     # creates a single form for entering individual file type information
@@ -23,11 +27,13 @@ class FileBlock(QtWidgets.QGroupBox):
         self.setLayout(windowLayout)
         self.model = self.window().findChild(QtWidgets.QWidget,'setupDialog').model
         self.setFocusPolicy(QtCore.Qt.StrongFocus)
+
     # -> QVBoxLayout
     def createFileTab(self):
+        self.dbhandler = ProjectSQLiteHandler()
         windowLayout = QtWidgets.QVBoxLayout()
-        self.createTopBlock('Setup','inputFile',self.assignFileBlock)
-        l = self.FileBlock.findChild(QtWidgets.QWidget,'inputFileDir')
+        self.createTopBlock('Setup',self.assignFileBlock)
+        l = self.FileBlock.findChild(QtWidgets.QWidget,'inputFileDirvalue')
         l.clicked.connect(self.lineclicked)
         windowLayout.addWidget(self.FileBlock)
 
@@ -44,19 +50,33 @@ class FileBlock(QtWidgets.QGroupBox):
         # creates a horizontal layout containing gridlayouts for data input
     @QtCore.pyqtSlot()
     def lineclicked(self):
-        print('open dialog search')
-
-        folderDialog = QtWidgets.QFileDialog.getExistingDirectory(None, 'Select a directory.',os.getcwd())
-        #once selected folderDialog gets set to the input box
-        self.findChild(QtWidgets.QWidget, 'inputFileDir').setText(folderDialog)
-
+        '''opens a folder dialog and returns the string value of the pathway selected'''
+        #if the directory has already been set then open the dialog to there otherwise default to current working directory
+        curdir = self.findChild(QtWidgets.QWidget, 'inputFileDirvalue').text()
+        if curdir == '':
+            curdir = os.getcwd()
+        folderDialog = QtWidgets.QFileDialog.getExistingDirectory(None, 'Select a directory.',curdir)
+        if (folderDialog != ''):
+            #once selected folderDialog gets set to the input box
+            self.findChild(QtWidgets.QWidget, 'inputFileDirvalue').setText(folderDialog)
+            #save the input to the setup data model and into the database
+            self.saveInput()
+            if self.dbhandler.getProjectPath() is None:
+                self.dbhandler.insertRecord('project'['project_path'],[folderDialog])
+            else:
+                self.dbhandler.updateRecord('project','_id',1,['project_path'],[folderDialog])
+            #filter the component and environemnt input tables to the current input directory
+            self.filterTables()
         return folderDialog
 
-    def createTopBlock(self,title, table, fn):
-        # create a horizontal grouping to contain the top setup xml portion of the form
+    def createTopBlock(self,title, fn):
+        '''The top block is where file information is set (format, date and time channels and file type)
+        :param title: [String]
+        :param fn: [method] used to assign the layout to a property'''
+
+        # create a horizontal grouping to contain the top portion of the form
         gb = QtWidgets.QGroupBox(title)
         hlayout = QtWidgets.QHBoxLayout()
-
         hlayout.setObjectName("setup")
 
         # add the setup grids
@@ -64,9 +84,9 @@ class FileBlock(QtWidgets.QGroupBox):
                   'rowNames': [1,2,3],
                   'columnWidths': [1, 1,1,3],
                   1:{1:{'widget':'lbl','name':'File Type:', 'default':'File Type'},
-                     2:{'widget':'combo', 'name':'fileTypevalue', 'items':['csv', 'MET']},
+                     2:{'widget':'combo', 'name':'inputFileTypevalue', 'items':['csv', 'MET']},
                      3: {'widget': 'lbl', 'name': 'File Directory', 'default': 'Directory'},
-                     4: {'widget': 'lncl', 'name': 'inputFileDir'}
+                     4: {'widget': 'lncl', 'name': 'inputFileDirvalue'}
                      },
                   # 2: {
                   #     1: {'widget': 'lbl', 'name': 'timestep','default':'Timestep'},
@@ -90,11 +110,10 @@ class FileBlock(QtWidgets.QGroupBox):
         grid = setupGrid(g1)
         hlayout.addLayout(grid)
         hlayout.addStretch(1)
-
         gb.setLayout(hlayout)
         fn(gb)
 
-        # layout for tables
+    # layout for tables
     def createTableBlock(self, title, table, fn):
 
         gb = QtWidgets.QGroupBox(title)
@@ -102,19 +121,26 @@ class FileBlock(QtWidgets.QGroupBox):
         tableGroup = QtWidgets.QVBoxLayout()
         tableGroup.addWidget(self.dataButtons(table))
         if table == 'components':
+
             tv = T.ComponentTableView(self)
             tv.setObjectName('components')
             m = T.ComponentTableModel(self)
+
+
+            tv.hideColumn(1)
+            tv.setModel(m)
+            tv.hideColumn(0)
+
+            tableGroup.addWidget(tv, 1)
         else:
             tv = E.EnvironmentTableView(self)
             tv.setObjectName('environment')
             m = E.EnvironmentTableModel(self)
 
-        tv.setModel(m)
-
-        tv.hideColumn(0)
-
-        tableGroup.addWidget(tv, 1)
+            tv.setModel(m)
+            tv.hideColumn(0)
+            tableGroup.addWidget(tv, 1)
+        self.filterTables()
         gb.setLayout(tableGroup)
         gb.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         fn(gb)
@@ -156,15 +182,10 @@ class FileBlock(QtWidgets.QGroupBox):
     # String -> None
     def functionForNewRecord(self, table):
         # add an empty record to the table
+        handler = TableHandler(self)
+        filedir = self.FileBlock.findChild(QtWidgets.QWidget, 'inputFileDirvalue').text()
+        handler.functionForNewRecord(table,fields=[1],values=[filedir])
 
-        # get the model
-        tableView = self.findChild((QtWidgets.QTableView), table)
-        model = tableView.model()
-        # insert an empty row as the last record
-
-        model.insertRows(model.rowCount(), 1)
-
-        model.submitAll()
 
     # delete the selected record from the specified datatable
     # String -> None
@@ -227,25 +248,29 @@ class FileBlock(QtWidgets.QGroupBox):
     # TODO this needs to change if its populating from a table
     # inserts data from the data model into corresponding boxes on the screen
     # SetupInfo -> None
-    def fillData(self, model):
+    def fillData(self, model,i):
 
         # dictionary of attributes of the class SetupTag belonging to a SetupInformation Model
         d = model.getSetupTags()
-
         # for every key in d find the corresponding textbox or combo box
-
         for k in d.keys():
-
-            for a in d[k]:
-                if d[k][a] is not None:
-                    edit_field = self.findChild((QtWidgets.QLineEdit, QtWidgets.QComboBox), k + a)
+            #values in d are setup tags and can contain list values
+            #each key in the setuptag has its own display slot on the form
+            #this fills the topblock
+            tag_keys = d[k].keys()
+            for t in tag_keys:
+                if t != 'name':
+                    edit_field = self.findChild((QtWidgets.QLineEdit, QtWidgets.QComboBox), k+t)
 
                     if type(edit_field) is QtWidgets.QLineEdit:
-
-                        edit_field.setText(d[k][a])
+                        if len(d[k][t])>0:
+                            edit_field.setText(d[k][t][self.input - 1])
+                    elif type(edit_field) is ClickableLineEdit:
+                        if len(d[k][t]) > 0:
+                            edit_field.setText(d[k][t][self.input - 1])
                     elif type(edit_field) is QtWidgets.QComboBox:
-                        edit_field.setCurrentIndex(edit_field.findText(d[k][a]))
-
+                        if len(d[k][t]) > 0:
+                            edit_field.setCurrentIndex(edit_field.findText(d[k][t][self.input - 1]))
         def getDefault(l, i):
             try:
                 l[i]
@@ -253,45 +278,9 @@ class FileBlock(QtWidgets.QGroupBox):
             except IndexError:
                 return 'NA'
 
-        # this is what happens if there isn't already a project database.
-        if not self.projectDatabase:
-
-            # for headers, componentnames, componentattributes data goes into the database for table models
-            dbHandler = ProjectSQLiteHandler()
-            # for every field listed in the header name tag create a table entry on the form
-            for i in range(len(model.headerName.value)):
-
-                fields = ('original_field_name', 'component_name', 'attribute', 'units')
-                # as long as an NA isn't returned for the field name get the values for that field
-                if (getDefault(model.headerName.value, i) != 'NA'):
-                    values = (getDefault(model.headerName.value, i), getDefault(model.componentName.value, i),
-                              getDefault(model.componentAttribute.value, i),
-                              getDefault(model.componentAttribute.unit, i))
-
-                    # if the attribute is in the environment list then the data gets placed in the environment table
-                    if getDefault(model.componentAttribute.value, i) in ['WS', 'WF', 'IR', 'Tamb', 'Tstorage']:
-                        # insert into environment table
-                        table = 'environment'
-                    else:
-                        table = 'components'
-                        # if its the components table then we need to fill in component type as well
-                        fields = fields + ('component_type',)
-                        componentType = getDefault(model.componentName.value, i)[0:3]
-                        values = values + (componentType,)
-
-                    if len(dbHandler.cursor.execute(
-                            "select * from " + table + " WHERE component_name = '" + getDefault(
-                                model.componentName.value, i) + "'").fetchall()) < 1:
-                        dbHandler.insertRecord(table, fields, values)
-            dbHandler.closeDatabase()
-
         # refresh the tables
-        tableView = self.findChild((QtWidgets.QTableView), 'environment')
-        tableModel = tableView.model()
-        tableModel.select()
-        tableView = self.findChild((QtWidgets.QTableView), 'components')
-        tableModel = tableView.model()
-        tableModel.select()
+        self.filterTables()
+
         return
     # Setters
     #(String, number, list or Object) ->
@@ -300,6 +289,7 @@ class FileBlock(QtWidgets.QGroupBox):
 
     def assignComponentBlock(self,value):
         self.componentBlock = value
+
     def assignFileBlock(self,value):
         self.FileBlock = value
         self.FileBlock.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
@@ -307,23 +297,28 @@ class FileBlock(QtWidgets.QGroupBox):
         self.FileBlock.setObjectName('fileInput')
 
     # if the fileblock looses focus update database information
-
     def focusOutEvent(self, event):
-        #get values from the file block
-        setupFields,setupValues = self.getSetupInfo()
-        print(event.type())
-        #update database table
-        dbhandler = ProjectSQLiteHandler()
 
-        if not dbhandler.insertRecord('input_files', setupFields,setupValues):
-            dbhandler.updateRecord('input_files',['_id'], [setupFields[0]],
-                                   setupFields[1:],
-                                   setupValues[1:])
+        if 'projectFolder' in self.model.__dict__.keys():
+            #input to model
+            self.saveInput()
+            #input to database
+            setupFields, setupValues = self.getSetupInfo()
+
+            # update database table
+            if not self.dbhandler.insertRecord('input_files', setupFields, setupValues):
+                self.dbhandler.updateRecord('input_files', ['_id'], [setupFields[0]],
+                                       setupFields[1:],
+                                       setupValues[1:])
+            # on leave save the xml files
+            self.model.writeNewXML()
         return
+
     #reads data from an file input top block and returns a list of fields and values
     def getSetupInfo(self):
         fieldNames = ['_id']
-        values = [re.findall(r'\d+',self.input)[0]]
+        #values = [re.findall(r'\d+',self.input)[0]]
+        values=[self.input]
         for child in self.FileBlock.findChildren((QtWidgets.QLineEdit, QtWidgets.QComboBox)):
 
             if type(child) is QtWidgets.QLineEdit:
@@ -338,7 +333,61 @@ class FileBlock(QtWidgets.QGroupBox):
 
         return fieldNames,values
 
+    #save the form input to the form setup data model
+    def saveInput(self):
+
+        #update model info from fileblock
+        self.model.assignTimeChannel(SetupTag.assignValue, self.FileBlock.findChild(QtWidgets.QWidget, 'timeChannelvalue').text(),position=int(self.input)-1)
+        self.model.assignTimeChannel(SetupTag.assignFormat, self.FileBlock.findChild(QtWidgets.QWidget, 'timeChannelformat').currentText(),position=int(self.input)-1)
+        self.model.assignDateChannel(SetupTag.assignValue, self.FileBlock.findChild(QtWidgets.QWidget, 'dateChannelvalue').text(),position=int(self.input)-1)
+        self.model.assignDateChannel(SetupTag.assignFormat, self.FileBlock.findChild(QtWidgets.QWidget, 'dateChannelformat').currentText(),position=int(self.input)-1)
+        self.model.assignInputFileDir(SetupTag.assignValue, self.FileBlock.findChild(QtWidgets.QWidget,'inputFileDirvalue').text(),position=int(self.input)-1)
+        self.model.assignInputFileType(SetupTag.assignValue, self.FileBlock.findChild(QtWidgets.QWidget,'inputFileTypevalue').currentText(),position=int(self.input)-1)
+        self.saveTables()
+        return
+
     # calls the specified function connected to a button onClick event
     @QtCore.pyqtSlot()
     def onClick(self, buttonFunction):
         buttonFunction()
+
+    def filterTables(self):
+        tables = self.findChildren(QtWidgets.QTableView)
+        filedir = self.FileBlock.findChild(QtWidgets.QWidget, 'inputFileDirvalue').text()
+        self.filter = filedir
+        for t in tables:
+            m = t.model()
+            m.setFilter("inputfiledir = '" + filedir + "'")
+    def saveTables(self):
+        '''get data from component and environment tables and update the setupInformation model
+        components within a single directory are seperated with commas
+        component info comes from the database not the tableview
+        component names, units, scale, offset, attribute, fieldname get saved'''
+
+        names = self.dbhandler.getComponentNames(self.filter)
+        for n in names:
+            self.model.assignComponentNames(SetupTag.assignValue, [n[0]])
+        #df is a pandas dataframe  of component information
+        df = self.dbhandler.getComponentsTable(self.filter)
+        self.model.assignComponentName(SetupTag.assignValue,[df['component_name'].tolist()])
+        self.model.assignHeaderName(SetupTag.assignValue,[df['original_field_name'].tolist()])
+        self.model.assignComponentAttribute(SetupTag.assignValue,[df['attribute'].tolist()])
+        self.model.assignComponentAttribute(SetupTag.assignUnits,[df['units'].tolist()])
+
+    def close(self):
+        if 'projectFolder' in self.model.__dict__.keys():
+            #input to model
+            self.saveInput()
+            #input to database
+            setupFields, setupValues = self.getSetupInfo()
+
+            # update database table
+            if not self.dbhandler.insertRecord('input_files', setupFields, setupValues):
+                self.dbhandler.updateRecord('input_files', ['_id'], [setupFields[0]],
+                                       setupFields[1:],
+                                       setupValues[1:])
+            self.saveTables()
+            # on leave save the xml files
+            self.model.writeNewXML()
+
+        self.dbhandler.closeDatabase()

@@ -1,18 +1,20 @@
 #MainForm is the parent for for all sections of the User Interface
 #it consists of a navigation tree and pages
-from PyQt5 import QtWidgets, QtCore, QtGui
+from PyQt5 import QtWidgets, QtCore, QtGui,QtSql
 from GBSUserInterface.ConsoleDisplay import ConsoleDisplay
+
 from GBSUserInterface.FormSetup import FormSetup
+from GBSUserInterface.switchProject import saveProject
 
 class MainForm(QtWidgets.QMainWindow):
 
-    def __init__(self):
+    def __init__(self,**kwargs):
         super().__init__()
 
-        self.initUI()
+        self.initUI(**kwargs)
 
-    def initUI(self):
-
+    def initUI(self,**kwargs):
+        self.lastProjectPath = kwargs.get('lastProjectPath')
         self.setObjectName("mainForm")
         self.layoutWidget = QtWidgets.QWidget(self)
 
@@ -34,7 +36,6 @@ class MainForm(QtWidgets.QMainWindow):
         self.setCentralWidget(self.pageBlock)
         # Main title
         self.setWindowTitle('GBS')
-
         # show the form
         self.showMaximized()
 
@@ -133,19 +134,34 @@ class MainForm(QtWidgets.QMainWindow):
         return
 
     def closeEvent(self,event):
-        p = self.findChild(QtWidgets.QWidget,'setupDialog')
-        p.close()
+        import os
+        import shutil
+        setupForm = self.findChild(QtWidgets.QWidget, 'setupDialog')
+        setupForm.closeEvent(event)
+
+        # copy the project database to the project folder and save xmls
+        if 'projectFolder' in setupForm.model.__dict__.keys():
+
+
+            saveProject(setupForm.model.projectFolder)
+
+        else:
+            # if a project was never set then just close and remove the default database
+            os.remove('project_manager')
 
     #page block contains all the forms
     def createPageBlock(self):
-        pageBlock = PageBlock()
+        pageBlock = PageBlock(lastProjectPath = self.lastProjectPath)
         return pageBlock
 
+
 class PageBlock(QtWidgets.QTabWidget):
-    def __init__(self):
+    def __init__(self,**kwargs):
         super().__init__()
         self.setObjectName('pages')
+        self.lastProjectPath = kwargs.get('lastProjectPath')
         self.initUI()
+
 
     def initUI(self):
         from GBSUserInterface.FormSetup import FormSetup

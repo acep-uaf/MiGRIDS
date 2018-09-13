@@ -18,8 +18,8 @@ class UIToHandler():
     #ModelSetupInformation -> None
     def makeSetup(self, setupInfo):
        # write the information to a setup xml
-        # create a mostly blank xml setup file
-        buildProjectSetup(setupInfo.project, setupInfo.setupFolder, setupInfo.componentNames)
+        # create a mostly blank xml setup file, componentNames is a SetupTag class so we need the value
+        buildProjectSetup(setupInfo.project, setupInfo.setupFolder, setupInfo.componentNames.value)
         #fill in project data into the setup xml and create descriptor xmls if they don't exist
         fillProjectData(setupInfo.setupFolder, setupInfo)
         return
@@ -183,17 +183,19 @@ class UIToHandler():
     #string->object
     def loadInputData(self,setupFile):
         inputDirectory = readXmlTag(setupFile, 'inputFileDir', 'value')
-        inputDirectory = os.path.join(*inputDirectory)
-        outputDirectory = os.path.join('/', inputDirectory, '../ProcessedData')
-        outfile = os.path.join(outputDirectory, 'processed_input_file.pkl')
+        if len(inputDirectory) > 0:
+            inputDirectory = os.path.join(*inputDirectory)
+            outputDirectory = os.path.join('/', inputDirectory, '../ProcessedData')
+            outfile = os.path.join(outputDirectory, 'processed_input_file.pkl')
 
-        if not os.path.exists(outfile):
-            return None
+            if not os.path.exists(outfile):
+                return None
 
-        file = open(outfile, 'rb')
-        data = pickle.load(file)
-        file.close()
-        return data
+            file = open(outfile, 'rb')
+            data = pickle.load(file)
+            file.close()
+            return data
+
     #generates all the set and run folders in the output directories and starts the sequence of models running
     #String, ComponentTable, SetupInformation
     def runModels(self, currentSet, componentTable, setupInfo):
@@ -250,6 +252,5 @@ class UIToHandler():
         contents_child = infile_child.read()
         infile_child.close()
         soup = BeautifulSoup(contents_child, 'xml')  # turn into soup
-
 
         return soup
