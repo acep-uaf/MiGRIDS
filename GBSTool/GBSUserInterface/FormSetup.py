@@ -13,7 +13,7 @@ from GBSUserInterface.Delegates import ClickableLineEdit
 from GBSUserInterface.FileBlock import FileBlock
 from GBSUserInterface.ProjectSQLiteHandler import ProjectSQLiteHandler
 from GBSUserInterface.ModelSetupInformation import SetupTag
-from GBSUserInterface.switchProject import switchProject, saveProject, clearProject
+from GBSUserInterface.switchProject import switchProject, saveProject, clearProjectDatabase
 
 class FormSetup(QtWidgets.QWidget):
     global model
@@ -114,7 +114,7 @@ class FormSetup(QtWidgets.QWidget):
     def functionForCreateButton(self):
         #if a project is already started save it before starting a new one
         if (self.model.project != '') & (self.model.project is not None):
-            self.model = switchProject(self.model)
+            self.model = switchProject(self)
             global model
             model = self.model
 

@@ -2,7 +2,7 @@
 #
 import sys
 from PyQt5 import QtWidgets,QtSql,QtGui,QtCore
-from GBSUserInterface.switchProject import clearProject
+from GBSUserInterface.switchProject import clearProjectDatabase
 from GBSUserInterface.FormMain import MainForm
 
 def callUIForm():
@@ -22,7 +22,7 @@ def callUIForm():
 
     #start with an empty default database called project_manager
     #get the name of the last project worked on
-    lastProjectPath = clearProject()
+    lastProjectPath = clearProjectDatabase()
 
     #make the database available to the form models
     db = QtSql.QSqlDatabase.addDatabase('QSQLITE')
