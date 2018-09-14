@@ -11,6 +11,7 @@ import sys
 import re
 import numpy as np
 import pandas as pd
+import pickle
 
 here = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(os.path.join(here, '../../'))
@@ -33,13 +34,14 @@ def getRunMetaData(projectSetDir,runs):
 
     # add columns for results
     df = pd.DataFrame(
-        columns=['Generator Import kWh', 'Generator Charging kWh', 'Generator Switching', 'Generator Loading',
+        columns=['Generator Import kWh', 'Generator Charging kWh', 'Generator Switching', 'Generator Loading', 'Generator Online Capacity',
                  'Generator Fuel Consumption kg', 'Diesel-off time h', 'Generator Cumulative Run time h', 'Generator Cumulative Capacity Run Time kWh', 'Generator Overloading Time h','Generator Overloading kWh',
                  'Wind Power Import kWh', 'Wind Power Spill kWh',
                  'Wind Power Charging kWh', 'Energy Storage Discharge kWh', 'Energy Storage Charge kWh',
                  'Energy Storage SRC kWh', 'Energy Storage Overloading Time h','Energy Storage Overloading kWh','Thermal Energy Storage Throughput kWh'])
 
-
+    genOverLoading = []
+    eessOverLoading = []
     for runNum in runs:
         # get run dir
         projectRunDir = os.path.join(projectSetDir,'Run'+str(runNum))
@@ -62,17 +64,22 @@ def getRunMetaData(projectSetDir,runs):
         genLoadingStd = np.std(genLoading)
         genLoadingMax = np.max(genLoading)
         genLoadingMin = np.min(genLoading)
+        # the online capacity of diesel generators
+        genCapacity = genPAvail[idxOnline]
+        genCapacityMean = np.mean(genCapacity)
 
         # get overloading of diesel
         # get indicies of when diesel generators online
         idxGenOnline = genPAvail > 0
         genOverLoadingTime = np.count_nonzero(genP[idxGenOnline]>genPAvail[idxGenOnline]) * ts/3600
         genLoadingDiff = genP[idxGenOnline] - genPAvail[idxGenOnline]
+        genOverLoading = genOverLoading + [list(genLoadingDiff[genLoadingDiff>0])]
         genOverLoadingkWh = sum(genLoadingDiff[genLoadingDiff>0]) * ts / 3600
 
         # get overloading of the ESS. this is the power requested from the diesel generators when none are online.
         eessOverLoadingTime = np.count_nonzero(genP[~idxGenOnline]) * ts/3600
         eessOverLoadingkWh = sum(genP[~idxGenOnline])*ts/3600
+        eessOverLoading = eessOverLoading + [list(genP[~idxGenOnline])]
 
         # get the total time spend in diesel-off
         genTimeOff = np.count_nonzero(genPAvail == 0)* tsGenPAvail / 3600
@@ -82,13 +89,13 @@ def getRunMetaData(projectSetDir,runs):
         genRunTimeRunTotkWh = 0.
         for genRunTimeFile in glob.glob('gen*RunTime*.nc'):
             genRunTimeStats, genRunTime, ts = loadResults(genRunTimeFile)
-            genTimeRunTot += np.count_nonzero(genPAvail != 0)* ts / 3600
+            genTimeRunTot += np.count_nonzero(genRunTime != 0)* ts / 3600
             # get the capcity of this generator
             # first get the gen ID
             genID = re.search('gen(.*)RunTime',genRunTimeFile).group(1)
             genPMax = readXmlTag("gen"+genID +"Set"+str(setNum)+"Run"+str(runNum)+"Descriptor.xml", "POutMaxPa",
                                  "value", fileDir=projectRunDir+"/Components", returnDtype='float')
-            genRunTimeRunTotkWh += (np.count_nonzero(genPAvail != 0)* ts / 3600)*genPMax[0]
+            genRunTimeRunTotkWh += (np.count_nonzero(genRunTime != 0)* ts / 3600)*genPMax[0]
 
         # calculate total generator energy delivered in kWh
         genPTot = (genPStats[4] - genPchStats[4])/3600
@@ -169,7 +176,7 @@ def getRunMetaData(projectSetDir,runs):
         '''
 
         # add row for this run
-        df.loc[runNum] = [genPTot,genPch,genSw,genLoadingMean,None,genTimeOff,genTimeRunTot,genRunTimeRunTotkWh,genOverLoadingTime,genOverLoadingkWh,wtgPImportTot,wtgPspillTot,wtgPchTot,eessPdisTot,eessPchTot,eessSRCTot,eessOverLoadingTime,eessOverLoadingkWh,tessPTot]
+        df.loc[runNum] = [genPTot,genPch,genSw,genLoadingMean,genCapacityMean,None,genTimeOff,genTimeRunTot,genRunTimeRunTotkWh,genOverLoadingTime,genOverLoadingkWh,wtgPImportTot,wtgPspillTot,wtgPchTot,eessPdisTot,eessPchTot,eessSRCTot,eessOverLoadingTime,eessOverLoadingkWh,tessPTot]
 
     dfResult = pd.concat([dfAttr, df], axis=1, join='inner')
 
@@ -178,6 +185,29 @@ def getRunMetaData(projectSetDir,runs):
     dfResult.to_sql('Results', conn, if_exists="replace", index=False)  # write to table compAttributes in db
     conn.close()
     dfResult.to_csv('Set' + str(setNum) + 'Results.csv')  # save a csv version
+
+    # make pdfs
+    # generator overloading
+    maxbin = max(max((x for x in genOverLoading if len(x)>0)))
+    minbin = min(min((x for x in genOverLoading if len(x) > 0)))
+    genOverLoadingPdf = [[]]*len(genOverLoading)
+    for idx, gol in enumerate(genOverLoading):
+        genOverLoadingPdf[idx] = np.histogram(gol,10,range=(minbin,maxbin))
+    outfile = open('genOverLoadingPdf.pkl','wb')
+    pickle.dump(genOverLoadingPdf,outfile)
+    outfile.close()
+
+    # eess overloading
+    eessOverLoading
+    maxbin = max(max((x for x in eessOverLoading if len(x) > 0)))
+    minbin = min(min((x for x in eessOverLoading if len(x) > 0)))
+    eessOverLoadingPdf = [[]] * len(eessOverLoading)
+    for idx, eol in enumerate(eessOverLoading):
+        eessOverLoadingPdf[idx] = np.histogram(eol, 10, range=(minbin, maxbin))
+    outfile = open('eessOverLoadingPdf.pkl', 'wb')
+    pickle.dump(eessOverLoadingPdf, outfile)
+    outfile.close()
+
 
     # get the stats for this variable
 def loadResults(fileName, location = '', returnTimeSeries = False):
