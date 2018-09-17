@@ -173,7 +173,21 @@ def generateRuns(projectSetDir):
                     a = list(runValuesUpdated[run]) # change values from tuple
                     a[idx] = value
                     runValuesUpdated[run] = tuple(a)
-
+                else:
+                    # check if it is referring to a tag in the same component
+                    # seperate into tags and attribute. There may be multiple tags
+                    tryTag = tryTagAttr[0]
+                    for i in tryTagAttr[1:-1]:  # if there are any other tag values
+                        tryTag = tryTag + '.' + i
+                    if tryTag in compTag:
+                        tryAttr = tryTagAttr[-1]  # the attribute
+                        idxTag = [i for i, x in enumerate(compTag) if x == tryTag]
+                        idxAttr = [i for i, x in enumerate(compAttr) if x == tryAttr]
+                        idxVal = list(set(idxTag).intersection(idxAttr))
+                        value = val[idxVal[0]]  # choose the first match, if there are multiple
+                        a = list(runValuesUpdated[run])  # change values from tuple
+                        a[idx] = value
+                        runValuesUpdated[run] = tuple(a)
             writeXmlTag(compFile, tag, attr, value)
 
             # if this is a wind turbine, then its values are being altered and the wind power time series will need

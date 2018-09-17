@@ -552,10 +552,15 @@ class SystemOperations:
             # TODO: add other RE
 
             # get the ability of the energy storage system to supply SRC
+            # first, calculate how much capacity should be reserved. This assumes that the eess will continue to discharge
+            # at the current rate while warming up the diesel generators. This will avoid SRC being scheduled from the
+            # eess which will not be available by the time the diesel generator is brought online.
+            kWsReserved = max(eessDis * self.PH.maxStartTime, 0)
             eesSrcAvailMax = [None] * len(self.EESS.electricalEnergyStorageUnits)  # the amount of SRC available from all ees units
             # iterate through all ees and add their available SRC
             for idy, ees in enumerate(self.EESS.electricalEnergyStorageUnits):
-                eesSrcAvailMax[idy] = ees.findPdisAvail(ees.eesSrcTime, 0, 0)
+                # assume the current discharge
+                eesSrcAvailMax[idy] = ees.findPdisAvail(ees.eesSrcTime, 0, kWsReserved)
 
             # find the required capacity of the diesel generators
             # how much SRC can EESS cover? This can be subtracted from the load that the diesel generators must be

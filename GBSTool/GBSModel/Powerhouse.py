@@ -157,6 +157,13 @@ class Powerhouse:
                     combList = np.append(combList, idy)
             self.lkpGenCombinationsUpperNormalLoading[load] = combList
 
+        # CALCULATE AND SAVE THE MAXIMUM GENERATOR START TIME
+        # this is used in the generator scheduling.
+        self.maxStartTime = 0
+        for gen in self.generators:
+            self.maxStartTime = max(self.maxStartTime, gen.genStartTime)
+
+
 
 
     # combine fuel curves for a combination of generators
@@ -396,7 +403,7 @@ class Powerhouse:
                 self.switchGenComb(genSwOn[indSort[indBest]],genSwOff[indSort[indBest]]) # switch generators
                 for idx in range(len(self.genIDS)):
                     # update genPAvail
-                    self.generators[idx].checkOperatingConditions()
+                    self.generators[idx].updateGenPAvail()
 
 
 

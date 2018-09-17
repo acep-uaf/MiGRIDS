@@ -258,4 +258,22 @@ class Generator:
                 self.outOfNormalBounds = False
                 self.outOfBounds = False
 
+    def updateGenPAvail(self):
+        """
+        Updates the value of genPAvail. This is also performed by 'checkOperatingConditions', but here it can be done
+        without performing all the other checks and updates.
+        :return:
+        """
+        if self.genState == 2: # if running online
+            self.genPAvail = self.genPMax
+            self.genQAvail = self.genQMax
+            self.genMolAvail = self.genMol  # the lowest loading it can run at
+            self.genMelAvail = self.genMel
+
+        else:  # if not running online
+            self.genPAvail = 0
+            self.genQAvail = 0
+            self.genMolAvail = 0  # the lowest loading it can run at
+            self.genMelAvail = 0
+
 
