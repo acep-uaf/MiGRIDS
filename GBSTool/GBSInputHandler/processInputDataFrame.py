@@ -11,12 +11,16 @@ def processInputDataFrame(df, columnNames, useNames, dateColumnName, dateColumnF
         df['DATE'] = df[dateColumnName].apply(pd.to_datetime,infer_datetime_format=True, errors='coerce')
         # remove rows that did not work
         df = df.drop(df.index[pd.isnull(df['DATE'])])
+    else:
+        df['DATE'] = df[dateColumnName]
 
     # add time to date, if there is a time column. if not, timeColumnFormat should be ''
     if timeColumnFormat == 'infer':
         df['DATE'] = df['DATE'] + df[timeColumnName].apply(pd.to_timedelta, errors='coerce')
         # remove rows that did not work
         df = df.drop(df.index[pd.isnull(df['DATE'])])
+    else:
+        df['DATE'] = df['DATE'] + df[timeColumnName]
 
     # convert data columns to numeric
     for idx, col in enumerate(columnNames):
@@ -29,7 +33,9 @@ def processInputDataFrame(df, columnNames, useNames, dateColumnName, dateColumnF
 
     # remove other columns
     if isinstance(useNames, (list, tuple, np.ndarray)):  # check if multple collumns
-        df = df[['DATE'] + useNames]  # combine date and time with columns to keep
+        #if date was inferred we have a DATE column otherwise we don't
+        if dateColumnFormat == 'infer':
+            df = df[['DATE'] + useNames]  # combine date and time with columns to keep
     else:
         df = df[['DATE'] + [useNames]]  # combine date and time with columns to keep
 

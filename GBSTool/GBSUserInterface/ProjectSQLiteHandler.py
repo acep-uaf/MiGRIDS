@@ -389,3 +389,9 @@ class ProjectSQLiteHandler:
         sql = """select component_name, original_field_name, units,attribute from environment where inputfiledir = ?"""
         df.append(pd.read_sql_query(sql,self.connection,params=[filter]))
         return df
+    def getInputPath(self, pathNum):
+        '''returns the file folder for the given input file number (corrasponds to fileblock in setup page)'''
+        path = self.cursor.execute("select inputfiledir from input_files where _id = " + pathNum).fetchone()
+        if path is not None:
+           return path[0]
+        return

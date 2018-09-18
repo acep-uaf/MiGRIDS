@@ -11,6 +11,7 @@ from GBSInputHandler.buildProjectSetup import buildProjectSetup
 from GBSInputHandler.fillProjectData import fillProjectData
 from GBSInputHandler.makeSoup import makeComponentSoup
 from GBSInputHandler.writeXmlTag import writeXmlTag
+from GBSInputHandler.mergeInputs import mergeInputs
 
 
 class UIToHandler():
@@ -106,37 +107,64 @@ class UIToHandler():
         from GBSInputHandler.fixBadData import fixBadData
         from GBSInputHandler.fixDataInterval import fixDataInterval
 
-
+        inputDictionary = {}
         Village = readXmlTag(setupFile, 'project', 'name')[0]
         # input specification
-        # input specification can be for multiple input files or a single file in AVEC format.
-        inputSpecification = readXmlTag(setupFile, 'inputFileFormat', 'value')[0]
-        # filelocation is the raw timeseries file.
-        # if multiple files specified look for raw_wind directory
+
+
         # input a list of subdirectories under the GBSProjects directory
         fileLocation = readXmlTag(setupFile, 'inputFileDir', 'value')
-        fileLocation = os.path.join(*fileLocation)
-        fileLocation = os.path.join('/', fileLocation)
+        #fileLocation = os.path.join(*fileLocation)
+        #fileLocation = os.path.join('/', fileLocation)
+        #inputDictionary['fileLocation'] = [os.path.join('../../GBSProjects', *x) for x in fileLocation]
+        inputDictionary['fileLocation'] = fileLocation
         # file type
-        fileType = readXmlTag(setupFile, 'inputFileType', 'value')[0]
-        outputInterval = readXmlTag(setupFile, 'timeStep', 'value')[0] + \
-                         readXmlTag(setupFile, 'timeStep', 'unit')[0]
-        inputInterval = readXmlTag(setupFile, 'inputTimeStep', 'value')[0] + \
-                        readXmlTag(setupFile, 'inputTimeStep', 'unit')[0]
+        fileType = readXmlTag(setupFile, 'inputFileType', 'value')
+        outputInterval = readXmlTag(setupFile, 'timeStep', 'value') + \
+                         readXmlTag(setupFile, 'timeStep', 'unit')
+        inputInterval = readXmlTag(setupFile, 'inputTimeStep', 'value') + \
+                        readXmlTag(setupFile, 'inputTimeStep', 'unit')
+        inputDictionary['fileType'] = readXmlTag(setupFile, 'inputFileType', 'value')
+        inputDictionary['outputInterval'] = readXmlTag(setupFile, 'timeStep', 'value')
+        inputDictionary['outputIntervalUnit'] = readXmlTag(setupFile, 'timeStep', 'unit')
+        inputDictionary['inputInterval'] = readXmlTag(setupFile, 'inputTimeStep', 'value')
+        inputDictionary['inputIntervalUnit'] = readXmlTag(setupFile, 'inputTimeStep', 'unit')
+
+        # get date and time values
+        inputDictionary['dateColumnName'] = readXmlTag(setupFile, 'dateChannel', 'value')
+        inputDictionary['dateColumnFormat'] = readXmlTag(setupFile, 'dateChannel', 'format')
+        inputDictionary['timeColumnName'] = readXmlTag(setupFile, 'timeChannel', 'value')
+        inputDictionary['timeColumnFormat'] = readXmlTag(setupFile, 'timeChannel', 'format')
+        inputDictionary['utcOffsetValue'] = readXmlTag(setupFile, 'inputUTCOffset', 'value')
+        inputDictionary['utcOffsetUnit'] = readXmlTag(setupFile, 'inputUTCOffset', 'unit')
+        inputDictionary['dst'] = readXmlTag(setupFile, 'inputDST', 'value')
+        flexibleYear = readXmlTag(setupFile, 'flexibleYear', 'value')
+        inputDictionary['flexibleYear'] = [(x.lower() == 'true') | (x.lower() == 't') for x in flexibleYear]
+
+        for idx in range(len(inputDictionary['outputInterval'])):  # there should only be one output interval specified
+            if len(inputDictionary['outputInterval']) > 1:
+                inputDictionary['outputInterval'][idx] += inputDictionary['outputIntervalUnit'][idx]
+            else:
+                inputDictionary['outputInterval'][idx] += inputDictionary['outputIntervalUnit'][0]
+
+        for idx in range(len(inputDictionary['inputInterval'])):  # for each group of input files
+            if len(inputDictionary['inputIntervalUnit']) > 1:
+                inputDictionary['inputInterval'][idx] += inputDictionary['inputIntervalUnit'][idx]
+            else:
+                inputDictionary['inputInterval'][idx] += inputDictionary['inputIntervalUnit'][0]
 
         # get data units and header names
-        headerNames, componentUnits, componentAttributes, componentNames, newHeaderNames = getUnits(Village, os.path.dirname(setupFile))
-
+        inputDictionary['headerNames'], inputDictionary['componentUnits'], \
+        inputDictionary['componentAttributes'], inputDictionary['componentNames'], inputDictionary['newHeaderNames'] = getUnits(Village, os.path.dirname(setupFile))
+        print(inputDictionary)
         # read time series data, combine with wind data if files are seperate.
-        df, listOfComponents = readDataFile(inputSpecification, fileLocation, fileType, headerNames, newHeaderNames,
-                                            componentUnits,
-                                            componentAttributes)  # dataframe with time series information. replace header names with column names
-
+        df, listOfComponents = mergeInputs(inputDictionary)
         # now fix the bad data
-        df_fixed = fixBadData(df, os.path.dirname(setupFile), listOfComponents, inputInterval)
+        df_fixed = fixBadData(df,os.path.dirname(setupFile),listOfComponents,inputDictionary['inputInterval'])
 
         # fix the intervals
-        df_fixed_interval = fixDataInterval(df_fixed, outputInterval)
+        df_fixed_interval = fixDataInterval(df_fixed, inputDictionary['outputInterval'])
+
 
         d = {}
         for c in listOfComponents:

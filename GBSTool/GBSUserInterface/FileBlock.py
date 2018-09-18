@@ -61,12 +61,16 @@ class FileBlock(QtWidgets.QGroupBox):
             self.findChild(QtWidgets.QWidget, 'inputFileDirvalue').setText(folderDialog)
             #save the input to the setup data model and into the database
             self.saveInput()
-            if self.dbhandler.getProjectPath() is None:
-                self.dbhandler.insertRecord('project'['project_path'],[folderDialog])
+            #update the filedir path
+            if self.dbhandler.getInputPath(str(self.input)) is None:
+                self.dbhandler.insertRecord('input_files',['inputfiledir'],[folderDialog])
             else:
-                self.dbhandler.updateRecord('project','_id',1,['project_path'],[folderDialog])
+                self.dbhandler.updateRecord('input_files',['_id'],[str(self.input)],['inputfiledir'],[folderDialog])
+                print(self.dbhandler.dataCheck('input_files'))
             #filter the component and environemnt input tables to the current input directory
             self.filterTables()
+            self.saveInput()
+            self.model.writeNewXML()
         return folderDialog
 
     def createTopBlock(self,title, fn):
@@ -307,7 +311,7 @@ class FileBlock(QtWidgets.QGroupBox):
 
             # update database table
             if not self.dbhandler.insertRecord('input_files', setupFields, setupValues):
-                self.dbhandler.updateRecord('input_files', ['_id'], [setupFields[0]],
+                self.dbhandler.updateRecord('input_files', ['_id'], [setupValues[0]],
                                        setupFields[1:],
                                        setupValues[1:])
             # on leave save the xml files
