@@ -236,9 +236,11 @@ class Generator:
             if self.genP > 0:
                 self.outOfNormalBounds = True
                 self.outOfBounds = True
+                self.outOfEfficientBounds = True
             else:
                 self.outOfNormalBounds = False
                 self.outOfBounds = False
+                self.outOfEfficientBounds = False
 
         else: # if not running and offline
             # update timers
@@ -254,9 +256,11 @@ class Generator:
             if self.genP > 0:
                 self.outOfNormalBounds = True
                 self.outOfBounds = True
+                self.outOfEfficientBounds = True
             else:
                 self.outOfNormalBounds = False
                 self.outOfBounds = False
+                self.outOfEfficientBounds = False
 
     def updateGenPAvail(self):
         """

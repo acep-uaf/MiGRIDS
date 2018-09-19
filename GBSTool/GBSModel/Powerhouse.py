@@ -390,7 +390,7 @@ class Powerhouse:
             self.switchGenComb(genSwOn[indSort[0]], genSwOff[indSort[0]])  # switch generators
             for idx in range(len(self.genIDS)):
                 # update genPAvail
-                self.generators[idx].checkOperatingConditions()
+                self.generators[idx].updateGenPAvail()
         # otherwise, start or continue warming up generators for most efficient combination
         else:
             self.startGenComb(genSwOn[indSort[0]])
