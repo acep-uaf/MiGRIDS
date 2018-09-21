@@ -40,7 +40,7 @@ class eesDispatch:
             PsrcAvail = []
             for idx, ees in enumerate(eess.electricalEnergyStorageUnits):
                 ees.eesP = PoutAvail[idx]*PdisRatio
-                ees.updateSrcAvail()
+                ees.checkOperatingConditions()
                 PsrcAvail.append(ees.eesPsrcAvail)
 
         elif newP < 0:  # if discharging
@@ -58,7 +58,7 @@ class eesDispatch:
             PsrcAvail = []
             for idx, ees in enumerate(eess.electricalEnergyStorageUnits):
                 ees.eesP = -PinAvail[idx] * PchRatio
-                ees.updateSrcAvail()
+                ees.checkOperatingConditions()
                 PsrcAvail.append(ees.eesPsrcAvail)
 
         else:
@@ -66,7 +66,7 @@ class eesDispatch:
             PsrcAvail = []
             for idx, ees in enumerate(eess.electricalEnergyStorageUnits):
                 ees.eesP = 0
-                ees.updateSrcAvail()
+                ees.checkOperatingConditions()
                 PsrcAvail.append(ees.eesPsrcAvail)
 
         # assign SRC based on availability

@@ -120,7 +120,6 @@ class ElectricalEnergyStorageSystem:
         self.eesDispatch(self, newP, newQ, newSRC)
         # check the operating conditions of ees, update counters
         for idx, ees in enumerate(self.electricalEnergyStorageUnits):
-            ees.checkOperatingConditions(tIndex)
             self.eesP[idx] = ees.eesP
             self.eesQ[idx] = ees.eesQ
             self.eesSOC[idx] = ees.eesSOC
