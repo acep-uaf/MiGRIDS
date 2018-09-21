@@ -7,13 +7,14 @@
 import numpy as np
 
 class eesDispatch:
-    def __init__(self, eess, newP, newQ, newSRC):
+    def __init__(self, eess, newP, newQ, newSRC, tIndex):
         """
         Constructor used for intialization of a dispatch scheme.
         :param eess: an energy storage system that is being dispatched
         :param newP: new total power level
         :param newQ: new total reactive power level
         :param newSRC: new spinning reserve requirement. if set to nan, there is no change in the SRC requirement.
+        :param tIndex: the index of the current simulation time step.
         """
 
         # find the max power available from each generator
@@ -40,7 +41,7 @@ class eesDispatch:
             PsrcAvail = []
             for idx, ees in enumerate(eess.electricalEnergyStorageUnits):
                 ees.eesP = PoutAvail[idx]*PdisRatio
-                ees.checkOperatingConditions()
+                ees.checkOperatingConditions(tIndex)
                 PsrcAvail.append(ees.eesPsrcAvail)
 
         elif newP < 0:  # if discharging
@@ -58,7 +59,7 @@ class eesDispatch:
             PsrcAvail = []
             for idx, ees in enumerate(eess.electricalEnergyStorageUnits):
                 ees.eesP = -PinAvail[idx] * PchRatio
-                ees.checkOperatingConditions()
+                ees.checkOperatingConditions(tIndex)
                 PsrcAvail.append(ees.eesPsrcAvail)
 
         else:
@@ -66,7 +67,7 @@ class eesDispatch:
             PsrcAvail = []
             for idx, ees in enumerate(eess.electricalEnergyStorageUnits):
                 ees.eesP = 0
-                ees.checkOperatingConditions()
+                ees.checkOperatingConditions(tIndex)
                 PsrcAvail.append(ees.eesPsrcAvail)
 
         # assign SRC based on availability

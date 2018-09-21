@@ -31,6 +31,8 @@ class Powerhouse:
         if not len(genIDS)==len(genStates):
             raise ValueError('The length genIDS, genP, genQ and genStates inputs to Powerhouse must be equal.')
         # ************Powerhouse variables**********************
+        # general
+        self.timeStep = timeStep
         # List of generators and their respective IDs
         self.generators = []
         self.genIDS = genIDS
@@ -325,9 +327,10 @@ class Powerhouse:
         turnOffTime = [None]*lenGenerators
         for idx, gen in enumerate(self.generators):
             # get the time remaining to turn on each generator
-            turnOnTime[idx] = gen.genStartTime - gen.genStartTimeAct
+            # include this time step in the calculation. this avoids having to wait 1 time step longer than necessary to bring a diesel generator online.
+            turnOnTime[idx] = gen.genStartTime - gen.genStartTimeAct - self.timeStep
             # get the time remaining to turn off each generator
-            turnOffTime[idx] = gen.genRunTimeMin - gen.genRunTimeAct
+            turnOffTime[idx] = gen.genRunTimeMin - gen.genRunTimeAct - self.timeStep
 
         # Go through each potential combination of generators and find which generators need to be switched on and
         # offline for each combination
