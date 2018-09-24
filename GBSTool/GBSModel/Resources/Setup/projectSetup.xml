@@ -52,7 +52,8 @@
       is the format of the time, for example 'HH:MM:SS:MS'. Also accepted is time as a fraction of 24 hours ('excel').
       If this is not set, then the timestamps will be assumed to be incorporated into the dataChannel. -->
     <timeChannel value="" format=""/>
-
+    <!--'timeZone' the name of the timezone date and time are in. Default is 'UTC'.-->
+    <timeZone value="UTC"/>
     <!-- 'inputUTCOffset' is the offset in hours from UTC time that input timestamps are in.   -->
     <inputUTCOffset value="0" unit="hr"/>
 
