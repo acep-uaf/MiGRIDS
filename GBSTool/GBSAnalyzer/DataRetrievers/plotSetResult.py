@@ -11,7 +11,7 @@ import numbers
 
 def plotSetResult(plotRes,plotAttr, projectSetDir = '', otherAttr = [],otherAttrVal = [], baseSet = '', baseRun = '',
                   subtractFromBase = 0, removeSingleOtherAttr = True, alwaysUseMarkers = False, plotResName = '',
-                  plotAttrName = '', otherAttrNames = []):
+                  plotAttrName = '', otherAttrNames = [], saveName = ''):
     '''
     plot a single result for a set of simulations
     :param plotRes: the database column header of the variable to plot.
@@ -287,15 +287,18 @@ def plotSetResult(plotRes,plotAttr, projectSetDir = '', otherAttr = [],otherAttr
     if not os.path.exists('figs'):
         os.makedirs('figs')
     os.chdir('figs')
-    if baseSet != '' and baseRun != '': # if base case was used, different file name
-        if subtractFromBase == 1:
-            plt.savefig('Reduction in ' + plotResName + ' vs ' + plotAttr + ' for ' + otherAttrText + '.png')
-        elif subtractFromBase == 2:
-            plt.savefig('Increase in ' + plotResName + ' vs ' + plotAttr + ' for ' + otherAttrText + '.png')
-        elif subtractFromBase == 0:
+    if saveName == '':
+        if baseSet != '' and baseRun != '': # if base case was used, different file name
+            if subtractFromBase == 1:
+                plt.savefig('Reduction in ' + plotResName + ' vs ' + plotAttr + ' for ' + otherAttrText + '.png')
+            elif subtractFromBase == 2:
+                plt.savefig('Increase in ' + plotResName + ' vs ' + plotAttr + ' for ' + otherAttrText + '.png')
+            elif subtractFromBase == 0:
+                plt.savefig(plotResName + ' vs ' + plotAttr + ' for ' + otherAttrText + '.png')
+        else:
             plt.savefig(plotResName + ' vs ' + plotAttr + ' for ' + otherAttrText + '.png')
     else:
-        plt.savefig(plotResName + ' vs ' + plotAttr + ' for ' + otherAttrText + '.png')
+        plt.savefig(saveName)
 
 
 # return the results to be plotted. If it is a list, add together. Otherwise, simply return the result.

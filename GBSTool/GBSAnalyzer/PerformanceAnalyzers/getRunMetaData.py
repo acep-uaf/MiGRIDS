@@ -77,9 +77,10 @@ def getRunMetaData(projectSetDir,runs):
         genOverLoadingkWh = sum(genLoadingDiff[genLoadingDiff>0]) * ts / 3600
 
         # get overloading of the ESS. this is the power requested from the diesel generators when none are online.
-        eessOverLoadingTime = np.count_nonzero(genP[~idxGenOnline]) * ts/3600
-        eessOverLoadingkWh = sum(genP[~idxGenOnline])*ts/3600
-        eessOverLoading = eessOverLoading + [list(genP[~idxGenOnline])]
+        # to avoid counting instances where there there is genP due to rounding error, only count if greater than 1
+        eessOverLoadingTime = sum([1 for x in genP[~idxGenOnline] if abs(x) > 1])* ts/3600
+        eessOverLoadingkWh = sum([abs(x) for x in genP[~idxGenOnline] if abs(x) > 1])*ts/3600
+        eessOverLoading = eessOverLoading + [[x for x in genP[~idxGenOnline] if abs(x) > 1]]
 
         # get the total time spend in diesel-off
         genTimeOff = np.count_nonzero(genPAvail == 0)* tsGenPAvail / 3600
@@ -133,7 +134,7 @@ def getRunMetaData(projectSetDir,runs):
         eessPStats, eessP, ts = loadResults('eessPSet'+str(setNum)+'Run' + str(runNum) + '.nc')
         # get the charging power
         eessPch = [x for x in eessP if x < 0]
-        eessPchTot = -sum(eessPch)*ts/3600 # total kWh chargning of eess
+        eessPchTot = -sum(eessPch)*ts/3600 # total kWh charging of eess
         # get the discharging power
         eessPdis = [x for x in eessP if x > 0]
         eessPdisTot = (sum(eessPdis) * ts)/3600  # total kWh dischargning of eess
