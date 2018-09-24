@@ -208,7 +208,11 @@ def fixDataInterval(data, interval):
                 simulatedDf = simulatedDf[~simulatedDf.index.duplicated(keep='last')]
                 # make sure timestamps for both df's are rounded to the same interval in order to join sucessfully
                 data.fixed[idx].index = data.fixed[idx].index.floor(interval[idx])
+                #make sure timezones match - can't join naive and notnaive times
+                tz = data.fixed[idx].index.tzinfo
                 simulatedDf.index = simulatedDf.index.floor(interval[idx])
+                #.apply(lambda d: timeZone.localize(d, is_dst=useDST))
+                simulatedDf.index = simulatedDf.index.tz_localize('UTC')
                 # join the simulated values to the upsampled dataframe by timestamp
                 data.fixed[idx] = data.fixed[idx].join(simulatedDf, how='left')
                 # fill na's for column with simulated values

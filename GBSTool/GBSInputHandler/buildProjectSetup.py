@@ -30,8 +30,7 @@ def buildProjectSetup(projectName,saveDir,componentNames):
         #if the specified directory doesn't exist create it.
         if not os.path.exists(saveDir):
             os.makedirs(saveDir)
-        else:
-            return
+
         saveName = os.path.join(saveDir, projectName + 'Setup.xml')
         f = open(saveName, "w")
         f.write(soup.prettify())

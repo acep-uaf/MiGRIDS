@@ -124,6 +124,7 @@ class UIToHandler():
                          readXmlTag(setupFile, 'timeStep', 'unit')
         inputInterval = readXmlTag(setupFile, 'inputTimeStep', 'value') + \
                         readXmlTag(setupFile, 'inputTimeStep', 'unit')
+        inputDictionary['timeZone'] = readXmlTag(setupFile,'timeZone','value')
         inputDictionary['fileType'] = readXmlTag(setupFile, 'inputFileType', 'value')
         inputDictionary['outputInterval'] = readXmlTag(setupFile, 'timeStep', 'value')
         inputDictionary['outputIntervalUnit'] = readXmlTag(setupFile, 'timeStep', 'unit')
@@ -141,6 +142,7 @@ class UIToHandler():
         flexibleYear = readXmlTag(setupFile, 'flexibleYear', 'value')
         inputDictionary['flexibleYear'] = [(x.lower() == 'true') | (x.lower() == 't') for x in flexibleYear]
 
+        #combine values with their units as a string
         for idx in range(len(inputDictionary['outputInterval'])):  # there should only be one output interval specified
             if len(inputDictionary['outputInterval']) > 1:
                 inputDictionary['outputInterval'][idx] += inputDictionary['outputIntervalUnit'][idx]
@@ -154,9 +156,9 @@ class UIToHandler():
                 inputDictionary['inputInterval'][idx] += inputDictionary['inputIntervalUnit'][0]
 
         # get data units and header names
-        inputDictionary['headerNames'], inputDictionary['componentUnits'], \
-        inputDictionary['componentAttributes'], inputDictionary['componentNames'], inputDictionary['newHeaderNames'] = getUnits(Village, os.path.dirname(setupFile))
-        print(inputDictionary)
+        inputDictionary['columnNames'], inputDictionary['componentUnits'], \
+        inputDictionary['componentAttributes'], inputDictionary['componentNames'], inputDictionary['useNames'] = getUnits(Village, os.path.dirname(setupFile))
+
         # read time series data, combine with wind data if files are seperate.
         df, listOfComponents = mergeInputs(inputDictionary)
         # now fix the bad data
@@ -164,7 +166,6 @@ class UIToHandler():
 
         # fix the intervals
         df_fixed_interval = fixDataInterval(df_fixed, inputDictionary['outputInterval'])
-
 
         d = {}
         for c in listOfComponents:

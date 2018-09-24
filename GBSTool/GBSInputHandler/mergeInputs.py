@@ -29,13 +29,14 @@ def mergeInputs(inputDictionary):
     # iterate through all sets of input files
     for idx in range(len(inputDictionary['fileLocation'])):
 
-        df0, listOfComponents0 = readDataFile(inputDictionary['fileType'][idx],inputDictionary['fileLocation'][idx],inputDictionary['fileType'][idx],
-                                             inputDictionary['headerNames'][idx],inputDictionary['newHeaderNames'][idx],inputDictionary['componentUnits'][idx],
-                                             inputDictionary['componentAttributes'][idx], 
-                                             inputDictionary['dateColumnName'][idx], inputDictionary['dateColumnFormat'][idx], 
-                                             inputDictionary['timeColumnName'][idx], inputDictionary['timeColumnFormat'][idx], 
-                                             inputDictionary['utcOffsetValue'][idx], inputDictionary['utcOffsetUnit'][0], 
-                                             inputDictionary['dst'][idx]) # dataframe with time series information. replace header names with column names
+        df0, listOfComponents0 = readDataFile(singleLocation(inputDictionary,idx))
+        # inputDictionary['fileType'][idx],inputDictionary['fileLocation'][idx],inputDictionary['fileType'][idx],
+        #                                      inputDictionary['headerNames'][idx],inputDictionary['newHeaderNames'][idx],inputDictionary['componentUnits'][idx],
+        #                                      inputDictionary['componentAttributes'][idx],
+        #                                      inputDictionary['dateColumnName'][idx], inputDictionary['dateColumnFormat'][idx],
+        #                                      inputDictionary['timeColumnName'][idx], inputDictionary['timeColumnFormat'][idx],
+        #                                      inputDictionary['utcOffsetValue'][0], inputDictionary['utcOffsetUnit'][0],
+        #                                      inputDictionary['dst'][0],inputDictionary['timeZone'][idx]) # dataframe with time series information. replace header names with column names
         #This slows down the import significantly
         '''os.chdir(inputDictionary['fileLocation'][idx])
         out = open("df_raw.pkl", "wb")
@@ -129,5 +130,15 @@ def mergeInputs(inputDictionary):
             return uniqueList(startList[1:],outList)
         
     l = uniqueList(listOfComponents,[])
-
+    #TODO update progress bar here
     return df, l
+
+def singleLocation(dict, position):
+    '''returns a dictionary that is a subset of the input dictionary with all the keys but only values at a specified position'''
+    singleValueDict={}
+    for key, val in dict.items():
+        try:
+            singleValueDict[key]=val[position]
+        except IndexError:
+            singleValueDict[key] =val[0]
+    return singleValueDict
