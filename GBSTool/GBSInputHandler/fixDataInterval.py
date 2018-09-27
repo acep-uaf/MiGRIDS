@@ -57,7 +57,7 @@ def fixDataInterval(data, interval):
         intervals = np.repeat(steps, len(t), axis=0)
         # reshape the interval matrix so each row has every timestep
         intervals_reshaped = intervals.reshape(len(steps), len(t))
-        # TODO: MemoryError here
+
         tr = t.repeat(len(steps))
         rs = tr.values.reshape(len(t), len(steps))
         time_matrix = rs + intervals_reshaped.transpose()
@@ -69,7 +69,7 @@ def fixDataInterval(data, interval):
         # use the next step in the time series as the average value for the synthesized data. The values will asympotically reach this value, resulting in a smooth transition.
         mu = start.shift(-1)
         mu.iloc[-1] = mu.iloc[-2]
-
+        #TODO replace for loops
         for i in range(n95-1):
             x[:, i + 1] = x[:, i] + timestep * (-(x[:, i] - mu) / tau) + np.multiply(sigma_bis.values * sqrtdt, np.random.randn(len(mu)))
 
@@ -164,7 +164,9 @@ def fixDataInterval(data, interval):
 
         # up or down sample to our desired interval
         # down sampling results in averaged values
+        #this changes the size fo data.fixed[idx], so it no longer matches df rowcount.
         data.fixed[idx] = data.fixed[idx].resample(pd.to_timedelta(interval[idx])).mean()
+
 
         for col in fixColumns:
             df0 = df[[col]].copy()
@@ -183,7 +185,7 @@ def fixDataInterval(data, interval):
             # time interval between consecutive records
             df0['timediff'] = pd.Series(pd.to_datetime(df0.index, unit='s'), index=df0.index).diff(1).shift(-1)
             df0['timediff'] = df0['timediff'].fillna(0)
-            # get the median number of steps in a 24 hr perdiod.
+            # get the median number of steps in a 24 hr period.
             steps1Day = int(pd.to_timedelta(1, unit='d') / np.median(df0['timediff']))
             # make sure it is at least 10
             if steps1Day < 10:
@@ -201,6 +203,10 @@ def fixDataInterval(data, interval):
             # if the resampled dataframe is bigger fill in new values
             if len(df0) < len(data.fixed[idx]):
                 # t is the time, k is the estimated value
+                print(len(df0))
+                print(len(data.fixed[idx]))
+                print(data.fixed[idx].index[0])
+                print(data.fixed[idx].last_valid_index())
                 t, k = estimateDistribution(df0, interval[idx], col)  # t is number of seconds since 1970
                 simulatedDf = pd.DataFrame({'time': t, 'value': k})
                 simulatedDf = simulatedDf.set_index(

@@ -3,7 +3,7 @@
 #assumes the component type is the first three characters of the component string
 def makeComponentSoup(component, saveDir):
     import os
-    from createComponentDescriptor import createComponentDescriptor
+    from GBSInputHandler.createComponentDescriptor import createComponentDescriptor
     from GBSUserInterface.readComponentXML import readComponentXML
 
 

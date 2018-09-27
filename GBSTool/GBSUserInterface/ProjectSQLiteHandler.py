@@ -383,9 +383,11 @@ class ProjectSQLiteHandler:
     def getComponentNames(self):
 
         names = self.cursor.execute("select component_name from components").fetchall()
-        names = [''.join(i) for i in names]
-        print(self.dataCheck('components'))
-        return pd.Series(names).tolist()
+        if names is not None:
+            names = [''.join(i) for i in names if i is not None]
+            print(self.dataCheck('components'))
+            return pd.Series(names).tolist()
+        return []
     def getComponentsTable(self, filter):
         print(self.dataCheck("components"))
         #sql = """select component_name, original_field_name, units,attribute from components where inputfiledir = ({0})"""
@@ -403,3 +405,13 @@ class ProjectSQLiteHandler:
         if path is not None:
            return path[0]
         return
+    def dataComplete(self):
+        required={'components':['original_field_name','component_type','component_name','units','attribute'],
+'environment':['original_field_name','component_name','units','attribute'],
+'project':['project_path']}
+        for k in required.keys():
+            condition = ' OR '.join(['{0} IS NULL'.format(x) for x in required[k]])
+            m = self.cursor.execute("select * from " + k + " where " + condition).fetchall()
+            if len(self.cursor.execute("select * from " + k + " where " + condition).fetchall()) > 1 :
+                return False
+        return True

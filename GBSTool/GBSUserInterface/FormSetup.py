@@ -49,7 +49,7 @@ class FormSetup(QtWidgets.QWidget):
 
         #list of dictionaries containing information for wizard
         #this is the information that is not input file specific.
-        #TODO move to seperate file
+
         dlist = [
             {'title': 'Dates to model', 'prompt': 'Enter the timespan you would like to include in the model.', 'sqltable': None,
               'sqlfield': None, 'reftable': None, 'name': 'runTimesteps', 'folder': False, 'dates':True},
@@ -186,7 +186,6 @@ class FormSetup(QtWidgets.QWidget):
         # return true if sets have been run
         #setsRun = loadSets(model,self.window())
         setsRun = False
-
         #make the data blocks editable if there are no sets already created
         #if sets have been created then input data is not editable from the interface
         if setsRun:
@@ -201,8 +200,11 @@ class FormSetup(QtWidgets.QWidget):
         self.findChild(QtWidgets.QLabel, 'projectTitle').setText(self.model.project)
 
         return
-    #display data in a setup model in the FormSetup form (fileblocks), creating a tab for each data input directory listed
+
     def displayModelData(self):
+        """creates a tab for each input directory specified the SetupModelInformation model inputFileDir attribute.
+        Each tab contains a FileBlock object to interact with the data input
+        Each FileBlock is filled with data specific to the input directory"""
         self.tabs.removeTab(0)
         #the number of directories listed in inputFileDir indicates how many tabs are required
         tab_count = len(self.model.inputFileDir.value)
@@ -217,6 +219,7 @@ class FormSetup(QtWidgets.QWidget):
     #TODO make dynamic from list input
     #List -> WizardTree
     def buildWizardTree(self, dlist):
+        """builds a QWizard based on list of inputs"""
         wiztree = QtWidgets.QWizard()
         wiztree.setWizardStyle(QtWidgets.QWizard.ModernStyle)
         wiztree.setWindowTitle("Setup")
@@ -230,34 +233,23 @@ class FormSetup(QtWidgets.QWidget):
 
     #save the input in the wizard tree to the setup data model
     def saveInput(self):
-        # update sql table
-        # update model info
+        """save the input in the wizard tree to the ModelSetupInformation data model"""
         model = self.model
         model.assignProject(self.WizardTree.field('project'))
         model.assignTimeStep(SetupTag.assignValue, self.WizardTree.field('timestep'))
         model.assignRunTimesteps(SetupTag.assignValue, self.WizardTree.field('runTimesteps'))
-
         return
 
-    # send input data to the ModelSetupInformation data model
-    # reads through all the file tabs to collect input
-    # None->None
-    def sendSetupData(self):
 
-        headerName = []
-        componentName = []
-        componentAttribute = []
-        componentAttributeU = []
-        fileType = []
-        dateChannel = []
-        dateFormat = []
-        timeChannel = []
-        timeFormat = []
-        fileDirectory= []
+    def sendSetupData(self):
+        """ send input data to the ModelSetupInformation data model
+        reads through all the file tabs to collect input
+        """
+
         # list of distinct components
         self.model.components = []
-        #needs to come from each page
 
+        #needs to come from each page
         tabWidget = self.findChild(QtWidgets.QTabWidget)
         for t in range(tabWidget.count()):
             page = tabWidget.widget(t)
@@ -276,83 +268,52 @@ class FormSetup(QtWidgets.QWidget):
 
             page.saveTables()
 
-        # we also need headerNames, componentNames, attributes and units from the component section
-        #     componentView = page.findChild((QtWidgets.QTableView), 'components')
-        #     componentModel = componentView.model()
-        #     for i in range(0, componentModel.rowCount()):
-        #         headerName.append(componentModel.data(componentModel.index(i, 2)))
-        #         componentName.append(componentModel.data(componentModel.index(i, 4)))
-        #         componentAttribute.append(componentModel.data(componentModel.index(i, 8)))
-        #         componentAttributeU.append(componentModel.data(componentModel.index(i, 5)))
-        #         c = Component(component_name=componentModel.data(componentModel.index(i, 4)) + componentModel.data(
-        #             componentModel.index(i, 8)),
-        #                       scale=componentModel.data(componentModel.index(i, 6)),
-        #                       units=componentModel.data(componentModel.index(i, 5)),
-        #                       offset=componentModel.data(componentModel.index(i, 7)),
-        #                       attribute=componentModel.data(componentModel.index(i, 8)),
-        #                       type=componentModel.data(componentModel.index(i, 3)),
-        #                       original_field_name=componentModel.data(componentModel.index(i, 3)))
-        #         self.model.components.append(c)
-        #     # make a list of distinct values
-        #     componentNames = list(set(componentName))
-        #     # and the same data from the environment section
-        #     envView = self.findChild((QtWidgets.QTableView), 'environment')
-        #     envModel = envView.model()
-        #     for j in range(0, envModel.rowCount()):
-        #         headerName.append(envModel.data(envModel.index(j, 2)))
-        #         componentName.append(envModel.data(envModel.index(j, 3)))
-        #         componentAttribute.append(envModel.data(envModel.index(j, 7)))
-        #         componentAttributeU.append(envModel.data(envModel.index(j, 4)))
-        #
-        #         c = Component(component_name=envModel.data(envModel.index(j, 3)) + envModel.data(envModel.index(j, 7)),
-        #
-        #                       scale=envModel.data(envModel.index(j, 5)),
-        #                       units=envModel.data(envModel.index(j, 4)),
-        #                       offset=envModel.data(envModel.index(j, 6)),
-        #                       attribute=envModel.data(envModel.index(j, 7)),
-        #                       original_field_name=envModel.data(envModel.index(j, 2)))
-        #         self.model.components.append(c)
-        # model.assign('headerNamevalue', headerName)
-        # model.assign('componentNamevalue', componentName)
-        # model.assign('componentAttributevalue', componentAttribute)
-        # model.assign('componentAttributeunit', componentAttributeU)
-        # model.assign('componentNamesvalue', componentNames)
-        # model.assign('inputFileType', fileType)
-        # model.assign('inputFileDir',fileDirectory)
-        # model.assign('dateChannelvalue', dateChannel)
-        # model.assign('dateChannelformat',dateFormat)
-        # model.assign('timeChannelvalue',timeChannel)
-        # model.assign('timeChannelformat',timeFormat)
-
-    # write data to the ModelSetupInformation data model and generate input xml files for setup and components
+    # Create a dataframe of input data based on importing files within each SetupModelInformation.inputFileDir
     # None->None
     def createInputFiles(self):
         import os
         self.addProgressBar()
         self.progress.setRange(0, 0)
         self.sendSetupData()
+        # check all the required fields are filled
+        dbhandler = ProjectSQLiteHandler()
+        if not dbhandler.dataComplete():
+            #if required fields are not filled in return to setup page.
+            msg = QtWidgets.QMessageBox(QtWidgets.QMessageBox.Warning, "Missing Required Fields",
+                                        "Please fill in all required fields before generating input files.")
+            msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
+            msg.exec()
+            dbhandler.closeDatabase()
+            return
+
+        dbhandler.closeDatabase()
         # write all the xml files
 
         # start with the setupxml
         self.model.writeNewXML()
 
+
         # import datafiles
         handler = UIToHandler()
-        cleaned_data, componentDict = handler.loadFixData(
+        cleaned_data, components = handler.loadFixData(
             os.path.join(model.setupFolder, model.project + 'Setup.xml'))
         self.updateModelPage(cleaned_data)
         # pickled data to be used later if needed
         handler.storeData(cleaned_data, os.path.join(model.setupFolder, model.project + 'Setup.xml'))
+        handler.storeComponents(components)
         self.progress.setRange(0, 1)
         # generate netcdf files
         msg = QtWidgets.QMessageBox(QtWidgets.QMessageBox.Warning, "Time Series loaded",
                                     "Do you want to generate netcdf files?.")
         msg.setStandardButtons(QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.Cancel)
-
         result = msg.exec()
+
         # if yes create netcdf files, Otherwise this can be done after the data is reviewed.
         if result == QtWidgets.QMessageBox.Ok:
-            handler.createNetCDF(cleaned_data.fixed, componentDict,
+            d = {}
+            for c in components:
+                d[c.component_name] = c.toDictionary()
+            handler.createNetCDF(cleaned_data.fixed, d,
                                  os.path.join(model.setupFolder, model.project + 'Setup.xml'))
 
         return
@@ -378,22 +339,10 @@ class FormSetup(QtWidgets.QWidget):
         # start and end are tuples at this point
         modelForm.makeSetInfo(start=defaultStart, end=defaultEnd, components=defaultComponents)
 
-    #event triggered when user navigates away from setup page
-    #xml data gets written and the ModelSetupInformation attributes get updated
-    #Event -> None
-    '''def leaveEvent(self, event):
-        # save xmls
-        if 'projectFolder' in self.model.__dict__.keys():
-            # on leave save the xml files
-            self.sendSetupData()
-            self.model.writeNewXML()
-            return'''
-
     # close event is triggered when the form is closed
     def closeEvent(self, event):
         #save xmls
         if 'projectFolder' in self.model.__dict__.keys():
-
             self.sendSetupData()
             # on close save the xml files
             self.model.writeNewXML()
@@ -423,8 +372,6 @@ class FormSetup(QtWidgets.QWidget):
     @QtCore.pyqtSlot()
     def onClick(self, buttonFunction):
         buttonFunction()
-
-
 
 #classes used for displaying wizard inputs
 class WizardPage(QtWidgets.QWizardPage):

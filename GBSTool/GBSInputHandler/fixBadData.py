@@ -30,11 +30,11 @@ DESCXML = 'Descriptor.xml'  # the suffix of the xml for each component that cont
 TOTALP = 'total_p'  # the name of the column that contains the sum of power output for all components
 
 
-# dataframe, string, list, list -> DataClass
+# dataframe, string, list, list, List/None -> DataClass
 # Dataframe is the combined dataframe consisting of all data input (multiple files may have been merged)
 # SampleInterval is a list of sample intervals for each input file
 # returns a DataClass object with raw and cleaned data and powercomponent information
-def fixBadData(df, setupDir, ListOfComponents, sampleInterval):
+def fixBadData(df, setupDir, ListOfComponents, sampleInterval,truncate):
    '''returns cleaned dataframe'''
    
    # local functions - not used outside fixBadData
@@ -82,9 +82,10 @@ def fixBadData(df, setupDir, ListOfComponents, sampleInterval):
    
 
    # create DataClass object to store raw, fixed, and summery outputs
-   # use the largest sample interval for the data class
+   # use the largest sample interval for the data class- this isn't used anylonger
    sampleIntervalTimeDelta = [pd.to_timedelta(s) for s in sampleInterval]
-   data = DataClass(df, max(sampleIntervalTimeDelta))
+   dataLimits = findDataDateLimits(setupDir)
+   data = DataClass(df, max(sampleIntervalTimeDelta),getValue)
 
   
   # create a list of power columns
@@ -197,7 +198,7 @@ def fixBadData(df, setupDir, ListOfComponents, sampleInterval):
    data.splitDataFrame()
    #data.removeAnomolies(5)
    data.totalPower()
-   #break up dataframe where data missing
+
    return data
 
 

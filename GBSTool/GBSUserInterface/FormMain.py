@@ -141,9 +141,7 @@ class MainForm(QtWidgets.QMainWindow):
 
         # copy the project database to the project folder and save xmls
         if 'projectFolder' in setupForm.model.__dict__.keys():
-
-
-            saveProject(setupForm.model.projectFolder)
+             saveProject(setupForm.model.projectFolder)
 
         else:
             # if a project was never set then just close and remove the default database
