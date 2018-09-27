@@ -97,22 +97,30 @@ def plotSetResult(plotRes,plotAttr, projectSetDir = '', otherAttr = [],otherAttr
         dfAttr = pd.read_sql_query('select * from compAttributes', conn)
     conn.close()
 
-    # remove values from otherAttr not to be plotted
-    for idx, attr in enumerate(otherAttr):  # for set of values to plot for this attribute
-        values = otherAttrVal[idx]
-        # convert to numeric, if not already
-        values = [float(x) for x in values]
-        # go through each value for this attribute, check if it is in the list of values to plot, if not, remove row
-        # from both dfAttr and dfRes
-        dropIdx = []  # df indicies to drop
-        for idx, attrVal in enumerate(dfAttr[attr]):
-            if not float(attrVal) in values:
-                # get the index of the row to be dropped and remove from both df
-                dropIdx.append(dfAttr.index[idx])
-                # dfAttr = dfAttr.drop(dfIdx)
-                # dfRes = dfRes.drop(dfIdx)
-        dfAttr = dfAttr.drop(dropIdx)
-        dfRes = dfRes.drop(dropIdx)
+    # remove values from otherAttr not to be plotted, only if values to be plotted have been specified
+    if otherAttrVal != []:
+        for idx, attr in enumerate(otherAttr):  # for set of values to plot for this attribute
+            values = otherAttrVal[idx]
+            # convert to numeric, if not already
+            values = [float(x) for x in values]
+            # go through each value for this attribute, check if it is in the list of values to plot, if not, remove row
+            # from both dfAttr and dfRes
+            dropIdx = []  # df indicies to drop
+            for idx0, attrVal in enumerate(dfAttr[attr]):
+                if not float(attrVal) in values:
+                    # get the index of the row to be dropped and remove from both df
+                    dropIdx.append(dfAttr.index[idx0])
+                    # dfAttr = dfAttr.drop(dfIdx)
+                    # dfRes = dfRes.drop(dfIdx)
+            dfAttr = dfAttr.drop(dropIdx)
+            dfRes = dfRes.drop(dropIdx)
+    else:
+        for idx, attr in enumerate(otherAttr):
+            try: # try to convert to intergers
+                # make unique with set
+                otherAttrVal.append(list(set([int(x) for x in dfAttr[attr]])))
+            except:
+                otherAttrVal.append(list(set([float(x) for x in dfAttr[attr]])))
 
     # get the names of all results columns
     columns = list(dfAttr.columns.values)
@@ -277,10 +285,10 @@ def plotSetResult(plotRes,plotAttr, projectSetDir = '', otherAttr = [],otherAttr
     for idx, attr in enumerate(otherAttr):
         # convert values to a string
         oavText = ''
-        for idx, oav in enumerate(otherAttrVal[idx]):
-            if idx != 0:
+        for idx0, oav in enumerate(otherAttrVal[idx]):
+            if idx0 != 0:
                 oavText = oavText + '_'
-            oavText = oavText + str(oav)
+            oavText = oavText + str(oav).replace('.','_') # replace periods with underscores.
         otherAttrText = otherAttrText + attr + '_' + oavText + ' '
 
     os.chdir(projectSetDir)
@@ -291,12 +299,16 @@ def plotSetResult(plotRes,plotAttr, projectSetDir = '', otherAttr = [],otherAttr
         if baseSet != '' and baseRun != '': # if base case was used, different file name
             if subtractFromBase == 1:
                 plt.savefig('Reduction in ' + plotResName + ' vs ' + plotAttr + ' for ' + otherAttrText + '.png')
+                plt.savefig('Reduction in ' + plotResName + ' vs ' + plotAttr + ' for ' + otherAttrText + '.pdf')
             elif subtractFromBase == 2:
                 plt.savefig('Increase in ' + plotResName + ' vs ' + plotAttr + ' for ' + otherAttrText + '.png')
+                plt.savefig('Increase in ' + plotResName + ' vs ' + plotAttr + ' for ' + otherAttrText + '.pdf')
             elif subtractFromBase == 0:
                 plt.savefig(plotResName + ' vs ' + plotAttr + ' for ' + otherAttrText + '.png')
+                plt.savefig(plotResName + ' vs ' + plotAttr + ' for ' + otherAttrText + '.pdf')
         else:
             plt.savefig(plotResName + ' vs ' + plotAttr + ' for ' + otherAttrText + '.png')
+            plt.savefig(plotResName + ' vs ' + plotAttr + ' for ' + otherAttrText + '.pdf')
     else:
         plt.savefig(saveName)
 

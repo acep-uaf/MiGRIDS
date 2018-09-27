@@ -308,12 +308,16 @@ def plotSetResult(plotRes,plotAttr, projectSetDir = '', otherAttr = [],otherAttr
     if baseSet != '' and baseRun != '': # if base case was used, different file name
         if subtractFromBase == 1:
             plt.savefig('Reduction in ' + plotResName + ' vs ' + plotAttr + ' for ' + otherAttrText + '.png')
+            plt.savefig('Reduction in ' + plotResName + ' vs ' + plotAttr + ' for ' + otherAttrText + '.pdf')
         elif subtractFromBase == 2:
             plt.savefig('Increase in ' + plotResName + ' vs ' + plotAttr + ' for ' + otherAttrText + '.png')
+            plt.savefig('Increase in ' + plotResName + ' vs ' + plotAttr + ' for ' + otherAttrText + '.pdf')
         elif subtractFromBase == 0:
             plt.savefig(plotResName + ' vs ' + plotAttr + ' for ' + otherAttrText + '.png')
+            plt.savefig(plotResName + ' vs ' + plotAttr + ' for ' + otherAttrText + '.pdf')
     else:
         plt.savefig(plotResName + ' vs ' + plotAttr + ' for ' + otherAttrText + '.png')
+        plt.savefig(plotResName + ' vs ' + plotAttr + ' for ' + otherAttrText + '.pdf')
 
 
 # return the results to be plotted. If it is a list, add together. Otherwise, simply return the result.

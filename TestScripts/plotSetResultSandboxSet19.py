@@ -26,7 +26,7 @@ plotResName, plotRes = zip(*plotResValues.items())
 otherAttr = ['ees0.POutMaxPa.value', 'ees0.ratedDuration.value']
 otherAttrNames = {'ees0.POutMaxPa.value':'GBS Rated Power (kW)', 'ees0.ratedDuration.value':'GBS Rated Duration (s)'}
 otherAttrVal = [[500,750,1000], [60,300]]
-projecSetDir = 'C:\\Users\jbvandermeer\Documents\ACEP\GBS\GBSTools_0\GBSProjects\StMary\OutputData\Set19'
+projecSetDir = 'C:\\Users\jbvandermeer\Documents\ACEP\GBS\GBSTools_0\GBSProjects\StMary\OutputData\Set19b'
 baseSet =  ''
 baseRun =  ''
 for pR,pRN, sFB in zip(plotRes,plotResName,subtractFromBase):

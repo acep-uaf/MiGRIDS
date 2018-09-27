@@ -25,10 +25,10 @@ plotAttrName = 'GBS Rated Duration (s)'
 plotResName, plotRes = zip(*plotResValues.items())
 otherAttr = ['ees0.POutMaxPa.value']
 otherAttrNames = {'ees0.POutMaxPa.value':'GBS Rated Power (kW)'}
-otherAttrVal = [[500,750,1000]]
-projecSetDir = 'C:\\Users\jbvandermeer\Documents\ACEP\GBS\GBSTools_0\GBSProjects\StMary\OutputData\Set19a'
-baseSet =  '' #17
-baseRun =  '' #0
+otherAttrVal = [] #[[500,750,1000]]
+projecSetDir = 'C:\\Users\jbvandermeer\Documents\ACEP\GBS\GBSTools_0\GBSProjects\StMary\OutputData\Set16d'
+baseSet =  17
+baseRun =  0
 for pR,pRN, sFB in zip(plotRes,plotResName,subtractFromBase):
     plotSetResult(pR,plotAttr, projectSetDir = projecSetDir, otherAttr = otherAttr,otherAttrVal = otherAttrVal,
                   baseSet = baseSet, baseRun = baseRun, subtractFromBase = sFB, removeSingleOtherAttr = True,

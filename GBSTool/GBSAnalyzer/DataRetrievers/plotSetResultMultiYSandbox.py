@@ -17,7 +17,7 @@ plotAttrName = 'GBS Rated Duration (s)'
 otherAttr = ['ees0.POutMaxPa.value']
 otherAttrNames = {'ees0.POutMaxPa.value':'GBS Rated Power (kW)'}
 otherAttrVal = [[500,750,1000]]
-projecSetDir = 'C:\\Users\jbvandermeer\Documents\ACEP\GBS\GBSTools_0\GBSProjects\StMary\OutputData\Set16a'
+projecSetDir = 'C:\\Users\jbvandermeer\Documents\ACEP\GBS\GBSTools_0\GBSProjects\StMary\OutputData\Set19b'
 baseSet =  17
 baseRun =  0
 for pRV, sFB in zip(plotResValues,subtractFromBase):
