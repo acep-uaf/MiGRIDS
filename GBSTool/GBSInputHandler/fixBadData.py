@@ -84,7 +84,7 @@ def fixBadData(df, setupDir, ListOfComponents, sampleInterval,truncate):
    # create DataClass object to store raw, fixed, and summery outputs
    # use the largest sample interval for the data class- this isn't used anylonger
    sampleIntervalTimeDelta = [pd.to_timedelta(s) for s in sampleInterval]
-   dataLimits = findDataDateLimits(setupDir)
+   #dataLimits = findDataDateLimits(setupDir)
    data = DataClass(df, max(sampleIntervalTimeDelta),getValue)
 
   
