@@ -105,11 +105,10 @@ class ModelSetupInformation:
                                    'componentNamevalue': [self.assignComponentName, SetupTag.assignValue],
                                    'headerNamevalue': [self.assignHeaderName, SetupTag.assignValue],
                                    'componentAttributevalue': [self.assignComponentAttribute, SetupTag.assignValue],
-                                   'componentAttributeunit': [self.assignComponentAttribute, SetupTag.assignUnits]
-
+                                   'componentAttributeunit': [self.assignComponentAttribute, SetupTag.assignUnits],
+                                   'timeZonevalue':[self.assignTimeZone, SetupTag.assignValue],
+                                   'useDST':[self.assignUseDST,SetupTag.assignValue]
                                    }
-
-
 
         #empty values
         self.componentFolder = ''
@@ -125,6 +124,8 @@ class ModelSetupInformation:
         self.inputFileFormat = SetupTag('inputFileFormat')
         self.inputFileType = SetupTag('inputFileType')
         self.inputTimeStep = SetupTag('inputTimeStep')
+        self.timeZone = SetupTag('timeZone')
+        self.useDST = SetupTag('useDST')
         self.runTimesteps = SetupTag('runTimeStep')
         self.timeStep = SetupTag('timeStep')
         self.inputFileDir = SetupTag('inputFileDir')
@@ -170,7 +171,9 @@ class ModelSetupInformation:
         self.componentName.assign(m, stringToList(v),**kwargs)
 
     def assignHeaderName(self, m, v,**kwargs):
-        self.headerName.assign(m, stringToList(v),**kwargs)
+        v = stringToList(v)
+        v = [i.replace(' ', '_') for i in v]
+        self.headerName.assign(m, v,**kwargs)
 
     def assignComponentAttribute(self,m,v,**kwargs):
         self.componentAttribute.assign(m,stringToList(v),**kwargs)
@@ -192,6 +195,12 @@ class ModelSetupInformation:
 
     def assignTimeStep(self, m, v,**kwargs):
         self.timeStep.assign(m, stringToList(v),**kwargs)
+
+    def assignTimeZone(self,m,v,**kwargs):
+        self.timeZone.assign(m,stringToList(v),**kwargs)
+
+    def assignUseDST(self,m,v,**kwargs):
+        self.useDST.assign(m,stringToList(v),**kwargs)
 
     def assignInputFileDir(self,m,v,**kwargs):
         self.inputFileDir.assign(m,stringToList(v),**kwargs)

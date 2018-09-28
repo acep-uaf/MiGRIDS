@@ -1,13 +1,13 @@
 from GBSInputHandler.readAvecCsv import readAvecCsv
 
-def readAllAvecTimeSeries(fileNames, fileLocation, columnNames, useNames, componentUnits, dateColumnName, dateColumnFormat, timeColumnName, timeColumnFormat, utcOffsetValue, utcOffsetUnit, dst):
-
+def readAllAvecTimeSeries(inputDict):
     df = None
-    for i in range(len(fileNames)):  # for each data file
+    for i in range(len(inputDict['fileNames'])):  # for each data file
         if i == 0:  # read data file into a new dataframe if first iteration
-            df = readAvecCsv(fileNames[i], fileLocation, columnNames, useNames, componentUnits, dateColumnName, dateColumnFormat, timeColumnName, timeColumnFormat, utcOffsetValue, utcOffsetUnit, dst)
+            inputDict['fileName'] = inputDict['fileNames'][i]
+            df = readAvecCsv(inputDict)
         else:  # otherwise append
-            df2 = readAvecCsv(fileNames[i], fileLocation, columnNames, useNames, componentUnits, dateColumnName, dateColumnFormat, timeColumnName, timeColumnFormat, utcOffsetValue, utcOffsetUnit, dst)  # the new file
+            df2 = readAvecCsv(inputDict)  # the new file
             # get intersection of columns,
             df2Col = df2.columns
             dfCol = df.columns

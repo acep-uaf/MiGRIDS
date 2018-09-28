@@ -4,6 +4,7 @@ import GBSUserInterface.ModelEnvironmentTable as E
 import GBSUserInterface.ModelFileInfoTable as F
 import re
 import os
+import pytz
 from GBSUserInterface.Delegates import ClickableLineEdit
 from GBSUserInterface.gridLayoutSetup import setupGrid
 from GBSController.UIToHandler import UIToHandler
@@ -61,12 +62,16 @@ class FileBlock(QtWidgets.QGroupBox):
             self.findChild(QtWidgets.QWidget, 'inputFileDirvalue').setText(folderDialog)
             #save the input to the setup data model and into the database
             self.saveInput()
-            if self.dbhandler.getProjectPath() is None:
-                self.dbhandler.insertRecord('project'['project_path'],[folderDialog])
+            #update the filedir path
+            if self.dbhandler.getInputPath(str(self.input)) is None:
+                self.dbhandler.insertRecord('input_files',['inputfiledir'],[folderDialog])
             else:
-                self.dbhandler.updateRecord('project','_id',1,['project_path'],[folderDialog])
+                self.dbhandler.updateRecord('input_files',['_id'],[str(self.input)],['inputfiledir'],[folderDialog])
+                print(self.dbhandler.dataCheck('input_files'))
             #filter the component and environemnt input tables to the current input directory
             self.filterTables()
+            self.saveInput()
+            self.model.writeNewXML()
         return folderDialog
 
     def createTopBlock(self,title, fn):
@@ -81,29 +86,28 @@ class FileBlock(QtWidgets.QGroupBox):
 
         # add the setup grids
         g1 = {'headers': [1,2,3,4],
-                  'rowNames': [1,2,3],
+                  'rowNames': [1,2,3,4],
                   'columnWidths': [1, 1,1,3],
                   1:{1:{'widget':'lbl','name':'File Type:', 'default':'File Type'},
                      2:{'widget':'combo', 'name':'inputFileTypevalue', 'items':['csv', 'MET']},
                      3: {'widget': 'lbl', 'name': 'File Directory', 'default': 'Directory'},
                      4: {'widget': 'lncl', 'name': 'inputFileDirvalue'}
                      },
-                  # 2: {
-                  #     1: {'widget': 'lbl', 'name': 'timestep','default':'Timestep'},
-                  #     2: {'widget': 'txt', 'name': 'timestepvalue','default':'1'},
-                  #     3: {'widget': 'lbl', 'name': 'units', 'default':'Time Units'},
-                  #     4: {'widget': 'combo','name':'timestepunits','default':'S','items':['S','m','H']}
-                  #     },
                   2: {1: {'widget': 'lbl', 'name': 'Date Channel','default':'Date Channel'},
                       2: {'widget': 'txt', 'name': 'dateChannelvalue'},
                       3: {'widget': 'lbl', 'name': 'Date Format','default':'Date Format'},
-                      4: {'widget': 'combo', 'items': ['mm/dd/yy', 'mon-dd YYYY', 'mm/dd/yyyy','mm-dd-yyyy', 'dd/mm/yyyy'], 'name': 'dateChannelformat'}
+                      4: {'widget': 'combo', 'items': ['mm/dd/yy', 'mon-dd YYYY', 'mm/dd/YYYY','mm-dd-YYYY', 'dd/mm/YYYY'], 'name': 'dateChannelformat'}
                       },
                   3: {1: {'widget': 'lbl', 'name': 'Time Channel', 'default':'Time Channel'},
                       2: {'widget': 'txt', 'name': 'timeChannelvalue'},
                       3: {'widget': 'lbl', 'name': 'Time Format', 'default': 'Time Format'},
-                      4: {'widget': 'combo', 'items': ['hh:mm:ss'], 'name': 'timeChannelformat'}
-                      }
+                      4: {'widget': 'combo', 'items': ['HH:MM:SS'], 'name': 'timeChannelformat'}
+                      },
+                  4:{1: {'widget': 'lbl', 'name': 'Time Zone', 'default':'Time Zone'},
+                     2: {'widget': 'combo', 'items':pytz.all_timezones,'name': 'timeZonevalue','default':'America/Anchorage'},
+                     3: {'widget': 'lbl', 'name': 'Use DST', 'default': 'Use DST'},
+                     4: {'widget': 'chk', 'name': 'useDSTvalue', 'default':False}
+                     }
 
                     }
 
@@ -307,7 +311,7 @@ class FileBlock(QtWidgets.QGroupBox):
 
             # update database table
             if not self.dbhandler.insertRecord('input_files', setupFields, setupValues):
-                self.dbhandler.updateRecord('input_files', ['_id'], [setupFields[0]],
+                self.dbhandler.updateRecord('input_files', ['_id'], [str(setupValues[0])],
                                        setupFields[1:],
                                        setupValues[1:])
             # on leave save the xml files
@@ -343,6 +347,13 @@ class FileBlock(QtWidgets.QGroupBox):
         self.model.assignDateChannel(SetupTag.assignFormat, self.FileBlock.findChild(QtWidgets.QWidget, 'dateChannelformat').currentText(),position=int(self.input)-1)
         self.model.assignInputFileDir(SetupTag.assignValue, self.FileBlock.findChild(QtWidgets.QWidget,'inputFileDirvalue').text(),position=int(self.input)-1)
         self.model.assignInputFileType(SetupTag.assignValue, self.FileBlock.findChild(QtWidgets.QWidget,'inputFileTypevalue').currentText(),position=int(self.input)-1)
+        self.model.assignTimeZone(SetupTag.assignValue,
+                                       self.FileBlock.findChild(QtWidgets.QWidget, 'timeZonevalue').currentText(),
+                                       position=int(self.input) - 1)
+        self.model.assignUseDST(SetupTag.assignValue,
+                                       str(self.FileBlock.findChild(QtWidgets.QWidget, 'useDSTvalue').isChecked()),
+                                       position=int(self.input) - 1)
+
         self.saveTables()
         return
 
@@ -364,15 +375,15 @@ class FileBlock(QtWidgets.QGroupBox):
         component info comes from the database not the tableview
         component names, units, scale, offset, attribute, fieldname get saved'''
 
-        names = self.dbhandler.getComponentNames(self.filter)
-        for n in names:
-            self.model.assignComponentNames(SetupTag.assignValue, [n[0]])
+        names = self.dbhandler.getComponentNames()
+        names = list(set(names))
+        self.model.assignComponentNames(SetupTag.assignValue, ' '.join(names))
         #df is a pandas dataframe  of component information
         df = self.dbhandler.getComponentsTable(self.filter)
-        self.model.assignComponentName(SetupTag.assignValue,[df['component_name'].tolist()])
-        self.model.assignHeaderName(SetupTag.assignValue,[df['original_field_name'].tolist()])
-        self.model.assignComponentAttribute(SetupTag.assignValue,[df['attribute'].tolist()])
-        self.model.assignComponentAttribute(SetupTag.assignUnits,[df['units'].tolist()])
+        self.model.assignComponentName(SetupTag.assignValue,[','.join(df['component_name'].tolist())],position=int(self.input)-1)
+        self.model.assignHeaderName(SetupTag.assignValue,[','.join(df['original_field_name'].tolist())],position=int(self.input)-1)
+        self.model.assignComponentAttribute(SetupTag.assignValue,[','.join([x if x is not None else 'NA' for x in df['attribute'].tolist()])],position=int(self.input)-1)
+        self.model.assignComponentAttribute(SetupTag.assignUnits,[','.join([x if x is not None else 'NA' for x in df['units'].tolist()])],position=int(self.input)-1)
 
     def close(self):
         if 'projectFolder' in self.model.__dict__.keys():

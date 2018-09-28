@@ -24,7 +24,7 @@ from netCDF4 import Dataset
 from GBSInputHandler.processInputDataFrame import processInputDataFrame
 
 #String, String -> dataframe
-def readWindData(fileDir, columnNames, useNames,componentUnits, dateColumnName, dateColumnFormat, timeColumnName, timeColumnFormat, utcOffsetValue, utcOffsetUnit, dst):
+def readWindData(fileDir, columnNames, useNames,componentUnits, dateColumnName, dateColumnFormat, timeColumnName, timeColumnFormat, utcOffsetValue, utcOffsetUnit, dst, timeZone):
     '''imports all data files in a folder and converts parameters to a dataframe'''
     import os
     #DATETIME = 'Date & Time Stamp'
@@ -298,7 +298,7 @@ def readWindData(fileDir, columnNames, useNames,componentUnits, dateColumnName, 
 
     #winddf = fillWindRecords(df,channels)
     # only choose the channels desired
-    winddf = processInputDataFrame(df, columnNames, useNames, dateColumnName, dateColumnFormat, timeColumnName, timeColumnFormat, utcOffsetValue, utcOffsetUnit, dst)
+    winddf = processInputDataFrame(df, columnNames, useNames, dateColumnName, dateColumnFormat, timeColumnName, timeColumnFormat, utcOffsetValue, utcOffsetUnit, dst,timeZone)
     #winddf = df[columnNames]
     return fileDict, winddf
 '''

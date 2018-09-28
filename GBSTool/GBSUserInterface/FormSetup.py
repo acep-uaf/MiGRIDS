@@ -144,7 +144,7 @@ class FormSetup(QtWidgets.QWidget):
         from GBSUserInterface.replaceDefaultDatabase import replaceDefaultDatabase
         #if we were already working on a project its state gets saved and  new project is loaded
         if (self.model.project != '') & (self.model.project is not None):
-            self.model = switchProject(self.model)
+            self.model = switchProject(self)
             global model
             model = self.model
 
@@ -274,43 +274,44 @@ class FormSetup(QtWidgets.QWidget):
                 attr = child.objectName()
                 model.assign(attr,value,position=int(page.input)-1)
 
+            page.saveTables()
 
         # we also need headerNames, componentNames, attributes and units from the component section
-            componentView = page.findChild((QtWidgets.QTableView), 'components')
-            componentModel = componentView.model()
-            for i in range(0, componentModel.rowCount()):
-                headerName.append(componentModel.data(componentModel.index(i, 1)))
-                componentName.append(componentModel.data(componentModel.index(i, 3)))
-                componentAttribute.append(componentModel.data(componentModel.index(i, 7)))
-                componentAttributeU.append(componentModel.data(componentModel.index(i, 4)))
-                c = Component(component_name=componentModel.data(componentModel.index(i, 3)) + componentModel.data(
-                    componentModel.index(i, 7)),
-                              scale=componentModel.data(componentModel.index(i, 5)),
-                              units=componentModel.data(componentModel.index(i, 4)),
-                              offset=componentModel.data(componentModel.index(i, 6)),
-                              attribute=componentModel.data(componentModel.index(i, 7)),
-                              type=componentModel.data(componentModel.index(i, 2)),
-                              original_field_name=componentModel.data(componentModel.index(i, 2)))
-                self.model.components.append(c)
-            # make a list of distinct values
-            componentNames = list(set(componentName))
-            # and the same data from the environment section
-            envView = self.findChild((QtWidgets.QTableView), 'environment')
-            envModel = envView.model()
-            for j in range(0, envModel.rowCount()):
-                headerName.append(envModel.data(envModel.index(j, 1)))
-                componentName.append(envModel.data(envModel.index(j, 2)))
-                componentAttribute.append(envModel.data(envModel.index(j, 6)))
-                componentAttributeU.append(envModel.data(envModel.index(j, 3)))
-
-                c = Component(component_name=envModel.data(envModel.index(j, 2)) + envModel.data(envModel.index(j, 6)),
-
-                              scale=envModel.data(envModel.index(j, 4)),
-                              units=envModel.data(envModel.index(j, 3)),
-                              offset=envModel.data(envModel.index(j, 5)),
-                              attribute=envModel.data(envModel.index(j, 6)),
-                              original_field_name=envModel.data(envModel.index(j, 1)))
-                self.model.components.append(c)
+        #     componentView = page.findChild((QtWidgets.QTableView), 'components')
+        #     componentModel = componentView.model()
+        #     for i in range(0, componentModel.rowCount()):
+        #         headerName.append(componentModel.data(componentModel.index(i, 2)))
+        #         componentName.append(componentModel.data(componentModel.index(i, 4)))
+        #         componentAttribute.append(componentModel.data(componentModel.index(i, 8)))
+        #         componentAttributeU.append(componentModel.data(componentModel.index(i, 5)))
+        #         c = Component(component_name=componentModel.data(componentModel.index(i, 4)) + componentModel.data(
+        #             componentModel.index(i, 8)),
+        #                       scale=componentModel.data(componentModel.index(i, 6)),
+        #                       units=componentModel.data(componentModel.index(i, 5)),
+        #                       offset=componentModel.data(componentModel.index(i, 7)),
+        #                       attribute=componentModel.data(componentModel.index(i, 8)),
+        #                       type=componentModel.data(componentModel.index(i, 3)),
+        #                       original_field_name=componentModel.data(componentModel.index(i, 3)))
+        #         self.model.components.append(c)
+        #     # make a list of distinct values
+        #     componentNames = list(set(componentName))
+        #     # and the same data from the environment section
+        #     envView = self.findChild((QtWidgets.QTableView), 'environment')
+        #     envModel = envView.model()
+        #     for j in range(0, envModel.rowCount()):
+        #         headerName.append(envModel.data(envModel.index(j, 2)))
+        #         componentName.append(envModel.data(envModel.index(j, 3)))
+        #         componentAttribute.append(envModel.data(envModel.index(j, 7)))
+        #         componentAttributeU.append(envModel.data(envModel.index(j, 4)))
+        #
+        #         c = Component(component_name=envModel.data(envModel.index(j, 3)) + envModel.data(envModel.index(j, 7)),
+        #
+        #                       scale=envModel.data(envModel.index(j, 5)),
+        #                       units=envModel.data(envModel.index(j, 4)),
+        #                       offset=envModel.data(envModel.index(j, 6)),
+        #                       attribute=envModel.data(envModel.index(j, 7)),
+        #                       original_field_name=envModel.data(envModel.index(j, 2)))
+        #         self.model.components.append(c)
         # model.assign('headerNamevalue', headerName)
         # model.assign('componentNamevalue', componentName)
         # model.assign('componentAttributevalue', componentAttribute)

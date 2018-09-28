@@ -97,7 +97,7 @@ class ProjectSQLiteHandler:
                                              (8, 'mon dd yyyy', 'mon dd yyyy'),
                                              (9, 'days', 'days')
                                                  ])
-        self.addRefValues('ref_time_format',[(0,'HH:mm:SS','HH:mm:SS'),(1,'HH:mm','HH:mm'),
+        self.addRefValues('ref_time_format',[(0,'HH:MM:SS','HH:MM:SS'),(1,'HH:MM','HH:MM'),
                                              (2,'hours','hours'),
                                                  (3,'minutes','minutes'),(4,'seconds','seconds')
                                                  ])
@@ -171,15 +171,17 @@ class ProjectSQLiteHandler:
         self.cursor.executescript("""
                 CREATE TABLE IF NOT EXISTS input_files
                 (_id integer primary key,
-                filetypevalue text , 
+                inputfiletypevalue text , 
                 datatype text ,
-                inputfiledir text,
+                inputfiledirvalue text,
                 timestep text,
                 datechannelvalue text,
                 datechannelformat text,
                 timechannelvalue text,
                 timechannelformat text,
                 includechannels text,
+                timezonevalue text,
+                usedstvalue text,
                 FOREIGN KEY (timechannelformat) REFERENCES ref_time_format(code),
                 FOREIGN KEY (datechannelformat) REFERENCES ref_date_format(code));""")
 
@@ -277,7 +279,10 @@ class ProjectSQLiteHandler:
                                 )
             self.connection.commit()
             return True
-        except:
+        except Exception as e:
+            print(e)
+            print(type(e))
+
             return False
         return
 
@@ -375,9 +380,12 @@ class ProjectSQLiteHandler:
 
         return codes
     #returns a list of components associated with a project
-    def getComponentNames(self,filter):
-        names = self.cursor.execute("Select component_name from components")
-        return list(names)
+    def getComponentNames(self):
+
+        names = self.cursor.execute("select component_name from components").fetchall()
+        names = [''.join(i) for i in names]
+        print(self.dataCheck('components'))
+        return pd.Series(names).tolist()
     def getComponentsTable(self, filter):
         print(self.dataCheck("components"))
         #sql = """select component_name, original_field_name, units,attribute from components where inputfiledir = ({0})"""
@@ -389,3 +397,9 @@ class ProjectSQLiteHandler:
         sql = """select component_name, original_field_name, units,attribute from environment where inputfiledir = ?"""
         df.append(pd.read_sql_query(sql,self.connection,params=[filter]))
         return df
+    def getInputPath(self, pathNum):
+        '''returns the file folder for the given input file number (corrasponds to fileblock in setup page)'''
+        path = self.cursor.execute("select inputfiledirvalue from input_files where _id = " + pathNum).fetchone()
+        if path is not None:
+           return path[0]
+        return

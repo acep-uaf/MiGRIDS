@@ -4,7 +4,7 @@
 # License: MIT License (see LICENSE file of this package for more information)
 # assumes the first column is always a date column
 # reads data files from user and outputs a dataframe.
-def readDataFile(inputFileType,fileLocation,fileType,columnNames,useNames,componentUnits,componentAttributes, dateColumnName, dateColumnFormat, timeColumnName, timeColumnFormat, utcOffsetValue, utcOffsetUnit, dst):
+def readDataFile(inputDict):
     # inputSpecification points to a script to accept data from a certain input data format *type string*
     # fileLocation is the dir where the data files are stored. It is either absolute or relative to the GBS project InputData dir *type string*
     # fileType is the file type. default is csv. All files of this type will be read from the dir *type string*
@@ -23,80 +23,79 @@ def readDataFile(inputFileType,fileLocation,fileType,columnNames,useNames,compon
     from GBSInputHandler.Component import Component
 
     ### convert inputs to list, if not already
-    if not isinstance(columnNames,(list,tuple,np.ndarray)):
-        columnNames = [columnNames]
-    if not isinstance(useNames, (list, tuple, np.ndarray)):
-        useNames = [useNames]
-    if not isinstance(componentUnits, (list, tuple, np.ndarray)):
-        componentUnits = [componentUnits]
-    if not isinstance(componentAttributes, (list, tuple, np.ndarray)):
-        componentAttributes = [componentAttributes]
+    if not isinstance(inputDict['columnNames'],(list,tuple,np.ndarray)):
+        inputDict['columnNames'] = [inputDict['columnNames']]
+    if not isinstance(inputDict['useNames'], (list, tuple, np.ndarray)):
+        inputDict['useNames'] = [inputDict['useNames']]
+    if not isinstance(inputDict['componentUnits'], (list, tuple, np.ndarray)):
+        inputDict['componentUnits'] = [inputDict['componentUnits']]
+    if not isinstance(inputDict['componentAttributes'], (list, tuple, np.ndarray)):
+        inputDict['componentAttributes'] = [inputDict['componentAttributes']]
 
     ###### go to directory with time series data is located #######
     here = os.path.dirname(os.path.realpath(__file__))
-    if fileLocation=='':
+    if inputDict['fileLocation']=='':
         print('Choose directory where input data files are located.')
         import tkinter as tk
         root = tk.Tk()
         root.withdraw()
         root.attributes('-topmost',1)
-        fileLocation = filedialog.askdirectory()
+        inputDict['fileLocation'] = filedialog.askdirectory()
     else:
-        fileLocation = os.path.join(here,fileLocation)
-    os.chdir(fileLocation)
+        inputDict['fileLocation'] = os.path.join(here,inputDict['fileLocation'])
+    os.chdir(inputDict['fileLocation'])
     # get just the filenames ending with fileType. check for both upper and lower case
     # met files are text.
-    if fileType.lower() == 'met':
-        fileNames = [f for f in os.listdir(fileLocation) if
+    if inputDict['fileType'].lower() == 'met':
+        inputDict['fileNames'] = [f for f in os.listdir(inputDict['fileLocation']) if
                      os.path.isfile(f) & (f.endswith('TXT') or f.endswith('txt'))]
     else:
-        fileNames = [f for f in os.listdir(fileLocation) if
-                     os.path.isfile(f) & (f.endswith(fileType.upper()) or f.endswith(fileType.lower()))]
+        inputDict['fileNames'] = [f for f in os.listdir(inputDict['fileLocation']) if
+                     os.path.isfile(f) & (f.endswith(inputDict['fileType'].upper()) or f.endswith(inputDict['fileType'].lower()))]
 
     
     df = pd.DataFrame()
     ####### Parse the time series data files ############
     # depending on input specification, different procedure
-    if inputFileType.lower() =='csv':
-        df = readAllAvecTimeSeries(fileNames,fileLocation,columnNames,useNames,componentUnits, dateColumnName, dateColumnFormat, timeColumnName, timeColumnFormat, utcOffsetValue, utcOffsetUnit, dst)
-    elif inputFileType.lower() == 'met':
-        fileDict, df = readWindData(fileLocation,columnNames,useNames,componentUnits, dateColumnName, dateColumnFormat, timeColumnName, timeColumnFormat, utcOffsetValue, utcOffsetUnit, dst)
-        
+    if inputDict['fileType'].lower() =='csv':
+        df = readAllAvecTimeSeries(inputDict)
+    elif inputDict['fileType'].lower() == 'met':
+        fileDict, df = readWindData(inputDict)
     
     # convert units
-    if np.all(componentUnits != None):
+    if np.all(inputDict['componentUnits'] != None):
         # initiate lists
 
         listOfComponents = []
-        if componentAttributes != None:
-            for i in range(len(componentUnits)): #for each channel make a component object
+        if inputDict['componentAttributes'] != None:
+            for i in range(len(inputDict['componentUnits'])): #for each channel make a component object
        
                 # cd to unit conventions file
                 dir_path = os.path.dirname(os.path.realpath(__file__))                
                 unitConventionDir = os.path.join(dir_path, '../GBSAnalyzer/UnitConverters')
                 # get the default unit for the data type
-                units = readXmlTag('internalUnitDefault.xml', ['unitDefaults', componentAttributes[i]], 'units', unitConventionDir)[0]
+                units = readXmlTag('internalUnitDefault.xml', ['unitDefaults', inputDict['componentAttributes'][i]], 'units', unitConventionDir)[0]
                 # if the units don't match, convert
-                if units.lower() != componentUnits[i].lower():
+                if units.lower() != inputDict['componentUnits'][i].lower():
                     unitConvertDir = os.path.join( dir_path,'../GBSAnalyzer/UnitConverters/unitConverters.py')
-                    funcName = componentUnits[i].lower() + '2' + units.lower()
+                    funcName = inputDict['componentUnits'][i].lower() + '2' + units.lower()
                     # load the conversion
                     spec = importlib.util.spec_from_file_location(funcName, unitConvertDir)
                     uc = importlib.util.module_from_spec(spec)
                     spec.loader.exec_module(uc)
                     x = getattr(uc, funcName)
                     # update data
-                    df[useNames[i]] = x(df[useNames[i]])
+                    df[inputDict['useNames'][i]] = x(df[inputDict['useNames'][i]])
                 # get the scale and offset
-                scale = readXmlTag('internalUnitDefault.xml', ['unitDefaults', componentAttributes[i]], 'scale',
+                scale = readXmlTag('internalUnitDefault.xml', ['unitDefaults', inputDict['componentAttributes'][i]], 'scale',
                                    unitConventionDir)[0]
-                offset = readXmlTag('internalUnitDefault.xml', ['unitDefaults', componentAttributes[i]], 'offset',
+                offset = readXmlTag('internalUnitDefault.xml', ['unitDefaults', inputDict['componentAttributes'][i]], 'offset',
                                     unitConventionDir)[0]
-                df[useNames[i]] = df[useNames[i]]*int(scale) + int(offset)
+                df[inputDict['useNames'][i]] = df[inputDict['useNames'][i]]*int(scale) + int(offset)
                 # get the desired data type and convert
-                datatype = readXmlTag('internalUnitDefault.xml', ['unitDefaults', componentAttributes[i]], 'datatype',
+                datatype = readXmlTag('internalUnitDefault.xml', ['unitDefaults', inputDict['componentAttributes'][i]], 'datatype',
                                       unitConventionDir)[0]
-                listOfComponents.append(Component(component_name=useNames[i],units=units,scale=scale,offset=offset,datatype=datatype,attribute=componentAttributes))
+                listOfComponents.append(Component(component_name=inputDict['useNames'][i],units=units,scale=scale,offset=offset,datatype=datatype,attribute=inputDict['componentAttributes']))
 
     # return to original directory
     os.chdir(here)

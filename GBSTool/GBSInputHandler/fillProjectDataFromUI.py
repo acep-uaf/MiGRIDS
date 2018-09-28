@@ -4,11 +4,11 @@ def fillProjectDataFromUI(projectDir, setupInfo):
     # general imports
     import sys
     import os
-    from createComponentDescriptor import createComponentDescriptor
+    from GBSInputHandler.createComponentDescriptor import createComponentDescriptor
     here = os.path.dirname(os.path.realpath(__file__))
     sys.path.append(here)
 
-    from writeXmlTag import writeXmlTag
+    from GBSInputHandler.writeXmlTag import writeXmlTag
 
 
     projectSetup = setupInfo.project + 'Setup.xml'
