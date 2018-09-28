@@ -166,8 +166,8 @@ def runSimulation(projectSetDir = ''):
         # pr0.enable()
         SO = SystemOperations(outputDataDir, timeStep = timeStep, runTimeSteps = runTimeSteps, loadRealFiles = loadProfileFile, loadReactiveFiles = [],
                               predictLoad = predictLoad, loadDescriptor = loadDescriptors, predictWind = predictWind, getMinSrcFile = getMinSrcFile, getMinSrcInputFile = getMinSrcInputFile, reDispatchFile = reDispatchFile, reDispatchInputsFile = reDispatchInputFile,
-                         genIDs = genIDs, genStates = genStates, genDescriptors = genDescriptors, genDispatch = genDispatch,
-                         wtgIDs = wtgIDs, wtgStates = wtgStates, wtgDescriptors = wtgDescriptors, wtgSpeedFiles = timeSeriesDir, wtgDispatch = wtgDispatch,
+                         genIDs = genIDs, genStates = genStates, genDescriptors = genDescriptors,
+                         wtgIDs = wtgIDs, wtgStates = wtgStates, wtgDescriptors = wtgDescriptors, wtgSpeedFiles = timeSeriesDir,
                          eesIDs = eesIDs, eesStates = eesStates, eesSOCs = eesSOC, eesDescriptors = eesDescriptors, eesDispatch = eesDispatch,
                          tesIDs = tesIDs, tesTs = tesT, tesStates=tesStates, tesDescriptors=tesDescriptors, tesDispatch=tesDispatch)
         # stop profiler
