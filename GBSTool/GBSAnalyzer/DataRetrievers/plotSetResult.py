@@ -9,7 +9,7 @@ import itertools
 import matplotlib.pyplot as plt
 import numbers
 
-def plotSetResult(plotRes,plotAttr, projectSetDir = '', otherAttr = [],otherAttrVal = [], baseSet = '', baseRun = '',
+def plotSetResult(plotRes,plotAttr, projectSetDir = '', otherAttr = [],otherAttrVal = [], removeOtherAttr = [], baseSet = '', baseRun = '',
                   subtractFromBase = 0, removeSingleOtherAttr = True, alwaysUseMarkers = False, plotResName = '',
                   plotAttrName = '', otherAttrNames = [], saveName = ''):
     '''
@@ -18,6 +18,8 @@ def plotSetResult(plotRes,plotAttr, projectSetDir = '', otherAttr = [],otherAttr
     :param plotAttr: The simulation attribute to be plotted against. This is the column header in the database as well as the tag and attribute from the component or setup xml file.
     :param otherAttr: The other component or setup attributes to have fixed values in the plot. If not specified, all values for the attribute will be plotted as multiple lines.
     :param otherAttrVal: The values of the 'otherAttr' to plot. It should be given as a list of lists, corresponding to otherAttr.
+    :param removeOtherAttr: a list of other attributes to remove from the legend. These are for attributes that only have one
+    value for every other combination of values.
     :param baseCaseRunDir: the run directory of the base case scenario.
     :param subtractFromBase:0  - do not subtract or add, but if base case is specified, place at the begining
 # 1 - subtract value from base -> decrease from base case
@@ -132,6 +134,11 @@ def plotSetResult(plotRes,plotAttr, projectSetDir = '', otherAttr = [],otherAttr
     otherColumns = columns.copy()
     otherColumns.remove(plotAttr)
     # check if input and output ess power are listed
+    for roa in removeOtherAttr:
+        try:
+            otherColumns.remove(roa)
+        except:
+            ValueError('RemoveOtherAttr value was not found in the component attributes that were changed for this set of simulations.')
     if 'ees0.POutMaxPa.value' in otherColumns and 'ees0.PInMaxPa.value' in otherColumns:
         # if they are, and they are identical, remove one.
         if all(dfAttr['ees0.POutMaxPa.value'] == dfAttr['ees0.PInMaxPa.value']):
@@ -188,7 +195,7 @@ def plotSetResult(plotRes,plotAttr, projectSetDir = '', otherAttr = [],otherAttr
                     # get line indices that wrap around when they reach the end of the list of lineStyles
                     indLineStyle0 = []
                     for idxL in range(len(uniqueValues)):
-                        indLineStyle0.append(indLineStyle + (idxL % len(lineStyles)))
+                        indLineStyle0.append((indLineStyle + idxL) % len(lineStyles))
                     legendLineStyles.append(lineStyles[indLineStyle0])
                     indLineStyle = indLineStyle + 1 % len(lineStyles)
                 else:
