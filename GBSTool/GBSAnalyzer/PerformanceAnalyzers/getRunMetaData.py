@@ -73,7 +73,7 @@ def getRunMetaData(projectSetDir,runs):
         idxGenOnline = genPAvail > 0
         genOverLoadingTime = np.count_nonzero(genP[idxGenOnline]>genPAvail[idxGenOnline]) * ts/3600
         genLoadingDiff = genP[idxGenOnline] - genPAvail[idxGenOnline]
-        genOverLoading = genOverLoading + [list(genLoadingDiff[genLoadingDiff>0])]
+        genOverLoading = genOverLoading + [[x for x in genLoadingDiff if x > 0]]
         genOverLoadingkWh = sum(genLoadingDiff[genLoadingDiff>0]) * ts / 3600
 
         # get overloading of the ESS. this is the power requested from the diesel generators when none are online.
@@ -189,22 +189,30 @@ def getRunMetaData(projectSetDir,runs):
 
     # make pdfs
     # generator overloading
-    maxbin = max(max((x for x in genOverLoading if len(x)>0)))
-    minbin = min(min((x for x in genOverLoading if len(x) > 0)))
-    genOverLoadingPdf = [[]]*len(genOverLoading)
-    for idx, gol in enumerate(genOverLoading):
-        genOverLoadingPdf[idx] = np.histogram(gol,10,range=(minbin,maxbin))
+    # get all simulations that had some generator overloading
+    genOverloadingSims = [x for x in genOverLoading if len(x)>0]
+    if len(genOverloadingSims) > 0:
+        maxbin = max(max(genOverloadingSims))
+        minbin = min(min(genOverloadingSims))
+        genOverLoadingPdf = [[]]*len(genOverLoading)
+        for idx, gol in enumerate(genOverLoading):
+            genOverLoadingPdf[idx] = np.histogram(gol,10,range=(minbin,maxbin))
+    else:
+        genOverLoadingPdf = []
     outfile = open('genOverLoadingPdf.pkl','wb')
     pickle.dump(genOverLoadingPdf,outfile)
     outfile.close()
 
     # eess overloading
-    eessOverLoading
-    maxbin = max(max((x for x in eessOverLoading if len(x) > 0)))
-    minbin = min(min((x for x in eessOverLoading if len(x) > 0)))
-    eessOverLoadingPdf = [[]] * len(eessOverLoading)
-    for idx, eol in enumerate(eessOverLoading):
-        eessOverLoadingPdf[idx] = np.histogram(eol, 10, range=(minbin, maxbin))
+    eessOverLoadingSims = [x for x in eessOverLoading if len(x) > 0]
+    if len(eessOverLoadingSims) > 0:
+        maxbin = max(max(eessOverLoadingSims))
+        minbin = min(min(eessOverLoadingSims))
+        eessOverLoadingPdf = [[]] * len(eessOverLoading)
+        for idx, eol in enumerate(eessOverLoading):
+            eessOverLoadingPdf[idx] = np.histogram(eol, 10, range=(minbin, maxbin))
+    else:
+        eessOverLoadingPdf = []
     outfile = open('eessOverLoadingPdf.pkl', 'wb')
     pickle.dump(eessOverLoadingPdf, outfile)
     outfile.close()

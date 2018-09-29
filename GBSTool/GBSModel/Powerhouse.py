@@ -31,6 +31,8 @@ class Powerhouse:
         if not len(genIDS)==len(genStates):
             raise ValueError('The length genIDS, genP, genQ and genStates inputs to Powerhouse must be equal.')
         # ************Powerhouse variables**********************
+        # general
+        self.timeStep = timeStep
         # List of generators and their respective IDs
         self.generators = []
         self.genIDS = genIDS
@@ -156,6 +158,13 @@ class Powerhouse:
                 if load <= genComb:
                     combList = np.append(combList, idy)
             self.lkpGenCombinationsUpperNormalLoading[load] = combList
+
+        # CALCULATE AND SAVE THE MAXIMUM GENERATOR START TIME
+        # this is used in the generator scheduling.
+        self.maxStartTime = 0
+        for gen in self.generators:
+            self.maxStartTime = max(self.maxStartTime, gen.genStartTime)
+
 
 
 
@@ -318,9 +327,10 @@ class Powerhouse:
         turnOffTime = [None]*lenGenerators
         for idx, gen in enumerate(self.generators):
             # get the time remaining to turn on each generator
-            turnOnTime[idx] = gen.genStartTime - gen.genStartTimeAct
+            # include this time step in the calculation. this avoids having to wait 1 time step longer than necessary to bring a diesel generator online.
+            turnOnTime[idx] = gen.genStartTime - gen.genStartTimeAct - self.timeStep
             # get the time remaining to turn off each generator
-            turnOffTime[idx] = gen.genRunTimeMin - gen.genRunTimeAct
+            turnOffTime[idx] = gen.genRunTimeMin - gen.genRunTimeAct - self.timeStep
 
         # Go through each potential combination of generators and find which generators need to be switched on and
         # offline for each combination
@@ -383,7 +393,7 @@ class Powerhouse:
             self.switchGenComb(genSwOn[indSort[0]], genSwOff[indSort[0]])  # switch generators
             for idx in range(len(self.genIDS)):
                 # update genPAvail
-                self.generators[idx].checkOperatingConditions()
+                self.generators[idx].updateGenPAvail()
         # otherwise, start or continue warming up generators for most efficient combination
         else:
             self.startGenComb(genSwOn[indSort[0]])
@@ -396,7 +406,7 @@ class Powerhouse:
                 self.switchGenComb(genSwOn[indSort[indBest]],genSwOff[indSort[indBest]]) # switch generators
                 for idx in range(len(self.genIDS)):
                     # update genPAvail
-                    self.generators[idx].checkOperatingConditions()
+                    self.generators[idx].updateGenPAvail()
 
 
 

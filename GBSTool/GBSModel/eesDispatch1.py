@@ -16,56 +16,36 @@ class eesDispatch:
         :param newSRC: new spinning reserve requirement. if set to nan, there is no change in the SRC requirement.
         :param tIndex: the index of the current simulation time step.
         """
-
-        # find the max power available from each generator
-        # decide how to split up the requested power between them:
-        # - simple: proportional to the remaining capacity left in each
-        # - use the loss maps to find the least cost. whether diesel generators were used to charge will be considered
-        # higher up in a system controller
-        # - have indicator to use one for high ramp rate and one for low
+        # This charges and discharges the ees in the order they are numbered. So ees0 with be discharged first and
+        # charge first. This is to simulate the scenario where ees0 is a high power (eg ultra caps or flywheel) that can
+        # handle many cycles. ees1 and above are more energy focussed and should not be cycled as much.
 
         # split power proportionally to remaining power capabilities
         # get power
         if newP > 0: # if discharging
-            # get all available powers
-            PoutAvail = []
-            for ees in eess.electricalEnergyStorageUnits:
-                PoutAvail.append(ees.eesPoutAvail)
-            # if no power available
-            if sum(PoutAvail) <= 0:
-                PdisRatio = 0
-            else:
-                # assign power based on what is available
-                PdisRatio = min([newP / sum(PoutAvail), 1])
             # for each electrical energy storage unit in the ees system set a power level and find remaining SRC available
             PsrcAvail = []
-            for idx, ees in enumerate(eess.electricalEnergyStorageUnits):
-                ees.eesP = PoutAvail[idx]*PdisRatio
+            newPremaining = newP # the remaining power after the scheduling previous ees
+            for ees in eess.electricalEnergyStorageUnits:
+                ees.eesP = min(ees.eesPoutAvail,newPremaining)
+                newPremaining = newPremaining - ees.eesP
                 ees.checkOperatingConditions(tIndex)
                 PsrcAvail.append(ees.eesPsrcAvail)
 
         elif newP < 0:  # if discharging
-            # get all available powers
-            PinAvail = []
-            for ees in eess.electricalEnergyStorageUnits:
-                PinAvail.append(ees.eesPinAvail)
-                # if no power available
-            if sum(PinAvail) <= 0:
-                PchRatio = 0
-            else:
-                # assign power based on what is available
-                PchRatio = min([-newP / sum(PinAvail), 1])
             # for each electrical energy storage unit in the ees system set a power level and find remaining SRC available
             PsrcAvail = []
-            for idx, ees in enumerate(eess.electricalEnergyStorageUnits):
-                ees.eesP = -PinAvail[idx] * PchRatio
+            newPremaining = newP  # the remaining power after the scheduling previous ees
+            for ees in eess.electricalEnergyStorageUnits:
+                ees.eesP = max(-ees.eesPinAvail, newPremaining)
+                newPremaining = newPremaining + ees.eesP
                 ees.checkOperatingConditions(tIndex)
                 PsrcAvail.append(ees.eesPsrcAvail)
 
         else:
             # for each electrical energy storage unit in the ees system set zero power and find remaining SRC available
             PsrcAvail = []
-            for idx, ees in enumerate(eess.electricalEnergyStorageUnits):
+            for ees in eess.electricalEnergyStorageUnits:
                 ees.eesP = 0
                 ees.checkOperatingConditions(tIndex)
                 PsrcAvail.append(ees.eesPsrcAvail)

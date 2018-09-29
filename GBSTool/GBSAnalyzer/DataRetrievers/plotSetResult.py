@@ -9,7 +9,7 @@ import itertools
 import matplotlib.pyplot as plt
 import numbers
 
-def plotSetResult(plotRes,plotAttr, projectSetDir = '', otherAttr = [],otherAttrVal = [], baseSet = '', baseRun = '',
+def plotSetResult(plotRes,plotAttr, projectSetDir = '', otherAttr = [],otherAttrVal = [], removeOtherAttr = [], baseSet = '', baseRun = '',
                   subtractFromBase = 0, removeSingleOtherAttr = True, alwaysUseMarkers = False, plotResName = '',
                   plotAttrName = '', otherAttrNames = [], saveName = ''):
     '''
@@ -18,6 +18,8 @@ def plotSetResult(plotRes,plotAttr, projectSetDir = '', otherAttr = [],otherAttr
     :param plotAttr: The simulation attribute to be plotted against. This is the column header in the database as well as the tag and attribute from the component or setup xml file.
     :param otherAttr: The other component or setup attributes to have fixed values in the plot. If not specified, all values for the attribute will be plotted as multiple lines.
     :param otherAttrVal: The values of the 'otherAttr' to plot. It should be given as a list of lists, corresponding to otherAttr.
+    :param removeOtherAttr: a list of other attributes to remove from the legend. These are for attributes that only have one
+    value for every other combination of values.
     :param baseCaseRunDir: the run directory of the base case scenario.
     :param subtractFromBase:0  - do not subtract or add, but if base case is specified, place at the begining
 # 1 - subtract value from base -> decrease from base case
@@ -97,22 +99,30 @@ def plotSetResult(plotRes,plotAttr, projectSetDir = '', otherAttr = [],otherAttr
         dfAttr = pd.read_sql_query('select * from compAttributes', conn)
     conn.close()
 
-    # remove values from otherAttr not to be plotted
-    for idx, attr in enumerate(otherAttr):  # for set of values to plot for this attribute
-        values = otherAttrVal[idx]
-        # convert to numeric, if not already
-        values = [float(x) for x in values]
-        # go through each value for this attribute, check if it is in the list of values to plot, if not, remove row
-        # from both dfAttr and dfRes
-        dropIdx = []  # df indicies to drop
-        for idx, attrVal in enumerate(dfAttr[attr]):
-            if not float(attrVal) in values:
-                # get the index of the row to be dropped and remove from both df
-                dropIdx.append(dfAttr.index[idx])
-                # dfAttr = dfAttr.drop(dfIdx)
-                # dfRes = dfRes.drop(dfIdx)
-        dfAttr = dfAttr.drop(dropIdx)
-        dfRes = dfRes.drop(dropIdx)
+    # remove values from otherAttr not to be plotted, only if values to be plotted have been specified
+    if otherAttrVal != []:
+        for idx, attr in enumerate(otherAttr):  # for set of values to plot for this attribute
+            values = otherAttrVal[idx]
+            # convert to numeric, if not already
+            values = [float(x) for x in values]
+            # go through each value for this attribute, check if it is in the list of values to plot, if not, remove row
+            # from both dfAttr and dfRes
+            dropIdx = []  # df indicies to drop
+            for idx0, attrVal in enumerate(dfAttr[attr]):
+                if not float(attrVal) in values:
+                    # get the index of the row to be dropped and remove from both df
+                    dropIdx.append(dfAttr.index[idx0])
+                    # dfAttr = dfAttr.drop(dfIdx)
+                    # dfRes = dfRes.drop(dfIdx)
+            dfAttr = dfAttr.drop(dropIdx)
+            dfRes = dfRes.drop(dropIdx)
+    else:
+        for idx, attr in enumerate(otherAttr):
+            try: # try to convert to intergers
+                # make unique with set
+                otherAttrVal.append(list(set([int(x) for x in dfAttr[attr]])))
+            except:
+                otherAttrVal.append(list(set([float(x) for x in dfAttr[attr]])))
 
     # get the names of all results columns
     columns = list(dfAttr.columns.values)
@@ -124,6 +134,11 @@ def plotSetResult(plotRes,plotAttr, projectSetDir = '', otherAttr = [],otherAttr
     otherColumns = columns.copy()
     otherColumns.remove(plotAttr)
     # check if input and output ess power are listed
+    for roa in removeOtherAttr:
+        try:
+            otherColumns.remove(roa)
+        except:
+            ValueError('RemoveOtherAttr value was not found in the component attributes that were changed for this set of simulations.')
     if 'ees0.POutMaxPa.value' in otherColumns and 'ees0.PInMaxPa.value' in otherColumns:
         # if they are, and they are identical, remove one.
         if all(dfAttr['ees0.POutMaxPa.value'] == dfAttr['ees0.PInMaxPa.value']):
@@ -180,7 +195,7 @@ def plotSetResult(plotRes,plotAttr, projectSetDir = '', otherAttr = [],otherAttr
                     # get line indices that wrap around when they reach the end of the list of lineStyles
                     indLineStyle0 = []
                     for idxL in range(len(uniqueValues)):
-                        indLineStyle0.append(indLineStyle + (idxL % len(lineStyles)))
+                        indLineStyle0.append((indLineStyle + idxL) % len(lineStyles))
                     legendLineStyles.append(lineStyles[indLineStyle0])
                     indLineStyle = indLineStyle + 1 % len(lineStyles)
                 else:
@@ -277,10 +292,10 @@ def plotSetResult(plotRes,plotAttr, projectSetDir = '', otherAttr = [],otherAttr
     for idx, attr in enumerate(otherAttr):
         # convert values to a string
         oavText = ''
-        for idx, oav in enumerate(otherAttrVal[idx]):
-            if idx != 0:
+        for idx0, oav in enumerate(otherAttrVal[idx]):
+            if idx0 != 0:
                 oavText = oavText + '_'
-            oavText = oavText + str(oav)
+            oavText = oavText + str(oav).replace('.','_') # replace periods with underscores.
         otherAttrText = otherAttrText + attr + '_' + oavText + ' '
 
     os.chdir(projectSetDir)
@@ -291,12 +306,16 @@ def plotSetResult(plotRes,plotAttr, projectSetDir = '', otherAttr = [],otherAttr
         if baseSet != '' and baseRun != '': # if base case was used, different file name
             if subtractFromBase == 1:
                 plt.savefig('Reduction in ' + plotResName + ' vs ' + plotAttr + ' for ' + otherAttrText + '.png')
+                plt.savefig('Reduction in ' + plotResName + ' vs ' + plotAttr + ' for ' + otherAttrText + '.pdf')
             elif subtractFromBase == 2:
                 plt.savefig('Increase in ' + plotResName + ' vs ' + plotAttr + ' for ' + otherAttrText + '.png')
+                plt.savefig('Increase in ' + plotResName + ' vs ' + plotAttr + ' for ' + otherAttrText + '.pdf')
             elif subtractFromBase == 0:
                 plt.savefig(plotResName + ' vs ' + plotAttr + ' for ' + otherAttrText + '.png')
+                plt.savefig(plotResName + ' vs ' + plotAttr + ' for ' + otherAttrText + '.pdf')
         else:
             plt.savefig(plotResName + ' vs ' + plotAttr + ' for ' + otherAttrText + '.png')
+            plt.savefig(plotResName + ' vs ' + plotAttr + ' for ' + otherAttrText + '.pdf')
     else:
         plt.savefig(saveName)
 

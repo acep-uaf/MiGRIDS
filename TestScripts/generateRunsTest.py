@@ -153,42 +153,79 @@ def generateRuns(projectSetDir):
         # make changes
         for idx, value in enumerate(val):
             compFile = os.path.join(compDir, compName[idx] + 'Set' + str(setNum) + 'Run' + str(run) + 'Descriptor.xml')
+
+
             tag = compTag[idx].split('.')
             attr = compAttr[idx]
-            # check if value is a tag in the xml document
-            tryTagAttr = value.split('.')  # split into tag and attribute
-            if len(tryTagAttr) > 1:
-                # seperate into component, tags and attribute. There may be multiple tags
-                tryComp = tryTagAttr[0]
-                tryTag = tryTagAttr[1]
-                for i in tryTagAttr[2:-1]: # if there are any other tag values
-                    tryTag = tryTag + '.' + i
-                tryAttr = tryTagAttr[-1]  # the attribute
-                if tryComp in compName:
-                    idxComp = [i for i, x in enumerate(compName) if x == tryComp]
-                    idxTag = [i for i, x in enumerate(compTag) if x == tryTag]
-                    idxAttr = [i for i, x in enumerate(compAttr) if x == tryAttr]
-                    idxVal = list(set(idxTag).intersection(idxAttr).intersection(idxComp))
-                    value = val[idxVal[0]] # choose the first match, if there are multiple
-                    a = list(runValuesUpdated[run]) # change values from tuple
-                    a[idx] = value
-                    runValuesUpdated[run] = tuple(a)
+            # check to see if any mathematical operations are required
+            tryTagAttr = value.split('+')  # check for addition
+            tryTagAttr = [x.split('-') for x in tryTagAttr]  # subtraction
+            tryTagAttr = [[x.split('*') for x in y] for y in tryTagAttr]  # multiplication
+            tryTagAttr = [[[x.split('/') for x in y] for y in z] for z in tryTagAttr]  # division
+
+            # the value to be written
+            writeVal = 0
+            for idxA,a in enumerate(tryTagAttr): # all addends
+                for idxS,s in enumerate(a): # all subtrahends
+                    for idxF,f in enumerate(s): # all factors
+                        for idxD,d in enumerate(f): # all dividends
+                            # check if this is possibly refering to another tag's value
+                            # split by '.' and see if corresponds to a component or tag name
+                            tryDTag = d.split('.')
+                            if len(tryDTag) > 1:
+                                # seperate into component, tags and attribute. There may be multiple tags
+                                tryComp = tryDTag[0]
+                                tryTag = tryDTag[1]
+                                for i in tryDTag[2:-1]:  # if there are any other tag values
+                                    tryTag = tryTag + '.' + i
+                                tryAttr = tryDTag[-1]  # the attribute
+                                if tryComp in compName:
+                                    idxComp = [i for i, x in enumerate(compName) if x == tryComp]
+                                    idxTag = [i for i, x in enumerate(compTag) if x == tryTag]
+                                    idxAttr = [i for i, x in enumerate(compAttr) if x == tryAttr]
+                                    idxVal = list(set(idxTag).intersection(idxAttr).intersection(idxComp))
+                                    d = val[idxVal[0]]  # choose the first match, if there are multiple
+
+                                else:
+                                    # check if it is referring to a tag in the same component
+                                    # seperate into tags and attribute. There may be multiple tags
+                                    tryTag = tryDTag[0]
+                                    for i in tryDTag[1:-1]:  # if there are any other tag values
+                                        tryTag = tryTag + '.' + i
+                                    if tryTag in compTag:
+                                        tryAttr = tryDTag[-1]  # the attribute
+                                        idxTag = [i for i, x in enumerate(compTag) if x == tryTag]
+                                        idxAttr = [i for i, x in enumerate(compAttr) if x == tryAttr]
+                                        idxVal = list(set(idxTag).intersection(idxAttr))
+                                        d = val[idxVal[0]]  # choose the first match, if there are multiple
+
+                            # divide
+                            if idxD ==0:
+                                f = d
+                            else:
+                                # round to 4 decimal places since floats are not exact and operations can result in a lot
+                                # of decimal places.
+                                f = round(float(f) / float(d),4)
+                        # multipy
+                        if idxF == 0:
+                            s = f
+                        else:
+                            s = round(float(s) * float(f),4)
+                    # subtract
+                    if idxS == 0:
+                        a = s
+                    else:
+                        a = round(float(a) - float(s),4)
+                # add
+                if idxA == 0:
+                    writeVal = a
                 else:
-                    # check if it is referring to a tag in the same component
-                    # seperate into tags and attribute. There may be multiple tags
-                    tryTag = tryTagAttr[0]
-                    for i in tryTagAttr[1:-1]:  # if there are any other tag values
-                        tryTag = tryTag + '.' + i
-                    if tryTag in compTag:
-                        tryAttr = tryTagAttr[-1]  # the attribute
-                        idxTag = [i for i, x in enumerate(compTag) if x == tryTag]
-                        idxAttr = [i for i, x in enumerate(compAttr) if x == tryAttr]
-                        idxVal = list(set(idxTag).intersection(idxAttr))
-                        value = val[idxVal[0]]  # choose the first match, if there are multiple
-                        a = list(runValuesUpdated[run])  # change values from tuple
-                        a[idx] = value
-                        runValuesUpdated[run] = tuple(a)
-            writeXmlTag(compFile, tag, attr, value)
+                    writeVal = round(float(writeVal) + float(a),4)
+
+            temp = list(runValuesUpdated[run])  # change values from tuple
+            temp[idx] = writeVal
+            runValuesUpdated[run] = tuple(temp)
+            writeXmlTag(compFile, tag, attr, writeVal)
 
             # if this is a wind turbine, then its values are being altered and the wind power time series will need
             # to be recalculated

@@ -11,6 +11,7 @@ plotResValues = {
 
 subtractFromBase = [0]*len(plotResValues)
 
+saveNames = ['WindOutputSubset.png','WindOutputSubsetElectrical.png']
 plotAttr = 'ees0.ratedDuration.value'
 plotAttrName = 'GBS Rated Duration (s)'
 plotResName, plotRes = zip(*plotResValues.items())
@@ -20,8 +21,8 @@ otherAttrVal = [[500,750,1000]]
 projecSetDir = 'C:\\Users\jbvandermeer\Documents\ACEP\GBS\GBSTools_0\GBSProjects\StMary\OutputData\Set16a'
 baseSet =  ''
 baseRun =  ''
-for pR,pRN, sFB in zip(plotRes,plotResName,subtractFromBase):
+for pR,pRN, sFB, saveName in zip(plotRes,plotResName,subtractFromBase,saveNames):
     plotSetResult(pR,plotAttr, projectSetDir = projecSetDir, otherAttr = otherAttr,otherAttrVal = otherAttrVal,
                   baseSet = baseSet, baseRun = baseRun, subtractFromBase = sFB, removeSingleOtherAttr = True,
                   alwaysUseMarkers = True, plotResName= pRN, plotAttrName = plotAttrName,
-                  otherAttrNames = otherAttrNames)
+                  otherAttrNames = otherAttrNames,saveName=saveName)

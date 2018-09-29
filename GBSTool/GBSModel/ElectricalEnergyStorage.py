@@ -215,6 +215,8 @@ class ElectricalEnergyStorage:
             self.eesPloss = self.findLoss(self.eesP,self.timeStep)
             # update the SOC
             self.eesSOC = min([max([self.eesSOC - (self.eesP + self.eesPloss)*self.timeStep/self.eesEMax,0]),1])
+            # find the amount of SRC power available
+            self.updateSrcAvail()
             # find the available real power (reactive is set to max)
             self.eesPinAvail = self.findPchAvail(self.timeStep)
             self.eesPoutAvail = self.findPdisAvail(self.timeStep, 0, 0)
