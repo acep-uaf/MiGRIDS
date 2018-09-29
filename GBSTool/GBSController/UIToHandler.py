@@ -4,7 +4,7 @@
 import os
 import pickle
 import pandas as pd
-from PyQt5 import QtWidgets
+from PyQt5 import QtWidgets,QtCore
 from bs4 import BeautifulSoup
 from GBSAnalyzer.DataRetrievers.readXmlTag import readXmlTag
 from GBSInputHandler.buildProjectSetup import buildProjectSetup
@@ -104,7 +104,7 @@ class UIToHandler():
     #use the input handler to load raw timeseries data, fix data and return fixed data
     #String, String, String -> DataClass
     def loadFixData(self, setupFile):
-        print(setupFile)
+
         from GBSInputHandler.getUnits import getUnits
         from GBSInputHandler.readDataFile import readDataFile
         from GBSInputHandler.fixBadData import fixBadData
@@ -164,58 +164,67 @@ class UIToHandler():
 
         # read time series data, combine with wind data if files are seperate.
         df, listOfComponents = mergeInputs(inputDictionary)
+
         # check the timespan of the dataset. If its more than 1 year ask for / look for limiting dates
         minDate = min(df.index)
         maxDate = max(df.index)
         limiters = inputDictionary['runTimeSteps']
 
         if ((maxDate - minDate) > pd.Timedelta(days=365)) & (limiters ==['all']):
-             self.launchDatesWizard(minDate, maxDate)
+             newdates = self.DatesDialog(minDate, maxDate)
+             m = newdates.exec_()
+             if m == 1:
+                result = 'boo'
+                #inputDictionary['runTimeSteps'] = [newdates.startDate.text(),newdates.endDate.text()]
+                inputDictionary['runTimeSteps'] = [pd.to_datetime(newdates.startDate.text()), pd.to_datetime(newdates.endDate.text())]
+                #TODO write to the setup file so can be archived
 
         # now fix the bad data
-        df_fixed = fixBadData(df,os.path.dirname(setupFile),listOfComponents,inputDictionary['inputInterval'],limiters)
+        df_fixed = fixBadData(df,os.path.dirname(setupFile),listOfComponents,inputDictionary['inputInterval'],inputDictionary['runTimeSteps'])
 
         # fix the intervals
         print('fixing data timestamp intervals to %s' %inputDictionary['outputInterval'])
         df_fixed_interval = fixDataInterval(df_fixed, inputDictionary['outputInterval'])
-
+        df_fixed_interval.preserve(os.path.dirname(setupFile))
         return df_fixed_interval, listOfComponents
 
-    def launchDatesWizard(self,minDate,maxDate):
-        d = QtWidgets.QDialog()
-        d.setWindowTitle("Dates to Analyze")
-        grp = QtWidgets.QGroupBox()
-        hz = QtWidgets.QVBoxLayout()
-        prompt = QtWidgets.QLabel("Select Dates to Analyze")
-        hz.addWidget(prompt)
-        box = QtWidgets.QHBoxLayout()
-        startDate = QtWidgets.QDateEdit()
-        startDate.setObjectName('start')
-        startDate.setDisplayFormat('yyyy-MM-dd')
-        startDate.setDate(minDate)
-        startDate.setCalendarPopup(True)
-        endDate = QtWidgets.QDateEdit()
-        endDate.setDate(maxDate)
-        endDate.setObjectName('end')
-        endDate.setDisplayFormat('yyyy-MM-dd')
-        endDate.setCalendarPopup(True)
-        box.addWidget(startDate)
-        box.addWidget(endDate)
-        grp.setLayout(box)
-        hz.addWidget(grp)
-        result = None
-        buttonBox = QtWidgets.QDialogButtonBox()
-        buttonBox.setStandardButtons(QtWidgets.QDialogButtonBox.Ok
-                         | QtWidgets.QDialogButtonBox.Cancel)
-        hz.addWidget(buttonBox)
-        d.setLayout(hz)
+    class DatesDialog(QtWidgets.QDialog):
 
-        if d.exec() == QtWidgets.QDialog.accepted():
-            result = ' - '.join([startDate.text(), endDate.text()])
+        def __init__(self,minDate,maxDate):
+            super().__init__()
+            self.setWindowTitle("Dates to Analyze")
+            grp = QtWidgets.QGroupBox()
+            hz = QtWidgets.QVBoxLayout()
+            prompt = QtWidgets.QLabel("Select Dates to Analyze")
+            hz.addWidget(prompt)
+            box = QtWidgets.QHBoxLayout()
+            self.startDate = QtWidgets.QDateEdit()
+            self.startDate.setObjectName('start')
+            self.startDate.setDisplayFormat('yyyy-MM-dd')
+            self.startDate.setDate(minDate)
+            self.startDate.setCalendarPopup(True)
+            self.endDate = QtWidgets.QDateEdit()
+            self.endDate.setDate(maxDate)
+            self.endDate.setObjectName('end')
+            self.endDate.setDisplayFormat('yyyy-MM-dd')
+            self.endDate.setCalendarPopup(True)
+            box.addWidget(self.startDate)
+            box.addWidget(self.endDate)
+            grp.setLayout(box)
+            hz.addWidget(grp)
 
+            buttonBox = QtWidgets.QDialogButtonBox()
+            buttonBox.setStandardButtons(QtWidgets.QDialogButtonBox.Ok
+                             | QtWidgets.QDialogButtonBox.Cancel)
+            buttonBox.button(QtWidgets.QDialogButtonBox.Ok).clicked.connect(self.accept)
+            buttonBox.button(QtWidgets.QDialogButtonBox.Cancel).clicked.connect(self.reject)
+            hz.addWidget(buttonBox)
 
-        #return " - ".join([self.startDate.text(), self.endDate.text()])
-        return result
+            self.setLayout(hz)
+
+            def getValues(self):
+                a,b = self.startDate.text(), self.endDate.text()
+                return a,b
     #dataframe of cleaned data
     #generate netcdf files for model running
     #dataframe, dictionary -> None

@@ -155,7 +155,7 @@ class FormSetup(QtWidgets.QWidget):
             return
         model.assignSetupFolder(setupFile[0])
         self.dbHandler.insertRecord('project',['project_path'],[setupFile[0]])
-        print(self.dbHandler.dataCheck('project'))
+
         #Look for an existing component database and replace the default one with it
         if os.path.exists(os.path.join(self.model.projectFolder,'project_manager')):
             print('An existing project database was found for %s.' %self.model.project)
@@ -267,7 +267,7 @@ class FormSetup(QtWidgets.QWidget):
                 model.assign(attr,value,position=int(page.input)-1)
 
             page.saveTables()
-
+    #TODO this should be done on a seperate thread
     # Create a dataframe of input data based on importing files within each SetupModelInformation.inputFileDir
     # None->None
     def createInputFiles(self):

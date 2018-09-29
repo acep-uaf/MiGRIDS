@@ -34,7 +34,7 @@ TOTALP = 'total_p'  # the name of the column that contains the sum of power outp
 # Dataframe is the combined dataframe consisting of all data input (multiple files may have been merged)
 # SampleInterval is a list of sample intervals for each input file
 # returns a DataClass object with raw and cleaned data and powercomponent information
-def fixBadData(df, setupDir, ListOfComponents, sampleInterval,truncate):
+def fixBadData(df, setupDir, ListOfComponents, sampleInterval,runTimeSteps):
    '''returns cleaned dataframe'''
    
    # local functions - not used outside fixBadData
@@ -85,7 +85,7 @@ def fixBadData(df, setupDir, ListOfComponents, sampleInterval,truncate):
    # use the largest sample interval for the data class- this isn't used anylonger
    sampleIntervalTimeDelta = [pd.to_timedelta(s) for s in sampleInterval]
    #dataLimits = findDataDateLimits(setupDir)
-   data = DataClass(df, max(sampleIntervalTimeDelta),getValue)
+   data = DataClass(df, max(sampleIntervalTimeDelta),runTimeSteps,getValue)
 
   
   # create a list of power columns
@@ -157,7 +157,9 @@ def fixBadData(df, setupDir, ListOfComponents, sampleInterval,truncate):
    for c in data.df[data.eColumns + data.loads].columns:
        reps= data.fixOfflineData([c], groupings[c])
        data.df = data.df.drop(reps.columns, axis=1)
-       data.df= pd.concat([data.df,reps],axis=1)   
+       data.df= pd.concat([data.df,reps],axis=1)
+
+
    #reads the component descriptor files and
    #returns True if none of the components have isFrequencyReference=1 and
 
@@ -198,7 +200,9 @@ def fixBadData(df, setupDir, ListOfComponents, sampleInterval,truncate):
    data.splitDataFrame()
    #data.removeAnomolies(5)
    data.totalPower()
-
+   data.truncateDate()
+   #TODO remove after testing
+   data.preserve(setupDir)
    return data
 
 
