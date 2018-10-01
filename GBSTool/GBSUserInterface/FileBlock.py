@@ -64,10 +64,10 @@ class FileBlock(QtWidgets.QGroupBox):
             self.saveInput()
             #update the filedir path
             if self.dbhandler.getInputPath(str(self.input)) is None:
-                self.dbhandler.insertRecord('input_files',['inputfiledir'],[folderDialog])
+                self.dbhandler.insertRecord('input_files',['inputfiledirvalue'],[folderDialog])
             else:
-                self.dbhandler.updateRecord('input_files',['_id'],[str(self.input)],['inputfiledir'],[folderDialog])
-                print(self.dbhandler.dataCheck('input_files'))
+                self.dbhandler.updateRecord('input_files',['_id'],[str(self.input)],['inputfiledirvalue'],[folderDialog])
+
             #filter the component and environemnt input tables to the current input directory
             self.filterTables()
             self.saveInput()

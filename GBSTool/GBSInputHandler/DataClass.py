@@ -17,7 +17,7 @@ MAXMISSING= '14 days'
 class DataClass:
     """A class with access to both raw and fixed dataframes."""
     #DataFrame, timedelta,list,timedelta -> 
-    def __init__(self, raw_df, sampleInterval,truncate=None,maxMissing=MAXMISSING):
+    def __init__(self, raw_df, sampleInterval,runTimeSteps=None,maxMissing=MAXMISSING):
         if len(raw_df) > 0:
             self.raw = raw_df.copy()
              
@@ -42,8 +42,8 @@ class DataClass:
         self.timeInterval = sampleInterval
         self.powerComponents = []
         self.ecolumns = []
-        #truncate is a list of dates that indicate the portion of the dataframe to fix and include in analysis
-        self.truncate = truncate
+        #runTimeSteps is a list of dates that indicate the portion of the dataframe to fix and include in analysis
+        self.runTimeSteps = runTimeSteps
         self.maxMissing = maxMissing
         self.baddata = {}
         return
@@ -115,7 +115,7 @@ class DataClass:
     # DataClass string -> pickle
     # pickles the dataframe so it can be restored later
     def preserve(self, setupDir):
-        filename = os.path.join(setupDir + '../TimeSeriesData', 'fixed_data.pickle')
+        filename = os.path.join(setupDir + '/../TimeSeriesData', 'fixed_data.pickle')
         pickle_out = open(filename, 'wb')
         pickle.dump(self.fixed, pickle_out)
         pickle_out.close
@@ -164,6 +164,7 @@ class DataClass:
         #try quick replace first
         column = columnsToReplace[0]
         df = self.df[columnsToReplace].copy()
+        original_range = [df.first_valid_index(),df.last_valid_index()]
         RcolumnsToReplace = ['R' + c for c in columnsToReplace]
         notReplacedGroups   = groupingColumn
         for g in range(len(self.yearBreakdown)):
@@ -178,13 +179,14 @@ class DataClass:
                    (df.index >= min(subS.index)) &
                    (df.index <= max(subS.index))),RcolumnsToReplace].values      
             df = df.drop(RcolumnsToReplace, axis=1)
+
         groupingColumn.name = '_'.join([column,'grouping'])
         df_to_fix = pd.concat([df,groupingColumn],axis=1,join='outer')
-        
+        df_to_fix = df_to_fix[original_range[0]:original_range[1]]
         
         #df_to_fix is the dataset that gets filled in (out of bands records are excluded)
-        if self.truncate is not None:
-            df_to_fix = df_to_fix.loc[self.truncate[0]:self.truncate[1]]
+        if self.runTimeSteps is not None:
+            df_to_fix = df_to_fix.loc[self.runTimeSteps[0]:self.runTimeSteps[1]]
          
         #if there is still data in the dataframe after we have truncated it 
         # to the specified interval replace bad data
@@ -216,8 +218,10 @@ class DataClass:
         return False
     
     def truncateDate(self):
-        if self.truncate is not None:
-            for df in self.fixed:
-                df = df[self.truncate[0]:self.truncate[1]]
+        if self.runTimeSteps is not None:
+            for i,df in enumerate(self.fixed):
+                df = df[self.runTimeSteps[0]:self.runTimeSteps[1]]
                 if len(df) < 1:
                     self.fixed.remove(df)
+                else:
+                    self.fixed[i] = df

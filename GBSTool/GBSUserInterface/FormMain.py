@@ -114,8 +114,6 @@ class MainForm(QtWidgets.QMainWindow):
         # change the focus depending on the selection
         if level == 1:
            name = list(self.treeBlock.model().itemData(position).values())[0]
-           print(name)
-
            focusObject = self.focusObjects[name]
 
            if type(focusObject) is str:
@@ -141,9 +139,7 @@ class MainForm(QtWidgets.QMainWindow):
 
         # copy the project database to the project folder and save xmls
         if 'projectFolder' in setupForm.model.__dict__.keys():
-
-
-            saveProject(setupForm.model.projectFolder)
+             saveProject(setupForm.model.projectFolder)
 
         else:
             # if a project was never set then just close and remove the default database
@@ -201,7 +197,7 @@ class PageBlock(QtWidgets.QTabWidget):
             path = os.path.dirname(__file__)
             print('Database was saved to %s' % self.model.projectFolder)
 
-        #Can be commmented out if we don't want to save the existing project database during development
+        #Can be commented out if we don't want to save the existing project database during development
             shutil.move(os.path.join(path, 'project_manager'),
                        os.path.join(self.model.projectFolder, 'project_manager'))
         else:

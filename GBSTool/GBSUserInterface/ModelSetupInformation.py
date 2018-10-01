@@ -24,8 +24,8 @@ class SetupTag:
                            self.value = self.value + v
                 else:
                     self.value = self.value + v
-            else:
-                self.value = v
+        else:
+            self.value = v
         return
 
     def assignUnits(self,v,**kwargs):
@@ -165,8 +165,8 @@ class ModelSetupInformation:
         self.assignProject(os.path.basename(setupFile[:-9]))
 
     def assignComponentNames(self, m, v,**kwargs):
-        self.componentNames.assign(m,stringToList(v),**kwargs)
-
+        #self.componentNames.assign(m,stringToList(v),**kwargs)
+        self.componentNames.assign(m, v, **kwargs)
     def assignComponentName(self, m,v,**kwargs):
         self.componentName.assign(m, stringToList(v),**kwargs)
 

@@ -57,7 +57,7 @@ def fixDataInterval(data, interval):
         intervals = np.repeat(steps, len(t), axis=0)
         # reshape the interval matrix so each row has every timestep
         intervals_reshaped = intervals.reshape(len(steps), len(t))
-        # TODO: MemoryError here
+
         tr = t.repeat(len(steps))
         rs = tr.values.reshape(len(t), len(steps))
         time_matrix = rs + intervals_reshaped.transpose()
@@ -69,7 +69,7 @@ def fixDataInterval(data, interval):
         # use the next step in the time series as the average value for the synthesized data. The values will asympotically reach this value, resulting in a smooth transition.
         mu = start.shift(-1)
         mu.iloc[-1] = mu.iloc[-2]
-
+        #TODO replace for loops
         for i in range(n95-1):
             x[:, i + 1] = x[:, i] + timestep * (-(x[:, i] - mu) / tau) + np.multiply(sigma_bis.values * sqrtdt, np.random.randn(len(mu)))
 
@@ -104,7 +104,7 @@ def fixDataInterval(data, interval):
             values = np.append(values, x0)
             timeArray = np.append(timeArray,time_matrix0)
 
-        # TODO: sort values and timeArray by TimeArray
+        # TODO: sort values and timeArray by TimeArray-Memory error here.
         tv = np.array(list(zip(timeArray,values)))
         tv = tv[tv[:,0].argsort()] # sort by timeArray
 
@@ -123,9 +123,14 @@ def fixDataInterval(data, interval):
         sigma = df[col+'_sigma']
         records = df['timediff'] / pd.to_timedelta(interval)
         timestep = pd.Timedelta(interval).seconds
-
-        #return an array of arrays of values
-        timeArray, values = getValues(records, start, sigma,timestep)
+        #handle memory error exceptions by working with smaller subsets
+        try:
+            #return an array of arrays of values
+            timeArray, values = getValues(records, start, sigma,timestep)
+            return timeArray, values
+        except MemoryError:
+            handleMemory()
+        return
         #steps is an array of timesteps in seconds with length = max(records)
         '''
         steps = np.arange(0, max(records) + 1, timestep)
@@ -149,7 +154,7 @@ def fixDataInterval(data, interval):
         #put all the values in a single array
         values = np.concatenate(y)
         '''
-        return timeArray, values
+
 
     for idx in range(len(data.fixed)):
         # df contains the non-upsampled records. Means and standard deviation come from non-upsampled data.
@@ -159,12 +164,16 @@ def fixDataInterval(data, interval):
         fixColumns = []
         fixColumns.extend(data.loads)
         fixColumns.extend(data.eColumns)
-        fixColumns.append('total_p')
+        #if there are power components fix intervals based on total power and scale to each component
+        if df['total_p'].first_valid_index() != None:
+            fixColumns.append('total_p')
 
-
+        print('before upsamping dataframe is: %s' %len(data.fixed[idx]))
         # up or down sample to our desired interval
         # down sampling results in averaged values
-        data.fixed[idx] = data.fixed[idx].resample(pd.to_timedelta(interval[idx])).mean()
+        #this changes the size fo data.fixed[idx], so it no longer matches df rowcount.
+        data.fixed[idx] = data.fixed[idx].resample(pd.to_timedelta(interval[0])).mean()
+        print('after upsamping dataframe is: %s' % len(data.fixed[idx]))
 
         for col in fixColumns:
             df0 = df[[col]].copy()
@@ -183,7 +192,7 @@ def fixDataInterval(data, interval):
             # time interval between consecutive records
             df0['timediff'] = pd.Series(pd.to_datetime(df0.index, unit='s'), index=df0.index).diff(1).shift(-1)
             df0['timediff'] = df0['timediff'].fillna(0)
-            # get the median number of steps in a 24 hr perdiod.
+            # get the median number of steps in a 24 hr period.
             steps1Day = int(pd.to_timedelta(1, unit='d') / np.median(df0['timediff']))
             # make sure it is at least 10
             if steps1Day < 10:
@@ -201,6 +210,7 @@ def fixDataInterval(data, interval):
             # if the resampled dataframe is bigger fill in new values
             if len(df0) < len(data.fixed[idx]):
                 # t is the time, k is the estimated value
+
                 t, k = estimateDistribution(df0, interval[idx], col)  # t is number of seconds since 1970
                 simulatedDf = pd.DataFrame({'time': t, 'value': k})
                 simulatedDf = simulatedDf.set_index(
@@ -219,9 +229,10 @@ def fixDataInterval(data, interval):
                 data.fixed[idx].loc[pd.isnull(data.fixed[idx][col]), col] = data.fixed[idx]['value']
                 # TODO: possibly remove the following commneted out code. This will leave individual power channels unfilled
                 # component values get calculated based on the proportion that they made up previously
-                #adj_m = data.fixed[idx][data.fixed[idx].columns[0:-1]].div(data.fixed[idx][col], axis=0)
-                #adj_m = adj_m.ffill()
-                #data.fixed[idx] = adj_m.multiply(data.fixed[idx]['total_p'], axis=0)
+                if col == 'total_p':
+                    adj_m = data.fixed[idx][data.powerComponents].div(data.fixed[idx]['total_p'], axis=0)
+                    adj_m = adj_m.ffill()
+                    data.fixed[idx] = adj_m.multiply(data.fixed[idx]['total_p'], axis=0)
 
                 # get rid of columns added
                 data.fixed[idx] = data.fixed[idx].drop('value', 1)
@@ -229,3 +240,19 @@ def fixDataInterval(data, interval):
 
     data.removeAnomolies(stdNum = 5)
     return data
+#TODO chunk up processing of upsampling
+def handleMemory():
+    """Not implemented yet.
+    Prints current memory usage stats.
+    """
+    import psutil
+    import os
+    PROCESS = psutil.Process(os.getpid())
+    MEGA = 10 ** 6 #convert to megabits
+
+
+    total, available, percent, used, free = psutil.virtual_memory()
+    total, available, used, free = total / MEGA, available / MEGA, used / MEGA, free / MEGA
+    proc = PROCESS.memory_info()[1] / MEGA
+    print('process = %s total = %s available = %s used = %s free = %s percent = %s'
+          % (proc, total, available, used, free, percent))

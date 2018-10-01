@@ -99,5 +99,7 @@ def readDataFile(inputDict):
 
     # return to original directory
     os.chdir(here)
+    #drop unused columns
+    df = df[inputDict['useNames'] + ['DATE']]
     return df, listOfComponents
 

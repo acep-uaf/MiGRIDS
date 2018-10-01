@@ -30,11 +30,11 @@ DESCXML = 'Descriptor.xml'  # the suffix of the xml for each component that cont
 TOTALP = 'total_p'  # the name of the column that contains the sum of power output for all components
 
 
-# dataframe, string, list, list -> DataClass
+# dataframe, string, list, list, List/None -> DataClass
 # Dataframe is the combined dataframe consisting of all data input (multiple files may have been merged)
 # SampleInterval is a list of sample intervals for each input file
 # returns a DataClass object with raw and cleaned data and powercomponent information
-def fixBadData(df, setupDir, ListOfComponents, sampleInterval):
+def fixBadData(df, setupDir, ListOfComponents, sampleInterval,runTimeSteps):
    '''returns cleaned dataframe'''
    
    # local functions - not used outside fixBadData
@@ -82,9 +82,10 @@ def fixBadData(df, setupDir, ListOfComponents, sampleInterval):
    
 
    # create DataClass object to store raw, fixed, and summery outputs
-   # use the largest sample interval for the data class
+   # use the largest sample interval for the data class- this isn't used anylonger
    sampleIntervalTimeDelta = [pd.to_timedelta(s) for s in sampleInterval]
-   data = DataClass(df, max(sampleIntervalTimeDelta))
+   #dataLimits = findDataDateLimits(setupDir)
+   data = DataClass(df, max(sampleIntervalTimeDelta),runTimeSteps,getValue)
 
   
   # create a list of power columns
@@ -156,7 +157,9 @@ def fixBadData(df, setupDir, ListOfComponents, sampleInterval):
    for c in data.df[data.eColumns + data.loads].columns:
        reps= data.fixOfflineData([c], groupings[c])
        data.df = data.df.drop(reps.columns, axis=1)
-       data.df= pd.concat([data.df,reps],axis=1)   
+       data.df= pd.concat([data.df,reps],axis=1)
+
+
    #reads the component descriptor files and
    #returns True if none of the components have isFrequencyReference=1 and
 
@@ -197,7 +200,9 @@ def fixBadData(df, setupDir, ListOfComponents, sampleInterval):
    data.splitDataFrame()
    #data.removeAnomolies(5)
    data.totalPower()
-   #break up dataframe where data missing
+   data.truncateDate()
+   #TODO remove after testing
+   data.preserve(setupDir)
    return data
 
 

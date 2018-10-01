@@ -29,17 +29,20 @@ def readXmlTag(fileName,tag,attr,fileDir='',returnDtype = ''):
             a = a.find(tag[i])
     else: # if it is just one string
         a = soup.find(tag)
-    tagValues = a[attr].split( ) # if a list was written to an attribute, this will be read as a string, which needs to be parsed using spaces.
-    # if individual entries have commas, parse
-    for idx, tv in enumerate(tagValues):
-        if ',' in tv:
-            tagValues[idx] = tv.split(',')
+    if a is not None:
+        tagValues = a[attr].split( ) # if a list was written to an attribute, this will be read as a string, which needs to be parsed using spaces.
 
-    if returnDtype == 'int':
-        tagValues = [int(x) for x in tagValues]
-    elif returnDtype == 'float':
-        tagValues = [float(x) for x in tagValues]
+        # if individual entries have commas, parse
+        for idx, tv in enumerate(tagValues):
+            if ',' in tv:
+                tagValues[idx] = tv.split(',')
 
+        if returnDtype == 'int':
+            tagValues = [int(x) for x in tagValues]
+        elif returnDtype == 'float':
+            tagValues = [float(x) for x in tagValues]
+    else:
+        tagValues = None
     os.chdir(here)
     return tagValues
 

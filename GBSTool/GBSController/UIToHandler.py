@@ -3,15 +3,18 @@
 
 import os
 import pickle
-
+import pandas as pd
+from PyQt5 import QtWidgets,QtCore
 from bs4 import BeautifulSoup
-
 from GBSAnalyzer.DataRetrievers.readXmlTag import readXmlTag
 from GBSInputHandler.buildProjectSetup import buildProjectSetup
 from GBSInputHandler.fillProjectData import fillProjectData
 from GBSInputHandler.makeSoup import makeComponentSoup
 from GBSInputHandler.writeXmlTag import writeXmlTag
 from GBSInputHandler.mergeInputs import mergeInputs
+from GBSInputHandler.findDataDateLimits import findDataDateLimits
+
+
 
 
 class UIToHandler():
@@ -101,7 +104,7 @@ class UIToHandler():
     #use the input handler to load raw timeseries data, fix data and return fixed data
     #String, String, String -> DataClass
     def loadFixData(self, setupFile):
-        print(setupFile)
+
         from GBSInputHandler.getUnits import getUnits
         from GBSInputHandler.readDataFile import readDataFile
         from GBSInputHandler.fixBadData import fixBadData
@@ -130,7 +133,7 @@ class UIToHandler():
         inputDictionary['outputIntervalUnit'] = readXmlTag(setupFile, 'timeStep', 'unit')
         inputDictionary['inputInterval'] = readXmlTag(setupFile, 'inputTimeStep', 'value')
         inputDictionary['inputIntervalUnit'] = readXmlTag(setupFile, 'inputTimeStep', 'unit')
-
+        inputDictionary['runTimeSteps'] = readXmlTag(setupFile,'runTimeSteps','value')
         # get date and time values
         inputDictionary['dateColumnName'] = readXmlTag(setupFile, 'dateChannel', 'value')
         inputDictionary['dateColumnFormat'] = readXmlTag(setupFile, 'dateChannel', 'format')
@@ -161,19 +164,67 @@ class UIToHandler():
 
         # read time series data, combine with wind data if files are seperate.
         df, listOfComponents = mergeInputs(inputDictionary)
+
+        # check the timespan of the dataset. If its more than 1 year ask for / look for limiting dates
+        minDate = min(df.index)
+        maxDate = max(df.index)
+        limiters = inputDictionary['runTimeSteps']
+
+        if ((maxDate - minDate) > pd.Timedelta(days=365)) & (limiters ==['all']):
+             newdates = self.DatesDialog(minDate, maxDate)
+             m = newdates.exec_()
+             if m == 1:
+                result = 'boo'
+                #inputDictionary['runTimeSteps'] = [newdates.startDate.text(),newdates.endDate.text()]
+                inputDictionary['runTimeSteps'] = [pd.to_datetime(newdates.startDate.text()), pd.to_datetime(newdates.endDate.text())]
+                #TODO write to the setup file so can be archived
+
         # now fix the bad data
-        df_fixed = fixBadData(df,os.path.dirname(setupFile),listOfComponents,inputDictionary['inputInterval'])
+        df_fixed = fixBadData(df,os.path.dirname(setupFile),listOfComponents,inputDictionary['inputInterval'],inputDictionary['runTimeSteps'])
 
         # fix the intervals
+        print('fixing data timestamp intervals to %s' %inputDictionary['outputInterval'])
         df_fixed_interval = fixDataInterval(df_fixed, inputDictionary['outputInterval'])
+        df_fixed_interval.preserve(os.path.dirname(setupFile))
+        return df_fixed_interval, listOfComponents
 
-        d = {}
-        for c in listOfComponents:
-           d[c.component_name] = c.toDictionary()
+    class DatesDialog(QtWidgets.QDialog):
 
+        def __init__(self,minDate,maxDate):
+            super().__init__()
+            self.setWindowTitle("Dates to Analyze")
+            grp = QtWidgets.QGroupBox()
+            hz = QtWidgets.QVBoxLayout()
+            prompt = QtWidgets.QLabel("Select Dates to Analyze")
+            hz.addWidget(prompt)
+            box = QtWidgets.QHBoxLayout()
+            self.startDate = QtWidgets.QDateEdit()
+            self.startDate.setObjectName('start')
+            self.startDate.setDisplayFormat('yyyy-MM-dd')
+            self.startDate.setDate(minDate)
+            self.startDate.setCalendarPopup(True)
+            self.endDate = QtWidgets.QDateEdit()
+            self.endDate.setDate(maxDate)
+            self.endDate.setObjectName('end')
+            self.endDate.setDisplayFormat('yyyy-MM-dd')
+            self.endDate.setCalendarPopup(True)
+            box.addWidget(self.startDate)
+            box.addWidget(self.endDate)
+            grp.setLayout(box)
+            hz.addWidget(grp)
 
-        return df_fixed_interval, d
+            buttonBox = QtWidgets.QDialogButtonBox()
+            buttonBox.setStandardButtons(QtWidgets.QDialogButtonBox.Ok
+                             | QtWidgets.QDialogButtonBox.Cancel)
+            buttonBox.button(QtWidgets.QDialogButtonBox.Ok).clicked.connect(self.accept)
+            buttonBox.button(QtWidgets.QDialogButtonBox.Cancel).clicked.connect(self.reject)
+            hz.addWidget(buttonBox)
 
+            self.setLayout(hz)
+
+            def getValues(self):
+                a,b = self.startDate.text(), self.endDate.text()
+                return a,b
     #dataframe of cleaned data
     #generate netcdf files for model running
     #dataframe, dictionary -> None
@@ -190,16 +241,28 @@ class UIToHandler():
         dataframe2netcdf(df, componentDict, outputDirectory)
         return
 
+    #save the components for a project
+    #List of Components, String -> None
+    def storeComponents(self, ListOfComponents,setupFile):
+        inputDirectory = readXmlTag(setupFile, 'inputFileDir', 'value')
+        inputDirectory = os.path.join(*inputDirectory)
+        outputDirectory = os.path.join(inputDirectory, '../ProcessedData')
+
+        if not os.path.exists(outputDirectory):
+            os.makedirs(outputDirectory)
+        outfile = os.path.join(outputDirectory, 'components.pkl')
+        file = open(outfile, 'wb')
+        pickle.dump(ListOfComponents, file)
+        file.close()
+        return
     #save the DataClass object as a pickle in the processed data folder
     #DataClass, string -> None
     def storeData(self,df,setupFile):
 
         inputDirectory = readXmlTag(setupFile, 'inputFileDir', 'value')
         inputDirectory = os.path.join(*inputDirectory)
-        #inputDirectory = os.path.join('../../GBSProjects', inputDirectory)
-        print(inputDirectory)
         outputDirectory = os.path.join(inputDirectory, '../ProcessedData')
-        print(outputDirectory)
+
         if not os.path.exists(outputDirectory):
             os.makedirs(outputDirectory)
         outfile = os.path.join(outputDirectory, 'processed_input_file.pkl')

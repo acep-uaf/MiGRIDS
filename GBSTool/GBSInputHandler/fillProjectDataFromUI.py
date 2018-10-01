@@ -30,8 +30,9 @@ def fillProjectDataFromUI(projectDir, setupInfo):
 
     #component is a string
     if (setupInfo.componentNames.value is not None):
-        if (len(setupInfo.componentNames.value) >0):
-            for component in setupInfo.componentNames.value: # for each component
+        #use as list not string
+        if (len(setupInfo.componentNames.value.split()) >0):
+            for component in setupInfo.componentNames.value.split(): # for each component
 
                  #if there isn't a component descriptor file create one
                  if not os.path.exists(os.path.join(componentDir, component + 'Descriptor.xml')):
