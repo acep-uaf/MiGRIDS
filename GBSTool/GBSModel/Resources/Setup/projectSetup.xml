@@ -129,6 +129,12 @@
     The class name in the file must be 'genDispatch'. Default value is 'genDispatch0'-->
     <genDispatch value="genDispatch0"/>
 
+    <!-- 'genSchedule' refers to the class that is used to schedule the generators.  If a user defines their
+    own schedule, it is the path and filename of the dispatch class used to schedule the generators.
+    Otherwise, it is the name of the schedule filename included in the software package. Options include: genSchedule0.
+    The class name in the file must be 'genSchedule'. Default value is 'genSchedule0'-->
+    <genSchedule value="genSchedule0"/>
+
     <!-- 'wtgDispatch' refers to the class that is used to dispatch the wind turbines.  If a user defines their
     own dispatch, it is the path and filename of the dispatch class used to dispatch the wind turbines.
     Otherwise, it is the name of the dispatch filename included in the software package. Options include: wtgDispatch0.
