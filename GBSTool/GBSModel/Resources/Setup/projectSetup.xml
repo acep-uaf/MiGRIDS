@@ -127,7 +127,7 @@
     own dispatch, it is the path and filename of the dispatch class used to dispatch the generators.
     Otherwise, it is the name of the dispatch filename included in the software package. Options include: genDispatch0.
     The class name in the file must be 'genDispatch'. Default value is 'genDispatch0'-->
-    <genDispatch value="eesDispatch0"/>
+    <genDispatch value="genDispatch0"/>
 
     <!-- 'wtgDispatch' refers to the class that is used to dispatch the wind turbines.  If a user defines their
     own dispatch, it is the path and filename of the dispatch class used to dispatch the wind turbines.
