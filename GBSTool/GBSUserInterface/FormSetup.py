@@ -299,8 +299,8 @@ class FormSetup(QtWidgets.QWidget):
             os.path.join(model.setupFolder, model.project + 'Setup.xml'))
         self.updateModelPage(cleaned_data)
         # pickled data to be used later if needed
-        handler.storeData(cleaned_data, os.path.join(model.setupFolder, model.project + 'Setup.xml'))
-        handler.storeComponents(components)
+        handler.storeData(cleaned_data.fixed, os.path.join(model.setupFolder, model.project + 'Setup.xml'))
+        handler.storeComponents(components,os.path.join(model.setupFolder, model.project + 'Setup.xml'))
         self.progress.setRange(0, 1)
         # generate netcdf files
         msg = QtWidgets.QMessageBox(QtWidgets.QMessageBox.Warning, "Time Series loaded",
@@ -312,7 +312,7 @@ class FormSetup(QtWidgets.QWidget):
         if result == QtWidgets.QMessageBox.Ok:
             d = {}
             for c in components:
-                d[c.component_name] = c.toDictionary()
+                d[c.column_name] = c.toDictionary()
             handler.createNetCDF(cleaned_data.fixed, d,
                                  os.path.join(model.setupFolder, model.project + 'Setup.xml'))
 
@@ -324,11 +324,25 @@ class FormSetup(QtWidgets.QWidget):
     def updateModelPage(self, data):
         # start and end dates get set written to database as default date ranges
         import pandas as pd
-        defaultStart = str((pd.to_datetime(data.fixed.index, unit='s')[0]).date())
-        defaultEnd = str((pd.to_datetime(data.fixed.index, unit='s')[len(data.fixed.index) - 1]).date())
+        def getDefaults(listDf,defaultStart=pd.to_datetime("1/1/1900").date(), defaultEnd = pd.datetime.today().date()):
+            if len(listDf) > 0:
+                s = listDf[0].index[0].date()
+                e = listDf[0].index[len(listDf[0])-1].date()
 
+                if (s < defaultStart) & (e > defaultEnd):
+                    return getDefaults(listDf[1:],s,e)
+                elif s < defaultStart:
+                    return getDefaults(listDf[1:],s,defaultEnd)
+                elif e > defaultStart:
+                    return getDefaults(listDf[1:], defaultStart, e)
+            return str(defaultStart), str(defaultEnd)
+
+        #default start is the first date there is record for
+        defaultStart, defaultEnd = getDefaults(data.fixed)
         defaultComponents = ','.join(self.model.componentNames.value)
 
+        #TODO this should be moved to the handler
+        #TODO this should be moved to the handler
         self.dbHandler.cursor.execute(
             "UPDATE setup set date_start = ?, date_end = ?, component_names = ? where set_name = 'default'",
             [defaultStart, defaultEnd, defaultComponents])

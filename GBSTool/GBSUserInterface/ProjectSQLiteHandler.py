@@ -385,16 +385,11 @@ class ProjectSQLiteHandler:
         names = self.cursor.execute("select component_name from components").fetchall()
         if names is not None:
             names = [''.join(i) for i in names if i is not None]
-            print(self.dataCheck('components'))
+
             return pd.Series(names).tolist()
         return []
     def getComponentsTable(self, filter):
-        print(self.dataCheck("components"))
-        #sql = """select component_name, original_field_name, units,attribute from components where inputfiledir = ({0})"""
-        #sql = sql.format('?', ','.join('?' * len((1))))
         sql = """select component_name, original_field_name, units,attribute from components where inputfiledir = ?"""
-        #sql = """select component_name, original_field_name, units,attribute from components"""
-        #df = pd.read_sql_query(sql, self.connection)
         df = pd.read_sql_query(sql,self.connection,params=[filter])
         sql = """select component_name, original_field_name, units,attribute from environment where inputfiledir = ?"""
         df.append(pd.read_sql_query(sql,self.connection,params=[filter]))
