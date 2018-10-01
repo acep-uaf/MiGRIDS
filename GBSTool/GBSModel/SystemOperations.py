@@ -22,10 +22,11 @@ from GBSModel.Windfarm import Windfarm
 class SystemOperations:
     # System Variables
     # Generation and dispatch resources
+    # FUTUREFEATURE: add genDispatch, genSchedule and wtgDispatch
     def __init__(self, outputDataDir, timeStep = 1, runTimeSteps = 'all', loadRealFiles = [], loadReactiveFiles = [], predictLoad = 'predictLoad1', loadDescriptor = [],
                  predictWind = 'predictWind0', getMinSrcFile = 'getMinSrc0', getMinSrcInputFile = 'getMinSrc0Inputs', reDispatchFile = 'reDispatch0', reDispatchInputsFile = 'reDispatchInputs0',
-                 genIDs = [], genStates = [], genDescriptors = [], genDispatch = [],
-                 wtgIDs = [], wtgStates = [], wtgDescriptors = [], wtgSpeedFiles = [], wtgDispatch = [],
+                 genIDs = [], genStates = [], genDescriptors = [],
+                 wtgIDs = [], wtgStates = [], wtgDescriptors = [], wtgSpeedFiles = [],
                  eesIDs = [], eesStates = [], eesSOCs = [], eesDescriptors = [], eesDispatch = [],
                  tesIDs = [], tesStates = [], tesTs = [], tesDescriptors = [], tesDispatch = []):
         """
