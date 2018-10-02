@@ -8,9 +8,11 @@ from GBSModel.ThermalEnergyStorage import ThermalEnergyStorage
 import os
 import sys
 import importlib.util
+from bs4 import BeautifulSoup as Soup
+import xml.etree.ElementTree as ET
 
 class ThermalEnergyStorageSystem:
-    def __init__(self, tesIDS, tesT, tesStates, timeStep, tesDescriptor, tesDispatch):
+    def __init__(self, tesIDS, tesT, tesStates, timeStep, tesDescriptor, tesDispatchFile, tesDispatchInputsFile):
         '''
         Constructor used for intialization of all Thermal Energy Storage units in this Thermal Energy Storage System.
         :param tesIDS:
@@ -18,7 +20,8 @@ class ThermalEnergyStorageSystem:
         :param tesStates:
         :param timeStep:
         :param tesDescriptor:
-        :param tesDispatch:
+        :param tesDispatchFile:
+        :param tesDispatchInputsFile:
         '''
         # check to make sure same length data coming in
         if not len(tesIDS) == len(tesT) == len(tesStates) == len(tesDescriptor):
@@ -61,9 +64,43 @@ class ThermalEnergyStorageSystem:
             self.tesPOutMax += self.thermalEnergyStorageUnits[idx].tesPOutMax
             self.tesEMax += self.thermalEnergyStorageUnits[idx].tesEMax
 
+            ## initiate tes dispatch and its inputs.
+            # import tes energy dispatch
+            modPath, modFile = os.path.split(tesDispatchFile)
+            # if located in a different directory, add to sys path
+            if len(modPath) != 0:
+                sys.path.append(modPath)
+            # split extension off of file
+            modFileName, modFileExt = os.path.splitext(modFile)
+            # import module
+            A = importlib.import_module(modFileName)
+            # get the inputs
+            rdi = open(tesDispatchInputsFile, "r")
+            tesDispatchInputsXml = rdi.read()
+            rdi.close()
+            tesDispatchInputsSoup = Soup(tesDispatchInputsXml, "xml")
+
+            # get all tags
+            elemList = []
+            xmlTree = ET.parse(tesDispatchInputsFile)
+            for elem in xmlTree.iter():
+                elemList.append(elem.tag)
+
+            # create Dict of tag names and values (not including root)
+            tesDispatchInputs = {}
+            for elem in elemList[1:]:
+                tesDispatchInputs[elem] = self.returnObjectValue(tesDispatchInputsSoup.find(elem).get('value'))
+
+            # check if inputs for initializing tesDispatch
+            if len(tesDispatchInputs) == 0:
+                self.tesDispatch = A.tesDispatch()
+            else:
+                self.tesDispatch = A.tesDispatch(tesDispatchInputs)
+
+
         # import the dispatch scheme
         # split into path and filename
-        modPath, modFile = os.path.split(tesDispatch)
+        modPath, modFile = os.path.split(tesDispatchFile)
         # if located in a different directory, add to sys path
         if len(modPath) != 0:
             sys.path.append(modPath)
@@ -74,7 +111,7 @@ class ThermalEnergyStorageSystem:
         self.tesDispatch = dispatchModule.tesDispatch()
 
     def runTesDispatch(self, newP):
-        self.tesDispatch.tesDispatch(self, newP)
+        self.tesDispatch.runDispatch(self, newP)
         # check the operating conditions of tes, update counters
         for idx, tes in enumerate(self.thermalEnergyStorageUnits):
             tes.checkOperatingConditions()

@@ -90,6 +90,33 @@
         <genScheduleInputValue value = ""/>
     </genScheduleInputAttributeValues>
 
+    <wtgDispatchInputAttributeValues>
+        <!-- 'wtgDispatchInputAttributeValues' describes the wtgDispatch inputs that have been varied from
+        the base case . -->
+        <!-- 'wtgDispatchInputTag' is the tag to change. If more than one level of tags is required enter as
+        a string seperated by periods '.'.   -->
+        <!-- 'wtgDispatchInputAttr' is the attribute to change. For example 'value'.  -->
+        <!-- 'wtgDispatchInputValue' value to place in the attribute. If a list is needs to be placed, enter as a string of values,
+        seperated by commas and no spaces .  -->
+        <wtgDispatchInputTag value = ""/>
+        <wtgDispatchInputAttr value = ""/>
+        <wtgDispatchInputValue value = ""/>
+    </wtgDispatchInputAttributeValues>
+
+    <tesDispatchInputAttributeValues>
+        <!-- 'tesDispatchInputAttributeValues' describes the tesDispatch inputs that have been varied from
+        the base case . -->
+        <!-- 'tesDispatchInputTag' is the tag to change. If more than one level of tags is required enter as
+        a string seperated by periods '.'.   -->
+        <!-- 'tesDispatchInputAttr' is the attribute to change. For example 'value'.  -->
+        <!-- 'tesDispatchInputValue' value to place in the attribute. If a list is needs to be placed, enter as a string of values,
+        seperated by commas and no spaces .  -->
+        <tesDispatchInputTag value = ""/>
+        <tesDispatchInputAttr value = ""/>
+        <tesDispatchInputValue value = ""/>
+    </tesDispatchInputAttributeValues>
+
+
 
 </project>
 <!-- EOF -->

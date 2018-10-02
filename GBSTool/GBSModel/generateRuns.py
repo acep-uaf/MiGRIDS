@@ -186,6 +186,63 @@ def generateRuns(projectSetDir):
             value = val
             writeXmlTag(setGenScheduleInputFile, tag, attr, value)
 
+        # make changes to the wtgDispatch input file,
+        # get the wtgDispatchInputsFile
+        wtgDispatch = readXmlTag(setupFile, 'wtgDispatch', 'value')[0]
+        getWtgDispatchInputsFile = os.path.join(projectDir, 'InputData', 'Setup',
+                                                projectName + wtgDispatch[0].upper() + wtgDispatch[
+                                                                                       1:] + 'Inputs.xml')
+
+        # get the wtg dispatch inputs for this set of simulations
+        getWtgDispatchInputsTag = readXmlTag(projectName + 'Set' + str(setNum) + 'Attributes.xml',
+                                             ['wtgDispatchInputAttributeValues', 'wtgDispatchInputTag'], 'value')
+        getWtgDispatchInputAttr = readXmlTag(projectName + 'Set' + str(setNum) + 'Attributes.xml',
+                                             ['wtgDispatchInputAttributeValues', 'wtgDispatchInputAttr'], 'value')
+        getWtgDispatchInputValue = readXmlTag(projectName + 'Set' + str(setNum) + 'Attributes.xml',
+                                              ['wtgDispatchInputAttributeValues', 'wtgDispatchInputValue'],
+                                              'value')
+
+        # copy the wtgDispatchInput xml file to this simulation set directory and make the specified changes
+        setWtgDispatchInputFile = os.path.join(projectSetDir, 'Setup',
+                                               projectName + 'Set' + str(setNum) + wtgDispatch[
+                                                   0].upper() + wtgDispatch[1:] + 'Inputs.xml')
+        # copy getWtgDispatchInput file
+        copyfile(getWtgDispatchInputsFile, setWtgDispatchInputFile)
+        # make the cbanges to it defined in projectSetAttributes
+        for idx, val in enumerate(getWtgDispatchInputValue):  # iterate through all re dispatch attribute values
+            tag = getWtgDispatchInputsTag[idx].split('.')
+            attr = getWtgDispatchInputAttr[idx]
+            value = val
+            writeXmlTag(setWtgDispatchInputFile, tag, attr, value)
+
+        # make changes to the tesDispatch input file,
+        # get the tesDispatchInputsFile
+        tesDispatch = readXmlTag(setupFile, 'tesDispatch', 'value')[0]
+        gettesDispatchInputsFile = os.path.join(projectDir, 'InputData', 'Setup',
+                                                projectName + tesDispatch[0].upper() + tesDispatch[
+                                                                                       1:] + 'Inputs.xml')
+
+        # get the tes dispatch inputs for this set of simulations
+        gettesDispatchInputsTag = readXmlTag(projectName + 'Set' + str(setNum) + 'Attributes.xml',
+                                             ['tesDispatchInputAttributeValues', 'tesDispatchInputTag'], 'value')
+        gettesDispatchInputAttr = readXmlTag(projectName + 'Set' + str(setNum) + 'Attributes.xml',
+                                             ['tesDispatchInputAttributeValues', 'tesDispatchInputAttr'], 'value')
+        gettesDispatchInputValue = readXmlTag(projectName + 'Set' + str(setNum) + 'Attributes.xml',
+                                              ['tesDispatchInputAttributeValues', 'tesDispatchInputValue'],
+                                              'value')
+
+        # copy the tesDispatchInput xml file to this simulation set directory and make the specified changes
+        settesDispatchInputFile = os.path.join(projectSetDir, 'Setup',
+                                               projectName + 'Set' + str(setNum) + tesDispatch[
+                                                   0].upper() + tesDispatch[1:] + 'Inputs.xml')
+        # copy gettesDispatchInput file
+        copyfile(gettesDispatchInputsFile, settesDispatchInputFile)
+        # make the cbanges to it defined in projectSetAttributes
+        for idx, val in enumerate(gettesDispatchInputValue):  # iterate through all re dispatch attribute values
+            tag = gettesDispatchInputsTag[idx].split('.')
+            attr = gettesDispatchInputAttr[idx]
+            value = val
+            writeXmlTag(settesDispatchInputFile, tag, attr, value)
 
 
     # get the components to be run

@@ -26,10 +26,10 @@ class SystemOperations:
     def __init__(self, outputDataDir, timeStep = 1, runTimeSteps = 'all', loadRealFiles = [], loadReactiveFiles = [], predictLoad = 'predictLoad1', loadDescriptor = [],
                  predictWind = 'predictWind0', getMinSrcFile = 'getMinSrc0', getMinSrcInputFile = 'getMinSrc0Inputs', reDispatchFile = 'reDispatch0', reDispatchInputsFile = 'reDispatchInputs0',
                  genIDs = [], genStates = [], genDescriptors = [], genDispatchFile = 'genDispatch0',
-                 genScheduleFile = 'genSchedule0', genDispatchInputsFile = 'genDispatchInputs0', genScheduleInputsFile = 'genScheduleInputsFile0',
-                 wtgIDs = [], wtgStates = [], wtgDescriptors = [], wtgSpeedFiles = [],
+                 genScheduleFile = 'genSchedule0', genDispatchInputsFile = 'genDispatch0Inputs', genScheduleInputsFile = 'genSchedule0InputsFile',
+                 wtgIDs = [], wtgStates = [], wtgDescriptors = [], wtgSpeedFiles = [], wtgDispatchFile = 'wtgDispatch0', wtgDispatchInputsFile = 'wtgDispatch0Inputs',
                  eesIDs = [], eesStates = [], eesSOCs = [], eesDescriptors = [], eesDispatch = [],
-                 tesIDs = [], tesStates = [], tesTs = [], tesDescriptors = [], tesDispatch = []):
+                 tesIDs = [], tesStates = [], tesTs = [], tesDescriptors = [], tesDispatchFile = [], tesDispatchInputsFile = []):
         """
         Constructor used for intialization of all sytem components
         :param timeStep: the length of time steps the simulation is run at in seconds.
@@ -173,13 +173,14 @@ class SystemOperations:
                  genDispatchInputsFile, genScheduleInputsFile)
         # initiate wind farm
         if len(wtgIDs) != 0:
-            self.WF = Windfarm(wtgIDs, wtgSpeedFiles, wtgStates, timeStep, wtgDescriptors, self.lenRealLoad, runTimeSteps)
+            self.WF = Windfarm(wtgIDs, wtgSpeedFiles, wtgStates, timeStep, wtgDescriptors, self.lenRealLoad,
+                               wtgDispatchFile, wtgDispatchInputsFile, runTimeSteps)
         # initiate electrical energy storage system
         if len(eesIDs) != 0:
             self.EESS = ElectricalEnergyStorageSystem(eesIDs, eesSOCs, eesStates, timeStep, eesDescriptors, eesDispatch, self.lenRealLoad)
         # initiate the thermal energy storage system
         if len(tesIDs) != 0:
-            self.TESS = ThermalEnergyStorageSystem(tesIDs, tesTs, tesStates, timeStep, tesDescriptors, tesDispatch)
+            self.TESS = ThermalEnergyStorageSystem(tesIDs, tesTs, tesStates, timeStep, tesDescriptors, tesDispatchFile, tesDispatchInputsFile)
 
 
         # save local variables

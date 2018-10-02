@@ -15,7 +15,7 @@ class tesDispatch:
         :param newQ: new total reactive power level
         :param newSRC: new spinning reserve requirement. if set to nan, there is no change in the SRC requirement.
         """
-    def tesDispatch(self, TESS, P):
+    def runDispatch(self, TESS, P):
         # Need to check div by zero
         sumTESSTesPAVail = sum(TESS.tesPAvail)
         if sumTESSTesPAVail == 0:
