@@ -5,15 +5,15 @@
 
 import itertools
 import sys
-
+import os
 import numpy as np
-
+import importlib.util
 from GBSModel.Generator import Generator
-
+from bs4 import BeautifulSoup as Soup
 sys.path.append('../')
 from GBSAnalyzer.CurveAssemblers.genFuelCurveAssembler import GenFuelCurve
 from GBSModel.getIntListIndex import getIntListIndex
-
+import xml.etree.ElementTree as ET
 
 # import GeneratorDispatch
 
@@ -26,7 +26,8 @@ class Powerhouse:
     # genQ - list of generator reactive power levels for respective generators listed in genIDS
     # genDescriptor - list of generator descriptor XML files for the respective generators listed in genIDS, this should
     #   be a string with a relative path and file name, e.g., /InputData/Components/gen1Descriptor.xml
-    def __init__(self, genIDS, genStates, timeStep, genDescriptor):
+    def __init__(self, genIDS, genStates, timeStep, genDescriptor, genDispatchFile, genScheduleFile,
+                 genDispatchInputsFile, genScheduleInputsFile):
         # check to make sure same length data coming in
         if not len(genIDS)==len(genStates):
             raise ValueError('The length genIDS, genP, genQ and genStates inputs to Powerhouse must be equal.')
@@ -64,13 +65,76 @@ class Powerhouse:
         self.genMolAvail = []
         # the minimum efficient power output based on MEL
         self.genMelAvail = []
-        """
 
-        :param genIDS:
-        :param genP:
-        :param genQ:
-        :param genDescriptor:
-        """
+
+
+        ## initiate generator dispatch and its inputs.
+        # import gen energy dispatch
+        modPath, modFile = os.path.split(genDispatchFile)
+        # if located in a different directory, add to sys path
+        if len(modPath) != 0:
+            sys.path.append(modPath)
+        # split extension off of file
+        modFileName, modFileExt = os.path.splitext(modFile)
+        # import module
+        A = importlib.import_module(modFileName)
+        # get the inputs
+        rdi = open(genDispatchInputsFile, "r")
+        genDispatchInputsXml = rdi.read()
+        rdi.close()
+        genDispatchInputsSoup = Soup(genDispatchInputsXml, "xml")
+
+        # get all tags
+        elemList = []
+        xmlTree = ET.parse(genDispatchInputsFile)
+        for elem in xmlTree.iter():
+            elemList.append(elem.tag)
+
+        # create Dict of tag names and values (not including root)
+        genDispatchInputs = {}
+        for elem in elemList[1:]:
+            genDispatchInputs[elem] = self.returnObjectValue(genDispatchInputsSoup.find(elem).get('value'))
+
+        # check if inputs for initializing genDispatch
+        if len(genDispatchInputs) == 0:
+            self.genDispatch = A.genDispatch()
+        else:
+            self.genDispatch = A.genDispatch(genDispatchInputs)
+
+        ## initiate generator schedule and its inputs.
+        # import gen energy dispatch
+        modPath, modFile = os.path.split(genScheduleFile)
+        # if located in a different directory, add to sys path
+        if len(modPath) != 0:
+            sys.path.append(modPath)
+        # split extension off of file
+        modFileName, modFileExt = os.path.splitext(modFile)
+        # import module
+        A = importlib.import_module(modFileName)
+        # get the inputs
+        rdi = open(genScheduleInputsFile, "r")
+        genScheduleInputsXml = rdi.read()
+        rdi.close()
+        genScheduleInputsSoup = Soup(genScheduleInputsXml, "xml")
+
+        # get all tags
+        elemList = []
+        xmlTree = ET.parse(genScheduleInputsFile)
+        for elem in xmlTree.iter():
+            elemList.append(elem.tag)
+
+        # create Dict of tag names and values (not including root)
+        genScheduleInputs = {}
+        for elem in elemList[1:]:
+            genScheduleInputs[elem] = self.returnObjectValue(genScheduleInputsSoup.find(elem).get('value'))
+
+        # check if inputs for initializing genDispatch
+        if len(genScheduleInputs) == 0:
+            self.genSchedule = A.genSchedule()
+        else:
+            self.genSchedule = A.genSchedule(genScheduleInputs)
+
+
 
         # Populate the list of generators with generator objects
         for idx, genID in enumerate(genIDS):
@@ -216,12 +280,15 @@ class Powerhouse:
              gmdcce = [0]
          return list(zip(gmdcce, gmdcc))
 
+
     # genDispatch class method. Assigns a loading to each online generator and checks if they are inside operating bounds.
     # Inputs:
     # self - self reference
     # newGenP - new total generator real load
     # newGenQ - new total generator reactive load
-    def genDispatch(self, newGenP, newGenQ):
+    def runGenDispatch(self, newGenP, newGenQ):
+        self.genDispatch.runDispatch(self, newGenP, newGenQ)
+        """     
         # dispatch
         if self.genDispatchType == 1: # if proportional loading
             # make sure to update genPAvail and genQAvail before
@@ -247,7 +314,7 @@ class Powerhouse:
                     self.genQ[idx] = self.generators[idx].genQ
         else:
             print('The generator dispatch is not supported. ')
-
+        """
         # check operating bounds for each generator
         for idx in range(len(self.genIDS)):
             self.generators[idx].checkOperatingConditions()
@@ -273,15 +340,16 @@ class Powerhouse:
                     gen.genState = 0
 
 
-
     # genSchedule class method. Brings another generator combination online
     # Inputs:
     # self - self reference
     # scheduledLoad - the load that the generators will be expected to supply, this is predicted based on previous loading
     # scheduledSRC -  the minimum spinning reserve that the generators will be expected to supply
     # schedWithFuelCons -  minimize fuel consumption in the scheduling of generators. If false, it will schedule the combination with the lowest MOL
-    def genSchedule(self, futureLoad, futureRE, scheduledSRCSwitch, scheduledSRCStay, powerAvailToSwitch, powerAvailToStay,underSRC, minimizeFuel = False):
-
+    def runGenSchedule(self, futureLoad, futureRE, scheduledSRCSwitch, scheduledSRCStay, powerAvailToSwitch, powerAvailToStay,underSRC):
+        self.genSchedule.runSchedule(self, futureLoad, futureRE, scheduledSRCSwitch, scheduledSRCStay,
+                                     powerAvailToSwitch, powerAvailToStay,underSRC)
+        """
         # scheduled load is the difference between load and RE, the min of what needs to be provided by gen or ess
         scheduledLoad = max(futureLoad - futureRE,0)
 
@@ -408,8 +476,7 @@ class Powerhouse:
                     # update genPAvail
                     self.generators[idx].updateGenPAvail()
 
-
-
+    """
     # switch generators on and off
     def switchGenComb(self,GenSwOn, GenSwOff):
         # bring online
@@ -424,3 +491,42 @@ class Powerhouse:
         # start the gennerators
         for genID in GenSwOn:
             self.generators[self.genIDS.index(genID)].genState = 1  # running but offline
+
+    # test if an object is a float
+    def isfloat(self,x):
+        try:
+            a = float(x)
+        except ValueError:
+            return False
+        else:
+            return True
+
+    # test if an object is an interger
+    def isint(self,x):
+        try:
+            a = int(x)
+        except ValueError:
+            return False
+        else:
+            return True
+
+    # test if an object is a bool
+    def isbool(self, x):
+        if x.lower() in ['false','true']:
+            return True
+        else:
+            return False
+
+    # return int, float, bool or string depending on what it can be converted into.
+    def returnObjectValue(self,obj):
+        if self.isint(obj):
+            return int(obj)
+        elif self.isfloat(obj):
+            return float(obj)
+        elif self.isbool(obj):
+            if obj.lower == 'true':
+                return True
+            else:
+                return False
+        else:
+            return str(obj)

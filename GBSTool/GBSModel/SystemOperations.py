@@ -25,7 +25,8 @@ class SystemOperations:
     # FUTUREFEATURE: add genDispatch, genSchedule and wtgDispatch
     def __init__(self, outputDataDir, timeStep = 1, runTimeSteps = 'all', loadRealFiles = [], loadReactiveFiles = [], predictLoad = 'predictLoad1', loadDescriptor = [],
                  predictWind = 'predictWind0', getMinSrcFile = 'getMinSrc0', getMinSrcInputFile = 'getMinSrc0Inputs', reDispatchFile = 'reDispatch0', reDispatchInputsFile = 'reDispatchInputs0',
-                 genIDs = [], genStates = [], genDescriptors = [],
+                 genIDs = [], genStates = [], genDescriptors = [], genDispatchFile = 'genDispatch0',
+                 genScheduleFile = 'genSchedule0', genDispatchInputsFile = 'genDispatchInputs0', genScheduleInputsFile = 'genScheduleInputsFile0',
                  wtgIDs = [], wtgStates = [], wtgDescriptors = [], wtgSpeedFiles = [],
                  eesIDs = [], eesStates = [], eesSOCs = [], eesDescriptors = [], eesDispatch = [],
                  tesIDs = [], tesStates = [], tesTs = [], tesDescriptors = [], tesDispatch = []):
@@ -168,7 +169,8 @@ class SystemOperations:
         # initiate generator power house
         # TODO: seperate genDispatch from power house, put as input
         if len(genIDs) != 0:
-            self.PH = Powerhouse(genIDs, genStates, timeStep, genDescriptors)
+            self.PH = Powerhouse(genIDs, genStates, timeStep, genDescriptors, genDispatchFile, genScheduleFile,
+                 genDispatchInputsFile, genScheduleInputsFile)
         # initiate wind farm
         if len(wtgIDs) != 0:
             self.WF = Windfarm(wtgIDs, wtgSpeedFiles, wtgStates, timeStep, wtgDescriptors, self.lenRealLoad, runTimeSteps)
@@ -497,7 +499,7 @@ class SystemOperations:
         phP = self.P - self.reDispatch.wfPimport - max([eessP, 0]) + phPch
 
         # dispatch the generators
-        self.PH.genDispatch(phP, 0)
+        self.PH.runGenDispatch(phP, 0)
 
         # record values
         if hasattr(self, 'TESS'):  # check if thermal energy storage in the simulation
@@ -599,7 +601,7 @@ class SystemOperations:
                                                             eesLoss + ees.eesSrcTime * eesSrcScheduledSwitch[index])
 
             # schedule the generators accordingly
-            self.PH.genSchedule(self.futureLoad, sumFutureWind, futureSRC[1] - coveredSRCSwitch,
+            self.PH.runGenSchedule(self.futureLoad, sumFutureWind, futureSRC[1] - coveredSRCSwitch,
                                 futureSRC[0] - coveredSRCStay,
                                 eesSchedDischAvail, sumEesSrcAvailMax - sum(eesSrcScheduledStay),
                                 any(self.EESS.underSRC))

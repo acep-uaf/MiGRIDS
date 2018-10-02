@@ -90,11 +90,19 @@ def runSimulation(projectSetDir = ''):
 
     reDispatchInputFile = os.path.join(projectSetDir, 'Setup', projectName + 'Set' + str(setNum) + reDispatchFile[0].upper() + reDispatchFile[1:] + 'Inputs.xml')
 
-    # TODO
     # get the gen dispatch
-    genDispatch = []
-    # get the wtg dispatch
-    wtgDispatch = []
+    genDispatchFile = readXmlTag(projectSetupFile, 'genDispatch', 'value')[0]
+
+    genDispatchInputFile = os.path.join(projectSetDir, 'Setup',
+                                       projectName + 'Set' + str(setNum) + genDispatchFile[0].upper() + genDispatchFile[
+                                                                                                       1:] + 'Inputs.xml')
+    # get the gen schedule
+    genScheduleFile = readXmlTag(projectSetupFile, 'genSchedule', 'value')[0]
+
+    genScheduleInputFile = os.path.join(projectSetDir, 'Setup',
+                                        projectName + 'Set' + str(setNum) + genScheduleFile[
+                                            0].upper() + genScheduleFile[
+                                                         1:] + 'Inputs.xml')
 
     while 1:
         # read the SQL table of runs in this set and look for the next run that has not been started yet.
@@ -166,7 +174,8 @@ def runSimulation(projectSetDir = ''):
         # pr0.enable()
         SO = SystemOperations(outputDataDir, timeStep = timeStep, runTimeSteps = runTimeSteps, loadRealFiles = loadProfileFile, loadReactiveFiles = [],
                               predictLoad = predictLoad, loadDescriptor = loadDescriptors, predictWind = predictWind, getMinSrcFile = getMinSrcFile, getMinSrcInputFile = getMinSrcInputFile, reDispatchFile = reDispatchFile, reDispatchInputsFile = reDispatchInputFile,
-                         genIDs = genIDs, genStates = genStates, genDescriptors = genDescriptors,
+                         genIDs = genIDs, genStates = genStates, genDescriptors = genDescriptors, genDispatchFile = genDispatchFile,
+                            genScheduleFile = genScheduleFile, genDispatchInputsFile= genDispatchInputFile, genScheduleInputsFile= genScheduleInputFile,
                          wtgIDs = wtgIDs, wtgStates = wtgStates, wtgDescriptors = wtgDescriptors, wtgSpeedFiles = timeSeriesDir,
                          eesIDs = eesIDs, eesStates = eesStates, eesSOCs = eesSOC, eesDescriptors = eesDescriptors, eesDispatch = eesDispatch,
                          tesIDs = tesIDs, tesTs = tesT, tesStates=tesStates, tesDescriptors=tesDescriptors, tesDispatch=tesDispatch)

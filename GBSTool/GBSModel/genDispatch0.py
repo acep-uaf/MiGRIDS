@@ -8,7 +8,7 @@
 import numpy as np
 
 class genDispatch:
-    def __init__(self,ph, newGenP, newGenQ):
+    def runDispatch(self,ph, newGenP, newGenQ = 0):
         """
         dispatch the power setpoints for each diesel generator.
         :param ph: a powerhouse object
@@ -20,7 +20,7 @@ class genDispatch:
         # Helper sum
         sumGenPAvail = sum(ph.genPAvail)
         if sumGenPAvail == 0:
-            for idx in range(len(self.genIDS)):
+            for idx in range(len(ph.genIDS)):
                 ph.generators[idx].genP = newGenP / len(ph.genIDS)
                 ph.generators[idx].genQ = newGenQ / len(ph.genIDS)
                 # update the local variable that keeps track of generator power
