@@ -245,6 +245,35 @@ def generateRuns(projectSetDir):
             writeXmlTag(settesDispatchInputFile, tag, attr, value)
 
 
+        # make changes to the eesDispatch input file,
+        # get the eesDispatchInputsFile
+        eesDispatch = readXmlTag(setupFile, 'eesDispatch', 'value')[0]
+        getEesDispatchInputsFile = os.path.join(projectDir, 'InputData', 'Setup',
+                                                projectName + eesDispatch[0].upper() + eesDispatch[
+                                                                                       1:] + 'Inputs.xml')
+        # get the ees dispatch inputs for this set of simulations
+        getEesDispatchInputsTag = readXmlTag(projectName + 'Set' + str(setNum) + 'Attributes.xml',
+                                             ['eesDispatchInputAttributeValues', 'eesDispatchInputTag'], 'value')
+        getEesDispatchInputAttr = readXmlTag(projectName + 'Set' + str(setNum) + 'Attributes.xml',
+                                             ['eesDispatchInputAttributeValues', 'eesDispatchInputAttr'], 'value')
+        getEesDispatchInputValue = readXmlTag(projectName + 'Set' + str(setNum) + 'Attributes.xml',
+                                              ['eesDispatchInputAttributeValues', 'eesDispatchInputValue'],
+                                              'value')
+
+        # copy the eesDispatchInput xml file to this simulation set directory and make the specified changes
+        setEesDispatchInputFile = os.path.join(projectSetDir, 'Setup',
+                                               projectName + 'Set' + str(setNum) + eesDispatch[
+                                                   0].upper() + eesDispatch[1:] + 'Inputs.xml')
+        # copy geteesDispatchInput file
+        copyfile(getEesDispatchInputsFile, setEesDispatchInputFile)
+        # make the cbanges to it defined in projectSetAttributes
+        for idx, val in enumerate(getEesDispatchInputValue):  # iterate through all re dispatch attribute values
+            tag = getEesDispatchInputsTag[idx].split('.')
+            attr = getEesDispatchInputAttr[idx]
+            value = val
+            writeXmlTag(setEesDispatchInputFile, tag, attr, value)
+
+
     # get the components to be run
     components = readXmlTag(setupFile, 'componentNames', 'value')
 

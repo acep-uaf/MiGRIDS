@@ -10,11 +10,13 @@ from GBSModel.ElectricalEnergyStorage import ElectricalEnergyStorage
 sys.path.append('../')
 import importlib.util
 import os
+from bs4 import BeautifulSoup as Soup
+import xml.etree.ElementTree as ET
 # import EESSDispatch
 
 class ElectricalEnergyStorageSystem:
 
-    def __init__(self, eesIDS, eesSOC, eesStates, timeStep, eesDescriptor, eesDispatch, timeSeriesLength):
+    def __init__(self, eesIDS, eesSOC, eesStates, timeStep, eesDescriptor, eesDispatchFile, eesDispatchInputsFile, timeSeriesLength):
         """
         Constructor used for intialization of all Energy Storage units in this Energy Storage System.
         :param eesIDS: list of integers for identification of Energy Storage units.
@@ -70,6 +72,41 @@ class ElectricalEnergyStorageSystem:
         self.eesQ = [0] * len(self.eesSOC)
         self.eesSRC = [0] * len(self.eesSOC)
 
+        ## initiate ees dispatch and its inputs.
+        # import ees energy dispatch
+        modPath, modFile = os.path.split(eesDispatchFile)
+        # if located in a different directory, add to sys path
+        if len(modPath) != 0:
+            sys.path.append(modPath)
+        # split extension off of file
+        modFileName, modFileExt = os.path.splitext(modFile)
+        # import module
+        A = importlib.import_module(modFileName)
+        # get the inputs
+        rdi = open(eesDispatchInputsFile, "r")
+        eesDispatchInputsXml = rdi.read()
+        rdi.close()
+        eesDispatchInputsSoup = Soup(eesDispatchInputsXml, "xml")
+
+        # get all tags
+        elemList = []
+        xmlTree = ET.parse(eesDispatchInputsFile)
+        for elem in xmlTree.iter():
+            elemList.append(elem.tag)
+
+        # create Dict of tag names and values (not including root)
+        eesDispatchInputs = {}
+        for elem in elemList[1:]:
+            eesDispatchInputs[elem] = self.returnObjectValue(eesDispatchInputsSoup.find(elem).get('value'))
+
+        # check if inputs for initializing eesDispatch
+        if len(eesDispatchInputs) == 0:
+            self.eesDispatch = A.eesDispatch()
+        else:
+            self.eesDispatch = A.eesDispatch(eesDispatchInputs)
+
+
+
         # Populate the list of ees with ees objects
         # TODO: consider leaving values at ees level, not bringing them to this level if not necessary
         for idx, eesID in enumerate(eesIDS):
@@ -101,7 +138,7 @@ class ElectricalEnergyStorageSystem:
             self.eesPOutMax += self.electricalEnergyStorageUnits[idx].eesPOutMax
             self.eesQOutMax += self.electricalEnergyStorageUnits[idx].eesQOutMax
             self.eesEMax += self.electricalEnergyStorageUnits[idx].eesEMax
-
+        """
         # import the dispatch scheme
         # split into path and filename
         modPath, modFile = os.path.split(eesDispatch)
@@ -114,10 +151,11 @@ class ElectricalEnergyStorageSystem:
         dispatchModule = importlib.import_module(modFileName)
         self.eesDispatch = dispatchModule.eesDispatch
 
+    """
 
     # this runs the ees dispatch schedule
     def runEesDispatch(self, newP, newQ, newSRC, tIndex):
-        self.eesDispatch(self, newP, newQ, newSRC, tIndex)
+        self.eesDispatch.runDispatch(self, newP, newQ, newSRC, tIndex)
         # check the operating conditions of ees, update counters
         for idx, ees in enumerate(self.electricalEnergyStorageUnits):
             self.eesP[idx] = ees.eesP

@@ -66,7 +66,11 @@ def runSimulation(projectSetDir = ''):
     predictWind = readXmlTag(projectSetupFile,'predictWind','value')[0]
 
     # get the ees dispatch
-    eesDispatch = readXmlTag(projectSetupFile,'eesDispatch','value')[0]
+    eesDispatchFile = readXmlTag(projectSetupFile,'eesDispatch','value')[0]
+    eesDispatchInputFile = os.path.join(projectSetDir, 'Setup',
+                                        projectName + 'Set' + str(setNum) + eesDispatchFile[
+                                            0].upper() + eesDispatchFile[
+                                                         1:] + 'Inputs.xml')
 
     # get the tes dispatch
     tesDispatchFile = readXmlTag(projectSetupFile, 'tesDispatch', 'value')[0]
@@ -190,7 +194,7 @@ def runSimulation(projectSetDir = ''):
                             genScheduleFile = genScheduleFile, genDispatchInputsFile= genDispatchInputFile, genScheduleInputsFile= genScheduleInputFile,
                          wtgIDs = wtgIDs, wtgStates = wtgStates, wtgDescriptors = wtgDescriptors, wtgSpeedFiles = timeSeriesDir,
                             wtgDispatchFile=wtgDispatchFile, wtgDispatchInputsFile=wtgDispatchInputFile,
-                         eesIDs = eesIDs, eesStates = eesStates, eesSOCs = eesSOC, eesDescriptors = eesDescriptors, eesDispatch = eesDispatch,
+                         eesIDs = eesIDs, eesStates = eesStates, eesSOCs = eesSOC, eesDescriptors = eesDescriptors, eesDispatchFile = eesDispatchFile, eesDispatchInputsFile= eesDispatchInputFile,
                          tesIDs = tesIDs, tesTs = tesT, tesStates=tesStates, tesDescriptors=tesDescriptors, tesDispatchFile=tesDispatchFile, tesDispatchInputsFile = tesDispatchInputFile )
         # stop profiler
         # pr0.disable()

@@ -25,10 +25,10 @@ class SystemOperations:
     # FUTUREFEATURE: add genDispatch, genSchedule and wtgDispatch
     def __init__(self, outputDataDir, timeStep = 1, runTimeSteps = 'all', loadRealFiles = [], loadReactiveFiles = [], predictLoad = 'predictLoad1', loadDescriptor = [],
                  predictWind = 'predictWind0', getMinSrcFile = 'getMinSrc0', getMinSrcInputFile = 'getMinSrc0Inputs', reDispatchFile = 'reDispatch0', reDispatchInputsFile = 'reDispatchInputs0',
-                 genIDs = [], genStates = [], genDescriptors = [], genDispatchFile = 'genDispatch0',
-                 genScheduleFile = 'genSchedule0', genDispatchInputsFile = 'genDispatch0Inputs', genScheduleInputsFile = 'genSchedule0InputsFile',
-                 wtgIDs = [], wtgStates = [], wtgDescriptors = [], wtgSpeedFiles = [], wtgDispatchFile = 'wtgDispatch0', wtgDispatchInputsFile = 'wtgDispatch0Inputs',
-                 eesIDs = [], eesStates = [], eesSOCs = [], eesDescriptors = [], eesDispatch = [],
+                 genIDs = [], genStates = [], genDescriptors = [], genDispatchFile = [],
+                 genScheduleFile = [], genDispatchInputsFile = [], genScheduleInputsFile = [],
+                 wtgIDs = [], wtgStates = [], wtgDescriptors = [], wtgSpeedFiles = [], wtgDispatchFile = [], wtgDispatchInputsFile = [],
+                 eesIDs = [], eesStates = [], eesSOCs = [], eesDescriptors = [], eesDispatchFile = [], eesDispatchInputsFile = [],
                  tesIDs = [], tesStates = [], tesTs = [], tesDescriptors = [], tesDispatchFile = [], tesDispatchInputsFile = []):
         """
         Constructor used for intialization of all sytem components
@@ -61,7 +61,7 @@ class SystemOperations:
         :param eesSOC: list of initial state of charge.
         :param eesState: list of the initial operating state, 0 - off, 1 - starting, 2 - online.
         :param eesDescriptor: list of relative path and file name of eesDescriptor-files used to populate static information.
-        :param eesDispatch: If a user defines their own dispatch, it is the path and filename of the dispatch class used
+        :param eesDispatchFile: If a user defines their own dispatch, it is the path and filename of the dispatch class used
         to dispatch the energy storage units. Otherwise, it is the name of the dispatch filename included in the software
         package. Options include: eesDispatch0. The class name in the file must be 'eesDispatch'
         """
@@ -177,7 +177,7 @@ class SystemOperations:
                                wtgDispatchFile, wtgDispatchInputsFile, runTimeSteps)
         # initiate electrical energy storage system
         if len(eesIDs) != 0:
-            self.EESS = ElectricalEnergyStorageSystem(eesIDs, eesSOCs, eesStates, timeStep, eesDescriptors, eesDispatch, self.lenRealLoad)
+            self.EESS = ElectricalEnergyStorageSystem(eesIDs, eesSOCs, eesStates, timeStep, eesDescriptors, eesDispatchFile, eesDispatchInputsFile, self.lenRealLoad)
         # initiate the thermal energy storage system
         if len(tesIDs) != 0:
             self.TESS = ThermalEnergyStorageSystem(tesIDs, tesTs, tesStates, timeStep, tesDescriptors, tesDispatchFile, tesDispatchInputsFile)
