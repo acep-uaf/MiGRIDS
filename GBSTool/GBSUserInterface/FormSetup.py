@@ -60,12 +60,8 @@ class FormSetup(QtWidgets.QWidget):
         ]
 
         self.WizardTree = self.buildWizardTree(dlist)
-        button = QtWidgets.QPushButton('Create input files')
-        button.setToolTip('Create input files to run models')
-        button.clicked.connect(lambda: self.onClick(self.createInputFiles))
-        button.setFixedWidth(200)
-        #windowLayout.addWidget(makeButtonBlock(self,self.createInputFiles,'Create input files',None,'Create input files to run models'),3)
-        windowLayout.addWidget(button)
+        self.createBottomButtonBlock()
+        windowLayout.addWidget(self.BottomButtons)
         #set the main layout as the layout for the window
 
         self.setLayout(windowLayout)
@@ -101,6 +97,35 @@ class FormSetup(QtWidgets.QWidget):
         projectTitlewdg.setObjectName('projectTitle')
         hlayout.addWidget(projectTitlewdg)
         hlayout.addStretch(1)
+        return hlayout
+
+        # FormSetup -> QWidgets.QHBoxLayout
+        # creates a horizontal button layout to insert in FormSetup
+    def createBottomButtonBlock(self):
+        self.BottomButtons = QtWidgets.QGroupBox()
+        hlayout = QtWidgets.QHBoxLayout()
+        # layout object name
+        hlayout.setObjectName('buttonLayout')
+        # add the button to load a setup xml
+        button = QtWidgets.QPushButton('Create input files')
+        button.setToolTip('Create input files to run models')
+        button.clicked.connect(lambda: self.onClick(self.createInputFiles))
+        button.setFixedWidth(200)
+        # windowLayout.addWidget(makeButtonBlock(self,self.createInputFiles,'Create input files',None,'Create input files to run models'),3)
+        hlayout.addWidget(button)
+        dataLoaded = QtWidgets.QLineEdit()
+        dataLoaded.setFrame(False)
+        dataLoaded.setObjectName('dataloaded')
+        dataLoaded.setText('No data loaded')
+        dataLoaded.setFixedWidth(200)
+        self.dataLoaded = dataLoaded
+        hlayout.addWidget(self.dataLoaded)
+        # generate netcd button
+        netCDFButton = self.createSubmitButton()
+        hlayout.addWidget(netCDFButton)
+        button.setFixedWidth(200)
+        hlayout.addStretch(1)
+        self.BottomButtons.setLayout(hlayout)
         return hlayout
 
     #method -> None
@@ -178,7 +203,7 @@ class FormSetup(QtWidgets.QWidget):
         self.model.data = handler.loadInputData(os.path.join(self.model.setupFolder, self.model.project + 'Setup.xml'))
         if self.model.data is not None:
             self.updateModelPage(self.model.data)
-
+            self.dataLoaded.setText('data loaded')
             #refresh the plot
             resultDisplay = self.parent().findChild(ResultsSetup)
             resultDisplay.defaultPlot(self.model.data)
@@ -236,9 +261,6 @@ class FormSetup(QtWidgets.QWidget):
         model = self.model
         model.assignProject(self.WizardTree.field('project'))
         model.assignTimeStep(SetupTag.assignValue, self.WizardTree.field('timestep'))
-        a = self.WizardTree.field('project')
-        p = self.WizardTree.field('timeInterval')
-        pp = self.WizardTree.field('sdate')
         model.assignRunTimesteps(SetupTag.assignValue, self.WizardTree.field('sdate') + ' ' + self.WizardTree.field('edate'))
         return
 
@@ -389,6 +411,41 @@ class FormSetup(QtWidgets.QWidget):
     def onClick(self, buttonFunction):
         buttonFunction()
 
+# ->QPushButton
+    def createSubmitButton(self):
+        button = QtWidgets.QPushButton()
+        button.setText("Generate netCDF inputs")
+        button.clicked.connect(self.generateNetcdf)
+        return button
+
+    #uses the current data object to generate input netcdfs
+    def generateNetcdf(self):
+
+        handler = UIToHandler()
+        #df gets read in from TimeSeries processed data folder
+        #component dictionary comes from setupXML's
+        MainWindow = self.window()
+        setupForm = MainWindow.findChild(QtWidgets.QWidget,'setupDialog')
+        setupModel= setupForm.model
+        if 'setupFolder' in setupModel.__dict__.keys():
+            setupFile = os.path.join(setupModel.setupFolder, setupModel.project + 'Setup.xml')
+            componentModel = setupForm.findChild(QtWidgets.QWidget,'components').model()
+            #From the setup file read the location of the input pickle
+            #by replacing the current pickle with the loaded one the user can manually edit the input and
+            #  then return to working with the interface
+            data = handler.loadInputData(setupFile)
+            if data:
+                df = data.fixed
+                componentDict = {}
+                if 'components' not in setupModel.__dict__.keys():
+                    #generate components
+                    setupForm.makeComponentList(componentModel)
+                for c in setupModel.components:
+                    componentDict[c.component_name] = c.toDictionary()
+
+                handler.createNetCDF(df, componentDict,setupFile)
+            else:
+                print("no data found")
 #classes used for displaying wizard inputs
 class WizardPage(QtWidgets.QWizardPage):
     def __init__(self, inputdict,**kwargs):
