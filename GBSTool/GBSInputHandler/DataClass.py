@@ -116,6 +116,8 @@ class DataClass:
     # pickles the dataframe so it can be restored later
     def preserve(self, setupDir):
         filename = os.path.join(setupDir + '/../TimeSeriesData', 'fixed_data.pickle')
+        if not os.path.exists(os.path.dirname(filename)):
+            os.makedirs(os.path.dirname(filename))
         pickle_out = open(filename, 'wb')
         pickle.dump(self.fixed, pickle_out)
         pickle_out.close
