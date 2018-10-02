@@ -226,7 +226,6 @@ class FormSetup(QtWidgets.QWidget):
         wiztree.addPage(WizardPage(dlist[2]))
         wiztree.addPage(TextWithDropDown(dlist[1]))
         wiztree.addPage(TwoDatesDialog(dlist[0]))
-
         btn = wiztree.button(QtWidgets.QWizard.FinishButton)
         btn.clicked.connect(self.saveInput)
         return wiztree
@@ -237,7 +236,10 @@ class FormSetup(QtWidgets.QWidget):
         model = self.model
         model.assignProject(self.WizardTree.field('project'))
         model.assignTimeStep(SetupTag.assignValue, self.WizardTree.field('timestep'))
-        model.assignRunTimesteps(SetupTag.assignValue, self.WizardTree.field('runTimesteps'))
+        a = self.WizardTree.field('project')
+        p = self.WizardTree.field('timeInterval')
+        pp = self.WizardTree.field('sdate')
+        model.assignRunTimesteps(SetupTag.assignValue, self.WizardTree.field('sdate') + ' ' + self.WizardTree.field('edate'))
         return
 
 
@@ -299,7 +301,7 @@ class FormSetup(QtWidgets.QWidget):
             os.path.join(model.setupFolder, model.project + 'Setup.xml'))
         self.updateModelPage(cleaned_data)
         # pickled data to be used later if needed
-        handler.storeData(cleaned_data.fixed, os.path.join(model.setupFolder, model.project + 'Setup.xml'))
+        handler.storeData(cleaned_data, os.path.join(model.setupFolder, model.project + 'Setup.xml'))
         handler.storeComponents(components,os.path.join(model.setupFolder, model.project + 'Setup.xml'))
         self.progress.setRange(0, 1)
         # generate netcdf files
@@ -408,6 +410,7 @@ class WizardPage(QtWidgets.QWizardPage):
         layout.addWidget(self.label)
         layout.addWidget(self.input)
         self.setLayout(layout)
+        n = inputdict['name']
         self.registerField(inputdict['name'],self.input)
 
         return
@@ -423,6 +426,7 @@ class WizardPage(QtWidgets.QWizardPage):
 class TwoDatesDialog(WizardPage):
     def __init__(self,d):
         super().__init__(d)
+        self.d = d
 
     def setInput(self):
         grp = QtWidgets.QGroupBox()
@@ -438,6 +442,9 @@ class TwoDatesDialog(WizardPage):
         box.addWidget(self.startDate)
         box.addWidget(self.endDate)
         grp.setLayout(box)
+        name = self.d['name']
+        self.registerField('sdate', self.startDate,"text")
+        self.registerField('edate',self.endDate,"text")
         return grp
 
     def getInput(self):
@@ -466,6 +473,7 @@ class DropDown(WizardPage):
 class TextWithDropDown(WizardPage):
     def __init__(self, d):
         super().__init__(d)
+        self.d = d
 
     def setInput(self):
         grp = QtWidgets.QGroupBox()
@@ -478,6 +486,9 @@ class TextWithDropDown(WizardPage):
         box.addWidget(self.text)
         box.addWidget(self.combo)
         grp.setLayout(box)
+        #self.registerField(self.d['name'],self.combo,"currentText",self.combo.currentIndexChanged)
+        self.registerField('timeInterval',self.text)
+        self.registerField('timeUnit',self.combo,"currentText")
         return grp
 
     def getInput(self):

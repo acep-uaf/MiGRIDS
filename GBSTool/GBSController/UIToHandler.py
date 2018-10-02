@@ -259,10 +259,8 @@ class UIToHandler():
     #DataClass, string -> None
     def storeData(self,df,setupFile):
 
-        inputDirectory = readXmlTag(setupFile, 'inputFileDir', 'value')
-        inputDirectory = os.path.join(*inputDirectory)
-        outputDirectory = os.path.join(inputDirectory, '../ProcessedData')
-
+        outputDirectory = os.path.join(os.path.dirname(setupFile), '/ProcessedData')
+        print("processed data saved to %s: " %outputDirectory)
         if not os.path.exists(outputDirectory):
             os.makedirs(outputDirectory)
         outfile = os.path.join(outputDirectory, 'processed_input_file.pkl')
@@ -274,19 +272,17 @@ class UIToHandler():
     #read in a pickled data object if it exists
     #string->object
     def loadInputData(self,setupFile):
-        inputDirectory = readXmlTag(setupFile, 'inputFileDir', 'value')
-        if len(inputDirectory) > 0:
-            inputDirectory = os.path.join(*inputDirectory)
-            outputDirectory = os.path.join('/', inputDirectory, '../ProcessedData')
-            outfile = os.path.join(outputDirectory, 'processed_input_file.pkl')
 
-            if not os.path.exists(outfile):
-                return None
+        outputDirectory = os.path.join(os.path.dirname(setupFile), '../ProcessedData')
+        outfile = os.path.join(outputDirectory, 'processed_input_file.pkl')
 
-            file = open(outfile, 'rb')
-            data = pickle.load(file)
-            file.close()
-            return data
+        if not os.path.exists(outfile):
+            return None
+
+        file = open(outfile, 'rb')
+        data = pickle.load(file)
+        file.close()
+        return data
 
     #generates all the set and run folders in the output directories and starts the sequence of models running
     #String, ComponentTable, SetupInformation
