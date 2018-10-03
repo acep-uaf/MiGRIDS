@@ -13,7 +13,10 @@ from GBSUserInterface.Delegates import ClickableLineEdit
 from GBSUserInterface.FileBlock import FileBlock
 from GBSUserInterface.ProjectSQLiteHandler import ProjectSQLiteHandler
 from GBSUserInterface.ModelSetupInformation import SetupTag
-from GBSUserInterface.switchProject import switchProject, saveProject, clearProjectDatabase
+from GBSUserInterface.switchProject import switchProject
+from GBSUserInterface.getFilePaths import getFilePath
+import os
+from GBSUserInterface.replaceDefaultDatabase import replaceDefaultDatabase
 
 class FormSetup(QtWidgets.QWidget):
     global model
@@ -166,12 +169,11 @@ class FormSetup(QtWidgets.QWidget):
             self.tabs.setEnabled(True)
             self.findChild(QtWidgets.QLabel, 'projectTitle').setText(self.model.project)
 
-    #searches for and loads existing project data - database, setupxml,descriptors, DataClass pickle
+    #searches for and loads existing project data - database, setupxml,descriptors, DataClass pickle, Component pickle netcdf,previously run model results, previous optimization results
     def functionForLoadButton(self):
         '''The load function reads the designated setup xml, looks for descriptor xmls,
         looks for an existing project database and a pickled data object.'''
-        import os
-        from GBSUserInterface.replaceDefaultDatabase import replaceDefaultDatabase
+
         #if we were already working on a project its state gets saved and  new project is loaded
         if (self.model.project != '') & (self.model.project is not None):
             self.model = switchProject(self)
@@ -179,14 +181,18 @@ class FormSetup(QtWidgets.QWidget):
             model = self.model
 
         #launch file navigator to identify setup file
-
         setupFile = QtWidgets.QFileDialog.getOpenFileName(self,"Select your setup file", self.lastProjectPath, "*xml" )
         if (setupFile == ('','')) | (setupFile is None):
             return
         model.assignSetupFolder(setupFile[0])
-        self.dbHandler.insertRecord('project',['project_path'],[setupFile[0]])
 
-        #Look for an existing component database and replace the default one with it
+        # assign setup information to data model
+        model.feedSetupInfo()
+
+        # now that setup data is set display it in the form
+        self.displayModelData()
+
+        #Look for an existing project database and replace the default one with it
         if os.path.exists(os.path.join(self.model.projectFolder,'project_manager')):
             print('An existing project database was found for %s.' %self.model.project)
 
@@ -196,11 +202,9 @@ class FormSetup(QtWidgets.QWidget):
             self.projectDatabase = False
             print('An existing project database was not found for %s.' % self.model.project)
 
-        # assign setup information to data model
-        model.feedSetupInfo()
+        # record the current project
+        self.dbHandler.insertRecord('project', ['project_path'], [setupFile[0]])
 
-        #now that setup data is set display it in the form
-        self.displayModelData()
 
         # look for an existing data pickle
         handler = UIToHandler()
@@ -214,30 +218,38 @@ class FormSetup(QtWidgets.QWidget):
             resultDisplay = self.parent().findChild(ResultsSetup)
             resultDisplay.defaultPlot()
 
-
+        #look for an existing component pickle or create one from information in setup xml
         self.model.components = handler.loadComponents(os.path.join(self.model.setupFolder, self.model.project + 'Setup.xml'))
-
         if self.model.components is None:
              self.getComponentsFromSetup()
 
-        # TODO uncomment
-        # return true if sets have been run
-        #setsRun = loadSets(model,self.window())
+        #list netcdf files previously generated
+        self.netCDFsLoaded.setText(', '.join(self.listNetCDFs()))
+        #TODO this part of the code always sets setsRun to false, need to implement check for models run
+        #boolean indicator of whether or not model sets have already been run
         setsRun = False
         #make the data blocks editable if there are no sets already created
         #if sets have been created then input data is not editable from the interface
         if setsRun:
             msg = QtWidgets.QMessageBox(QtWidgets.QMessageBox.Warning, "Analysis in Progress",
-                                        "Analysis results were detected. You cannot edit projected input data after analysis has begun.")
+                                        "Analysis results were detected. You cannot edit input data after analysis has begun.")
             msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
             msg.exec()
         else:
             self.tabs.setEnabled(True)
 
             print('Loaded %s:' % model.project)
+
+        #set the project name on the form
         self.findChild(QtWidgets.QLabel, 'projectTitle').setText(self.model.project)
 
         return
+    #looks in the processed folder and lists nc files found
+    #->ListOfStrings
+    def listNetCDFs(self):
+        lof = [f for f in os.listdir(getFilePath(self.model.setupFolder,'Processed')) if f[-2] =='nc']
+        return lof
+
 
     def displayModelData(self):
         """creates a tab for each input directory specified the SetupModelInformation model inputFileDir attribute.
