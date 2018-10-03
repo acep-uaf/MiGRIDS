@@ -85,7 +85,7 @@ def fixBadData(df, setupDir, ListOfComponents, sampleInterval,runTimeSteps):
    # use the largest sample interval for the data class- this isn't used anylonger
    sampleIntervalTimeDelta = [pd.to_timedelta(s) for s in sampleInterval]
    #dataLimits = findDataDateLimits(setupDir)
-   data = DataClass(df, max(sampleIntervalTimeDelta),runTimeSteps,getValue)
+   data = DataClass(df, max(sampleIntervalTimeDelta),runTimeSteps)
 
   
   # create a list of power columns

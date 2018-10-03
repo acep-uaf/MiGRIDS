@@ -1,6 +1,6 @@
 
 from PyQt5 import QtCore, QtWidgets, QtGui
-
+import os
 
 from GBSUserInterface.ModelSetupInformation import ModelSetupInformation
 from GBSInputHandler.Component import Component
@@ -124,8 +124,13 @@ class FormSetup(QtWidgets.QWidget):
         netCDFButton = self.createSubmitButton()
         hlayout.addWidget(netCDFButton)
         button.setFixedWidth(200)
-        hlayout.addStretch(1)
+        self.netCDFsLoaded  = QtWidgets.QLineEdit()
+        self.netCDFsLoaded.setFrame(False)
+        self.netCDFsLoaded.setText("none")
+        hlayout.addWidget(self.netCDFsLoaded)
+        #hlayout.addStretch(1)
         self.BottomButtons.setLayout(hlayout)
+
         return hlayout
 
     #method -> None
@@ -206,7 +211,7 @@ class FormSetup(QtWidgets.QWidget):
             self.dataLoaded.setText('data loaded')
             #refresh the plot
             resultDisplay = self.parent().findChild(ResultsSetup)
-            resultDisplay.defaultPlot(self.model.data)
+            resultDisplay.defaultPlot()
        # TODO uncomment
         # return true if sets have been run
         #setsRun = loadSets(model,self.window())
@@ -241,7 +246,7 @@ class FormSetup(QtWidgets.QWidget):
         else:
             self.newTab(1)
         return
-    #TODO make dynamic from list input
+
     #List -> WizardTree
     def buildWizardTree(self, dlist):
         """builds a QWizard based on list of inputs"""
@@ -325,6 +330,7 @@ class FormSetup(QtWidgets.QWidget):
         # pickled data to be used later if needed
         handler.storeData(cleaned_data, os.path.join(model.setupFolder, model.project + 'Setup.xml'))
         handler.storeComponents(components,os.path.join(model.setupFolder, model.project + 'Setup.xml'))
+        self.dataLoaded.setText('data loaded')
         self.progress.setRange(0, 1)
         # generate netcdf files
         msg = QtWidgets.QMessageBox(QtWidgets.QMessageBox.Warning, "Time Series loaded",
@@ -372,10 +378,14 @@ class FormSetup(QtWidgets.QWidget):
             [defaultStart, defaultEnd, defaultComponents])
         self.dbHandler.connection.commit()
 
-        # tell the model form to fillSetInfo now that there is data
+        # Deliver appropriate info to the ModelForm
         modelForm = self.window().findChild(SetsTableBlock)
         # start and end are tuples at this point
         modelForm.makeSetInfo(start=defaultStart, end=defaultEnd, components=defaultComponents)
+
+        #deliver the data to the ResultsSetup form so it can be plotted
+        resultsForm = self.window().findChild(ResultsSetup)
+        resultsForm.setPlotData(data)
 
     # close event is triggered when the form is closed
     def closeEvent(self, event):
@@ -389,7 +399,7 @@ class FormSetup(QtWidgets.QWidget):
         for i in range(self.tabs.count()):
             page = self.tabs.widget(i)
             page.close()
-#TODO add progress bar for uploading raw data and generating fixed data pickle
+    #TODO add progress bar for uploading raw data and generating fixed data pickle
     def addProgressBar(self):
         self.progress = QtWidgets.QProgressBar(self)
         self.progress.setObjectName('uploadBar')
@@ -442,10 +452,13 @@ class FormSetup(QtWidgets.QWidget):
                     setupForm.makeComponentList(componentModel)
                 for c in setupModel.components:
                     componentDict[c.component_name] = c.toDictionary()
-
-                handler.createNetCDF(df, componentDict,setupFile)
+                #filesCreated is a list of netcdf files that were generated
+                filesCreated = handler.createNetCDF(df, componentDict,setupFile)
+                self.netCDFsLoaded.setText(', '.join(filesCreated))
             else:
                 print("no data found")
+
+
 #classes used for displaying wizard inputs
 class WizardPage(QtWidgets.QWizardPage):
     def __init__(self, inputdict,**kwargs):

@@ -225,28 +225,28 @@ class UIToHandler():
             def getValues(self):
                 a,b = self.startDate.text(), self.endDate.text()
                 return a,b
-    #dataframe of cleaned data
+    #List Of dataframe of cleaned data
     #generate netcdf files for model running
     #dataframe, dictionary -> None
-    def createNetCDF(self, df,componentDict,setupFile):
+    def createNetCDF(self, lodf,componentDict,setupFile):
         from GBSInputHandler.dataframe2netcdf import dataframe2netcdf
-        inputDirectory = readXmlTag(setupFile, 'inputFileDir', 'value')
-        inputDirectory = os.path.join(*inputDirectory)
+        outputDirectory = os.path.join(os.path.dirname(setupFile), '/TimeSeries/processed')
 
-        outputDirectory = os.path.join("/",inputDirectory, '../ProcessedData')
         #if there isn't an output directory make one
         if not os.path.exists(outputDirectory):
             os.makedirs(outputDirectory)
-
-        dataframe2netcdf(df, componentDict, outputDirectory)
-        return
+        #only the largest dataframe is kept
+        largest = 0
+        for i, df in enumerate(lodf):
+            if len(df) > largest:
+                dataframe2netcdf(df, componentDict, outputDirectory)
+                largest = len(df)
+        return netCDFlist
 
     #save the components for a project
     #List of Components, String -> None
     def storeComponents(self, ListOfComponents,setupFile):
-        inputDirectory = readXmlTag(setupFile, 'inputFileDir', 'value')
-        inputDirectory = os.path.join(*inputDirectory)
-        outputDirectory = os.path.join(inputDirectory, '../ProcessedData')
+        outputDirectory = os.path.join(os.path.dirname(setupFile), '/ProcessedData')
 
         if not os.path.exists(outputDirectory):
             os.makedirs(outputDirectory)
@@ -273,7 +273,7 @@ class UIToHandler():
     #string->object
     def loadInputData(self,setupFile):
 
-        outputDirectory = os.path.join(os.path.dirname(setupFile), '../ProcessedData')
+        outputDirectory = os.path.join(os.path.dirname(setupFile), '../TimeSeriesData/Processed')
         outfile = os.path.join(outputDirectory, 'processed_input_file.pkl')
 
         if not os.path.exists(outfile):
