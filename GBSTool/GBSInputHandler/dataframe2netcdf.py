@@ -27,11 +27,15 @@ def dataframe2netcdf(df,components,saveLocation=''):
         saveLocation = filedialog.askdirectory()
     os.chdir(saveLocation)
     netCDFList = []
+    def get(attr,default):
+        if attr is None:
+            return default
+        return attr
     # create a netCDF file for each data column of the data frame containing the timestamps and the data
     for component in components.keys():
         # get header name from dataframe
         try:
-            column = [c for c,x in enumerate(df.columns.values) if x == component]
+            column = [c for c,x in enumerate(df.columns.values) if x == components[component]['column_name']]
             if len(column) >0:
                 column = column[0]
             ncName = component + '.nc'
@@ -46,12 +50,15 @@ def dataframe2netcdf(df,components,saveLocation=''):
             # assign attributes
             rootgrp.variables['time'].units = 'seconds'  # set unit attribute
             rootgrp.variables['value'].units = components[component]['units'] # set unit attribute
-            rootgrp.variables['value'].Scale = components[component]['scale'] # set unit attribute
-            rootgrp.variables['value'].offset = components[component]['offset']  # set unit attribute
+            rootgrp.variables['value'].Scale = get(components[component]['scale'],1) # set unit attribute
+            rootgrp.variables['value'].offset = get(components[component]['offset'],0)  # set unit attribute
             # close file
             rootgrp.close()
-            netCDFList.append(component)
-        except:
+            netCDFList.append(ncName)
+        except Exception as e:
+            print('could not generate netcdf file for %s' %component)
+            print(e)
+
             #if a netcdf file wasn't created successfully, move on to the next one
             continue
     # return to the starting directory

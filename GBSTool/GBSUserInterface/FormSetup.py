@@ -204,15 +204,23 @@ class FormSetup(QtWidgets.QWidget):
 
         # look for an existing data pickle
         handler = UIToHandler()
+        self.model.data= handler.loadInputData(
+            os.path.join(self.model.setupFolder, self.model.project + 'Setup.xml'))
 
-        self.model.data = handler.loadInputData(os.path.join(self.model.setupFolder, self.model.project + 'Setup.xml'))
         if self.model.data is not None:
             self.updateModelPage(self.model.data)
             self.dataLoaded.setText('data loaded')
             #refresh the plot
             resultDisplay = self.parent().findChild(ResultsSetup)
             resultDisplay.defaultPlot()
-       # TODO uncomment
+
+
+        self.model.components = handler.loadComponents(os.path.join(self.model.setupFolder, self.model.project + 'Setup.xml'))
+
+        if self.model.components is None:
+             self.getComponentsFromSetup()
+
+        # TODO uncomment
         # return true if sets have been run
         #setsRun = loadSets(model,self.window())
         setsRun = False
@@ -275,9 +283,6 @@ class FormSetup(QtWidgets.QWidget):
         reads through all the file tabs to collect input
         """
 
-        # list of distinct components
-        self.model.components = []
-
         #needs to come from each page
         tabWidget = self.findChild(QtWidgets.QTabWidget)
         for t in range(tabWidget.count()):
@@ -295,7 +300,10 @@ class FormSetup(QtWidgets.QWidget):
                 attr = child.objectName()
                 model.assign(attr,value,position=int(page.input)-1)
 
-            page.saveTables()
+            model.setComponents(page.saveTables())
+
+            return
+
     #TODO this should be done on a seperate thread
     # Create a dataframe of input data based on importing files within each SetupModelInformation.inputFileDir
     # None->None
@@ -428,6 +436,7 @@ class FormSetup(QtWidgets.QWidget):
         button.clicked.connect(self.generateNetcdf)
         return button
 
+
     #uses the current data object to generate input netcdfs
     def generateNetcdf(self):
 
@@ -451,13 +460,21 @@ class FormSetup(QtWidgets.QWidget):
                     #generate components
                     setupForm.makeComponentList(componentModel)
                 for c in setupModel.components:
-                    componentDict[c.component_name] = c.toDictionary()
+                    componentDict[c.column_name] = c.toDictionary()
                 #filesCreated is a list of netcdf files that were generated
-                filesCreated = handler.createNetCDF(df, componentDict,setupFile)
+                filesCreated = handler.createNetCDF(df, componentDict,setupModel.setupFolder)
                 self.netCDFsLoaded.setText(', '.join(filesCreated))
             else:
                 print("no data found")
 
+    #generate a list of Component objects based on attributes specified ModelSetupInformation
+    #
+    def getComponentsFromSetup(self):
+        for i,c in enumerate(self.model.componentName.value):
+            self.model.makeNewComponent(c,self.model.headerName.value[i],
+                                        self.model.componentAttribute.unit[i],
+                                        self.model.componentAttribute.value[i],
+                                        None)
 
 #classes used for displaying wizard inputs
 class WizardPage(QtWidgets.QWizardPage):

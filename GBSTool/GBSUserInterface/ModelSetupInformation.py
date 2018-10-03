@@ -112,9 +112,10 @@ class ModelSetupInformation:
 
         #empty values
         self.componentFolder = ''
-        self.components =[]
+
         self.project =''
         self.data = None
+        self.components=[]
         self.setupFolder = ''
         self.inputFileType = SetupTag('inputFileType')
         self.inputFileFormat= SetupTag('inputFileFormat')
@@ -243,18 +244,27 @@ class ModelSetupInformation:
                     d[v.name]=v.getDict()
 
         return d
-    # #make a new component and add it to the component list
-    # def makeNewComponent(self,component,originalHeading,units,attribute,componentType):
-    #     # start a component with basic info or original header name, component name and type and attribute
-    #     newComponent = Component(component=component,originalHeading = originalHeading, units=units,attribute=attribute,
-    #                              componentType=componentType)
-    #     self.addComponent(newComponent)
-    # #delete a component from a component list
-    # def removeComponent(self,component):
-    #     self.components = [x for x in self.components if x != component]
-    # #add a component to the component list
-    # def addComponent(self, newComponent):
-    #     self.component.append(newComponent)
+    #make a new component and add it to the component list
+    def makeNewComponent(self,component,originalHeading,units,attribute,componentType):
+        # start a component with basic info or original header name, component name and type and attribute
+        newComponent = Component(component_name=component,column_name = component + attribute, original_field_name = originalHeading, units=units,attribute=attribute,
+                                 type=componentType)
+        self.addComponent(newComponent)
+    #delete a component from a component list
+    def removeComponent(self,component):
+        self.components = [x for x in self.components if x != component]
+    #add a component to the component list
+    def addComponent(self, newComponent):
+        if self.components is None:
+            self.components = [newComponent]
+            return
+        self.components.append(newComponent)
+        return
+    def setComponents(self,loC):
+        ''' sets a list of Components to the components attribute
+        :param loC [List Of Components] a list of Component objects'''
+        self.components = loC
+        return
 
     #read setup xml and assign values to the model parameters
     def feedSetupInfo(self):

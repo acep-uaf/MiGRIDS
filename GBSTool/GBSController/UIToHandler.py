@@ -12,6 +12,7 @@ from GBSInputHandler.fillProjectData import fillProjectData
 from GBSInputHandler.makeSoup import makeComponentSoup
 from GBSInputHandler.writeXmlTag import writeXmlTag
 from GBSInputHandler.mergeInputs import mergeInputs
+from GBSUserInterface.ProjectSQLiteHandler import ProjectSQLiteHandler
 from GBSInputHandler.findDataDateLimits import findDataDateLimits
 
 
@@ -228,10 +229,10 @@ class UIToHandler():
     #List Of dataframe of cleaned data
     #generate netcdf files for model running
     #dataframe, dictionary -> None
-    def createNetCDF(self, lodf,componentDict,setupFile):
+    def createNetCDF(self, lodf,componentDict,setupFolder):
         from GBSInputHandler.dataframe2netcdf import dataframe2netcdf
-        outputDirectory = os.path.join(os.path.dirname(setupFile), '/TimeSeries/processed')
-
+        outputDirectory = os.path.join(setupFolder, *['..','TimeSeriesData','Processed'])
+        netCDFList = []
         #if there isn't an output directory make one
         if not os.path.exists(outputDirectory):
             os.makedirs(outputDirectory)
@@ -239,14 +240,14 @@ class UIToHandler():
         largest = 0
         for i, df in enumerate(lodf):
             if len(df) > largest:
-                dataframe2netcdf(df, componentDict, outputDirectory)
+                netCDFList = dataframe2netcdf(df, componentDict, outputDirectory)
                 largest = len(df)
-        return netCDFlist
+        return netCDFList
 
     #save the components for a project
     #List of Components, String -> None
     def storeComponents(self, ListOfComponents,setupFile):
-        outputDirectory = os.path.join(os.path.dirname(setupFile), '/ProcessedData')
+        outputDirectory = os.path.dirname(setupFile)
 
         if not os.path.exists(outputDirectory):
             os.makedirs(outputDirectory)
@@ -259,7 +260,7 @@ class UIToHandler():
     #DataClass, string -> None
     def storeData(self,df,setupFile):
 
-        outputDirectory = os.path.join(os.path.dirname(setupFile), '/ProcessedData')
+        outputDirectory = os.path.join(os.path.dirname(setupFile), *['..','TimeSeriesData','Processed'])
         print("processed data saved to %s: " %outputDirectory)
         if not os.path.exists(outputDirectory):
             os.makedirs(outputDirectory)
@@ -270,10 +271,10 @@ class UIToHandler():
         return
 
     #read in a pickled data object if it exists
-    #string->object
+    #string->DataClass
     def loadInputData(self,setupFile):
 
-        outputDirectory = os.path.join(os.path.dirname(setupFile), '../TimeSeriesData/Processed')
+        outputDirectory = os.path.join(os.path.dirname(setupFile), *['..','TimeSeriesData','Processed'])
         outfile = os.path.join(outputDirectory, 'processed_input_file.pkl')
 
         if not os.path.exists(outfile):
@@ -283,7 +284,18 @@ class UIToHandler():
         data = pickle.load(file)
         file.close()
         return data
+    #string->ListOfComponents
+    #loads a pickled Component list
+    def loadComponents(self, setupFile):
+        outputDirectory = os.path.dirname(setupFile)
+        infile = os.path.join(outputDirectory, 'components.pkl')
+        if not os.path.exists(infile):
+            return
 
+        file = open(infile, 'rb')
+        loC = pickle.load(file)
+        file.close()
+        return loC
     #generates all the set and run folders in the output directories and starts the sequence of models running
     #String, ComponentTable, SetupInformation
     def runModels(self, currentSet, componentTable, setupInfo):
@@ -342,3 +354,8 @@ class UIToHandler():
         soup = BeautifulSoup(contents_child, 'xml')  # turn into soup
 
         return soup
+    def getComponentTypes(self):
+        dbhandler = ProjectSQLiteHandler()
+        loT = dbhandler.getComponentTypes()
+        dbhandler.closeDatabase()
+        return loT
