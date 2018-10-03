@@ -410,3 +410,8 @@ class ProjectSQLiteHandler:
             if len(self.cursor.execute("select * from " + k + " where " + condition).fetchall()) > 1 :
                 return False
         return True
+    '''gets a list of possible component types from the ref_component_type table'''
+    def getComponentTypes(self):
+        loT = pd.read_sql_query("select code from ref_component_type",self.connection)
+        loT = pd.Series(loT).tolist()
+        return loT

@@ -14,6 +14,7 @@ from GBSInputHandler.writeXmlTag import writeXmlTag
 from GBSInputHandler.mergeInputs import mergeInputs
 from GBSUserInterface.ProjectSQLiteHandler import ProjectSQLiteHandler
 from GBSInputHandler.findDataDateLimits import findDataDateLimits
+from GBSUserInterface.getFilePaths import getFilePath
 
 
 
@@ -231,7 +232,7 @@ class UIToHandler():
     #dataframe, dictionary -> None
     def createNetCDF(self, lodf,componentDict,setupFolder):
         from GBSInputHandler.dataframe2netcdf import dataframe2netcdf
-        outputDirectory = os.path.join(setupFolder, *['..','TimeSeriesData','Processed'])
+        outputDirectory = getFilePath(setupFolder, 'Processed')
         netCDFList = []
         #if there isn't an output directory make one
         if not os.path.exists(outputDirectory):
@@ -260,7 +261,7 @@ class UIToHandler():
     #DataClass, string -> None
     def storeData(self,df,setupFile):
 
-        outputDirectory = os.path.join(os.path.dirname(setupFile), *['..','TimeSeriesData','Processed'])
+        outputDirectory = getFilePath(os.path.dirname(setupFile), 'Processed')
         print("processed data saved to %s: " %outputDirectory)
         if not os.path.exists(outputDirectory):
             os.makedirs(outputDirectory)

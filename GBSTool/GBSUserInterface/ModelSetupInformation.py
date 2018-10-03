@@ -2,6 +2,7 @@
 The information is written to an XML file using the writeXML method. '''
 from GBSInputHandler.Component import Component
 from GBSController.UIToHandler import UIToHandler
+from GBSUserInterface.getFilePaths import getFilePath
 import os
 #setup tags are a class that is used for attributes that get written to the setup.xml
 class SetupTag:
@@ -143,13 +144,13 @@ class ModelSetupInformation:
     def assignProject(self, name):
 
         self.project = name
-#setupFolder is in tags before it gets set.
+        #setupFolder is in tags before it gets set.
         if ('setupFolder' not in self.__dict__.keys()) | (self.setupFolder == ""):
             path = os.path.dirname(__file__)
-            self.setupFolder = os.path.join(path, '../../GBSProjects/', self.project, 'InputData/Setup')
-        self.componentFolder = os.path.join(self.setupFolder ,'../Components')
-        self.projectFolder = os.path.join(self.setupFolder, '../../' )
-        self.outputFolder = os.path.join(self.projectFolder, 'OutputData')
+            self.setupFolder = os.path.join(path, *['..','..','GBSProjects', self.project, 'InputData','Setup'])
+        self.componentFolder = getFilePath(self.setupFolder ,'Components')
+        self.projectFolder = getFilePath(self.setupFolder, 'Project')
+        #self.outputFolder = getFilePath(self.projectFolder, 'OutputData')
 
         #if there isn't a setup folder then its a new project
         if not os.path.exists(self.setupFolder):
@@ -227,7 +228,7 @@ class ModelSetupInformation:
     #return the file path for a set attribute xml file for a given set
     #String -> String
     def getSetAttributeXML(self, set):
-        filePath = os.path.join(self.outputFolder, set, self.project + set + 'Attributes.xml')
+        filePath = os.path.join(getFilePath(self.setupFolder, set),set + 'Attributes.xml')
         return filePath
 
     #creates a dictionary designed to feed into fillProjectData
