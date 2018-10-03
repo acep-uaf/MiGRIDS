@@ -116,7 +116,8 @@ def generateRuns(projectSetDir):
         setGetMinSRCInputFile = os.path.join(projectSetDir, 'Setup',
                                               projectName + 'Set' + str(setNum) + getMinSRC[
                                                   0].upper() + getMinSRC[1:] + 'Inputs.xml')
-        # copy getMinSRCInput file
+
+        # copy reDispatchInput file
         copyfile(getMinSRCInputsFile, setGetMinSRCInputFile)
         # make the cbanges to it defined in projectSetAttributes
         for idx, val in enumerate(getMinSRCInputValue):  # iterate through all re dispatch attribute values
@@ -127,7 +128,150 @@ def generateRuns(projectSetDir):
 
 
 
+        # make changes to the genDispatch input file,
+        # get the genDispatchInputsFile
+        genDispatch = readXmlTag(setupFile, 'genDispatch', 'value')[0]
+        getGenDispatchInputsFile = os.path.join(projectDir, 'InputData', 'Setup',
+                                           projectName + genDispatch[0].upper() + genDispatch[1:] + 'Inputs.xml')
 
+        # get the gen dispatch inputs for this set of simulations
+        getGenDispatchInputsTag = readXmlTag(projectName + 'Set' + str(setNum) + 'Attributes.xml',
+                                        ['genDispatchInputAttributeValues', 'genDispatchInputTag'], 'value')
+        getGenDispatchInputAttr = readXmlTag(projectName + 'Set' + str(setNum) + 'Attributes.xml',
+                                        ['genDispatchInputAttributeValues', 'genDispatchInputAttr'], 'value')
+        getGenDispatchInputValue = readXmlTag(projectName + 'Set' + str(setNum) + 'Attributes.xml',
+                                         ['genDispatchInputAttributeValues', 'genDispatchInputValue'],
+                                         'value')
+
+        # copy the genDispatchInput xml file to this simulation set directory and make the specified changes
+        setGenDispatchInputFile = os.path.join(projectSetDir, 'Setup',
+                                             projectName + 'Set' + str(setNum) + genDispatch[
+                                                 0].upper() + genDispatch[1:] + 'Inputs.xml')
+        # copy getMinSRCInput file
+        copyfile(getGenDispatchInputsFile, setGenDispatchInputFile)
+        # make the cbanges to it defined in projectSetAttributes
+        for idx, val in enumerate(getGenDispatchInputValue):  # iterate through all re dispatch attribute values
+            tag = getGenDispatchInputsTag[idx].split('.')
+            attr = getGenDispatchInputAttr[idx]
+            value = val
+            writeXmlTag(setGenDispatchInputFile, tag, attr, value)
+
+
+        # make changes to the genSchedule input file,
+        # get the genScheduleInputsFile
+        genSchedule = readXmlTag(setupFile, 'genSchedule', 'value')[0]
+        getGenScheduleInputsFile = os.path.join(projectDir, 'InputData', 'Setup',
+                                                projectName + genSchedule[0].upper() + genSchedule[
+                                                                                       1:] + 'Inputs.xml')
+
+        # get the gen Schedule inputs for this set of simulations
+        getGenScheduleInputsTag = readXmlTag(projectName + 'Set' + str(setNum) + 'Attributes.xml',
+                                             ['genScheduleInputAttributeValues', 'genScheduleInputTag'], 'value')
+        getGenScheduleInputAttr = readXmlTag(projectName + 'Set' + str(setNum) + 'Attributes.xml',
+                                             ['genScheduleInputAttributeValues', 'genScheduleInputAttr'], 'value')
+        getGenScheduleInputValue = readXmlTag(projectName + 'Set' + str(setNum) + 'Attributes.xml',
+                                              ['genScheduleInputAttributeValues', 'genScheduleInputValue'],
+                                              'value')
+
+        # copy the genScheduleInput xml file to this simulation set directory and make the specified changes
+        setGenScheduleInputFile = os.path.join(projectSetDir, 'Setup',
+                                               projectName + 'Set' + str(setNum) + genSchedule[
+                                                   0].upper() + genSchedule[1:] + 'Inputs.xml')
+        # copy getMinSRCInput file
+        copyfile(getGenScheduleInputsFile, setGenScheduleInputFile)
+        # make the cbanges to it defined in projectSetAttributes
+        for idx, val in enumerate(getGenScheduleInputValue):  # iterate through all re Schedule attribute values
+            tag = getGenScheduleInputsTag[idx].split('.')
+            attr = getGenScheduleInputAttr[idx]
+            value = val
+            writeXmlTag(setGenScheduleInputFile, tag, attr, value)
+
+        # make changes to the wtgDispatch input file,
+        # get the wtgDispatchInputsFile
+        wtgDispatch = readXmlTag(setupFile, 'wtgDispatch', 'value')[0]
+        getWtgDispatchInputsFile = os.path.join(projectDir, 'InputData', 'Setup',
+                                                projectName + wtgDispatch[0].upper() + wtgDispatch[
+                                                                                       1:] + 'Inputs.xml')
+
+        # get the wtg dispatch inputs for this set of simulations
+        getWtgDispatchInputsTag = readXmlTag(projectName + 'Set' + str(setNum) + 'Attributes.xml',
+                                             ['wtgDispatchInputAttributeValues', 'wtgDispatchInputTag'], 'value')
+        getWtgDispatchInputAttr = readXmlTag(projectName + 'Set' + str(setNum) + 'Attributes.xml',
+                                             ['wtgDispatchInputAttributeValues', 'wtgDispatchInputAttr'], 'value')
+        getWtgDispatchInputValue = readXmlTag(projectName + 'Set' + str(setNum) + 'Attributes.xml',
+                                              ['wtgDispatchInputAttributeValues', 'wtgDispatchInputValue'],
+                                              'value')
+
+        # copy the wtgDispatchInput xml file to this simulation set directory and make the specified changes
+        setWtgDispatchInputFile = os.path.join(projectSetDir, 'Setup',
+                                               projectName + 'Set' + str(setNum) + wtgDispatch[
+                                                   0].upper() + wtgDispatch[1:] + 'Inputs.xml')
+        # copy getWtgDispatchInput file
+        copyfile(getWtgDispatchInputsFile, setWtgDispatchInputFile)
+        # make the cbanges to it defined in projectSetAttributes
+        for idx, val in enumerate(getWtgDispatchInputValue):  # iterate through all re dispatch attribute values
+            tag = getWtgDispatchInputsTag[idx].split('.')
+            attr = getWtgDispatchInputAttr[idx]
+            value = val
+            writeXmlTag(setWtgDispatchInputFile, tag, attr, value)
+
+        # make changes to the tesDispatch input file,
+        # get the tesDispatchInputsFile
+        tesDispatch = readXmlTag(setupFile, 'tesDispatch', 'value')[0]
+        gettesDispatchInputsFile = os.path.join(projectDir, 'InputData', 'Setup',
+                                                projectName + tesDispatch[0].upper() + tesDispatch[
+                                                                                       1:] + 'Inputs.xml')
+
+        # get the tes dispatch inputs for this set of simulations
+        gettesDispatchInputsTag = readXmlTag(projectName + 'Set' + str(setNum) + 'Attributes.xml',
+                                             ['tesDispatchInputAttributeValues', 'tesDispatchInputTag'], 'value')
+        gettesDispatchInputAttr = readXmlTag(projectName + 'Set' + str(setNum) + 'Attributes.xml',
+                                             ['tesDispatchInputAttributeValues', 'tesDispatchInputAttr'], 'value')
+        gettesDispatchInputValue = readXmlTag(projectName + 'Set' + str(setNum) + 'Attributes.xml',
+                                              ['tesDispatchInputAttributeValues', 'tesDispatchInputValue'],
+                                              'value')
+
+        # copy the tesDispatchInput xml file to this simulation set directory and make the specified changes
+        settesDispatchInputFile = os.path.join(projectSetDir, 'Setup',
+                                               projectName + 'Set' + str(setNum) + tesDispatch[
+                                                   0].upper() + tesDispatch[1:] + 'Inputs.xml')
+        # copy gettesDispatchInput file
+        copyfile(gettesDispatchInputsFile, settesDispatchInputFile)
+        # make the cbanges to it defined in projectSetAttributes
+        for idx, val in enumerate(gettesDispatchInputValue):  # iterate through all re dispatch attribute values
+            tag = gettesDispatchInputsTag[idx].split('.')
+            attr = gettesDispatchInputAttr[idx]
+            value = val
+            writeXmlTag(settesDispatchInputFile, tag, attr, value)
+
+
+        # make changes to the eesDispatch input file,
+        # get the eesDispatchInputsFile
+        eesDispatch = readXmlTag(setupFile, 'eesDispatch', 'value')[0]
+        getEesDispatchInputsFile = os.path.join(projectDir, 'InputData', 'Setup',
+                                                projectName + eesDispatch[0].upper() + eesDispatch[
+                                                                                       1:] + 'Inputs.xml')
+        # get the ees dispatch inputs for this set of simulations
+        getEesDispatchInputsTag = readXmlTag(projectName + 'Set' + str(setNum) + 'Attributes.xml',
+                                             ['eesDispatchInputAttributeValues', 'eesDispatchInputTag'], 'value')
+        getEesDispatchInputAttr = readXmlTag(projectName + 'Set' + str(setNum) + 'Attributes.xml',
+                                             ['eesDispatchInputAttributeValues', 'eesDispatchInputAttr'], 'value')
+        getEesDispatchInputValue = readXmlTag(projectName + 'Set' + str(setNum) + 'Attributes.xml',
+                                              ['eesDispatchInputAttributeValues', 'eesDispatchInputValue'],
+                                              'value')
+
+        # copy the eesDispatchInput xml file to this simulation set directory and make the specified changes
+        setEesDispatchInputFile = os.path.join(projectSetDir, 'Setup',
+                                               projectName + 'Set' + str(setNum) + eesDispatch[
+                                                   0].upper() + eesDispatch[1:] + 'Inputs.xml')
+        # copy geteesDispatchInput file
+        copyfile(getEesDispatchInputsFile, setEesDispatchInputFile)
+        # make the cbanges to it defined in projectSetAttributes
+        for idx, val in enumerate(getEesDispatchInputValue):  # iterate through all re dispatch attribute values
+            tag = getEesDispatchInputsTag[idx].split('.')
+            attr = getEesDispatchInputAttr[idx]
+            value = val
+            writeXmlTag(setEesDispatchInputFile, tag, attr, value)
 
 
     # get the components to be run

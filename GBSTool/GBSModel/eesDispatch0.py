@@ -7,7 +7,7 @@
 import numpy as np
 
 class eesDispatch:
-    def __init__(self, eess, newP, newQ, newSRC, tIndex):
+    def runDispatch(self, eess, newP, newQ, newSRC, tIndex):
         """
         Constructor used for intialization of a dispatch scheme.
         :param eess: an energy storage system that is being dispatched

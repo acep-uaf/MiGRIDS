@@ -66,10 +66,18 @@ def runSimulation(projectSetDir = ''):
     predictWind = readXmlTag(projectSetupFile,'predictWind','value')[0]
 
     # get the ees dispatch
-    eesDispatch = readXmlTag(projectSetupFile,'eesDispatch','value')[0]
+    eesDispatchFile = readXmlTag(projectSetupFile,'eesDispatch','value')[0]
+    eesDispatchInputFile = os.path.join(projectSetDir, 'Setup',
+                                        projectName + 'Set' + str(setNum) + eesDispatchFile[
+                                            0].upper() + eesDispatchFile[
+                                                         1:] + 'Inputs.xml')
 
     # get the tes dispatch
-    tesDispatch = readXmlTag(projectSetupFile, 'tesDispatch', 'value')[0]
+    tesDispatchFile = readXmlTag(projectSetupFile, 'tesDispatch', 'value')[0]
+    tesDispatchInputFile = os.path.join(projectSetDir, 'Setup',
+                                        projectName + 'Set' + str(setNum) + tesDispatchFile[
+                                            0].upper() + tesDispatchFile[
+                                                         1:] + 'Inputs.xml')
 
     # get the minimum required SRC calculation
     getMinSrcFile = readXmlTag(projectSetupFile, 'getMinSrc', 'value')[0]
@@ -90,11 +98,27 @@ def runSimulation(projectSetDir = ''):
 
     reDispatchInputFile = os.path.join(projectSetDir, 'Setup', projectName + 'Set' + str(setNum) + reDispatchFile[0].upper() + reDispatchFile[1:] + 'Inputs.xml')
 
-    # TODO
     # get the gen dispatch
-    genDispatch = []
+    genDispatchFile = readXmlTag(projectSetupFile, 'genDispatch', 'value')[0]
+
+    genDispatchInputFile = os.path.join(projectSetDir, 'Setup',
+                                       projectName + 'Set' + str(setNum) + genDispatchFile[0].upper() + genDispatchFile[
+                                                                                                       1:] + 'Inputs.xml')
+    # get the gen schedule
+    genScheduleFile = readXmlTag(projectSetupFile, 'genSchedule', 'value')[0]
+
+    genScheduleInputFile = os.path.join(projectSetDir, 'Setup',
+                                        projectName + 'Set' + str(setNum) + genScheduleFile[
+                                            0].upper() + genScheduleFile[
+                                                         1:] + 'Inputs.xml')
+
     # get the wtg dispatch
-    wtgDispatch = []
+    wtgDispatchFile = readXmlTag(projectSetupFile, 'wtgDispatch', 'value')[0]
+
+    wtgDispatchInputFile = os.path.join(projectSetDir, 'Setup',
+                                        projectName + 'Set' + str(setNum) + wtgDispatchFile[
+                                            0].upper() + wtgDispatchFile[
+                                                         1:] + 'Inputs.xml')
 
     while 1:
         # read the SQL table of runs in this set and look for the next run that has not been started yet.
@@ -166,10 +190,12 @@ def runSimulation(projectSetDir = ''):
         # pr0.enable()
         SO = SystemOperations(outputDataDir, timeStep = timeStep, runTimeSteps = runTimeSteps, loadRealFiles = loadProfileFile, loadReactiveFiles = [],
                               predictLoad = predictLoad, loadDescriptor = loadDescriptors, predictWind = predictWind, getMinSrcFile = getMinSrcFile, getMinSrcInputFile = getMinSrcInputFile, reDispatchFile = reDispatchFile, reDispatchInputsFile = reDispatchInputFile,
-                         genIDs = genIDs, genStates = genStates, genDescriptors = genDescriptors,
+                         genIDs = genIDs, genStates = genStates, genDescriptors = genDescriptors, genDispatchFile = genDispatchFile,
+                            genScheduleFile = genScheduleFile, genDispatchInputsFile= genDispatchInputFile, genScheduleInputsFile= genScheduleInputFile,
                          wtgIDs = wtgIDs, wtgStates = wtgStates, wtgDescriptors = wtgDescriptors, wtgSpeedFiles = timeSeriesDir,
-                         eesIDs = eesIDs, eesStates = eesStates, eesSOCs = eesSOC, eesDescriptors = eesDescriptors, eesDispatch = eesDispatch,
-                         tesIDs = tesIDs, tesTs = tesT, tesStates=tesStates, tesDescriptors=tesDescriptors, tesDispatch=tesDispatch)
+                            wtgDispatchFile=wtgDispatchFile, wtgDispatchInputsFile=wtgDispatchInputFile,
+                         eesIDs = eesIDs, eesStates = eesStates, eesSOCs = eesSOC, eesDescriptors = eesDescriptors, eesDispatchFile = eesDispatchFile, eesDispatchInputsFile= eesDispatchInputFile,
+                         tesIDs = tesIDs, tesTs = tesT, tesStates=tesStates, tesDescriptors=tesDescriptors, tesDispatchFile=tesDispatchFile, tesDispatchInputsFile = tesDispatchInputFile )
         # stop profiler
         # pr0.disable()
         #pr0.print_stats(sort="calls")
