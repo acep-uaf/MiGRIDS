@@ -143,12 +143,7 @@ class Generator:
             self.prevLoading = self.prevLoading[self.checkLoadTimeIdx:] + [self.genP]
 
             ### Check the MOL constraint ###
-            '''
-            # subtract prevLoading from MOL to get under MOL generation
-            molDifference = [self.genMol - x for x in self.prevLoading]
-            # the amount of energy that has been operated below MOL in checkLoadingTime
-            self.underMol = sum([num for num in molDifference if num > 0]) * self.timeStep
-            '''
+
             # try faster check - see issue #113 and #114 for explanation
             molDifference0 = self.molDifference[0]
             self.molDifference = self.molDifference[self.checkLoadTimeIdx:] + [max([self.genMol - self.genP,0])]
@@ -160,12 +155,6 @@ class Generator:
             self.underMel = self.underMel - (melDifference0 - self.melDifference[-1]) * self.timeStep
 
             ### Check the upper normal loading limit ###
-            '''
-            # subtract genUpperNormalLoading from prevLoading to get over genUpperNormalLoading generation
-            normalUpperDifference = [x - self.genUpperNormalLoading for x in self.prevLoading]
-            # the amount of energy that has been operated above genUpperNormalLoading in checkLoadingTime
-            self.overGenUpperNormalLoading = sum([num for num in normalUpperDifference if num > 0]) * self.timeStep
-            '''
 
             # try faster check -  see issue #113 and #114 for explanation
             normalUpperDifference0 = self.normalUpperDifference[0]

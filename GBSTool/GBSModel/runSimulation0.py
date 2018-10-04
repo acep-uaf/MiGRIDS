@@ -60,10 +60,18 @@ def runSimulation(projectSetDir = ''):
         runTimeSteps = [int(x) for x in runTimeSteps]
 
     # get the load predicting function
-    predictLoad = readXmlTag(projectSetupFile,'predictLoad','value')[0]
+    predictLoadFile = readXmlTag(projectSetupFile,'predictLoad','value')[0]
+    predictLoadInputsFile = os.path.join(projectSetDir, 'Setup',
+                                        projectName + 'Set' + str(setNum) + predictLoadFile[
+                                            0].upper() + predictLoadFile[
+                                                         1:] + 'Inputs.xml')
 
     # get the wind predicting function
-    predictWind = readXmlTag(projectSetupFile,'predictWind','value')[0]
+    predictWindFile = readXmlTag(projectSetupFile,'predictWind','value')[0]
+    predictWindInputsFile = os.path.join(projectSetDir, 'Setup',
+                                         projectName + 'Set' + str(setNum) + predictWindFile[
+                                             0].upper() + predictWindFile[
+                                                          1:] + 'Inputs.xml')
 
     # get the ees dispatch
     eesDispatchFile = readXmlTag(projectSetupFile,'eesDispatch','value')[0]
@@ -189,10 +197,12 @@ def runSimulation(projectSetDir = ''):
         # pr0 = cProfile.Profile()
         # pr0.enable()
         SO = SystemOperations(outputDataDir, timeStep = timeStep, runTimeSteps = runTimeSteps, loadRealFiles = loadProfileFile, loadReactiveFiles = [],
-                              predictLoad = predictLoad, loadDescriptor = loadDescriptors, predictWind = predictWind, getMinSrcFile = getMinSrcFile, getMinSrcInputFile = getMinSrcInputFile, reDispatchFile = reDispatchFile, reDispatchInputsFile = reDispatchInputFile,
+                              predictLoadFile = predictLoadFile, predictLoadInputsFile=predictLoadInputsFile,
+                              loadDescriptor = loadDescriptors, predictWindFile = predictWindFile, predictWindInputsFile=predictWindInputsFile,
+                              getMinSrcFile = getMinSrcFile, getMinSrcInputFile = getMinSrcInputFile, reDispatchFile = reDispatchFile, reDispatchInputsFile = reDispatchInputFile,
                          genIDs = genIDs, genStates = genStates, genDescriptors = genDescriptors, genDispatchFile = genDispatchFile,
                             genScheduleFile = genScheduleFile, genDispatchInputsFile= genDispatchInputFile, genScheduleInputsFile= genScheduleInputFile,
-                         wtgIDs = wtgIDs, wtgStates = wtgStates, wtgDescriptors = wtgDescriptors, wtgSpeedFiles = timeSeriesDir,
+                         wtgIDs = wtgIDs, wtgStates = wtgStates, wtgDescriptors = wtgDescriptors, windSpeedDir = timeSeriesDir,
                             wtgDispatchFile=wtgDispatchFile, wtgDispatchInputsFile=wtgDispatchInputFile,
                          eesIDs = eesIDs, eesStates = eesStates, eesSOCs = eesSOC, eesDescriptors = eesDescriptors, eesDispatchFile = eesDispatchFile, eesDispatchInputsFile= eesDispatchInputFile,
                          tesIDs = tesIDs, tesTs = tesT, tesStates=tesStates, tesDescriptors=tesDescriptors, tesDispatchFile=tesDispatchFile, tesDispatchInputsFile = tesDispatchInputFile )

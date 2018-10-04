@@ -12,24 +12,24 @@ import importlib.util
 import os
 from bs4 import BeautifulSoup as Soup
 import xml.etree.ElementTree as ET
-# import EESSDispatch
+from GBSModel.loadControlModule import loadControlModule
 
 class ElectricalEnergyStorageSystem:
 
-    def __init__(self, eesIDS, eesSOC, eesStates, timeStep, eesDescriptor, eesDispatchFile, eesDispatchInputsFile, timeSeriesLength):
+    def __init__(self, eesIDS, eesSOC, eesStates, timeStep, eesDescriptors, eesDispatchFile, eesDispatchInputsFile, timeSeriesLength):
         """
         Constructor used for intialization of all Energy Storage units in this Energy Storage System.
         :param eesIDS: list of integers for identification of Energy Storage units.
         :param eesSOC: list of initial state of charge.
         :param eesState: list of the initial operating state, 0 - off, 1 - starting, 2 - online.
-        :param eesDescriptor: list of relative path and file name of eesDescriptor-files used to populate static information.
+        :param eesDescriptors: list of relative path and file name of eesDescriptor-files used to populate static information.
         :param eesDispatch: If a user defines their own dispatch, it is the path and filename of the dispatch class used
         to dispatch the energy storage units. Otherwise, it is the name of the dispatch filename included in the software
         package. Options include: eesDispatch1. The class name in the file must be 'eesDispatch'. It needs to run the function
         updateSrcAvail() for each energy storage unit, after assigning the power to eesP, to update the eesSrcAvail property.
         """
         # check to make sure same length data coming in
-        if not len(eesIDS) == len(eesSOC)==len(eesStates)==len(eesDescriptor):
+        if not len(eesIDS) == len(eesSOC)==len(eesStates)==len(eesDescriptors):
             raise ValueError('The length eesIDS, eesP, eesQ, eesSOC, eesStates,eesSRC and eesDescriptor inputs to '
                              'ElectricalEnergyStorage must be equal.')
         # ************ EESS variables**********************
@@ -74,44 +74,14 @@ class ElectricalEnergyStorageSystem:
 
         ## initiate ees dispatch and its inputs.
         # import ees energy dispatch
-        modPath, modFile = os.path.split(eesDispatchFile)
-        # if located in a different directory, add to sys path
-        if len(modPath) != 0:
-            sys.path.append(modPath)
-        # split extension off of file
-        modFileName, modFileExt = os.path.splitext(modFile)
-        # import module
-        A = importlib.import_module(modFileName)
-        # get the inputs
-        rdi = open(eesDispatchInputsFile, "r")
-        eesDispatchInputsXml = rdi.read()
-        rdi.close()
-        eesDispatchInputsSoup = Soup(eesDispatchInputsXml, "xml")
-
-        # get all tags
-        elemList = []
-        xmlTree = ET.parse(eesDispatchInputsFile)
-        for elem in xmlTree.iter():
-            elemList.append(elem.tag)
-
-        # create Dict of tag names and values (not including root)
-        eesDispatchInputs = {}
-        for elem in elemList[1:]:
-            eesDispatchInputs[elem] = self.returnObjectValue(eesDispatchInputsSoup.find(elem).get('value'))
-
-        # check if inputs for initializing eesDispatch
-        if len(eesDispatchInputs) == 0:
-            self.eesDispatch = A.eesDispatch()
-        else:
-            self.eesDispatch = A.eesDispatch(eesDispatchInputs)
-
+        self.eesDispatch = loadControlModule(eesDispatchFile, eesDispatchInputsFile, 'eesDispatch')
 
 
         # Populate the list of ees with ees objects
         # TODO: consider leaving values at ees level, not bringing them to this level if not necessary
         for idx, eesID in enumerate(eesIDS):
             # Initialize EES
-            self.electricalEnergyStorageUnits.append(ElectricalEnergyStorage(eesID, eesSOC[idx], eesStates[idx], timeStep, eesDescriptor[idx], timeSeriesLength))
+            self.electricalEnergyStorageUnits.append(ElectricalEnergyStorage(eesID, eesSOC[idx], eesStates[idx], timeStep, eesDescriptors[idx], timeSeriesLength))
 
             # Initial operating values
             self.eesPinAvail.append(self.electricalEnergyStorageUnits[idx].eesPinAvail)
@@ -138,20 +108,6 @@ class ElectricalEnergyStorageSystem:
             self.eesPOutMax += self.electricalEnergyStorageUnits[idx].eesPOutMax
             self.eesQOutMax += self.electricalEnergyStorageUnits[idx].eesQOutMax
             self.eesEMax += self.electricalEnergyStorageUnits[idx].eesEMax
-        """
-        # import the dispatch scheme
-        # split into path and filename
-        modPath, modFile = os.path.split(eesDispatch)
-        # if located in a different directory, add to sys path
-        if len(modPath) != 0:
-            sys.path.append(modPath)
-        # split extension off of file
-        modFileName, modFileExt = os.path.splitext(modFile)
-        # import module
-        dispatchModule = importlib.import_module(modFileName)
-        self.eesDispatch = dispatchModule.eesDispatch
-
-    """
 
     # this runs the ees dispatch schedule
     def runEesDispatch(self, newP, newQ, newSRC, tIndex):

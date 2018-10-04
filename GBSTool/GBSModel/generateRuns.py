@@ -71,6 +71,26 @@ def generateRuns(projectSetDir):
             value = val
             writeXmlTag(setupFile, tag, attr, value)
 
+        # make changes to the predict Load input file
+        generateInputFile(projectDir, projectSetDir, projectName, setNum, setupFile, 'predictLoad')
+        # make changes to the predict Wind input file
+        generateInputFile(projectDir, projectSetDir, projectName, setNum, setupFile, 'predictWind')
+        # make changes to the reDispatch input file
+        generateInputFile(projectDir, projectSetDir, projectName, setNum, setupFile, 'reDispatch')
+        # make changes to the getMinSrc input file
+        generateInputFile(projectDir, projectSetDir, projectName, setNum, setupFile, 'getMinSrc')
+        # make changes to the gen dispatch
+        generateInputFile(projectDir, projectSetDir, projectName, setNum, setupFile, 'genDispatch')
+        # make changes to the genSchedule input file
+        generateInputFile(projectDir, projectSetDir, projectName, setNum, setupFile, 'genSchedule')
+        # make changes to the wtg dispatch input file
+        generateInputFile(projectDir, projectSetDir, projectName, setNum, setupFile, 'wtgDispatch')
+        # make changes to the ees dispatch input file
+        generateInputFile(projectDir, projectSetDir, projectName, setNum, setupFile, 'eesDispatch')
+        # make changes to the tes dispatch input file
+        generateInputFile(projectDir, projectSetDir, projectName, setNum, setupFile, 'tesDispatch')
+
+        """
         # make changes to the re dispatch input file, only if initializing the setup dir for this set. This avoids over
         # writing information
         # get the reDispatchInputsFile
@@ -273,7 +293,7 @@ def generateRuns(projectSetDir):
             value = val
             writeXmlTag(setEesDispatchInputFile, tag, attr, value)
 
-
+"""
     # get the components to be run
     components = readXmlTag(setupFile, 'componentNames', 'value')
 
@@ -359,5 +379,32 @@ def generateRuns(projectSetDir):
     os.chdir(here)
 
 
+def generateInputFile(projectDir, projectSetDir, projectName, setNum, setupFile, controlNameRoot):
+    # make changes to the re dispatch input file, only if initializing the setup dir for this set. This avoids over
+    # writing information
+    # get the reDispatchInputsFile
+    controlName = readXmlTag(setupFile, controlNameRoot, 'value')[0]
+    controlInputsFile = os.path.join(projectDir, 'InputData', 'Setup',
+                                        projectName + controlName[0].upper() + controlName[1:] + 'Inputs.xml')
 
+    # get the control inputs for this set of simulations
+    controlInputsTag = readXmlTag(projectName + 'Set' + str(setNum) + 'Attributes.xml',
+                                     [controlNameRoot+'InputAttributeValues', controlNameRoot+'InputTag'], 'value')
+    controlInputAttr = readXmlTag(projectName + 'Set' + str(setNum) + 'Attributes.xml',
+                                     [controlNameRoot+'InputAttributeValues', controlNameRoot+'InputAttr'], 'value')
+    controlInputValue = readXmlTag(projectName + 'Set' + str(setNum) + 'Attributes.xml',
+                                      [controlNameRoot+'InputAttributeValues', controlNameRoot+'InputValue'],
+                                      'value')
 
+    # copy the reDispatchInput xml file to this simulation set directory and make the specified changes
+    setControlInputFile = os.path.join(projectSetDir, 'Setup',
+                                          projectName + 'Set' + str(setNum) + controlName[0].upper() + controlName[
+                                                                                                      1:] + 'Inputs.xml')
+    # copy controlInput file
+    copyfile(controlInputsFile, setControlInputFile)
+    # make the cbanges to it defined in projectSetAttributes
+    for idx, val in enumerate(controlInputValue):  # iterate through all re dispatch attribute values
+        tag = controlInputsTag[idx].split('.')
+        attr = controlInputAttr[idx]
+        value = val
+        writeXmlTag(setControlInputFile, tag, attr, value)

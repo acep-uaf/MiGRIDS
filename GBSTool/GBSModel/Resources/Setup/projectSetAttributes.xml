@@ -37,6 +37,32 @@
         <setupValue value = ""/>
     </setupAttributeValues>
 
+    <predictLoadInputAttributeValues>
+        <!-- 'predictLoadInputAttributeValues' describes the predictLoad inputs that have been varied from
+        the base case . -->
+        <!-- 'predictLoadInputTag' is the tag to change. If more than one level of tags is required enter as
+        a string seperated by periods '.'.   -->
+        <!-- 'predictLoadInputAttr' is the attribute to change. For example 'value'.  -->
+        <!-- 'predictLoadInputValue' value to place in the attribute. If a list is needs to be placed, enter as a string of values,
+        seperated by commas and no spaces .  -->
+        <predictLoadInputTag value = ""/>
+        <predictLoadInputAttr value = ""/>
+        <predictLoadInputValue value = ""/>
+    </predictLoadInputAttributeValues>
+
+    <predictWindInputAttributeValues>
+        <!-- 'predictWindInputAttributeValues' describes the predictLoad inputs that have been varied from
+        the base case . -->
+        <!-- 'predictWindInputTag' is the tag to change. If more than one level of tags is required enter as
+        a string seperated by periods '.'.   -->
+        <!-- 'predictWindInputAttr' is the attribute to change. For example 'value'.  -->
+        <!-- 'predictWindInputValue' value to place in the attribute. If a list is needs to be placed, enter as a string of values,
+        seperated by commas and no spaces .  -->
+        <predictWindInputTag value = ""/>
+        <predictWindInputAttr value = ""/>
+        <predictWindInputValue value = ""/>
+    </predictWindInputAttributeValues>
+
     <reDispatchInputAttributeValues>
         <!-- 'reDispatchInputAttributeValues' describes the renewable energy dispatch inputs that have been varied from
         the base case . -->
@@ -51,18 +77,18 @@
     </reDispatchInputAttributeValues>
 
 
-    <getMinSRCInputAttributeValues>
-        <!-- 'getMinSRCInputAttributeValues' describes the getMinSRC inputs that have been varied from
+    <getMinSrcInputAttributeValues>
+        <!-- 'getMinSrcInputAttributeValues' describes the getMinSRC inputs that have been varied from
         the base case . -->
-        <!-- 'getMinSRCInputTag' is the tag to change. If more than one level of tags is required enter as
+        <!-- 'getMinSrcInputTag' is the tag to change. If more than one level of tags is required enter as
         a string seperated by periods '.'.   -->
-        <!-- 'getMinSRCInputAttr' is the attribute to change. For example 'value'.  -->
-        <!-- 'getMinSRCInputValue' value to place in the attribute. If a list is needs to be placed, enter as a string of values,
+        <!-- 'getMinSrcInputAttr' is the attribute to change. For example 'value'.  -->
+        <!-- 'getMinSrcInputValue' value to place in the attribute. If a list is needs to be placed, enter as a string of values,
         seperated by commas and no spaces .  -->
-        <getMinSRCInputTag value = ""/>
-        <getMinSRCInputAttr value = ""/>
-        <getMinSRCInputValue value = ""/>
-    </getMinSRCInputAttributeValues>
+        <getMinSrcInputTag value = ""/>
+        <getMinSrcInputAttr value = ""/>
+        <getMinSrcInputValue value = ""/>
+    </getMinSrcInputAttributeValues>
 
     <genDispatchInputAttributeValues>
         <!-- 'genDispatchInputAttributeValues' describes the genDispatch inputs that have been varied from
