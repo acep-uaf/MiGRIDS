@@ -2,6 +2,7 @@
 The information is written to an XML file using the writeXML method. '''
 from GBSInputHandler.Component import Component
 from GBSController.UIToHandler import UIToHandler
+from GBSUserInterface.getFilePaths import getFilePath
 import os
 #setup tags are a class that is used for attributes that get written to the setup.xml
 class SetupTag:
@@ -112,9 +113,10 @@ class ModelSetupInformation:
 
         #empty values
         self.componentFolder = ''
-        self.components =[]
+
         self.project =''
         self.data = None
+        self.components=[]
         self.setupFolder = ''
         self.inputFileType = SetupTag('inputFileType')
         self.inputFileFormat= SetupTag('inputFileFormat')
@@ -142,13 +144,13 @@ class ModelSetupInformation:
     def assignProject(self, name):
 
         self.project = name
-#setupFolder is in tags before it gets set.
+        #setupFolder is in tags before it gets set.
         if ('setupFolder' not in self.__dict__.keys()) | (self.setupFolder == ""):
             path = os.path.dirname(__file__)
-            self.setupFolder = os.path.join(path, '../../GBSProjects/', self.project, 'InputData/Setup')
-        self.componentFolder = os.path.join(self.setupFolder ,'../Components')
-        self.projectFolder = os.path.join(self.setupFolder, '../../' )
-        self.outputFolder = os.path.join(self.projectFolder, 'OutputData')
+            self.setupFolder = os.path.join(path, *['..','..','GBSProjects', self.project, 'InputData','Setup'])
+        self.componentFolder = getFilePath(self.setupFolder ,'Components')
+        self.projectFolder = getFilePath(self.setupFolder, 'Project')
+        #self.outputFolder = getFilePath(self.projectFolder, 'OutputData')
 
         #if there isn't a setup folder then its a new project
         if not os.path.exists(self.setupFolder):
@@ -226,7 +228,7 @@ class ModelSetupInformation:
     #return the file path for a set attribute xml file for a given set
     #String -> String
     def getSetAttributeXML(self, set):
-        filePath = os.path.join(self.outputFolder, set, self.project + set + 'Attributes.xml')
+        filePath = os.path.join(getFilePath(self.setupFolder, set),set + 'Attributes.xml')
         return filePath
 
     #creates a dictionary designed to feed into fillProjectData
@@ -243,18 +245,27 @@ class ModelSetupInformation:
                     d[v.name]=v.getDict()
 
         return d
-    # #make a new component and add it to the component list
-    # def makeNewComponent(self,component,originalHeading,units,attribute,componentType):
-    #     # start a component with basic info or original header name, component name and type and attribute
-    #     newComponent = Component(component=component,originalHeading = originalHeading, units=units,attribute=attribute,
-    #                              componentType=componentType)
-    #     self.addComponent(newComponent)
-    # #delete a component from a component list
-    # def removeComponent(self,component):
-    #     self.components = [x for x in self.components if x != component]
-    # #add a component to the component list
-    # def addComponent(self, newComponent):
-    #     self.component.append(newComponent)
+    #make a new component and add it to the component list
+    def makeNewComponent(self,component,originalHeading,units,attribute,componentType):
+        # start a component with basic info or original header name, component name and type and attribute
+        newComponent = Component(component_name=component,column_name = component + attribute, original_field_name = originalHeading, units=units,attribute=attribute,
+                                 type=componentType)
+        self.addComponent(newComponent)
+    #delete a component from a component list
+    def removeComponent(self,component):
+        self.components = [x for x in self.components if x != component]
+    #add a component to the component list
+    def addComponent(self, newComponent):
+        if self.components is None:
+            self.components = [newComponent]
+            return
+        self.components.append(newComponent)
+        return
+    def setComponents(self,loC):
+        ''' sets a list of Components to the components attribute
+        :param loC [List Of Components] a list of Component objects'''
+        self.components = loC
+        return
 
     #read setup xml and assign values to the model parameters
     def feedSetupInfo(self):

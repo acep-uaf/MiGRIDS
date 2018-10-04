@@ -385,6 +385,9 @@ class FileBlock(QtWidgets.QGroupBox):
         self.model.assignComponentAttribute(SetupTag.assignValue,[','.join([x if x is not None else 'NA' for x in df['attribute'].tolist()])],position=int(self.input)-1)
         self.model.assignComponentAttribute(SetupTag.assignUnits,[','.join([x if x is not None else 'NA' for x in df['units'].tolist()])],position=int(self.input)-1)
 
+        loC = [self.model.makeNewComponent(df['component_name'],x['original_field_name'],
+                                     x['units'],x['attribute'],x['component_type']) for i,x in df.iterrows()]
+        return loC
     def close(self):
         if 'projectFolder' in self.model.__dict__.keys():
             #input to model

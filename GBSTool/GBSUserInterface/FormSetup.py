@@ -1,6 +1,6 @@
 
 from PyQt5 import QtCore, QtWidgets, QtGui
-
+import os
 
 from GBSUserInterface.ModelSetupInformation import ModelSetupInformation
 from GBSInputHandler.Component import Component
@@ -13,7 +13,10 @@ from GBSUserInterface.Delegates import ClickableLineEdit
 from GBSUserInterface.FileBlock import FileBlock
 from GBSUserInterface.ProjectSQLiteHandler import ProjectSQLiteHandler
 from GBSUserInterface.ModelSetupInformation import SetupTag
-from GBSUserInterface.switchProject import switchProject, saveProject, clearProjectDatabase
+from GBSUserInterface.switchProject import switchProject
+from GBSUserInterface.getFilePaths import getFilePath
+import os
+from GBSUserInterface.replaceDefaultDatabase import replaceDefaultDatabase
 
 class FormSetup(QtWidgets.QWidget):
     global model
@@ -60,12 +63,8 @@ class FormSetup(QtWidgets.QWidget):
         ]
 
         self.WizardTree = self.buildWizardTree(dlist)
-        button = QtWidgets.QPushButton('Create input files')
-        button.setToolTip('Create input files to run models')
-        button.clicked.connect(lambda: self.onClick(self.createInputFiles))
-        button.setFixedWidth(200)
-        #windowLayout.addWidget(makeButtonBlock(self,self.createInputFiles,'Create input files',None,'Create input files to run models'),3)
-        windowLayout.addWidget(button)
+        self.createBottomButtonBlock()
+        windowLayout.addWidget(self.BottomButtons)
         #set the main layout as the layout for the window
 
         self.setLayout(windowLayout)
@@ -103,6 +102,40 @@ class FormSetup(QtWidgets.QWidget):
         hlayout.addStretch(1)
         return hlayout
 
+        # FormSetup -> QWidgets.QHBoxLayout
+        # creates a horizontal button layout to insert in FormSetup
+    def createBottomButtonBlock(self):
+        self.BottomButtons = QtWidgets.QGroupBox()
+        hlayout = QtWidgets.QHBoxLayout()
+        # layout object name
+        hlayout.setObjectName('buttonLayout')
+        # add the button to load a setup xml
+        button = QtWidgets.QPushButton('Create input files')
+        button.setToolTip('Create input files to run models')
+        button.clicked.connect(lambda: self.onClick(self.createInputFiles))
+        button.setFixedWidth(200)
+        # windowLayout.addWidget(makeButtonBlock(self,self.createInputFiles,'Create input files',None,'Create input files to run models'),3)
+        hlayout.addWidget(button)
+        dataLoaded = QtWidgets.QLineEdit()
+        dataLoaded.setFrame(False)
+        dataLoaded.setObjectName('dataloaded')
+        dataLoaded.setText('No data loaded')
+        dataLoaded.setFixedWidth(200)
+        self.dataLoaded = dataLoaded
+        hlayout.addWidget(self.dataLoaded)
+        # generate netcd button
+        netCDFButton = self.createSubmitButton()
+        hlayout.addWidget(netCDFButton)
+        button.setFixedWidth(200)
+        self.netCDFsLoaded  = QtWidgets.QLineEdit()
+        self.netCDFsLoaded.setFrame(False)
+        self.netCDFsLoaded.setText("none")
+        hlayout.addWidget(self.netCDFsLoaded)
+        #hlayout.addStretch(1)
+        self.BottomButtons.setLayout(hlayout)
+
+        return hlayout
+
     #method -> None
     #calls the specified function connected to a button onClick event
     @QtCore.pyqtSlot()
@@ -136,12 +169,11 @@ class FormSetup(QtWidgets.QWidget):
             self.tabs.setEnabled(True)
             self.findChild(QtWidgets.QLabel, 'projectTitle').setText(self.model.project)
 
-    #searches for and loads existing project data - database, setupxml,descriptors, DataClass pickle
+    #searches for and loads existing project data - database, setupxml,descriptors, DataClass pickle, Component pickle netcdf,previously run model results, previous optimization results
     def functionForLoadButton(self):
         '''The load function reads the designated setup xml, looks for descriptor xmls,
         looks for an existing project database and a pickled data object.'''
-        import os
-        from GBSUserInterface.replaceDefaultDatabase import replaceDefaultDatabase
+
         #if we were already working on a project its state gets saved and  new project is loaded
         if (self.model.project != '') & (self.model.project is not None):
             self.model = switchProject(self)
@@ -149,14 +181,18 @@ class FormSetup(QtWidgets.QWidget):
             model = self.model
 
         #launch file navigator to identify setup file
-
         setupFile = QtWidgets.QFileDialog.getOpenFileName(self,"Select your setup file", self.lastProjectPath, "*xml" )
         if (setupFile == ('','')) | (setupFile is None):
             return
         model.assignSetupFolder(setupFile[0])
-        self.dbHandler.insertRecord('project',['project_path'],[setupFile[0]])
 
-        #Look for an existing component database and replace the default one with it
+        # assign setup information to data model
+        model.feedSetupInfo()
+
+        # now that setup data is set display it in the form
+        self.displayModelData()
+
+        #Look for an existing project database and replace the default one with it
         if os.path.exists(os.path.join(self.model.projectFolder,'project_manager')):
             print('An existing project database was found for %s.' %self.model.project)
 
@@ -166,40 +202,54 @@ class FormSetup(QtWidgets.QWidget):
             self.projectDatabase = False
             print('An existing project database was not found for %s.' % self.model.project)
 
-        # assign setup information to data model
-        model.feedSetupInfo()
+        # record the current project
+        self.dbHandler.insertRecord('project', ['project_path'], [setupFile[0]])
 
-        #now that setup data is set display it in the form
-        self.displayModelData()
 
         # look for an existing data pickle
         handler = UIToHandler()
+        self.model.data= handler.loadInputData(
+            os.path.join(self.model.setupFolder, self.model.project + 'Setup.xml'))
 
-        self.model.data = handler.loadInputData(os.path.join(self.model.setupFolder, self.model.project + 'Setup.xml'))
         if self.model.data is not None:
             self.updateModelPage(self.model.data)
-
+            self.dataLoaded.setText('data loaded')
             #refresh the plot
             resultDisplay = self.parent().findChild(ResultsSetup)
-            resultDisplay.defaultPlot(self.model.data)
-       # TODO uncomment
-        # return true if sets have been run
-        #setsRun = loadSets(model,self.window())
+            resultDisplay.defaultPlot()
+
+        #look for an existing component pickle or create one from information in setup xml
+        self.model.components = handler.loadComponents(os.path.join(self.model.setupFolder, self.model.project + 'Setup.xml'))
+        if self.model.components is None:
+             self.getComponentsFromSetup()
+
+        #list netcdf files previously generated
+        self.netCDFsLoaded.setText(', '.join(self.listNetCDFs()))
+        #TODO this part of the code always sets setsRun to false, need to implement check for models run
+        #boolean indicator of whether or not model sets have already been run
         setsRun = False
         #make the data blocks editable if there are no sets already created
         #if sets have been created then input data is not editable from the interface
         if setsRun:
             msg = QtWidgets.QMessageBox(QtWidgets.QMessageBox.Warning, "Analysis in Progress",
-                                        "Analysis results were detected. You cannot edit projected input data after analysis has begun.")
+                                        "Analysis results were detected. You cannot edit input data after analysis has begun.")
             msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
             msg.exec()
         else:
             self.tabs.setEnabled(True)
 
             print('Loaded %s:' % model.project)
+
+        #set the project name on the form
         self.findChild(QtWidgets.QLabel, 'projectTitle').setText(self.model.project)
 
         return
+    #looks in the processed folder and lists nc files found
+    #->ListOfStrings
+    def listNetCDFs(self):
+        lof = [f for f in os.listdir(getFilePath(self.model.setupFolder,'Processed')) if f[-2] =='nc']
+        return lof
+
 
     def displayModelData(self):
         """creates a tab for each input directory specified the SetupModelInformation model inputFileDir attribute.
@@ -216,7 +266,7 @@ class FormSetup(QtWidgets.QWidget):
         else:
             self.newTab(1)
         return
-    #TODO make dynamic from list input
+
     #List -> WizardTree
     def buildWizardTree(self, dlist):
         """builds a QWizard based on list of inputs"""
@@ -226,7 +276,6 @@ class FormSetup(QtWidgets.QWidget):
         wiztree.addPage(WizardPage(dlist[2]))
         wiztree.addPage(TextWithDropDown(dlist[1]))
         wiztree.addPage(TwoDatesDialog(dlist[0]))
-
         btn = wiztree.button(QtWidgets.QWizard.FinishButton)
         btn.clicked.connect(self.saveInput)
         return wiztree
@@ -237,7 +286,7 @@ class FormSetup(QtWidgets.QWidget):
         model = self.model
         model.assignProject(self.WizardTree.field('project'))
         model.assignTimeStep(SetupTag.assignValue, self.WizardTree.field('timestep'))
-        model.assignRunTimesteps(SetupTag.assignValue, self.WizardTree.field('runTimesteps'))
+        model.assignRunTimesteps(SetupTag.assignValue, self.WizardTree.field('sdate') + ' ' + self.WizardTree.field('edate'))
         return
 
 
@@ -245,9 +294,6 @@ class FormSetup(QtWidgets.QWidget):
         """ send input data to the ModelSetupInformation data model
         reads through all the file tabs to collect input
         """
-
-        # list of distinct components
-        self.model.components = []
 
         #needs to come from each page
         tabWidget = self.findChild(QtWidgets.QTabWidget)
@@ -266,7 +312,10 @@ class FormSetup(QtWidgets.QWidget):
                 attr = child.objectName()
                 model.assign(attr,value,position=int(page.input)-1)
 
-            page.saveTables()
+            model.setComponents(page.saveTables())
+
+            return
+
     #TODO this should be done on a seperate thread
     # Create a dataframe of input data based on importing files within each SetupModelInformation.inputFileDir
     # None->None
@@ -299,8 +348,9 @@ class FormSetup(QtWidgets.QWidget):
             os.path.join(model.setupFolder, model.project + 'Setup.xml'))
         self.updateModelPage(cleaned_data)
         # pickled data to be used later if needed
-        handler.storeData(cleaned_data.fixed, os.path.join(model.setupFolder, model.project + 'Setup.xml'))
+        handler.storeData(cleaned_data, os.path.join(model.setupFolder, model.project + 'Setup.xml'))
         handler.storeComponents(components,os.path.join(model.setupFolder, model.project + 'Setup.xml'))
+        self.dataLoaded.setText('data loaded')
         self.progress.setRange(0, 1)
         # generate netcdf files
         msg = QtWidgets.QMessageBox(QtWidgets.QMessageBox.Warning, "Time Series loaded",
@@ -348,10 +398,14 @@ class FormSetup(QtWidgets.QWidget):
             [defaultStart, defaultEnd, defaultComponents])
         self.dbHandler.connection.commit()
 
-        # tell the model form to fillSetInfo now that there is data
+        # Deliver appropriate info to the ModelForm
         modelForm = self.window().findChild(SetsTableBlock)
         # start and end are tuples at this point
         modelForm.makeSetInfo(start=defaultStart, end=defaultEnd, components=defaultComponents)
+
+        #deliver the data to the ResultsSetup form so it can be plotted
+        resultsForm = self.window().findChild(ResultsSetup)
+        resultsForm.setPlotData(data)
 
     # close event is triggered when the form is closed
     def closeEvent(self, event):
@@ -365,7 +419,7 @@ class FormSetup(QtWidgets.QWidget):
         for i in range(self.tabs.count()):
             page = self.tabs.widget(i)
             page.close()
-#TODO add progress bar for uploading raw data and generating fixed data pickle
+    #TODO add progress bar for uploading raw data and generating fixed data pickle
     def addProgressBar(self):
         self.progress = QtWidgets.QProgressBar(self)
         self.progress.setObjectName('uploadBar')
@@ -386,6 +440,53 @@ class FormSetup(QtWidgets.QWidget):
     @QtCore.pyqtSlot()
     def onClick(self, buttonFunction):
         buttonFunction()
+
+# ->QPushButton
+    def createSubmitButton(self):
+        button = QtWidgets.QPushButton()
+        button.setText("Generate netCDF inputs")
+        button.clicked.connect(self.generateNetcdf)
+        return button
+
+
+    #uses the current data object to generate input netcdfs
+    def generateNetcdf(self):
+
+        handler = UIToHandler()
+        #df gets read in from TimeSeries processed data folder
+        #component dictionary comes from setupXML's
+        MainWindow = self.window()
+        setupForm = MainWindow.findChild(QtWidgets.QWidget,'setupDialog')
+        setupModel= setupForm.model
+        if 'setupFolder' in setupModel.__dict__.keys():
+            setupFile = os.path.join(setupModel.setupFolder, setupModel.project + 'Setup.xml')
+            componentModel = setupForm.findChild(QtWidgets.QWidget,'components').model()
+            #From the setup file read the location of the input pickle
+            #by replacing the current pickle with the loaded one the user can manually edit the input and
+            #  then return to working with the interface
+            data = handler.loadInputData(setupFile)
+            if data:
+                df = data.fixed
+                componentDict = {}
+                if 'components' not in setupModel.__dict__.keys():
+                    #generate components
+                    setupForm.makeComponentList(componentModel)
+                for c in setupModel.components:
+                    componentDict[c.column_name] = c.toDictionary()
+                #filesCreated is a list of netcdf files that were generated
+                filesCreated = handler.createNetCDF(df, componentDict,setupModel.setupFolder)
+                self.netCDFsLoaded.setText(', '.join(filesCreated))
+            else:
+                print("no data found")
+
+    #generate a list of Component objects based on attributes specified ModelSetupInformation
+    #
+    def getComponentsFromSetup(self):
+        for i,c in enumerate(self.model.componentName.value):
+            self.model.makeNewComponent(c,self.model.headerName.value[i],
+                                        self.model.componentAttribute.unit[i],
+                                        self.model.componentAttribute.value[i],
+                                        None)
 
 #classes used for displaying wizard inputs
 class WizardPage(QtWidgets.QWizardPage):
@@ -408,6 +509,7 @@ class WizardPage(QtWidgets.QWizardPage):
         layout.addWidget(self.label)
         layout.addWidget(self.input)
         self.setLayout(layout)
+        n = inputdict['name']
         self.registerField(inputdict['name'],self.input)
 
         return
@@ -423,6 +525,7 @@ class WizardPage(QtWidgets.QWizardPage):
 class TwoDatesDialog(WizardPage):
     def __init__(self,d):
         super().__init__(d)
+        self.d = d
 
     def setInput(self):
         grp = QtWidgets.QGroupBox()
@@ -438,6 +541,9 @@ class TwoDatesDialog(WizardPage):
         box.addWidget(self.startDate)
         box.addWidget(self.endDate)
         grp.setLayout(box)
+        name = self.d['name']
+        self.registerField('sdate', self.startDate,"text")
+        self.registerField('edate',self.endDate,"text")
         return grp
 
     def getInput(self):
@@ -466,6 +572,7 @@ class DropDown(WizardPage):
 class TextWithDropDown(WizardPage):
     def __init__(self, d):
         super().__init__(d)
+        self.d = d
 
     def setInput(self):
         grp = QtWidgets.QGroupBox()
@@ -478,6 +585,9 @@ class TextWithDropDown(WizardPage):
         box.addWidget(self.text)
         box.addWidget(self.combo)
         grp.setLayout(box)
+        #self.registerField(self.d['name'],self.combo,"currentText",self.combo.currentIndexChanged)
+        self.registerField('timeInterval',self.text)
+        self.registerField('timeUnit',self.combo,"currentText")
         return grp
 
     def getInput(self):

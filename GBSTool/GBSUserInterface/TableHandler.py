@@ -25,6 +25,7 @@ class TableHandler():
             values = kwargs.get('values')
             for i,n in enumerate(fields):
                 tableView.model().setData(model.index(model.rowCount()-1, n), values[i])
+
     #removes selected records from the table and its underlying sql table
     #String -> None
     def functionForDeleteRecord(self, table):
