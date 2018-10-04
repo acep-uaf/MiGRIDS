@@ -303,7 +303,7 @@ class UIToHandler():
         from PyQt5 import QtWidgets
         from GBSModel.generateRuns import generateRuns
         from GBSUserInterface.makeAttributeXML import makeAttributeXML, writeAttributeXML
-        from GBSModel.runSimulation0 import runSimulation
+        from GBSModel.runSimulation import runSimulation
         #generate xml's based on inputs
         #call to run models
 

@@ -10,7 +10,7 @@ generators only, electrical and thermal storage systems are set to 0.
 """
 from GBSOptimizer.optimize import optimize
 from GBSModel.generateRuns import generateRuns
-from GBSModel.runSimulation0 import runSimulation
+from GBSModel.runSimulation import runSimulation
 
 import pandas as pd
 from mpl_toolkits.mplot3d import Axes3D

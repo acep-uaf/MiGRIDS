@@ -1,5 +1,5 @@
 
-from runSimulation0 import runSimulation
+from runSimulation import runSimulation
 import sys
 import os
 here = os.path.dirname(os.path.realpath(__file__))

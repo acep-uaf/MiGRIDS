@@ -18,7 +18,7 @@ from GBSAnalyzer.DataRetrievers.readNCFile import readNCFile
 from GBSAnalyzer.PerformanceAnalyzers.getFuelUse import getFuelUse
 from GBSAnalyzer.PerformanceAnalyzers.getPrimaryREContribution import getPrimaryREContribution
 from GBSModel.generateRuns import generateRuns
-from GBSModel.runSimulation0 import runSimulation
+from GBSModel.runSimulation import runSimulation
 from GBSOptimizer.FitnessFunctions.getFitness import getFitness
 from GBSOptimizer.OptimizationBoundaryCalculators.getOptimizationBoundaries import getOptimizationBoundaries
 

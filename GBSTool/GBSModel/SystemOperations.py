@@ -155,7 +155,7 @@ class SystemOperations:
                 # 3) Re-initialize all time-series variables as pre-allocated list with len == resultLength
                 # 4) Adjust self.idx by n*resultLength, where n is the number of temp saves performed
                 # 5) Upon completion, stitch together the temp pickles for final (this should be called 'per variable' by
-                #   runSimulation0.py, e.g., SO.stitchVar('varName') right before the respective ncWrite is called.)
+                #   runSimulation.py, e.g., SO.stitchVar('varName') right before the respective ncWrite is called.)
                 if (self.masterIdx % self.maxStepsBeforeBreak) == 0 and self.masterIdx != 0:
                     # Check for the right length to re-initialize with. Normally this will be resultLength as set outside
                     # the loop, except, potentially for the last run through.

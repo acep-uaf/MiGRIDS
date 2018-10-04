@@ -7,7 +7,7 @@ Created on Wed Aug 15 10:23:08 2018
 """
 from GBSOptimizer.optimize import optimize
 from GBSModel.generateRuns import generateRuns
-from GBSModel.runSimulation0 import runSimulation
+from GBSModel.runSimulation import runSimulation
 
 import pandas as pd
 from mpl_toolkits.mplot3d import Axes3D
