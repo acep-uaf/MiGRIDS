@@ -1,6 +1,3 @@
-# TODO: File header here
-# TODO: Use more comments throughout ;-)
-# TODO: Bundle all `import' statements at the top
 # Project: GBS Tool
 # Author: Jeremy VanderMeer, jbvandermeer@alaska.edu
 # Date: October 18, 2017

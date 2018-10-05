@@ -10,7 +10,7 @@ def readDataFile(inputDict):
     # fileType is the file type. default is csv. All files of this type will be read from the dir *type string*
     # columnNames, if specified, is a list of column names from the data file that will be returned in the dataframe.
     # otherwise all columns will be returned. Note indexing starts from 0.*type list(string)*
-
+    print('readDataFile : %s' %inputDict)
     ####### general imports #######
     import pandas as pd
     from tkinter import filedialog

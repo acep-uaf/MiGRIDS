@@ -21,6 +21,10 @@ from GBSInputHandler.processInputDataFrame import processInputDataFrame
 
 #String, String -> dataframe
 def readWindData(inputDict):
+    '''
+    :param inputDict: [Dictionary] a dictionary containing file location, datetime and channel information
+    :return: [Dictionary],[pandas.DataFrame] a dictionary of files that were read and the resulting dataframe of values is returned
+    '''
     
     '''imports all MET data files in a folder and converts parameters to a dataframe'''
 
