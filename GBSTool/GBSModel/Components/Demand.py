@@ -10,7 +10,7 @@ from scipy.interpolate import interp1d
 from bs4 import BeautifulSoup as Soup
 from GBSAnalyzer.DataRetrievers.readNCFile import readNCFile
 # imports
-from GBSModel.getSeriesIndices import getSeriesIndices
+from GBSModel.Operational.getSeriesIndices import getSeriesIndices
 
 
 class Demand:

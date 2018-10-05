@@ -3,31 +3,33 @@
 # Date: November 27, 2017
 # License: MIT License (see LICENSE file of this package for more information)
 
-import importlib.util
 import os
-import sys
 import pickle
-import xml.etree.ElementTree as ET
 import numpy as np
-from bs4 import BeautifulSoup as Soup
 # from ThermalSystem import ThermalSystem
-from GBSModel.Demand import Demand
+from GBSModel.Components.Demand import Demand
 # from SolarFarm import Solarfarm
-from GBSModel.ElectricalEnergyStorageSystem import ElectricalEnergyStorageSystem
-from GBSModel.ThermalEnergyStorageSystem import ThermalEnergyStorageSystem
-from GBSModel.Powerhouse import Powerhouse
-from GBSModel.Windfarm import Windfarm
+from GBSModel.Components.ElectricalEnergyStorageSystem import ElectricalEnergyStorageSystem
+from GBSModel.Components.ThermalEnergyStorageSystem import ThermalEnergyStorageSystem
+from GBSModel.Components.Powerhouse import Powerhouse
+from GBSModel.Components.Windfarm import Windfarm
+from GBSModel.Operational.loadControlModule import loadControlModule
+import sys
+
+# add controls and components directories to path
+sys.path.append('../Controls')
+sys.path.append('../Components')
 
 
 class SystemOperations:
     # System Variables
     # Generation and dispatch resources
     # FUTUREFEATURE: add genDispatch, genSchedule and wtgDispatch
-    def __init__(self, outputDataDir, timeStep = 1, runTimeSteps = 'all', loadRealFiles = [], loadReactiveFiles = [], predictLoad = 'predictLoad1', loadDescriptor = [],
-                 predictWind = 'predictWind0', getMinSrcFile = 'getMinSrc0', getMinSrcInputFile = 'getMinSrc0Inputs', reDispatchFile = 'reDispatch0', reDispatchInputsFile = 'reDispatchInputs0',
+    def __init__(self, outputDataDir, timeStep = 1, runTimeSteps = 'all', loadRealFiles = [], loadReactiveFiles = [], predictLoadFile = 'predictLoad1', predictLoadInputsFile = 'predictLoad1Inputs', loadDescriptor = [],
+                 predictWindFile = 'predictWind0', predictWindInputsFile = 'predictWind0Inputs', getMinSrcFile = 'getMinSrc0', getMinSrcInputFile = 'getMinSrc0Inputs', reDispatchFile = 'reDispatch0', reDispatchInputsFile = 'reDispatchInputs0',
                  genIDs = [], genStates = [], genDescriptors = [], genDispatchFile = [],
                  genScheduleFile = [], genDispatchInputsFile = [], genScheduleInputsFile = [],
-                 wtgIDs = [], wtgStates = [], wtgDescriptors = [], wtgSpeedFiles = [], wtgDispatchFile = [], wtgDispatchInputsFile = [],
+                 wtgIDs = [], wtgStates = [], wtgDescriptors = [], windSpeedDir = [], wtgDispatchFile = [], wtgDispatchInputsFile = [],
                  eesIDs = [], eesStates = [], eesSOCs = [], eesDescriptors = [], eesDispatchFile = [], eesDispatchInputsFile = [],
                  tesIDs = [], tesStates = [], tesTs = [], tesDescriptors = [], tesDispatchFile = [], tesDispatchInputsFile = []):
         """
@@ -70,92 +72,18 @@ class SystemOperations:
         self.outputDataDir = outputDataDir
 
         # import the load predictor
-        # split into path and filename
-        modPath, modFile = os.path.split(predictLoad)
-        # if located in a different directory, add to sys path
-        if len(modPath) != 0:
-            sys.path.append(modPath)
-        # split extension off of file
-        modFileName, modFileExt = os.path.splitext(modFile)
-        # import module
-        dispatchModule = importlib.import_module(modFileName)
-        self.predictLoad = dispatchModule.predictLoad()
+        self.predictLoad = loadControlModule(predictLoadFile, predictLoadInputsFile, 'predictLoad')
 
         # import the wind predictor
         # split into path and filename
-        modPath, modFile = os.path.split(predictWind)
-        # if located in a different directory, add to sys path
-        if len(modPath) != 0:
-            sys.path.append(modPath)
-        # split extension off of file
-        modFileName, modFileExt = os.path.splitext(modFile)
-        # import module
-        dispatchModule = importlib.import_module(modFileName)
-        self.predictWind = dispatchModule.predictWind()
+        self.predictWind = loadControlModule(predictWindFile, predictWindInputsFile, 'predictWind')
 
         # import min src calculator
-        modPath, modFile = os.path.split(getMinSrcFile)
-        # if located in a different directory, add to sys path
-        if len(modPath) != 0:
-            sys.path.append(modPath)
-        # split extension off of file
-        modFileName, modFileExt = os.path.splitext(modFile)
-        # import module
-        A = importlib.import_module(modFileName)
-        # get the inputs
-        rdi = open(getMinSrcInputFile, "r")
-        getMinSrcInputsXml = rdi.read()
-        rdi.close()
-        getMinSrcInputsSoup = Soup(getMinSrcInputsXml, "xml")
-
-        # get all tags
-        elemList = []
-        xmlTree = ET.parse(getMinSrcInputFile)
-        for elem in xmlTree.iter():
-            elemList.append(elem.tag)
-
-        # create Dict of tag names and values (not including root)
-        getMinSrcInputs = {}
-        for elem in elemList[1:]:
-            getMinSrcInputs[elem] = float(getMinSrcInputsSoup.find(elem).get('value'))
-
-        # check if inputs for initializing reDispatch
-        if len(getMinSrcInputs) == 0:
-            self.getMinSrc = A.getMinSrc()
-        else:
-            self.getMinSrc = A.getMinSrc(getMinSrcInputs)
+        # import renewable energy dispatch
+        self.getMinSrc = loadControlModule(getMinSrcFile, getMinSrcInputFile, 'getMinSrc')
 
         # import renewable energy dispatch
-        modPath, modFile = os.path.split(reDispatchFile)
-        # if located in a different directory, add to sys path
-        if len(modPath) != 0:
-            sys.path.append(modPath)
-        # split extension off of file
-        modFileName, modFileExt = os.path.splitext(modFile)
-        # import module
-        A = importlib.import_module(modFileName)
-        # get the inputs
-        rdi = open(reDispatchInputsFile, "r")
-        reDispatchInputsXml = rdi.read()
-        rdi.close()
-        reDispatchInputsSoup = Soup(reDispatchInputsXml, "xml")
-
-        # get all tags
-        elemList = []
-        xmlTree = ET.parse(reDispatchInputsFile)
-        for elem in xmlTree.iter():
-            elemList.append(elem.tag)
-
-        # create Dict of tag names and values (not including root)
-        reDispatchInputs = {}
-        for elem in elemList[1:]:
-            reDispatchInputs[elem] = float(reDispatchInputsSoup.find(elem).get('value'))
-
-        # check if inputs for initializing reDispatch
-        if len(reDispatchInputs) == 0:
-            self.reDispatch = A.reDispatch()
-        else:
-            self.reDispatch = A.reDispatch(reDispatchInputs)
+        self.reDispatch = loadControlModule(reDispatchFile, reDispatchInputsFile, 'reDispatch')
 
         # load the real load
         if len(loadRealFiles) != 0:
@@ -173,7 +101,7 @@ class SystemOperations:
                  genDispatchInputsFile, genScheduleInputsFile)
         # initiate wind farm
         if len(wtgIDs) != 0:
-            self.WF = Windfarm(wtgIDs, wtgSpeedFiles, wtgStates, timeStep, wtgDescriptors, self.lenRealLoad,
+            self.WF = Windfarm(wtgIDs, windSpeedDir, wtgStates, timeStep, wtgDescriptors, self.lenRealLoad,
                                wtgDispatchFile, wtgDispatchInputsFile, runTimeSteps)
         # initiate electrical energy storage system
         if len(eesIDs) != 0:
@@ -228,7 +156,7 @@ class SystemOperations:
                 # 3) Re-initialize all time-series variables as pre-allocated list with len == resultLength
                 # 4) Adjust self.idx by n*resultLength, where n is the number of temp saves performed
                 # 5) Upon completion, stitch together the temp pickles for final (this should be called 'per variable' by
-                #   runSimulation0.py, e.g., SO.stitchVar('varName') right before the respective ncWrite is called.)
+                #   runSimulation.py, e.g., SO.stitchVar('varName') right before the respective ncWrite is called.)
                 if (self.masterIdx % self.maxStepsBeforeBreak) == 0 and self.masterIdx != 0:
                     # Check for the right length to re-initialize with. Normally this will be resultLength as set outside
                     # the loop, except, potentially for the last run through.

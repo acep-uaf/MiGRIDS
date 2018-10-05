@@ -102,7 +102,7 @@
     load. Otherwise, it is the name of the dispatch filename included in the software package. Options include:
     predictLoad0. The class name in the file must be 'predictLoad'. Inputs to the class are the load profile up till the
     current time step and the date-time in epoch format. Default is predictLoad1 -->
-    <predictLoad value="predictLoad0"/>
+    <predictLoad value="predictLoad1"/>
 
     <!-- 'predictWind' refers to the function that is used to predict the wind speed. If a user defines their own wind
     predicting function, it is the path and filename of the function used to predict short term (several hours) future

@@ -11,7 +11,7 @@ sys.path.append('../')
 from GBSAnalyzer.CurveAssemblers.esLossMapAssembler import esLossMap
 from GBSAnalyzer.DataRetrievers.readXmlTag import readXmlTag
 import numpy as np
-from GBSModel.getIntListIndex import getIntListIndex
+from GBSModel.Operational.getIntListIndex import getIntListIndex
 
 class ElectricalEnergyStorage:
     '''
@@ -230,20 +230,6 @@ class ElectricalEnergyStorage:
                 self.underSRC = True
             else:
                 self.underSRC = False
-            ''' calculate these as needed in dispatch 
-            # given the SRC required from the EES, find the maximum power available for a minimum of 1 timestep
-            
-            self.eesPinAvail_1 = self.findPchAvail(self.eesPinAvail_1_time)
-            self.eesQinAvail = self.eesQInMax  # reactive power is not strictly tied to state of charge
-            # the maximum currently available discharge power for 1 timestep
-            
-            self.eesQoutAvail = self.eesQOutMax # reactive power is not strictly tied to state of charge
-
-            # The max power available while reserving enough capacity for SRC, this will return a negative value if not
-            # enough capacity left for SRC.
-            self.eesPoutAvailOverSrc = self.findPdisAvail(self.timeStep,self.eesSRC,self.eesMinSrcE)
-            self.eesPoutAvailOverSrc_1 = self.findPdisAvail(self.eesPoutAvail_1_time, self.eesSRC, self.eesMinSrcE)
-            '''
 
             # check to make sure the current power output or input is not greater than the maximum allowed.
             if (self.eesP > self.eesPoutAvail) | (self.eesP < -self.eesPinAvail):
@@ -291,11 +277,6 @@ class ElectricalEnergyStorage:
         if self.useLossMap:
             # get the index of the closest E from the loss map
             eInd = getIntListIndex(self.eesSOC*self.eesEMax, self.eesLossMapE, self.lossMapEstep)
-            '''       
-            eInd = np.searchsorted(self.eesLossMapE,self.eesSOC*self.eesEMax,side='left')
-            # get the searchable array for charging power (negative) the discharge times for this are already sorted in
-            # increasing order, so do not need to be sorted
-            '''
             ChTimeSorted = self.eesmaxDischTime[:self.eesLossMapPZeroInd,eInd]
             # get the index of the closest discharge time to duration
             # need to reverse the order of discharge times to get

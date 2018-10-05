@@ -16,11 +16,8 @@ dynamics with the diesel fleet, etc.
 """
 
 import numpy as np
-from matplotlib import pyplot as plt
-import time
 from GBSAnalyzer.DataWriters.writeNCFile import writeNCFile
-from GBSAnalyzer.DataRetrievers.readNCFile import readNCFile
-from GBSModel.WindTurbine import WindTurbine
+from GBSModel.Components.WindTurbine import WindTurbine
 
 # Turn generation of time-series on or off individually
 mkLoad = False

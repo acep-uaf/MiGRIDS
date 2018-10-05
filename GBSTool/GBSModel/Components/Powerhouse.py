@@ -5,17 +5,13 @@
 
 import itertools
 import sys
-import os
 import numpy as np
-import importlib.util
-from GBSModel.Generator import Generator
-from bs4 import BeautifulSoup as Soup
+from GBSModel.Components.Generator import Generator
+
 sys.path.append('../')
 from GBSAnalyzer.CurveAssemblers.genFuelCurveAssembler import GenFuelCurve
-from GBSModel.getIntListIndex import getIntListIndex
-import xml.etree.ElementTree as ET
+from GBSModel.Operational.loadControlModule import loadControlModule
 
-# import GeneratorDispatch
 
 class Powerhouse:
     # __init()__ Class constructor. Initiates the setup of the individual generators as per the initial input.
@@ -70,70 +66,8 @@ class Powerhouse:
 
         ## initiate generator dispatch and its inputs.
         # import gen energy dispatch
-        modPath, modFile = os.path.split(genDispatchFile)
-        # if located in a different directory, add to sys path
-        if len(modPath) != 0:
-            sys.path.append(modPath)
-        # split extension off of file
-        modFileName, modFileExt = os.path.splitext(modFile)
-        # import module
-        A = importlib.import_module(modFileName)
-        # get the inputs
-        rdi = open(genDispatchInputsFile, "r")
-        genDispatchInputsXml = rdi.read()
-        rdi.close()
-        genDispatchInputsSoup = Soup(genDispatchInputsXml, "xml")
-
-        # get all tags
-        elemList = []
-        xmlTree = ET.parse(genDispatchInputsFile)
-        for elem in xmlTree.iter():
-            elemList.append(elem.tag)
-
-        # create Dict of tag names and values (not including root)
-        genDispatchInputs = {}
-        for elem in elemList[1:]:
-            genDispatchInputs[elem] = self.returnObjectValue(genDispatchInputsSoup.find(elem).get('value'))
-
-        # check if inputs for initializing genDispatch
-        if len(genDispatchInputs) == 0:
-            self.genDispatch = A.genDispatch()
-        else:
-            self.genDispatch = A.genDispatch(genDispatchInputs)
-
-        ## initiate generator schedule and its inputs.
-        # import gen energy dispatch
-        modPath, modFile = os.path.split(genScheduleFile)
-        # if located in a different directory, add to sys path
-        if len(modPath) != 0:
-            sys.path.append(modPath)
-        # split extension off of file
-        modFileName, modFileExt = os.path.splitext(modFile)
-        # import module
-        A = importlib.import_module(modFileName)
-        # get the inputs
-        rdi = open(genScheduleInputsFile, "r")
-        genScheduleInputsXml = rdi.read()
-        rdi.close()
-        genScheduleInputsSoup = Soup(genScheduleInputsXml, "xml")
-
-        # get all tags
-        elemList = []
-        xmlTree = ET.parse(genScheduleInputsFile)
-        for elem in xmlTree.iter():
-            elemList.append(elem.tag)
-
-        # create Dict of tag names and values (not including root)
-        genScheduleInputs = {}
-        for elem in elemList[1:]:
-            genScheduleInputs[elem] = self.returnObjectValue(genScheduleInputsSoup.find(elem).get('value'))
-
-        # check if inputs for initializing genDispatch
-        if len(genScheduleInputs) == 0:
-            self.genSchedule = A.genSchedule()
-        else:
-            self.genSchedule = A.genSchedule(genScheduleInputs)
-
+        self.genDispatch = loadControlModule(genDispatchFile, genDispatchInputsFile, 'genDispatch')
+        self.genSchedule = loadControlModule(genScheduleFile, genScheduleInputsFile, 'genSchedule')
 
 
         # Populate the list of generators with generator objects
@@ -288,33 +222,6 @@ class Powerhouse:
     # newGenQ - new total generator reactive load
     def runGenDispatch(self, newGenP, newGenQ):
         self.genDispatch.runDispatch(self, newGenP, newGenQ)
-        """     
-        # dispatch
-        if self.genDispatchType == 1: # if proportional loading
-            # make sure to update genPAvail and genQAvail before
-            # check if no diesel generators online. still assign power, this will be flagged as a power outage
-            # Helper sum
-            sumGenPAvail = sum(self.genPAvail)
-            if sumGenPAvail == 0:
-                for idx in range(len(self.genIDS)):
-                    self.generators[idx].genP = newGenP/len(self.genIDS)
-                    self.generators[idx].genQ = newGenQ/len(self.genIDS)
-                    # update the local variable that keeps track of generator power
-                    self.genP[idx] = self.generators[idx].genP
-                    self.genQ[idx] = self.generators[idx].genQ
-            else:
-                loadingP = newGenP / max(sumGenPAvail, 1) # this is the PU loading of each generator. max with 1 for 0 capacity instance
-                loadingQ = newGenQ / max(sum(self.genQAvail),1)  # this is the PU loading of each generator
-                # cycle through each gen and update with new P and Q
-                for idx in range(len(self.genIDS)):
-                    self.generators[idx].genP = loadingP * self.generators[idx].genPAvail
-                    self.generators[idx].genQ = loadingQ * self.generators[idx].genQAvail
-                    # update the local variable that keeps track of generator power
-                    self.genP[idx] = self.generators[idx].genP
-                    self.genQ[idx] = self.generators[idx].genQ
-        else:
-            print('The generator dispatch is not supported. ')
-        """
         # check operating bounds for each generator
         for idx in range(len(self.genIDS)):
             self.generators[idx].checkOperatingConditions()
@@ -349,134 +256,7 @@ class Powerhouse:
     def runGenSchedule(self, futureLoad, futureRE, scheduledSRCSwitch, scheduledSRCStay, powerAvailToSwitch, powerAvailToStay,underSRC):
         self.genSchedule.runSchedule(self, futureLoad, futureRE, scheduledSRCSwitch, scheduledSRCStay,
                                      powerAvailToSwitch, powerAvailToStay,underSRC)
-        """
-        # scheduled load is the difference between load and RE, the min of what needs to be provided by gen or ess
-        scheduledLoad = max(futureLoad - futureRE,0)
 
-        ## first find all generator combinations that can supply the load within their operating bounds
-        # find all with capacity over the load and the required SRC
-        #indCap = np.array([idx for idx, x in enumerate(self.genCombinationsUpperNormalLoading) if x >= scheduledLoad -
-                           #powerAvailToSwitch + scheduledSRCSwitch])
-
-        capReq = max(int(scheduledLoad - powerAvailToSwitch + scheduledSRCSwitch),0)
-        indCap = np.asarray(self.lkpGenCombinationsUpperNormalLoading.get(capReq, self.genCombinationsUpperNormalLoadingMaxIdx), dtype=int)
-
-        # check if the current online combination is capable of supplying the projected load minus the power available to
-        # help the current generator combination stay online
-        if self.onlineCombinationID not in indCap and not (True in self.outOfNormalBounds) and not underSRC: # keep current generating combingation in the mix unless has gone out of bounds for allotted amount
-                        #self.genCombinationsUpperNormalLoading[self.onlineCombinationID] >= scheduledLoad + scheduledSRCStay - powerAvailToStay:
-            # do not add the current generating option if it is diesel-off and it does not have enough SRC
-            #if not((self.onlineCombinationID == 0) and underSRC):
-                indCap = np.append(indCap,self.onlineCombinationID)
-        # if there are no gen combinations large enough to supply, automatically add largest (last combination)
-        if indCap.size == 0:
-            indCap = np.append(indCap,len(self.genCombinationsUpperNormalLoading)-1)
-            indInBounds = indCap
-
-        elif indCap.size == 1:
-            indInBounds = indCap
-
-        else:
-            # find all with MOL under the load
-            indMOLCap = [idx for idx, x in enumerate(self.genCombinationsMOL[indCap]) if x <= futureLoad]
-            # ind of in bounds combinations
-            indInBounds = indCap[indMOLCap]
-
-        # if there are no gen combinations with a low enough MOL enough to supply, automatically add combination 1,
-        # which is to smallest generator combination without turning off the generators
-        if indInBounds.size == 0:
-            indInBounds = np.array([indCap[0]])
-
-        indInBounds = np.atleast_1d(indInBounds)
-
-        ## then check how long it will take to switch to any of the combinations online
-        lenGenerators = len(self.generators)
-        turnOnTime = [None]*lenGenerators
-        turnOffTime = [None]*lenGenerators
-        for idx, gen in enumerate(self.generators):
-            # get the time remaining to turn on each generator
-            # include this time step in the calculation. this avoids having to wait 1 time step longer than necessary to bring a diesel generator online.
-            turnOnTime[idx] = gen.genStartTime - gen.genStartTimeAct - self.timeStep
-            # get the time remaining to turn off each generator
-            turnOffTime[idx] = gen.genRunTimeMin - gen.genRunTimeAct - self.timeStep
-
-        # Go through each potential combination of generators and find which generators need to be switched on and
-        # offline for each combination
-        lenIndInBounds = indInBounds.size #len(indInBounds)
-        genSwOn = [] # the generators to be switched on for each possible combination
-        genSwOff = [] # the generators to be switched off for each possible combination
-        timeToSwitch = [None]*lenIndInBounds # the time switch for each in bounds generator combination
-        fuelCons = [None]*lenIndInBounds # the predicted fuel consumption for each combination
-        for ind, idx in enumerate(np.atleast_1d(indInBounds)): # for each combination that is in bounds
-            # inititiate the generators to be switched on for this combination to all generators in the combination
-            genSwOn.append(list(self.genCombinationsID[idx]))
-            # initiate the generators to be switched off for this combination to all generators currently online
-            genSwOff.append(list(self.genCombinationsID[self.combinationsID.index(self.onlineCombinationID)]))
-            # find common elements between switch on and switch off lists
-            commonGen = list(set(genSwOff[-1]).intersection(genSwOn[-1]))
-            # remove common generators from both lists
-            for genID in commonGen:
-                genSwOn[-1].remove(genID)
-                genSwOff[-1].remove(genID)
-            # for each gen to be switched get time, max time for combination is time will take to bring online
-
-            # find max time to switch generators online
-            onTime = 0
-            for genID in genSwOn[-1]: # for each to be brought online in the current combination
-                onTime = max(onTime,turnOnTime[self.genIDS.index(genID)]) # max turn on time
-            # find max of turn on time and turn off time
-            SwitchTime = onTime # initiate to max turn on time
-            for genID in genSwOff[-1]: # for each generator to be switched off in the current combination
-                SwitchTime = max(SwitchTime, turnOffTime[self.genIDS.index(genID)]) # check if there is a higher turn off time
-            timeToSwitch[ind] = SwitchTime
-
-            if minimizeFuel:
-                # get the generator fuel consumption at this loading for this combination
-                FCpower, FCcons = zip(*self.genCombinationsFCurve[idx]) # separate out the consumptio n and power
-                # check if this is the online combination. If so, use the power available to stay online to calculate the
-                # the load required by the generator
-                if idx == self.onlineCombinationID:
-                    useScheduledLoad = int(max([scheduledLoad - powerAvailToStay, self.genCombinationsMOL[idx]]))
-                else:
-                    useScheduledLoad = int(max([scheduledLoad - powerAvailToSwitch, self.genCombinationsMOL[idx]]))
-                indFCcons = getIntListIndex(useScheduledLoad, FCpower)
-
-                fuelCons[ind] = FCcons[indFCcons]
-                # TODO: Add cost of switching generators
-
-
-
-        ## bring the best option that can be switched immediatley, if any
-        # if the most efficient option can't be switched, start warming up generators
-        # order fuel consumptions
-        if minimizeFuel:
-            indSort = np.argsort(fuelCons)
-        else:
-            indSort = np.argsort(self.genCombinationsMOL[indInBounds])
-
-        # if the most efficient can be switched on now, switch to it
-        if timeToSwitch[indSort[0]] <= 0:
-            # update online generator combination
-            self.onlineCombinationID = self.combinationsID[indInBounds[indSort[0]]]
-            self.switchGenComb(genSwOn[indSort[0]], genSwOff[indSort[0]])  # switch generators
-            for idx in range(len(self.genIDS)):
-                # update genPAvail
-                self.generators[idx].updateGenPAvail()
-        # otherwise, start or continue warming up generators for most efficient combination
-        else:
-            self.startGenComb(genSwOn[indSort[0]])
-            # otherwise, if a generator is out of bounds (not just normal bounds) switch to the best possible, if can
-            if (True in (np.array(timeToSwitch)<=0)) & (True in self.outOfBounds):
-                # find most efficient option that can be switched now
-                indBest = next((x for x in range(len(indSort)) if timeToSwitch[indSort[x]] <= 0 )) # indBest wrt indSort
-                # update online generator combination
-                self.onlineCombinationID = self.combinationsID[indInBounds[indSort[indBest]]]
-                self.switchGenComb(genSwOn[indSort[indBest]],genSwOff[indSort[indBest]]) # switch generators
-                for idx in range(len(self.genIDS)):
-                    # update genPAvail
-                    self.generators[idx].updateGenPAvail()
-
-    """
     # switch generators on and off
     def switchGenComb(self,GenSwOn, GenSwOff):
         # bring online
@@ -492,41 +272,5 @@ class Powerhouse:
         for genID in GenSwOn:
             self.generators[self.genIDS.index(genID)].genState = 1  # running but offline
 
-    # test if an object is a float
-    def isfloat(self,x):
-        try:
-            a = float(x)
-        except ValueError:
-            return False
-        else:
-            return True
 
-    # test if an object is an interger
-    def isint(self,x):
-        try:
-            a = int(x)
-        except ValueError:
-            return False
-        else:
-            return True
 
-    # test if an object is a bool
-    def isbool(self, x):
-        if x.lower() in ['false','true']:
-            return True
-        else:
-            return False
-
-    # return int, float, bool or string depending on what it can be converted into.
-    def returnObjectValue(self,obj):
-        if self.isint(obj):
-            return int(obj)
-        elif self.isfloat(obj):
-            return float(obj)
-        elif self.isbool(obj):
-            if obj.lower == 'true':
-                return True
-            else:
-                return False
-        else:
-            return str(obj)

@@ -4,13 +4,12 @@
 # License: MIT License (see LICENSE file of this package for more information)
 
 import sys
-import os
 import numpy as np
-from bs4 import BeautifulSoup as Soup
-from GBSModel.WindTurbine import WindTurbine
-import xml.etree.ElementTree as ET
-import importlib.util
+from GBSModel.Components.WindTurbine import WindTurbine
+
 sys.path.append('../')
+from GBSModel.Operational.loadControlModule import loadControlModule
+
 
 
 class Windfarm:
@@ -23,7 +22,7 @@ class Windfarm:
     # wtgStates - list of wind turbine operating states 0 - off, 1 - starting, 2 - online.
     # wtgDescriptor - list of generator descriptor XML files for the respective generators listed in genIDS, this should
     #   be a string with a relative path and file name, e.g., /InputData/Components/wtg1Descriptor.xml
-    def __init__(self, wtgIDS, windSpeedFiles, wtgStates, timeStep, wtgDescriptor, timeSeriesLength, wtgDispatchFile, wtgDispatchInputsFile, runTimeSteps = 'all' ):
+    def __init__(self, wtgIDS, windSpeedDir, wtgStates, timeStep, wtgDescriptors, timeSeriesLength, wtgDispatchFile, wtgDispatchInputsFile, runTimeSteps = 'all' ):
         # check to make sure same length data coming in
         if not len(wtgIDS) == len(wtgStates):
             raise ValueError('The length wtgIDS, wtgP, wtgQ and wtgStates inputs to Windfarm must be equal.')
@@ -52,52 +51,22 @@ class Windfarm:
 
         ## initiate wtg dispatch and its inputs.
         # import wtg energy dispatch
-        modPath, modFile = os.path.split(wtgDispatchFile)
-        # if located in a different directory, add to sys path
-        if len(modPath) != 0:
-            sys.path.append(modPath)
-        # split extension off of file
-        modFileName, modFileExt = os.path.splitext(modFile)
-        # import module
-        A = importlib.import_module(modFileName)
-        # get the inputs
-        rdi = open(wtgDispatchInputsFile, "r")
-        wtgDispatchInputsXml = rdi.read()
-        rdi.close()
-        wtgDispatchInputsSoup = Soup(wtgDispatchInputsXml, "xml")
-
-        # get all tags
-        elemList = []
-        xmlTree = ET.parse(wtgDispatchInputsFile)
-        for elem in xmlTree.iter():
-            elemList.append(elem.tag)
-
-        # create Dict of tag names and values (not including root)
-        wtgDispatchInputs = {}
-        for elem in elemList[1:]:
-            wtgDispatchInputs[elem] = self.returnObjectValue(wtgDispatchInputsSoup.find(elem).get('value'))
-
-        # check if inputs for initializing wtgDispatch
-        if len(wtgDispatchInputs) == 0:
-            self.wtgDispatch = A.wtgDispatch()
-        else:
-            self.wtgDispatch = A.wtgDispatch(wtgDispatchInputs)
-
+        self.wtgDispatch = loadControlModule(wtgDispatchFile, wtgDispatchInputsFile, 'wtgDispatch')
 
         # Populate the list of wtg with windTurbine objects
         for idx, wtgID in enumerate(wtgIDS):
             # check if only one wind profile was given
-            if isinstance(windSpeedFiles,(list,tuple,np.ndarray)):
+            if isinstance(windSpeedDir,(list,tuple,np.ndarray)):
                 # if windSpeedFiles is a list of files with length greater than one (more than one file) then one for each turbine
-                if len(windSpeedFiles) > 1:
-                    WSF = windSpeedFiles[idx]
+                if len(windSpeedDir) > 1:
+                    WSD = windSpeedDir[idx]
                 else: # if there is only 1 list, then use for all turbines
-                    WSF = windSpeedFiles[0]
+                    WSD = windSpeedDir[0]
             else: # if windSpeed is a list of values, not lists, then use for all turbines
-                WSF = windSpeedFiles
+                WSD = windSpeedDir
 
             # Initialize wtg
-            self.windTurbines.append(WindTurbine(wtgID, WSF, wtgStates[idx], timeStep, wtgDescriptor[idx], timeSeriesLength, runTimeSteps))
+            self.windTurbines.append(WindTurbine(wtgID, WSD, wtgStates[idx], timeStep, wtgDescriptors[idx], timeSeriesLength, runTimeSteps))
 
             # Initial value for wtgP, wtgQ, wtgPAvail and wtgQAvail can be handled while were in this loop
             self.wtgPMax = self.wtgPMax + self.windTurbines[idx].wtgPMax
@@ -120,31 +89,8 @@ class Windfarm:
 
         # dispatch
         if self.wtgDispatchType == 1:  # if proportional loading
-            """
-            # get the loading pu for real and reactive power
-            wtgPAvailTot = sum(self.wtgPAvail)
-            if  wtgPAvailTot == 0:
-                loadingP = 0
-            else:
-                loadingP = min([max([newWtgP / wtgPAvailTot, 0]), 1])  # this is the PU loading of each wtg, limited to 1
-
-            wtgQAvailTot = sum(self.wtgQAvail)
-            if wtgQAvailTot == 0:
-                loadingQ = 0
-            else:
-                loadingQ = min([max([newWtgQ / wtgQAvailTot, 0]), 1])  # this is the PU loading of each wtg
-            """
             # cycle through each wtg and update with new P and Q
             for idx in range(len(self.wtgIDS)):
-                """
-                self.windTurbines[idx].wtgP = loadingP * self.wtgPAvail[idx]
-                self.windTurbines[idx].wtgQ = loadingQ * self.wtgQAvail[idx]
-                # update the local variable that keeps track of wtg power
-                self.wtgP[idx] = self.windTurbines[idx].wtgP
-                self.wtgQ[idx] = self.windTurbines[idx].wtgQ
-                # TODO: update time with some other metric to measure when enough wind to start turbine. Add this value to the wtgDescriptor.xml
-                # TODO: or just take this into account in the wind power profile.
-                """
                 # check to see if turbines that are starting up are ready to switch online
                 if self.windTurbines[idx].wtgStartTimeAct >= self.windTurbines[idx].wtgStartTime:
                     self.windTurbines[idx].wtgState = 2
