@@ -11,7 +11,7 @@ sys.path.append('../')
 from GBSAnalyzer.CurveAssemblers.esLossMapAssembler import esLossMap
 from GBSAnalyzer.DataRetrievers.readXmlTag import readXmlTag
 import numpy as np
-from GBSModel.getIntListIndex import getIntListIndex
+from GBSModel.Operational.getIntListIndex import getIntListIndex
 
 class ElectricalEnergyStorage:
     '''

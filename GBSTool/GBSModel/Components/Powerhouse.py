@@ -5,16 +5,12 @@
 
 import itertools
 import sys
-import os
 import numpy as np
-import importlib.util
-from GBSModel.Generator import Generator
-from bs4 import BeautifulSoup as Soup
+from GBSModel.Components.Generator import Generator
+
 sys.path.append('../')
 from GBSAnalyzer.CurveAssemblers.genFuelCurveAssembler import GenFuelCurve
-from GBSModel.getIntListIndex import getIntListIndex
-import xml.etree.ElementTree as ET
-from GBSModel.loadControlModule import loadControlModule
+from GBSModel.Operational.loadControlModule import loadControlModule
 
 
 class Powerhouse:
@@ -72,71 +68,6 @@ class Powerhouse:
         # import gen energy dispatch
         self.genDispatch = loadControlModule(genDispatchFile, genDispatchInputsFile, 'genDispatch')
         self.genSchedule = loadControlModule(genScheduleFile, genScheduleInputsFile, 'genSchedule')
-        """
-        modPath, modFile = os.path.split(genDispatchFile)
-        # if located in a different directory, add to sys path
-        if len(modPath) != 0:
-            sys.path.append(modPath)
-        # split extension off of file
-        modFileName, modFileExt = os.path.splitext(modFile)
-        # import module
-        A = importlib.import_module(modFileName)
-        # get the inputs
-        rdi = open(genDispatchInputsFile, "r")
-        genDispatchInputsXml = rdi.read()
-        rdi.close()
-        genDispatchInputsSoup = Soup(genDispatchInputsXml, "xml")
-
-        # get all tags
-        elemList = []
-        xmlTree = ET.parse(genDispatchInputsFile)
-        for elem in xmlTree.iter():
-            elemList.append(elem.tag)
-
-        # create Dict of tag names and values (not including root)
-        genDispatchInputs = {}
-        for elem in elemList[1:]:
-            genDispatchInputs[elem] = self.returnObjectValue(genDispatchInputsSoup.find(elem).get('value'))
-
-        # check if inputs for initializing genDispatch
-        if len(genDispatchInputs) == 0:
-            self.genDispatch = A.genDispatch()
-        else:
-            self.genDispatch = A.genDispatch(genDispatchInputs)
-        
-        ## initiate generator schedule and its inputs.
-        # import gen energy dispatch
-        modPath, modFile = os.path.split(genScheduleFile)
-        # if located in a different directory, add to sys path
-        if len(modPath) != 0:
-            sys.path.append(modPath)
-        # split extension off of file
-        modFileName, modFileExt = os.path.splitext(modFile)
-        # import module
-        A = importlib.import_module(modFileName)
-        # get the inputs
-        rdi = open(genScheduleInputsFile, "r")
-        genScheduleInputsXml = rdi.read()
-        rdi.close()
-        genScheduleInputsSoup = Soup(genScheduleInputsXml, "xml")
-
-        # get all tags
-        elemList = []
-        xmlTree = ET.parse(genScheduleInputsFile)
-        for elem in xmlTree.iter():
-            elemList.append(elem.tag)
-
-        # create Dict of tag names and values (not including root)
-        genScheduleInputs = {}
-        for elem in elemList[1:]:
-            genScheduleInputs[elem] = self.returnObjectValue(genScheduleInputsSoup.find(elem).get('value'))
-
-        # check if inputs for initializing genDispatch
-        if len(genScheduleInputs) == 0:
-            self.genSchedule = A.genSchedule()
-        else:
-            self.genSchedule = A.genSchedule(genScheduleInputs)
-        """
 
 
         # Populate the list of generators with generator objects
@@ -291,33 +222,6 @@ class Powerhouse:
     # newGenQ - new total generator reactive load
     def runGenDispatch(self, newGenP, newGenQ):
         self.genDispatch.runDispatch(self, newGenP, newGenQ)
-        """     
-        # dispatch
-        if self.genDispatchType == 1: # if proportional loading
-            # make sure to update genPAvail and genQAvail before
-            # check if no diesel generators online. still assign power, this will be flagged as a power outage
-            # Helper sum
-            sumGenPAvail = sum(self.genPAvail)
-            if sumGenPAvail == 0:
-                for idx in range(len(self.genIDS)):
-                    self.generators[idx].genP = newGenP/len(self.genIDS)
-                    self.generators[idx].genQ = newGenQ/len(self.genIDS)
-                    # update the local variable that keeps track of generator power
-                    self.genP[idx] = self.generators[idx].genP
-                    self.genQ[idx] = self.generators[idx].genQ
-            else:
-                loadingP = newGenP / max(sumGenPAvail, 1) # this is the PU loading of each generator. max with 1 for 0 capacity instance
-                loadingQ = newGenQ / max(sum(self.genQAvail),1)  # this is the PU loading of each generator
-                # cycle through each gen and update with new P and Q
-                for idx in range(len(self.genIDS)):
-                    self.generators[idx].genP = loadingP * self.generators[idx].genPAvail
-                    self.generators[idx].genQ = loadingQ * self.generators[idx].genQAvail
-                    # update the local variable that keeps track of generator power
-                    self.genP[idx] = self.generators[idx].genP
-                    self.genQ[idx] = self.generators[idx].genQ
-        else:
-            print('The generator dispatch is not supported. ')
-        """
         # check operating bounds for each generator
         for idx in range(len(self.genIDS)):
             self.generators[idx].checkOperatingConditions()

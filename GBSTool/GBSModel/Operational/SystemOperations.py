@@ -3,21 +3,22 @@
 # Date: November 27, 2017
 # License: MIT License (see LICENSE file of this package for more information)
 
-import importlib.util
 import os
-import sys
 import pickle
-import xml.etree.ElementTree as ET
 import numpy as np
-from bs4 import BeautifulSoup as Soup
 # from ThermalSystem import ThermalSystem
-from GBSModel.Demand import Demand
+from GBSModel.Components.Demand import Demand
 # from SolarFarm import Solarfarm
-from GBSModel.ElectricalEnergyStorageSystem import ElectricalEnergyStorageSystem
-from GBSModel.ThermalEnergyStorageSystem import ThermalEnergyStorageSystem
-from GBSModel.Powerhouse import Powerhouse
-from GBSModel.Windfarm import Windfarm
-from GBSModel.loadControlModule import loadControlModule
+from GBSModel.Components.ElectricalEnergyStorageSystem import ElectricalEnergyStorageSystem
+from GBSModel.Components.ThermalEnergyStorageSystem import ThermalEnergyStorageSystem
+from GBSModel.Components.Powerhouse import Powerhouse
+from GBSModel.Components.Windfarm import Windfarm
+from GBSModel.Operational.loadControlModule import loadControlModule
+import sys
+
+# add controls and components directories to path
+sys.path.append('../Controls')
+sys.path.append('../Components')
 
 
 class SystemOperations:

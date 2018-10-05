@@ -4,15 +4,8 @@
 # License: MIT License (see LICENSE file of this package for more information)
 
 import sys
-
-from GBSModel.ElectricalEnergyStorage import ElectricalEnergyStorage
-
-sys.path.append('../')
-import importlib.util
-import os
-from bs4 import BeautifulSoup as Soup
-import xml.etree.ElementTree as ET
-from GBSModel.loadControlModule import loadControlModule
+from GBSModel.Components.ElectricalEnergyStorage import ElectricalEnergyStorage
+from GBSModel.Operational.loadControlModule import loadControlModule
 
 class ElectricalEnergyStorageSystem:
 

@@ -4,14 +4,11 @@
 # License: MIT License (see LICENSE file of this package for more information)
 
 import sys
-import os
 import numpy as np
-from bs4 import BeautifulSoup as Soup
-from GBSModel.WindTurbine import WindTurbine
-import xml.etree.ElementTree as ET
-import importlib.util
+from GBSModel.Components.WindTurbine import WindTurbine
+
 sys.path.append('../')
-from GBSModel.loadControlModule import loadControlModule
+from GBSModel.Operational.loadControlModule import loadControlModule
 
 
 

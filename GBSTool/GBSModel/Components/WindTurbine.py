@@ -14,9 +14,8 @@ sys.path.append(os.path.join(here, '../'))
 from GBSAnalyzer.CurveAssemblers.wtgPowerCurveAssembler import WindPowerCurve
 from bisect import bisect_left
 from GBSAnalyzer.DataRetrievers.readNCFile import readNCFile
-from GBSModel.getIntListIndex import getIntListIndex
-from GBSModel.getIntListIndex import  getIntDictKey
-from GBSModel.getSeriesIndices import getSeriesIndices
+from GBSModel.Operational.getIntListIndex import  getIntDictKey
+from GBSModel.Operational.getSeriesIndices import getSeriesIndices
 import numpy as np
 from scipy.interpolate import interp1d
 from distutils.util import strtobool

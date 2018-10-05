@@ -5,15 +5,9 @@ Created on Wed Aug 15 10:23:08 2018
 
 @author: marcmueller-stoffels
 """
-from GBSOptimizer.optimize import optimize
-from GBSModel.generateRuns import generateRuns
-from GBSModel.runSimulation import runSimulation
+from GBSModel.Operational.generateRuns import generateRuns
+from GBSModel.Operational.runSimulation import runSimulation
 
-import pandas as pd
-from mpl_toolkits.mplot3d import Axes3D
-import matplotlib.pyplot as plt
-import numpy as np
-import shutil
 import os
 from bs4 import BeautifulSoup as bs
 import time

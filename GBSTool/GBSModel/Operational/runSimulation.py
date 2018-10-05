@@ -16,7 +16,7 @@ from tkinter import filedialog
 
 import pandas as pd
 
-from GBSModel.SystemOperations import SystemOperations
+from GBSModel.Operational.SystemOperations import SystemOperations
 
 here = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(os.path.join(here, '../'))

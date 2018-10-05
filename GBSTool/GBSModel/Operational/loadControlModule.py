@@ -9,6 +9,8 @@ import os
 import sys
 import xml.etree.ElementTree as ET
 from bs4 import BeautifulSoup as Soup
+here = os.path.dirname(os.path.realpath(__file__))
+sys.path.append(os.path.join(here, '../Controls'))
 
 def loadControlModule(controlFile,controlInputsFile,controlClass):
     # import control class

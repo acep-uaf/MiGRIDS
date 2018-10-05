@@ -4,13 +4,8 @@
 # License: MIT License (see LICENSE file of this package for more information)
 
 #imports
-from GBSModel.ThermalEnergyStorage import ThermalEnergyStorage
-import os
-import sys
-import importlib.util
-from bs4 import BeautifulSoup as Soup
-import xml.etree.ElementTree as ET
-from GBSModel.loadControlModule import loadControlModule
+from GBSModel.Components.ThermalEnergyStorage import ThermalEnergyStorage
+from GBSModel.Operational.loadControlModule import loadControlModule
 
 class ThermalEnergyStorageSystem:
     def __init__(self, tesIDS, tesT, tesStates, timeStep, tesDescriptor, tesDispatchFile, tesDispatchInputsFile):
