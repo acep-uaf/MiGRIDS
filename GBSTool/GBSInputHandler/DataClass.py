@@ -1,15 +1,12 @@
 # DataClass is object with raw_data, fixed_data,baddata dictionary, and system characteristics.
-from GBSInputHandler.identifyGenColumns import identifyGenColumns
-import pandas as pd
+
 from GBSInputHandler.isInline import *
-from GBSInputHandler.badDictAdd import badDictAdd
-#from GBSInputHandler.getReplacements import getReplacement
 from matplotlib.backends.backend_pdf import PdfPages
 import matplotlib as plt
 import pickle
 import numpy as np
 import os
-import logging
+
 
 TOTALP = 'total_p'
 MAXMISSING= '14 days'
@@ -17,7 +14,7 @@ MAXMISSING= '14 days'
 class DataClass:
     """A class with access to both raw and fixed dataframes."""
     #DataFrame, timedelta,list,timedelta -> 
-    def __init__(self, raw_df, sampleInterval,runTimeSteps=None,maxMissing=MAXMISSING):
+    def __init__(self, raw_df,runTimeSteps=None,maxMissing=MAXMISSING):
         if len(raw_df) > 0:
             self.raw = raw_df.copy()
              
@@ -39,7 +36,7 @@ class DataClass:
             self.rawCopy = pd.DataFrame()
             self.fixed = [pd.DataFrame()]
         
-        self.timeInterval = sampleInterval
+        #self.timeInterval = sampleInterval
         self.powerComponents = []
         self.ecolumns = []
         #runTimeSteps is a list of dates that indicate the portion of the dataframe to fix and include in analysis
@@ -73,7 +70,7 @@ class DataClass:
     # if the system can't operate withouth the generators (GEN = True) then values are filled
     # with data from a matching time of day (same as offline values)
     def fixGen(self, componentList):
-        gencolumns = identifyGenColumns(componentList)
+        gencolumns = self.identifyGenColumns(componentList)
         if len(gencolumns) > 0:
             df_to_fix = self.df.copy()
             
@@ -218,7 +215,9 @@ class DataClass:
         if sum(df[column]) == 0:
             return True
         return False
-    
+
+    #keeps only rows of data that are between the specified runTimeSteps
+    #raw data is not affected, only fixed data
     def truncateDate(self):
         if self.runTimeSteps is not None:
             for i,df in enumerate(self.fixed):
@@ -227,3 +226,12 @@ class DataClass:
                     self.fixed.remove(df)
                 else:
                     self.fixed[i] = df
+
+    # ListOfComponents -> ListOfComponents
+    # returns a list of components that are diesel generators (start with 'gen')
+    def identifyGenColumns(self, componentList):
+        genColumns = []
+        for c in componentList:
+            if (c[:3].lower() == 'gen') & (c[-1].lower() == 'p'):
+                genColumns.append(c)
+        return genColumns

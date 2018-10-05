@@ -1,22 +1,24 @@
-# fill in information about the project into the descriptor and setup xml files
-#Does not interact directly with User Interface but takes object containing relevent information passed
-#from user interface through controller.
-#if setupInfo is none then csv files are assumed
-#String, ModelSetupInformation - > None
+
+#String- > None
 def fillProjectDataFromCSV(projectDir):
+    '''
+    fills in information about the project into the descriptor and setup xml files.
+    :param projectDir: [String] the directory containing information needed to generate the project xml files
+    :return:
+    '''
     # general imports
     # add to sys path
     import sys
     import os
-    here = os.path.dirname(os.path.realpath(__file__))
-    sys.path.append(here)
     import pandas as pd
     from writeXmlTag import writeXmlTag
     from buildAllComponentDescriptor import buildComponentDescriptor
     from buildProjectSetup import buildProjectSetup
 
+    here = os.path.dirname(os.path.realpath(__file__))
+    sys.path.append(here)
 
-    userInputDir = projectDir + '/InputData/Setup/UserInput/'
+    userInputDir = os.path.join(projectDir, *['InputData','Setup','UserInput'])
 
     os.chdir(userInputDir)
 
@@ -27,7 +29,7 @@ def fillProjectDataFromCSV(projectDir):
     projectSetup = projectName + 'Setup.xml'
 
     # get the directory to save the project setup xml file
-    setupDir = projectDir + '/InputData/Setup/'
+    setupDir = os.path.join(projectDir, *['InputData','Setup'])
     generalSetupInfo = df.as_matrix() # this is written to the projectSetup.xml file below, after it is initialized
     generalSetupInfoDf = df
 
@@ -37,7 +39,7 @@ def fillProjectDataFromCSV(projectDir):
     componentNames = list(df['componentName']) # unique list of component names
 
     # get the directory to save the component descriptor xml files in
-    componentDir = projectDir + '/InputData/Components/'
+    componentDir = os.path.join(projectDir, *['InputData','Components'])
     for row in range(df.shape[0]): # for each component
         componentDesctiptor = componentNames[row] + 'Descriptor.xml'
         # initialize the component descriptor xml file
@@ -86,4 +88,4 @@ def fillProjectDataFromCSV(projectDir):
     writeXmlTag(projectSetup, ['componentChannels', 'componentAttribute'], 'value', componentAttribute_value, setupDir)
     writeXmlTag(projectSetup, ['componentChannels', 'componentAttribute'], 'unit', componentAttribute_unit, setupDir)
 
-
+    return

@@ -16,26 +16,30 @@ import logging
 import sqlite3 as lite
 import numpy as np
 import os
-import matplotlib.pyplot as plt
-from matplotlib.backends.backend_pdf import PdfPages
-import matplotlib.gridspec as gridspec
-from scipy import fftpack
 from netCDF4 import Dataset
 from GBSInputHandler.processInputDataFrame import processInputDataFrame
 
 #String, String -> dataframe
-def readWindData(fileDir, columnNames, useNames,componentUnits, dateColumnName, dateColumnFormat, timeColumnName, timeColumnFormat, utcOffsetValue, utcOffsetUnit, dst, timeZone):
-    '''imports all data files in a folder and converts parameters to a dataframe'''
-    import os
-    #DATETIME = 'Date & Time Stamp'
-    DATETIME = dateColumnName
-    def readAsHeader(file, header_dict, componentName):
+def readWindData(inputDict):
+    
+    '''imports all MET data files in a folder and converts parameters to a dataframe'''
 
+    #DATETIME = 'Date & Time Stamp'
+    DATETIME = inputDict['dateColumnName']
+    def readAsHeader(file, header_dict, componentName):
+        '''extracts the header information from a MET file.
+        :param file [File] a MET file to be read.
+        :param header_dict [Dictionary] a dictionary of header information
+        :param componentName [String] the name of the channel of interest.
+        :return [Dictionary] of header information for the file.
+        '''
         inline = file.readline().split('\t')
         inline = [re.sub(r"\s+", '_', x.strip()) for x in inline] # strip whitespaces at ends and replaces spaces with underscores
-        #assumes 'Date & Time Stamp' is the first column name where the dataframe starts. Thus we return the dictionary.
+        
+        #assumes 'Date & Time Stamp' is the first column name where the dataframe starts. 
+        #we return the dictionary of header information
         if inline[0] == DATETIME:
-        #if inline[0].strip() == DATETIME:
+        
             names = inline
             return header_dict, names
         else:
@@ -50,7 +54,10 @@ def readWindData(fileDir, columnNames, useNames,componentUnits, dateColumnName, 
 
 
     def readAsData(file, names):
-
+        '''reast the data portion of a MET file into a dataframe
+        :param file [File] the MET file to be read
+        :param names [ListOf String] the channels to be read.
+        :return [DataFrame] of values for specified channels with datetime index'''
         rowList = []
         for line in file:
         #these are the data lines with column names
@@ -160,8 +167,8 @@ def readWindData(fileDir, columnNames, useNames,componentUnits, dateColumnName, 
     #a dictionary of files that are read
     fileDict = {}
     df = pd.DataFrame()
-    print(fileDir)
-    for root, dirs, files in os.walk(fileDir):
+    print(inputDict['fileLocation'])
+    for root, dirs, files in os.walk(inputDict['fileLocation']):
         for f in files:
             with open(os.path.join(root, f), 'r',errors='ignore') as file:
                 #read the header information of each file
@@ -187,7 +194,7 @@ def readWindData(fileDir, columnNames, useNames,componentUnits, dateColumnName, 
     df = df.set_index(pd.to_datetime(df[DATETIME]))
     df = df.apply(pd.to_numeric, errors='ignore')
     df = df.sort_index()
-
+    inputDict['df'] = df
 
 
     combinedHeader = {}
@@ -208,23 +215,12 @@ def readWindData(fileDir, columnNames, useNames,componentUnits, dateColumnName, 
                     #add the channel
                     addChannel(channel, h, combinedHeader, channel)
 
-    # scale and offset already seem to be applied.
-   #scale and offset info for each channel are in combinedHeader
-    #for k in combinedHeader.keys():
-    #    columns_to_scale = [x for x in df.columns if x[0:len(k)] == k]
-    #   for c in columns_to_scale:
-    #        if combinedHeader[k]['Scale_Factor'] != '0':
-    #           print(k)
-    #           print(c)
-    #           print(combinedHeader[k]['Scale_Factor'])
-    #           if np.issubdtype(df[c],np.number):
-    #               df[c] = df[c] * float(combinedHeader[k]['Scale_Factor']) + float(combinedHeader[k]['Offset'])
 
     def createNetCDF(df, increment):
         # create a netcdf file
         dtype = 'float'
         # column = df.columns.values[i]
-        ncName = os.path.join(fileDir, (str(increment) + 'WS.nc'))
+        ncName = os.path.join(inputDict['fileLocation'], (str(increment) + 'WS.nc'))
         rootgrp = Dataset(ncName, 'w', format='NETCDF4')  # create netCDF object
         rootgrp.createDimension('time', None)  # create dimension for all called time
         # create the time variable
@@ -245,13 +241,12 @@ def readWindData(fileDir, columnNames, useNames,componentUnits, dateColumnName, 
     #now we need to fill in the gaps between sampling points
     #apply to every row, 10 minutes = 600 seconds
     def fillWindRecords(df, channels):
-        database = os.path.join(fileDir, 'wind.db')
+        database = os.path.join(inputDict['fileLocation'], 'wind.db')
         connection = lite.connect(database)
 
         for k in channels:
             logging.info(k)
-            p = re.compile(k + '[a-zA-z]')
-            columns_to_estimate = [x for x in df.columns if p.match(x)]
+     
             newdf = df.copy()
             newdf = newdf.sort_index()
             newColumns = [x.replace(k,'').rstrip() for x in newdf.columns]
@@ -298,51 +293,6 @@ def readWindData(fileDir, columnNames, useNames,componentUnits, dateColumnName, 
 
     #winddf = fillWindRecords(df,channels)
     # only choose the channels desired
-    winddf = processInputDataFrame(df, columnNames, useNames, dateColumnName, dateColumnFormat, timeColumnName, timeColumnFormat, utcOffsetValue, utcOffsetUnit, dst,timeZone)
-    #winddf = df[columnNames]
+    winddf = processInputDataFrame(inputDict)
+   
     return fileDict, winddf
-'''
-fileDir = '/Users/tawnamorgan/Documents/GBSTools/GBSProjects/StMary/InputData/TimeSeriesData/RawWindData'
-#fileDict, winddf = readWindData(fileDir, ['CH4'])
-
-database = os.path.join(fileDir, 'wind.db')
-connection = lite.connect(database)
-cursor = connection.cursor()
-
-winddf = pd.read_sql_query("select * from windrecordCH4", connection)
-connection.close()
-print(winddf.info())
-
-winddf = winddf.set_index(pd.to_datetime(winddf.time))
-winddf_summary = winddf.groupby(pd.TimeGrouper('1D')).mean()
-print(winddf_summary.info())
-pdffile = os.path.join(fileDir,'wind_profile.pdf')
-with PdfPages(pdffile) as pdf:
-    plt.plot(winddf_summary['values'])
-    plt.title('Channel 4 wind profile')
-    plt.ylabel('m/s')
-    plt.xlabel('Date')
-    pdf.savefig()
-    plt.close()
-
-
-dtype = 'float'
-# column = df.columns.values[i]
-ncName = os.path.join(fileDir,(str('CH4')+'WS.nc'))
-rootgrp = Dataset(ncName, 'w', format='NETCDF4')  # create netCDF object
-rootgrp.createDimension('time', None)  # create dimension for all called time
-# create the time variable
-rootgrp.createVariable('time', dtype, 'time')  # create a var using the varnames
-rootgrp.variables['time'][:] = np.array(pd.to_timedelta(pd.Series(winddf.index)).dt.total_seconds().astype(int))
-
-# create the value variable
-rootgrp.createVariable('value', dtype, 'time')  # create a var using the varnames
-rootgrp.variables['value'][:] = np.array(winddf['values'])  # fill with values
-# assign attributes
-rootgrp.variables['time'].units = 'seconds'  # set unit attribute
-rootgrp.variables['value'].units = 'm/s'  # set unit attribute
-rootgrp.variables['value'].Scale = 1  # set unit attribute
-rootgrp.variables['value'].offset = 0  # set unit attribute
-# close file
-rootgrp.close()
-'''

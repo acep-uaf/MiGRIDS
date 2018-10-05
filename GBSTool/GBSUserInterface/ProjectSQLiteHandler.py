@@ -389,9 +389,9 @@ class ProjectSQLiteHandler:
             return pd.Series(names).tolist()
         return []
     def getComponentsTable(self, filter):
-        sql = """select component_name, original_field_name, units,attribute from components where inputfiledir = ?"""
+        sql = """select component_name, component_type, original_field_name, units,attribute from components where inputfiledir = ?"""
         df = pd.read_sql_query(sql,self.connection,params=[filter])
-        sql = """select component_name, original_field_name, units,attribute from environment where inputfiledir = ?"""
+        sql = """select component_name, 'env', original_field_name, units,attribute from environment where inputfiledir = ?"""
         df.append(pd.read_sql_query(sql,self.connection,params=[filter]))
         return df
     def getInputPath(self, pathNum):

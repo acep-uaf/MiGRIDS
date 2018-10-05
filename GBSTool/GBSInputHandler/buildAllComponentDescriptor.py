@@ -16,7 +16,7 @@ def buildComponentDescriptor(componentNames,saveDir):
 
     # cd to where component descriptors are located
     here = os.path.dirname(os.path.realpath(__file__))
-    componentPath = os.path.join(here, '../GBSModel/Resources/Components')
+    componentPath = os.path.join(here, *['..','GBSModel','Resources','Components'])
     os.chdir(componentPath)
     # get list of component prefixes that correspond to componentDescriptors
     varnames = []
@@ -26,8 +26,7 @@ def buildComponentDescriptor(componentNames,saveDir):
     # initiate var to store the good component names
     componentNamesGood = []
     for i in range(len(componentNames)):
-        #ind = varnames.index(componentNames[i].lower())
-        #ind = [varnames.index(i) for i in varnames if componentNames[i].lower() in i ]
+
         ind = [j for j, s in enumerate(varnames) if s in componentNames[i].lower()]            # get the index of varnmaes that matches the input componentName
 
         if len(ind)==0:
@@ -42,7 +41,7 @@ def buildComponentDescriptor(componentNames,saveDir):
             contents_child = infile_child.read()
             infile_child.close()
             soup = BeautifulSoup(contents_child, 'xml') # turn into soup
-            parent = soup.childOf.string # find the anme of parent. if 'self', no parent file
+            parent = soup.childOf.string # find the name of parent. if 'self', no parent file
             # update the component name
             soup.component.attrs['name'] = componentNames[i]
             componentNamesGood.append(componentNames[i])

@@ -15,13 +15,19 @@ def fixDataInterval(data, interval):
      the mean of values within the new interval will be generated'''
     import pandas as pd
     import numpy as np
-    import matplotlib.pyplot as plt
-
 
 
     #integer, numeric, numeric, numeric -> numeric array
     #uses the Langevin equation to estimate records based on provided mean (mu) and standard deviation and a start value
     def getValues(records, start, sigma, timestep):
+        '''
+        Uses the Langevin equation to estimate records based on provided mean (mu) and standard deviation and a start value
+        :param records: [Array of Integers] the number of timesteps to estimate values for
+        :param start: [Array of numeric] the start value to initiate the estimator for a given record
+        :param sigma: [Array of numeric] the standard deviation to use in the estimator
+        :param timestep: [Array of integer] the timestep to use in the estimator
+        :return: [Array of timestamps], [Array of numeric] the timestamp and estimated values for each record
+        '''
         # sigma is the the standard deviation for 1000 samples at timestep interval
         import numpy as np
 
@@ -33,13 +39,9 @@ def fixDataInterval(data, interval):
         tau[tau<1] = 1
 
         #renormalized variables
-        # TODO: look at sigma calculation
+
         # sigma scaled takes into account the difference in STD for different number of samples of data. Given a STD for
         # 1000 data samples (sigma) the mean STD that will be observed is sigmaScaled, base empirically off of 1 second
-        # Igiugig data for 1 year.
-        #sigmaScaled = 0.5 * sigma * (0.0158*np.log(n)**2 + 0.0356*np.log(n))
-        #sigmaScaled = sigma
-        #sigma_bis = sigmaScaled * np.sqrt(2.0 / n) # adapted from ipython interactive computing visualization cookbook
         sigma_bis = 0.4 * sigma * np.sqrt(2.0/(900*timestep))
         sqrtdt = np.sqrt(timestep)
         # find the 95th percentile of number of steps
@@ -61,9 +63,8 @@ def fixDataInterval(data, interval):
         tr = t.repeat(len(steps))
         rs = tr.values.reshape(len(t), len(steps))
         time_matrix = rs + intervals_reshaped.transpose()
+
         # put all the times in a single array
-
-
         #the starter value
         x[:, 0] = start
         # use the next step in the time series as the average value for the synthesized data. The values will asympotically reach this value, resulting in a smooth transition.
@@ -72,8 +73,6 @@ def fixDataInterval(data, interval):
         #TODO replace for loops
         for i in range(n95-1):
             x[:, i + 1] = x[:, i] + timestep * (-(x[:, i] - mu) / tau) + np.multiply(sigma_bis.values * sqrtdt, np.random.randn(len(mu)))
-
-
 
         # remove extra values to avoid improper mixing of values when sorting
         for row in range(time_matrix.shape[0]):
@@ -104,7 +103,7 @@ def fixDataInterval(data, interval):
             values = np.append(values, x0)
             timeArray = np.append(timeArray,time_matrix0)
 
-        # TODO: sort values and timeArray by TimeArray-Memory error here.
+        # TODO: sort values and timeArray by TimeArray.
         tv = np.array(list(zip(timeArray,values)))
         tv = tv[tv[:,0].argsort()] # sort by timeArray
 
@@ -132,28 +131,7 @@ def fixDataInterval(data, interval):
             handleMemory()
         return
         #steps is an array of timesteps in seconds with length = max(records)
-        '''
-        steps = np.arange(0, max(records) + 1, timestep)
-        #t is the numeric value of the dataframe timestamps
-        t = pd.to_timedelta(pd.Series(pd.to_datetime(df.index.values, unit='s'),index=df.index)).dt.total_seconds()
-        # test if the index can be interpreted as datetime, if not recognized, convert
-        #try:
-        #    t = pd.to_timedelta(pd.Series(df.index.values)).dt.total_seconds()
-        #except ValueError:
-        #    t = pd.to_timedelta(pd.Series(pd.to_datetime(df.index.values, unit='s'), index=df.index)).dt.total_seconds()
-        #intervals is the steps array repeated for every row of time
-        intervals = np.repeat(steps, len(t), axis=0)
-        #reshape the interval matrix so each row has every timestep
-        intervals_reshaped = intervals.reshape(len(steps), len(t))
-        # TODO: MemoryError here
-        tr = t.repeat(len(steps))
-        rs = tr.reshape(len(t), len(steps))
-        time_matrix = rs + intervals_reshaped.transpose()
-        #put all the times in a single array
-        timeArray = np.concatenate(time_matrix)
-        #put all the values in a single array
-        values = np.concatenate(y)
-        '''
+
 
 
     for idx in range(len(data.fixed)):
@@ -187,8 +165,7 @@ def fixDataInterval(data, interval):
             idx1 = df0[col].last_valid_index()
             if idx1 != None:
                 df0[col][-1] = df0[col][idx1]
-            #df0 = df0.bfill()
-            #df0 = df0.ffill()
+
             # time interval between consecutive records
             df0['timediff'] = pd.Series(pd.to_datetime(df0.index, unit='s'), index=df0.index).diff(1).shift(-1)
             df0['timediff'] = df0['timediff'].fillna(0)
@@ -209,8 +186,8 @@ def fixDataInterval(data, interval):
 
             # if the resampled dataframe is bigger fill in new values
             if len(df0) < len(data.fixed[idx]):
-                # t is the time, k is the estimated value
 
+                # t is the time, k is the estimated value
                 t, k = estimateDistribution(df0, interval[idx], col)  # t is number of seconds since 1970
                 simulatedDf = pd.DataFrame({'time': t, 'value': k})
                 simulatedDf = simulatedDf.set_index(
@@ -218,7 +195,7 @@ def fixDataInterval(data, interval):
                 simulatedDf = simulatedDf[~simulatedDf.index.duplicated(keep='last')]
                 # make sure timestamps for both df's are rounded to the same interval in order to join sucessfully
                 data.fixed[idx].index = data.fixed[idx].index.floor(interval[idx])
-                #make sure timezones match - can't join naive and notnaive times
+                #make sure timezones match - can't join naive and nonnaive times
                 tz = data.fixed[idx].index.tzinfo
                 simulatedDf.index = simulatedDf.index.floor(interval[idx])
                 #.apply(lambda d: timeZone.localize(d, is_dst=useDST))
@@ -227,8 +204,8 @@ def fixDataInterval(data, interval):
                 data.fixed[idx] = data.fixed[idx].join(simulatedDf, how='left')
                 # fill na's for column with simulated values
                 data.fixed[idx].loc[pd.isnull(data.fixed[idx][col]), col] = data.fixed[idx]['value']
-                # TODO: possibly remove the following commneted out code. This will leave individual power channels unfilled
-                # component values get calculated based on the proportion that they made up previously
+
+                # component values get calculated based on the proportion that they made up previously if we are working with total_p
                 if col == 'total_p':
                     adj_m = data.fixed[idx][data.powerComponents].div(data.fixed[idx]['total_p'], axis=0)
                     adj_m = adj_m.ffill()
@@ -240,7 +217,8 @@ def fixDataInterval(data, interval):
 
     data.removeAnomolies(stdNum = 5)
     return data
-#TODO chunk up processing of upsampling
+
+#TODO NotImplemented: chunk up processing of upsampling
 def handleMemory():
     """Not implemented yet.
     Prints current memory usage stats.

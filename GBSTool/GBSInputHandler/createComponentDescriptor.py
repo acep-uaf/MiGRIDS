@@ -1,9 +1,15 @@
-#
+
 # build an empty descriptor file for a single component
-#fill the descriptor file if a soup object is provided
+#fill the descriptor file if a soup object is provided, otherwise use defaults
 #String string, Soup-> None
 def createComponentDescriptor(component, saveDir, soup = None):
-    # componentNames is a list of all components to be included in the simulation
+    '''build an empty descriptor file for a single component.
+     Fill the descriptor file if a soup object is provided, otherwise use defaults.
+    :param component: [String] name of the component
+    :param saveDir: [String] directory to save the xml to
+    :param soup: [BeautifulSoup] if provided, soup tag values will deterimin xml values
+    :return: [String] the name of the xml file created.
+    '''
     # saveDir is where the generated component descriptor files will be saved
     #this assumes that the first three characters in a component string is the component type
 
@@ -15,7 +21,7 @@ def createComponentDescriptor(component, saveDir, soup = None):
     #get the component descriptor template from the resource folder
     #component descriptor can have parent files that contain additional tags
     here = os.path.dirname(os.path.realpath(__file__))
-    componentPath = os.path.join(here, '../GBSModel/Resources/Components')
+    componentPath = os.path.join(here, *['..','GBSModel','Resources','Components'])
 
     def typeOfComponent(c):
         '''extracts the type of a component from its name

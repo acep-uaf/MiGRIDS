@@ -27,8 +27,7 @@ import pickle
 import cProfile
 import bisect
 import copy
-#import matplotlib.pyplot as plt
-from GBSInputHandler.adjustColumnYear import adjustColumnYear
+
 
 
 fileName = os.path.join(here,"../../GBSProjects/StMary/InputData/Setup/StMarySetup.xml")

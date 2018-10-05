@@ -2,7 +2,8 @@ from GBSInputHandler.readAvecCsv import readAvecCsv
 
 def readAllAvecTimeSeries(inputDict):
     df = None
-    for i in range(len(inputDict['fileNames'])):  # for each data file
+    for i in range(len(inputDict['fileNames'])): 
+        print(inputDict['fileNames'][i])# for each data file
         if i == 0:  # read data file into a new dataframe if first iteration
             inputDict['fileName'] = inputDict['fileNames'][i]
             df = readAvecCsv(inputDict)
@@ -19,3 +20,4 @@ def readAllAvecTimeSeries(inputDict):
             df2 = df2[dfNewCol]
             df = df.append(df2)  # append
     return df
+

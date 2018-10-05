@@ -4,7 +4,7 @@
 import os
 import pickle
 import pandas as pd
-from PyQt5 import QtWidgets,QtCore
+from PyQt5 import QtWidgets
 from bs4 import BeautifulSoup
 from GBSAnalyzer.DataRetrievers.readXmlTag import readXmlTag
 from GBSInputHandler.buildProjectSetup import buildProjectSetup
@@ -13,7 +13,6 @@ from GBSInputHandler.makeSoup import makeComponentSoup
 from GBSInputHandler.writeXmlTag import writeXmlTag
 from GBSInputHandler.mergeInputs import mergeInputs
 from GBSUserInterface.ProjectSQLiteHandler import ProjectSQLiteHandler
-from GBSInputHandler.findDataDateLimits import findDataDateLimits
 from GBSUserInterface.getFilePaths import getFilePath
 
 
@@ -108,7 +107,6 @@ class UIToHandler():
     def loadFixData(self, setupFile):
 
         from GBSInputHandler.getUnits import getUnits
-        from GBSInputHandler.readDataFile import readDataFile
         from GBSInputHandler.fixBadData import fixBadData
         from GBSInputHandler.fixDataInterval import fixDataInterval
 
@@ -301,9 +299,9 @@ class UIToHandler():
     #String, ComponentTable, SetupInformation
     def runModels(self, currentSet, componentTable, setupInfo):
         from PyQt5 import QtWidgets
-        from GBSModel.generateRuns import generateRuns
+        from GBSModel.Operational.generateRuns import generateRuns
         from GBSUserInterface.makeAttributeXML import makeAttributeXML, writeAttributeXML
-        from GBSModel.runSimulation0 import runSimulation
+        from GBSModel.Operational.runSimulation import runSimulation
         #generate xml's based on inputs
         #call to run models
 

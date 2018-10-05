@@ -3,8 +3,14 @@
 # Date: November 21, 2017
 # License: MIT License (see LICENSE file of this package for more information)
 
-# write a value to an xml tag
+#
 def getUnits(projectName,projectDir):
+    '''
+     reads a series fo xml tags in component xml files and returns their values as a list
+    :param projectName: [String] the name of a project
+    :param projectDir: [String] the path where project files are saved
+    :return: [ListOfString],[ListOfString],[ListOfString],[ListOfString],[ListOfString]
+    '''
     # projectName is the name of the project *type string*
     # projectDir is the directory where the project setup xml file is located
     from GBSAnalyzer.DataRetrievers.readXmlTag import readXmlTag

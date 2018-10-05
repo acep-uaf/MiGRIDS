@@ -1,9 +1,13 @@
-#String, SetupInformation ->
-#modifies the ModelSetupInformation object based on tags in the setup xml
 def getSetupInformation(setupXML, setupInfo):
+    '''
+    Modifies the ModelSetupInformation object based on tags in the setup xml
+    :param setupXML: [String] path to a setup xml file
+    :param setupInfo: [ModelSetupInformation] model to be updated
+    :return: None
+    '''
 
     from bs4 import BeautifulSoup
-    #read teh setupfile
+    #read the setupfile
     infile = open(setupXML, "r")
     contents = infile.read()
     setupInfo.getSetupTags()
@@ -27,3 +31,4 @@ def getSetupInformation(setupXML, setupInfo):
 
     infile.close()
 
+    return

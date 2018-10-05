@@ -37,8 +37,7 @@ def readAvecCsv(inputDict):
 
     #------------------- load the file -----------------------------
     df = pd.read_csv(inputDict['fileName']) # read as a data frame
-    # TODO: REMOVE THIS, FOR TESTING ONLY
-    #df = df.drop(df.index[range(1000,len(df))])
+    
     # check and see if the df column names match the input specification.
     # TODO: throw a catch in here in case it does not find the headers
     gotHeader = False
@@ -58,8 +57,7 @@ def readAvecCsv(inputDict):
             raise ValueError('Input column names were not found in the CSV file.')
     inputDict['df'] = df
     df = processInputDataFrame(inputDict)
-    #df = processInputDataFrame(df, columnNames, useNames, dateColumnName, dateColumnFormat, timeColumnName, timeColumnFormat, utcOffsetValue, utcOffsetUnit, dst, timeZone)
-   
+    
 
     return df
 

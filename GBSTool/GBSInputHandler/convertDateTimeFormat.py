@@ -9,14 +9,6 @@ def convertDateTimeFormat(f):
         sep = '-'
     elif len(f.split(':'))>1:
         sep = ':'
-    # f = f.replace('mmm','b').replace('mm','m')\
-    #     .replace('dd','d').replace('yyyy','Y')\
-    #     .replace('yy','y')\
-    #     .replace('hh','H')\
-    #     .replace('ss','s')\
-    #     .replace('MM','M')\
-    #     .split(sep)
-
     f = list(map(doubleToSingle,f.split(sep)))
     return sep.join(map('%{0}'.format, f))
 

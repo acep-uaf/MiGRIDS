@@ -7,11 +7,8 @@ Created on Wed Jun  6 16:59:08 2018
 
 import numpy as np
 from GBSInputHandler.readDataFile import readDataFile
-import os
-import pickle
 import pandas as pd
-import functools
-import operator
+
 
 # CONSTANTS
 YEARSECONDS = 31536000 # seconds in a non-leap Year
@@ -21,14 +18,13 @@ YEARSECONDS = 31536000 # seconds in a non-leap Year
 
 def avg_datetime(series):
     dt_min = series.min()
-    deltas = [x-dt_min for x in series]
     return dt_min + (series - dt_min).mean()
 
 def mergeInputs(inputDictionary):
 
     # iterate through all sets of input files
     for idx in range(len(inputDictionary['fileLocation'])):
-
+        print(inputDictionary)
         df0, listOfComponents0 = readDataFile(singleLocation(inputDictionary,idx))
 
         # set index as DATE

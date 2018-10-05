@@ -77,7 +77,7 @@ def readDataFile(inputDict):
                 units = readXmlTag('internalUnitDefault.xml', ['unitDefaults', inputDict['componentAttributes'][i]], 'units', unitConventionDir)[0]
                 # if the units don't match, convert
                 if units.lower() != inputDict['componentUnits'][i].lower():
-                    unitConvertDir = os.path.join( dir_path,'../GBSAnalyzer/UnitConverters/unitConverters.py')
+                    unitConvertDir = os.path.join( dir_path,*['..','GBSAnalyzer','UnitConverters','unitConverters.py'])
                     funcName = inputDict['componentUnits'][i].lower() + '2' + units.lower()
                     # load the conversion
                     spec = importlib.util.spec_from_file_location(funcName, unitConvertDir)

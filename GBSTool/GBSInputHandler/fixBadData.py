@@ -21,7 +21,7 @@ import numpy as np
 from GBSInputHandler.DataClass import DataClass
 from GBSInputHandler.isInline import isInline
 from GBSInputHandler.badDictAdd import badDictAdd
-from GBSInputHandler.adjustColumnYear import adjustColumnYear
+
 
 
 # constants
@@ -34,7 +34,7 @@ TOTALP = 'total_p'  # the name of the column that contains the sum of power outp
 # Dataframe is the combined dataframe consisting of all data input (multiple files may have been merged)
 # SampleInterval is a list of sample intervals for each input file
 # returns a DataClass object with raw and cleaned data and powercomponent information
-def fixBadData(df, setupDir, ListOfComponents, sampleInterval,runTimeSteps):
+def fixBadData(df, setupDir, ListOfComponents,runTimeSteps):
    '''returns cleaned dataframe'''
    
    # local functions - not used outside fixBadData
@@ -83,9 +83,9 @@ def fixBadData(df, setupDir, ListOfComponents, sampleInterval,runTimeSteps):
 
    # create DataClass object to store raw, fixed, and summery outputs
    # use the largest sample interval for the data class- this isn't used anylonger
-   sampleIntervalTimeDelta = [pd.to_timedelta(s) for s in sampleInterval]
+   #sampleIntervalTimeDelta = [pd.to_timedelta(s) for s in sampleInterval]
    #dataLimits = findDataDateLimits(setupDir)
-   data = DataClass(df, max(sampleIntervalTimeDelta),runTimeSteps)
+   data = DataClass(df, runTimeSteps)
 
   
   # create a list of power columns
