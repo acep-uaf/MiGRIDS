@@ -20,7 +20,7 @@ class predictWind:
         #stopIdx = SO.idx + 1
         # for each wind turnbine
         for wtg in SO.WF.windTurbines:
-            # the future power possible is calculated as the minimum possible power in the past 10 min.
+            # the future power possible is calculated as the average possible power in the past 10 min.
             fw10min = wtg.windPower10minTrend[SO.masterIdx] #np.min(wtg.windPower[startIdx10min:stopIdx])
             self.futureWind += [fw10min]
 
