@@ -57,7 +57,7 @@ class Demand:
         self.loadPMax = float(loadSoup.PInMaxPa.get('value'))  # maximum load
         self.minSRC = float(loadSoup.minSRC.get('value'))  # min required SRC as fraction of load
 
-    def loadLoadFiles(self,loadFiles, isReal = True):
+    def loadLoadFiles(self,loadFiles):
         # read the real load in
         # check if it is a list or tuple
         if type(loadFiles) is list or type(loadFiles) is tuple:

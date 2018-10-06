@@ -1,7 +1,7 @@
 
-from getRunMetaData import getRunMetaData
+from GBSAnalyzer.PerformanceAnalyzers.getRunMetaData import getRunMetaData
 
 projectSetDir = 'C:\\Users\jbvandermeer\Documents\ACEP\GBS\GBSTools_0\GBSProjects\StMary\OutputData\Set1000'
-runs = [1]#range(2)
+runs = range(2)
 getRunMetaData(projectSetDir,runs)
 
