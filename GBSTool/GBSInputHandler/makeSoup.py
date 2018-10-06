@@ -1,7 +1,13 @@
 #string, string -> BeautifulSoup
-#makes either a blank template soup or filled soup from existing component descriptor file
-#assumes the component type is the first three characters of the component string
+#
 def makeComponentSoup(component, saveDir):
+    '''
+    makes either a blank template soup or filled soup from existing component descriptor file
+    assumes the component type is the first three characters of the component string.
+    :param component: [String] the name of a component.
+    :param saveDir: [String] the directory  to save to.
+    :return: BeautifulSoup
+    '''
     import os
     from GBSInputHandler.createComponentDescriptor import createComponentDescriptor
     from GBSUserInterface.readComponentXML import readComponentXML

@@ -10,7 +10,7 @@ def fillProjectData(projectDir = '',setupInfo = None):
     '''
     Calls function to create project data files depending on what parameters are provided
     Does not interact directly with User Interface but takes object containing relevent information passed
-    from user interface through controller.If setupInfo is none then csv files are assumed
+    from user interface through controller.If setupInfo is none then csv files are assumed.
     :param projectDir: [string] the directory that project data is saved in
     :param setupInfo: [ModelSetupInformation] a model of setup information collected from the user interface
     :return: None

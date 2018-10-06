@@ -57,7 +57,7 @@ inputDictionary['utcOffsetValue'] = readXmlTag(fileName,'inputUTCOffset','value'
 inputDictionary['utcOffsetUnit'] = readXmlTag(fileName,'inputUTCOffset','unit')
 inputDictionary['dst'] = readXmlTag(fileName,'inputDST','value')
 inputDictionary['timeZone'] = readXmlTag(fileName,'timeZone','value')
-
+inputDictionary['componentName']= readXmlTag(fileName, 'componentName','value')
 flexibleYear = readXmlTag(fileName,'flexibleYear','value')
 
 # convert string to bool
@@ -106,7 +106,7 @@ out.close()
 # inFile.close()
 
 #fix missing or bad data
-df_fixed = fixBadData(setupDir,listOfComponents,inputDictionary['runTimeSteps'])
+df_fixed = fixBadData(df, setupDir,listOfComponents,inputDictionary['runTimeSteps'])
 # fix the intervals
 df_fixed_interval = fixDataInterval(df_fixed,inputDictionary['outputInterval'])
 

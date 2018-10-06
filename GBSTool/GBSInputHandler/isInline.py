@@ -9,7 +9,7 @@ import datetime
 # series -> series
 def checkDataGaps(s):
     '''checkDataGaps looks for gaps in the timestamp index that is greater than the median sampling interval
-     new records will have NA for values
+     new records will have NA for values.
     :param s: [pandas.Series] the series to evalutate
     :return: [pandas.Series] series with gaps filled with NA
     '''

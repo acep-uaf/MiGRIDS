@@ -21,12 +21,10 @@ from GBSInputHandler.processInputDataFrame import processInputDataFrame
 
 #String, String -> dataframe
 def readWindData(inputDict):
-    '''
+    '''imports all MET data files in a folder and converts parameters to a dataframe.
     :param inputDict: [Dictionary] a dictionary containing file location, datetime and channel information
     :return: [Dictionary],[pandas.DataFrame] a dictionary of files that were read and the resulting dataframe of values is returned
     '''
-    
-    '''imports all MET data files in a folder and converts parameters to a dataframe'''
 
     #DATETIME = 'Date & Time Stamp'
     DATETIME = inputDict['dateColumnName']
@@ -171,7 +169,7 @@ def readWindData(inputDict):
     #a dictionary of files that are read
     fileDict = {}
     df = pd.DataFrame()
-    print(inputDict['fileLocation'])
+    
     for root, dirs, files in os.walk(inputDict['fileLocation']):
         for f in files:
             with open(os.path.join(root, f), 'r',errors='ignore') as file:
@@ -198,7 +196,7 @@ def readWindData(inputDict):
     df = df.set_index(pd.to_datetime(df[DATETIME]))
     df = df.apply(pd.to_numeric, errors='ignore')
     df = df.sort_index()
-    inputDict['df'] = df
+    
 
 
     combinedHeader = {}
@@ -295,7 +293,7 @@ def readWindData(inputDict):
                 print ('An error occured. Current results are stored in %s' %database)
         return winddf
 
-    #winddf = fillWindRecords(df,channels)
+    inputDict['df'] = df
     # only choose the channels desired
     winddf = processInputDataFrame(inputDict)
    

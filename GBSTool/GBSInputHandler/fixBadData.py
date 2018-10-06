@@ -96,7 +96,7 @@ def fixBadData(df, setupDir, ListOfComponents,runTimeSteps):
  
    # replace out of bounds component values before we use these data to replace missing data
    for c in ListOfComponents:
-
+       print(c.column_name)
        componentName = componentNameFromColumn(c.column_name)
        
        attribute = attributeFromColumn(c.column_name)

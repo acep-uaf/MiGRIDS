@@ -6,8 +6,9 @@ import matplotlib as plt
 import pickle
 import numpy as np
 import os
+import pandas as pd
 
-
+#constants
 TOTALP = 'total_p'
 MAXMISSING= '14 days'
 
@@ -184,7 +185,7 @@ class DataClass:
         df_to_fix = df_to_fix[original_range[0]:original_range[1]]
         
         #df_to_fix is the dataset that gets filled in (out of bands records are excluded)
-        if self.runTimeSteps is not None:
+        if self.runTimeSteps is not None & self.runTimeSteps != 'all':
             df_to_fix = df_to_fix.loc[self.runTimeSteps[0]:self.runTimeSteps[1]]
          
         #if there is still data in the dataframe after we have truncated it 

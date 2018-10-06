@@ -4,7 +4,7 @@
 # License: MIT License (see LICENSE file of this package for more information)
 #This builds a project setup xml file
 def buildProjectSetup(projectName,saveDir,componentNames):
-    '''
+    '''This builds a project setup xml file
     :param componentNames [ListOfString] is a list of all components to be included in the simulation
     :param saveDir [string] is where the generated setup file will be saved'''
 

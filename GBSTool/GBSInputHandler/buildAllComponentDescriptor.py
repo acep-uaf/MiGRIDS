@@ -6,9 +6,14 @@
 # this accepts a list of component names with acceptable format and generates empty component descriptor files for them
 # and saves them in the input directory specified. These files will then be updated each time the user updates the information
 def buildComponentDescriptor(componentNames,saveDir):
-    # componentNames is a list of all components to be included in the simulation
-    # saveDir is where the generated component descriptor files will be saved
-
+    '''
+    Builds component xml files for the specified components and saves 
+    them in the specified directory.
+    
+    :param componentNames is a list of all components to be included in the simulation
+    :param saveDir is where the generated component descriptor files will be saved
+    '''
+    
     # General Imports
     from bs4 import BeautifulSoup
     import os

@@ -15,20 +15,36 @@ class Component:
         self.scale = kwargs.get('scale')
         #type specifies the type of component (i.e. wtg, gen)
         self.type = kwargs.get('type')
-        if self.type is None:
-            self.inferComponentType()
+        
         self.attribute =kwargs.get('attribute')
         self.filepath = kwargs.get('filepath')
         self.source = kwargs.get('source')
         self.tags=kwargs.get('tags')
-
+        if self.component_name is None:
+            self.inferComponentName()
+        if self.type is None:
+            self.inferComponentType()
+    
+    def inferComponentName(self):
+        import re
+        try:
+            match = re.match(r"([a-z]+)([0-9]+)([a-z]+)", self.column_name, re.I)
+            if match:
+                componentName = match.group(0) + match.group(1)
+                return componentName
+        except:
+            return
+        
     # returns a possible component type inferred from the components column name
     def inferComponentType(self):
         import re
-        match = re.match(r"([a-z]+)([0-9]+)", self.component_name, re.I)
-        if match:
-            componentType = match.group(1)
-            return componentType
+        try:
+           match = re.match(r"([a-z]+)([0-9]+)", self.component_name, re.I)
+           if match:
+                componentType = match.group(1)
+                return componentType
+        except:
+            return
 
 
     # set the datatype for a column in a dataframe that contains data for a specific component

@@ -1,6 +1,11 @@
 from GBSInputHandler.readAvecCsv import readAvecCsv
 
 def readAllAvecTimeSeries(inputDict):
+    '''
+    Cycles through a list of files in the AVEC format and imports them into a single dataframe.
+    :param inputDict:
+    :return: pandas.DataFrame with data from all input files.
+    '''
     df = None
     for i in range(len(inputDict['fileNames'])): 
         print(inputDict['fileNames'][i])# for each data file
@@ -12,8 +17,7 @@ def readAllAvecTimeSeries(inputDict):
             # get intersection of columns,
             df2Col = df2.columns
             dfCol = df.columns
-            # TODO: this does not maintain the order. It needs to be modified to maintain order of columns
-            # dfNewCol = list(set(df2Col).intersection(dfCol))
+
             dfNewCol = [val for val in dfCol if val in df2Col]
             # resize dataframes to only contain columns contained in both dataframes
             df = df[dfNewCol]

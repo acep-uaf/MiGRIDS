@@ -10,7 +10,7 @@ def readDataFile(inputDict):
     # fileType is the file type. default is csv. All files of this type will be read from the dir *type string*
     # columnNames, if specified, is a list of column names from the data file that will be returned in the dataframe.
     # otherwise all columns will be returned. Note indexing starts from 0.*type list(string)*
-    print('readDataFile : %s' %inputDict)
+    
     ####### general imports #######
     import pandas as pd
     from tkinter import filedialog
@@ -22,6 +22,7 @@ def readDataFile(inputDict):
     from GBSAnalyzer.DataRetrievers.readXmlTag import readXmlTag
     from GBSInputHandler.Component import Component
 
+    
     ### convert inputs to list, if not already
     if not isinstance(inputDict['columnNames'],(list,tuple,np.ndarray)):
         inputDict['columnNames'] = [inputDict['columnNames']]
@@ -72,7 +73,7 @@ def readDataFile(inputDict):
        
                 # cd to unit conventions file
                 dir_path = os.path.dirname(os.path.realpath(__file__))                
-                unitConventionDir = os.path.join(dir_path, '../GBSAnalyzer/UnitConverters')
+                unitConventionDir = os.path.join(dir_path, *['..','GBSAnalyzer','UnitConverters'])
                 # get the default unit for the data type
                 units = readXmlTag('internalUnitDefault.xml', ['unitDefaults', inputDict['componentAttributes'][i]], 'units', unitConventionDir)[0]
                 # if the units don't match, convert
@@ -91,11 +92,18 @@ def readDataFile(inputDict):
                                    unitConventionDir)[0]
                 offset = readXmlTag('internalUnitDefault.xml', ['unitDefaults', inputDict['componentAttributes'][i]], 'offset',
                                     unitConventionDir)[0]
+               
+                
                 df[inputDict['useNames'][i]] = df[inputDict['useNames'][i]]*int(scale) + int(offset)
                 # get the desired data type and convert
                 datatype = readXmlTag('internalUnitDefault.xml', ['unitDefaults', inputDict['componentAttributes'][i]], 'datatype',
                                       unitConventionDir)[0]
-                listOfComponents.append(Component(component_name=inputDict['useNames'][i],units=units,scale=scale,offset=offset,datatype=datatype,attribute=inputDict['componentAttributes']))
+                
+                listOfComponents.append(Component(
+                        column_name=inputDict['useNames'][i],
+                        units=units,scale=scale,
+                        offset=offset,datatype=datatype,
+                        attribute=inputDict['componentAttributes']))
 
     # return to original directory
     os.chdir(here)
