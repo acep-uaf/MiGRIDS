@@ -17,6 +17,7 @@ from GBSInputHandler.fixBadData import fixBadData
 from GBSInputHandler.fixDataInterval import fixDataInterval
 from GBSInputHandler.dataframe2netcdf import dataframe2netcdf
 from GBSInputHandler.mergeInputs import mergeInputs
+from GBSController.UIToHandler import UIToHandler
 import pickle
 
 root = tk.Tk()
@@ -97,13 +98,13 @@ pickle.dump(listOfComponents,out)
 out.close()
 
 #IF YOU ARE STARTING FROM AN EXISTING DF and COMPONENTS USE THE CODE BELOW TO LOAD
-# os.chdir(setupDir)
-# inFile = open("df_fixed.p", "rb")
-# df_fixed = pickle.load(inFile)
-# inFile.close()
-# inFile = open("component.pkl", "rb")
-# listOfComponents = pickle.load(inFile)
-# inFile.close()
+ os.chdir(setupDir)
+ inFile = open("df_raw.pkl", "rb")
+ df= pickle.load(inFile)
+ inFile.close()
+ inFile = open("component.pkl", "rb")
+ listOfComponents = pickle.load(inFile)
+ inFile.close()
 
 #fix missing or bad data
 df_fixed = fixBadData(df, setupDir,listOfComponents,inputDictionary['runTimeSteps'])

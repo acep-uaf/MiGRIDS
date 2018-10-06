@@ -174,7 +174,7 @@ class UIToHandler():
              newdates = self.DatesDialog(minDate, maxDate)
              m = newdates.exec_()
              if m == 1:
-                result = 'boo'
+               
                 #inputDictionary['runTimeSteps'] = [newdates.startDate.text(),newdates.endDate.text()]
                 inputDictionary['runTimeSteps'] = [pd.to_datetime(newdates.startDate.text()), pd.to_datetime(newdates.endDate.text())]
                 #TODO write to the setup file so can be archived

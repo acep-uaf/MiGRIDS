@@ -13,10 +13,9 @@
 
 import xml.etree.ElementTree as ET
 import os
-import logging
 import re
 import pandas as pd
-import numpy as np
+
 
 from GBSInputHandler.DataClass import DataClass
 from GBSInputHandler.isInline import isInline
@@ -200,7 +199,7 @@ def fixBadData(df, setupDir, ListOfComponents,runTimeSteps):
    data.splitDataFrame()
    #data.removeAnomolies(5)
    data.totalPower()
-   data.truncateDate()
+   data.truncateAllDates()
    #TODO remove after testing
    data.preserve(setupDir)
    return data

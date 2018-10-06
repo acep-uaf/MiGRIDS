@@ -185,9 +185,9 @@ class DataClass:
         df_to_fix = df_to_fix[original_range[0]:original_range[1]]
         
         #df_to_fix is the dataset that gets filled in (out of bands records are excluded)
-        if self.runTimeSteps is not None & self.runTimeSteps != 'all':
-            df_to_fix = df_to_fix.loc[self.runTimeSteps[0]:self.runTimeSteps[1]]
-         
+        #if self.runTimeSteps is not None & self.runTimeSteps != 'all':
+         #   df_to_fix = df_to_fix.loc[self.runTimeSteps[0]:self.runTimeSteps[1]]
+        df_to_fix = self.truncateDate(df_to_fix)
         #if there is still data in the dataframe after we have truncated it 
         # to the specified interval replace bad data
         if len(df_to_fix) > 1:
@@ -219,15 +219,30 @@ class DataClass:
 
     #keeps only rows of data that are between the specified runTimeSteps
     #raw data is not affected, only fixed data
-    def truncateDate(self):
-        if self.runTimeSteps is not None:
-            for i,df in enumerate(self.fixed):
-                df = df[self.runTimeSteps[0]:self.runTimeSteps[1]]
-                if len(df) < 1:
-                    self.fixed.remove(df)
-                else:
-                    self.fixed[i] = df
+    def truncateDate(self,df):
+        def makeList(dateString):
+            newlist = self.runTimeSteps.split()
+            return newlist
 
+        if self.runTimeSteps is not None:
+            if (self.runTimeSteps != 'all') & (self.runTimeSteps != ['all']):
+                if type(self.runTimeSteps) is not list:
+                    self.runTimeSteps = makeList(self.runTimeSteps)
+                elif len(self.runTimeSteps) == 2:
+                    df = df[self.runTimeSteps[0]:self.runTimeSteps[1]]
+                elif len(self.runTimeSteps) == 1:
+                    df = df[:self.runTimeSteps[0]]
+                else:
+                    df = df[self.runTimeSteps]
+        return df
+
+    def truncateAllDates(self):
+        for i,df in enumerate(self.fixed):
+            df = self.truncateDate(df)
+            if len(df) < 1:
+                self.fixed.remove(df)
+            else:
+                self.fixed[i] = df
     # ListOfComponents -> ListOfComponents
     # returns a list of components that are diesel generators (start with 'gen')
     def identifyGenColumns(self, componentList):
