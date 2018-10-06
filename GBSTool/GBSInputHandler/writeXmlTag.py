@@ -5,12 +5,19 @@
 
 # write a value to an xml tag
 def writeXmlTag(fileName,tag,attr,value,fileDir=''):
+    '''
+    Writes a value to a specified tag and attribute within an xml file
+    :param fileName: [String] name of the xml to write
+    :param tag: [String] tag to write
+    :param attr: [String] attribute to write
+    :param value: [String] value to write
+    :param fileDir: [String] path to xml file
+    :return: None
+    '''
     # general imports
     import os
     import numpy as np
     from bs4 import BeautifulSoup
-
-
 
     # open file and read into soup
     infile_child = open(os.path.join(fileDir,fileName), "r")  # open
@@ -33,11 +40,9 @@ def writeXmlTag(fileName,tag,attr,value,fileDir=''):
     if a is not None:
         a[attr] = value
 
-
     # save again
-
     f = open(os.path.join(fileDir,fileName), "w")
     f.write(soup.prettify())
     f.close()
 
-
+    return

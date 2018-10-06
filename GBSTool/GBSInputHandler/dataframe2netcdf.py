@@ -3,12 +3,14 @@
 # Date: October 23, 2017
 # License: MIT License (see LICENSE file of this package for more information)
 
-# this function is passed a pandas dataframe and converts it to net cdf format
+# Converts a pandas.DataFrame to netcdf files
 def dataframe2netcdf(df,components,saveLocation=''):
-    # df is the dataframe. The headers will be used as the variable names unless they are specified by the 'headers' input
-    # components is a dictionary of units and offsets for each component
-    # varNames are the names of the variables specified by the columns of the dataframe *type string*
-    # saveLocation is where the net CDF files are saved *type string*
+    '''
+    :param df: [pandas.DataFrame] a dataframe with datetime index and columns with column names that match the provided components
+    :param components: [ListOf Components] a dictionary of component information. A netcdf file will be generated for each key.
+    :param saveLocation: [string] directory to save netcdf files to
+    :return: netCDFList [ListOf String] a list of netcdf files that were created
+    '''
 
     # general imports
     from netCDF4 import Dataset

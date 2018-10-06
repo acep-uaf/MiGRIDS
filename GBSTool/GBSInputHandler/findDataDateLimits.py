@@ -1,7 +1,11 @@
 def findDataDateLimits(setupXML):
-    """reads the runTimeSteps value in the setup xml and returns the value string"""
+    '''reads the runTimeSteps value in the setup xml and returns the value string
+    :param setupXML:
+    :return: [string] string value of multiple space sepearted dates
+    '''
+
     from bs4 import BeautifulSoup
-    # read teh setupfile
+    # read the setupfile
     infile = open(setupXML, "r")
     contents = infile.read()
 
@@ -9,12 +13,10 @@ def findDataDateLimits(setupXML):
     rawIndices = None
     # get runTimeSteps child
     children = soup.findChildren()  # get all children
-    # find all the children and assign them to the setupInfo model
-    for i in range(len(children)):
-        # the project tag is different so skip it here
-        if children[i].name == 'runTimeSteps':
-            rawIndices = children[i].value
+    target = children.find(name='runTimeSteps')
+    rawIndices = target.value
 
+    #close the xml
     infile.close()
 
     return processDates(rawIndices)

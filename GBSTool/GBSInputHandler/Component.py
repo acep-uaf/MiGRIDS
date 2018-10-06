@@ -1,5 +1,5 @@
 from GBSController.UIToHandler import UIToHandler
-# Component class consisting of component name, units and attribute - required for data input
+# Component class consisting of component name, units,offset, scale, datatype, column name, original field name and attribute
 class Component:
     """A class with access to the generic characteristics of a component."""
 
@@ -12,7 +12,6 @@ class Component:
         self.units = kwargs.get('units')
         self.offset = kwargs.get('offset')
         self.datatype = kwargs.get('datatype')
-
         self.scale = kwargs.get('scale')
         #type specifies the type of component (i.e. wtg, gen)
         self.type = kwargs.get('type')
@@ -21,23 +20,21 @@ class Component:
         self.attribute =kwargs.get('attribute')
         self.filepath = kwargs.get('filepath')
         self.source = kwargs.get('source')
-
         self.tags=kwargs.get('tags')
+
+    # returns a possible component type inferred from the components column name
     def inferComponentType(self):
-        #contact the UIToHandler to get possible types
-        handler = UIToHandler()
-        possibleTypes = handler.getComponentTypes()
-        # match the name to a type
-        match = [i for i in possibleTypes if self.column_name[0:3] in i]
-        if len(match) > 0:
-            return match[0]
-        return
+        import re
+        match = re.match(r"([a-z]+)([0-9]+)", self.component_name, re.I)
+        if match:
+            componentType = match.group(1)
+            return componentType
 
 
     # set the datatype for a column in a dataframe that contains data for a specific component
     def setDatatype(self, df):
-        #if the datatype is an integer it becomes a float with 0 decimal places
 
+        # if the datatype is an integer it becomes a float with 0 decimal places
         if self.datatype[0:3] == 'int':
             df[self.column_name] = round(df[self.column_name].astype('float'), 0)
         else:

@@ -10,7 +10,7 @@ def readDataFile(inputDict):
     # fileType is the file type. default is csv. All files of this type will be read from the dir *type string*
     # columnNames, if specified, is a list of column names from the data file that will be returned in the dataframe.
     # otherwise all columns will be returned. Note indexing starts from 0.*type list(string)*
-
+    print('readDataFile : %s' %inputDict)
     ####### general imports #######
     import pandas as pd
     from tkinter import filedialog
@@ -77,7 +77,7 @@ def readDataFile(inputDict):
                 units = readXmlTag('internalUnitDefault.xml', ['unitDefaults', inputDict['componentAttributes'][i]], 'units', unitConventionDir)[0]
                 # if the units don't match, convert
                 if units.lower() != inputDict['componentUnits'][i].lower():
-                    unitConvertDir = os.path.join( dir_path,'../GBSAnalyzer/UnitConverters/unitConverters.py')
+                    unitConvertDir = os.path.join( dir_path,*['..','GBSAnalyzer','UnitConverters','unitConverters.py'])
                     funcName = inputDict['componentUnits'][i].lower() + '2' + units.lower()
                     # load the conversion
                     spec = importlib.util.spec_from_file_location(funcName, unitConvertDir)

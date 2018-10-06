@@ -1,15 +1,20 @@
-#assumes the project has already been initialized throught the UI and empty setup and component xml files exist
+#fill project xml files
 #String, ModelSetupInformation - > None
-def fillProjectDataFromUI(projectDir, setupInfo):
+def fillProjectDataFromUI(setupInfo):
+    '''
+    Fills project xml files from a model object provided from the user interface.
+    Assumes the project has already been initialized throught the UI and empty setup and component xml files exist.
+    :param setupInfo: [ModelSetupInformation] contains setup information attributes
+    :return: None
+    '''
     # general imports
     import sys
     import os
     from GBSInputHandler.createComponentDescriptor import createComponentDescriptor
-    here = os.path.dirname(os.path.realpath(__file__))
-    sys.path.append(here)
-
     from GBSInputHandler.writeXmlTag import writeXmlTag
 
+    here = os.path.dirname(os.path.realpath(__file__))
+    sys.path.append(here)
 
     projectSetup = setupInfo.project + 'Setup.xml'
 
@@ -26,7 +31,7 @@ def fillProjectDataFromUI(projectDir, setupInfo):
 
 
     #look for component descriptor files for all componentName
-    componentDir = os.path.join(setupInfo.setupFolder, '../Components')
+    componentDir = os.path.join(setupInfo.setupFolder, *['..','Components'])
 
     #component is a string
     if (setupInfo.componentNames.value is not None):

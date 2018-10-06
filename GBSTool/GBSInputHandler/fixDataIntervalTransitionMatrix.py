@@ -42,7 +42,7 @@ def fixDataIntervalTransitionMatrix(data, interval, sigma = None, useMarkov = Fa
         tau = records * .2
 
         # renormalized variables
-        # TODO: look at sigma calculation
+
         sigma_bis = sigma * np.sqrt(2.0 / n)  # adapted from ipython interactive computing visualization cookbook
         sqrtdt = np.sqrt(timestep)
         # x is the array that will contain the new values
