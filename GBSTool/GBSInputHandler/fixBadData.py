@@ -200,7 +200,7 @@ def fixBadData(df, setupDir, ListOfComponents,runTimeSteps):
    #data.removeAnomolies(5)
    data.totalPower()
    data.truncateAllDates()
-   #TODO remove after testing
+
    data.preserve(setupDir)
    return data
 

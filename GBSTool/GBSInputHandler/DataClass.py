@@ -92,7 +92,7 @@ class DataClass:
     # list, string -> pdf
     # creates a pdf comparing raw and fixed data values
     def visualize(self, components, setupDir):
-        filename = os.path.join(setupDir, '../TimeSeriesData', 'fixed_data_compare.pdf')
+        filename = os.path.join(setupDir, *['..','TimeSeriesData', 'fixed_data_compare.pdf'])
 
         # plot raw and fixed data
         with PdfPages(filename) as pdf:
@@ -113,7 +113,7 @@ class DataClass:
     # DataClass string -> pickle
     # pickles the dataframe so it can be restored later
     def preserve(self, setupDir):
-        filename = os.path.join(setupDir + '/../TimeSeriesData', 'fixed_data.pickle')
+        filename = os.path.join(setupDir, *['..','TimeSeriesData', 'fixed_data.pickle'])
         if not os.path.exists(os.path.dirname(filename)):
             os.makedirs(os.path.dirname(filename))
         pickle_out = open(filename, 'wb')
@@ -185,8 +185,6 @@ class DataClass:
         df_to_fix = df_to_fix[original_range[0]:original_range[1]]
         
         #df_to_fix is the dataset that gets filled in (out of bands records are excluded)
-        #if self.runTimeSteps is not None & self.runTimeSteps != 'all':
-         #   df_to_fix = df_to_fix.loc[self.runTimeSteps[0]:self.runTimeSteps[1]]
         df_to_fix = self.truncateDate(df_to_fix)
         #if there is still data in the dataframe after we have truncated it 
         # to the specified interval replace bad data
