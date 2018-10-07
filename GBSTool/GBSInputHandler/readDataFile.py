@@ -37,20 +37,21 @@ def readDataFile(inputDict):
     # met files are text.
     if inputDict['fileType'].lower() == 'met':
         inputDict['fileNames'] = [f for f in os.listdir(inputDict['fileLocation']) if
-                     os.path.isfile(f) & (f.endswith('TXT') or f.endswith('txt'))]
+                     os.path.isfile(os.path.join(inputDict['fileLocation'],f)) & (f.endswith('TXT') or f.endswith('txt'))]
     else:
         inputDict['fileNames'] = [f for f in os.listdir(inputDict['fileLocation']) if
-                     os.path.isfile(f) & (f.endswith(inputDict['fileType'].upper()) or f.endswith(inputDict['fileType'].lower()))]
-
-    
+                     os.path.isfile(os.path.join(inputDict['fileLocation'],f)) & (f.endswith(inputDict['fileType'].upper()) or f.endswith(inputDict['fileType'].lower()))]
+       
     df = pd.DataFrame()
     ####### Parse the time series data files ############
     # depending on input specification, different procedure
     if inputDict['fileType'].lower() =='csv':
+        
         df = readAllAvecTimeSeries(inputDict)
     elif inputDict['fileType'].lower() == 'met':
+        
         fileDict, df = readWindData(inputDict)
-    print(len(df))
+    
     # convert units
     if np.all(inputDict['componentUnits'] != None):
         # initiate lists

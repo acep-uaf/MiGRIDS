@@ -13,7 +13,7 @@ def readAvecCsv(inputDict):
 
     # general imports
     import numpy as np
-    
+    import os
     import pandas as pd
     
     from GBSInputHandler.processInputDataFrame import processInputDataFrame
@@ -27,7 +27,8 @@ def readAvecCsv(inputDict):
  
 
     #------------------- load the file -----------------------------
-    df = pd.read_csv(inputDict['fileName']) # read as a data frame
+    df = pd.read_csv(os.path.join(inputDict['fileLocation'],
+                                  inputDict['fileName'])) # read as a data frame
     
     # check and see if the df column names match the input specification.
     # TODO: throw a catch in here in case it does not find the headers
