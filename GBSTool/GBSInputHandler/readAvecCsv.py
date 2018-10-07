@@ -13,9 +13,7 @@ def readAvecCsv(inputDict):
 
     # general imports
     import numpy as np
-    import os
-    import tkinter as tk
-    from tkinter import filedialog
+    
     import pandas as pd
     
     from GBSInputHandler.processInputDataFrame import processInputDataFrame
@@ -26,16 +24,7 @@ def readAvecCsv(inputDict):
         inputDict['columnNames'] = inputDict['columnNames'].tolist()
     if type(inputDict['useNames'])== np.ndarray:
         inputDict['useNames'] = inputDict['useNames'].tolist()
-    # -------------- cd to file location ------------------------
-    # TODO: Set this up such that it can easily setup with an interactive interface later (either command line or GUI)
-    # if no fileLocation is specified, request the user to input one.
-    if inputDict['fileLocation']=='':
-        print('Choose directory where input data files are located.')
-        root = tk.Tk()
-        root.withdraw()
-        inputDict['fileLocation'] = filedialog.askdirectory()
-    os.chdir(inputDict['fileLocation'])
-
+ 
 
     #------------------- load the file -----------------------------
     df = pd.read_csv(inputDict['fileName']) # read as a data frame
@@ -60,6 +49,5 @@ def readAvecCsv(inputDict):
     inputDict['df'] = df
     df = processInputDataFrame(inputDict)
     
-
     return df
 

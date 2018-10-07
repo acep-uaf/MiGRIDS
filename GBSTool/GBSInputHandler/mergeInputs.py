@@ -24,7 +24,7 @@ def mergeInputs(inputDictionary):
 
     # iterate through all sets of input files
     for idx in range(len(inputDictionary['fileLocation'])):
-        print(inputDictionary)
+        
         df0, listOfComponents0 = readDataFile(singleLocation(inputDictionary,idx))
 
         # set index as DATE

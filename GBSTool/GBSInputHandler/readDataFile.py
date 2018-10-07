@@ -13,7 +13,6 @@ def readDataFile(inputDict):
     
     ####### general imports #######
     import pandas as pd
-    from tkinter import filedialog
     import os
     import importlib.util
     import numpy as np
@@ -32,19 +31,8 @@ def readDataFile(inputDict):
         inputDict['componentUnits'] = [inputDict['componentUnits']]
     if not isinstance(inputDict['componentAttributes'], (list, tuple, np.ndarray)):
         inputDict['componentAttributes'] = [inputDict['componentAttributes']]
-
-    ###### go to directory with time series data is located #######
-    here = os.path.dirname(os.path.realpath(__file__))
-    if inputDict['fileLocation']=='':
-        print('Choose directory where input data files are located.')
-        import tkinter as tk
-        root = tk.Tk()
-        root.withdraw()
-        root.attributes('-topmost',1)
-        inputDict['fileLocation'] = filedialog.askdirectory()
-    else:
-        inputDict['fileLocation'] = os.path.join(here,inputDict['fileLocation'])
-    os.chdir(inputDict['fileLocation'])
+    
+    
     # get just the filenames ending with fileType. check for both upper and lower case
     # met files are text.
     if inputDict['fileType'].lower() == 'met':
@@ -62,7 +50,7 @@ def readDataFile(inputDict):
         df = readAllAvecTimeSeries(inputDict)
     elif inputDict['fileType'].lower() == 'met':
         fileDict, df = readWindData(inputDict)
-    
+    print(len(df))
     # convert units
     if np.all(inputDict['componentUnits'] != None):
         # initiate lists
@@ -105,8 +93,7 @@ def readDataFile(inputDict):
                         offset=offset,datatype=datatype,
                         attribute=inputDict['componentAttributes']))
 
-    # return to original directory
-    os.chdir(here)
+   
     #drop unused columns
     df = df[inputDict['useNames'] + ['DATE']]
     return df, listOfComponents
