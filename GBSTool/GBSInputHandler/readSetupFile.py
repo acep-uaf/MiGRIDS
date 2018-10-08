@@ -21,6 +21,8 @@ def readSetupFile(fileName):
         #filelocation is the raw timeseries file.
         #if multiple files specified look for raw_wind directory
         # input a list of subdirectories under the GBSProjects directory
+
+        inputDictionary['setupDir'] = setupDir
         
         lol = readXmlTag(fileName,'inputFileDir','value')
         inputDictionary['fileLocation'] = [os.path.join(setupDir,'..','..','..',*l) if l[0] == projectName else l for l in lol ]

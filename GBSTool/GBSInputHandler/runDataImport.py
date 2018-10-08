@@ -8,11 +8,8 @@
 # this is run after the project files have been initiated (initiateProject.py) and filled (fillProjectData.py)
 
 # get input data to run the functions to import data into the project
-#from tkinter import filedialog
-#import tkinter as tk
-import os
 
-from GBSInputHandler.getUnits import getUnits
+import os
 from GBSInputHandler.fixBadData import fixBadData
 from GBSInputHandler.fixDataInterval import fixDataInterval
 from GBSInputHandler.dataframe2netcdf import dataframe2netcdf
@@ -21,17 +18,12 @@ from GBSController.UIToHandler import UIToHandler
 from GBSInputHandler.readSetupFile import readSetupFile
 import pickle
 
-#root = tk.Tk()
-#root.withdraw()
-#root.attributes('-topmost',1)
-#fileName = filedialog.askopenfilename()
-
 #specify the correct path to your project setup file here
 fileName = os.path.join(os.getcwd(),*['..\\' 'GBSProjects','SampleProject','InputData','Setup','SampleProjectSetup.xml'])
 # get the setup Directory
-setupDir = os.path.dirname(fileName)
+
 inputDictionary = readSetupFile(fileName)
-print(inputDictionary)
+
 # read time series data, combine with wind data if files are seperate.
 df, listOfComponents = mergeInputs(inputDictionary)
 
@@ -40,7 +32,7 @@ print(df.head())
 
 #save the dataframe and components used
 #its recommended that you save the data at each stage since the process can be time consuming to repeat.
-os.chdir(setupDir)
+os.chdir(inputDictionary['setupDir'])
 out = open("df_raw.pkl","wb")
 pickle.dump(df,out )
 out.close()
@@ -49,7 +41,7 @@ pickle.dump(listOfComponents,out)
 out.close()
 
 #IF YOU ARE STARTING FROM AN EXISTING DF and COMPONENTS USE THE CODE BELOW TO LOAD
-os.chdir(setupDir)
+os.chdir(inputDictionary['setupDir'])
 inFile = open("df_raw.pkl", "rb")
 df= pickle.load(inFile)
 inFile.close()
@@ -58,12 +50,12 @@ listOfComponents = pickle.load(inFile)
 inFile.close()
 
 #fix missing or bad data
-df_fixed = fixBadData(df, setupDir,listOfComponents,inputDictionary['runTimeSteps'])
+df_fixed = fixBadData(df, inputDictionary['setupDir'],listOfComponents,inputDictionary['runTimeSteps'])
 # fix the intervals
 df_fixed_interval = fixDataInterval(df_fixed,inputDictionary['outputInterval'])
 
 # pickle df
-os.chdir(setupDir)
+os.chdir(inputDictionary['setupDir'])
 pickle.dump(df_fixed_interval, open("df_fixed_interval.p","wb"))
 
 d = {}
