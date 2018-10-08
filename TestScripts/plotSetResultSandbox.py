@@ -2,7 +2,7 @@
 from GBSTool.GBSAnalyzer.DataRetrievers.plotSetResult import plotSetResult
 import os
 
-plotResValues = {'Generator Import [GWh]':{'Generator Import kWh':'+',1000000:'/'},'Generator Charging [kWh]':{'Generator Charging kWh':'+',1000000:'/'},
+plotResValues = {'Generator Import [GWh]':{'Generator Import kWh':'+',1000000:'/'},'Generator Charging [GWh]':{'Generator Charging kWh':'+',1000000:'/'},
                  'Generator Switching':'Generator Switching','Generator Loading':'Generator Loading','Diesel-off time [h]':'Diesel-off time h',
            'Generator Cumulative Run time [h]':'Generator Cumulative Run time h',
                  'Generator Cumulative Capacity Run Time [GWh]':{'Generator Cumulative Capacity Run Time kWh':'+',1000000:'/'},'Generator Overloading Time [h]':'Generator Overloading Time h',
