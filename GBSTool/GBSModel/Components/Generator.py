@@ -188,7 +188,7 @@ class Generator:
                         self.normalUpperDifference[-1] > 0):
                 self.outOfNormalBounds = True
                 self.outOfEfficientBounds = False
-                # check if also over upper limit
+                # check if also above the upper limit
                 if self.genP > self.genUpperLimit:
                     self.outOfBounds = True  # special flags for upper and lower bounds, for more immediate action by scheduler
 
@@ -222,7 +222,7 @@ class Generator:
             self.genMelAvail = 0
 
             ### Check if out of bounds operation, then flag outOfNormalBounds ###
-            if self.genP > 0:
+            if self.genP > 1: # greater than 1 to account for rounding errors
                 self.outOfNormalBounds = True
                 self.outOfBounds = True
                 self.outOfEfficientBounds = True
@@ -242,7 +242,7 @@ class Generator:
             self.genMelAvail = 0
 
             ### Check if out of bounds operation, then flag outOfNormalBounds ###
-            if self.genP > 0:
+            if self.genP > 1: # greater than 1 to account for out of bounds operation
                 self.outOfNormalBounds = True
                 self.outOfBounds = True
                 self.outOfEfficientBounds = True

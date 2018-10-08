@@ -6,24 +6,24 @@
 <!-- This file describes an interface for all components that may be part of the model. It does not itself implement a -->
 <!-- specific component and thus should not directly be used as description for a component. -->
 <!-- Root tag is 'project' -->
-<project name="ControlProject1">
+<project name="StMary">
  <!-- Declaration of inheritance - the interface itself should be the master parent. Later more specific -->
  <!-- project descriptions should state the immediate parent here. All have to be traceable to this interface. -->
  <childOf>
   self
  </childOf>
  <!-- 'inputFileDir' is the directory where the input data files are stored.  -->
- <inputFileDir value="NONE"/>
+ <inputFileDir value="StMary,InputData,TimeSeriesData,RawData,StMaryHighRes StMary,InputData,TimeSeriesData,RawData,StMary  StMary,InputData,TimeSeriesData,RawData,MtVillage StMary,InputData,TimeSeriesData,RawData,WindMet"/>
  <!-- 'inputFileType' is the file type of the input data files. Eg '.CSV'  -->
- <inputFileType value="NONE"/>
+ <inputFileType value="CSV CSV CSV MET"/>
  <!-- 'inputFileFormat' is format that the input files are in. This includes formatting specific to certain data sources
       where a script has been specifically generated to deal with the data. For example 'AVEC'. If this is not specified
       Then it will assume that the data files are organized in a data table with a header at the top. -->
- <inputFileFormat value="NONE" />
+ <inputFileFormat value="AVEC" />
  <!-- 'componentNames' is a tuple of the names of components in the grid. Acceptable names must start with corresponding
      names to the component descriptor files, including: 'Gen', 'Wtg', 'Inv', 'Tes', 'Ees' and 'ControlledLoad'. For example 'Gen1',
       'Gen2', 'Wtg1',... -->
- <componentNames value="gen0 gen1 gen2 wtg0 load0 ees0 tes0"/>
+ <componentNames value="gen0 gen1 gen2 wtg0 ees0 load0 tes0"/>
  <!-- 'componentChannels' describes the input data channels corresponding to grid components to read into the simulation.
     The tuple 'headerName' is the names or indices of the columns in the input data files. The component names are the names
     in the componentDescriptor files. 'componentAttribute' describes what was measured and what the units were. For example,
@@ -36,25 +36,25 @@
      for temperature are 'C', 'F' and 'K'. Available units for speed are 'm/s', 'ft/s', 'km/hr' and 'mi/hr'. Available
      units for irradiation is 'W/m2'. Available units for flow include 'm3/s', 'L/s', 'cfm' and 'gal/min'  -->
  <componentChannels>
-  <headerName value="None None"/>
-  <componentName value="load0  wtg0"/>
-  <componentAttribute unit="kW kW" value="P P"/>
+  <headerName value="Village_load_kW kW kW CH3Avg "/>
+  <componentName value="load0 load0 load1 wtg0"/>
+  <componentAttribute unit="kW kW kW m/s" value="P P P WS"/>
  </componentChannels>
  <!-- 'dateChannel' the name or index of the data channel with the timestamps. 'value' is the name or index. 'format'
       is the format of the date, for example 'ordinal'. -->
- <dateChannel format="NONE" value="NONE"/>
+ <dateChannel format="infer infer infer infer" value="DATE Date Date Date_&amp;_Time_Stamp"/>
  <!-- 'timeChannel' the name or index of the data channel with the times of day. 'value' is the name or index. 'format'
       is the format of the time, for example 'HH:MM:SS:MS'. Also accepted is time as a fraction of 24 hours ('excel').
       If this is not set, then the timestamps will be assumed to be incorporated into the dataChannel. -->
- <timeChannel format="NONE" value="NONE"/>
+ <timeChannel format="infer infer infer NONE " value="TIME Time Time None"/>
  <!-- 'inputUTCOffset' is the offset in hours from UTC time that input timestamps are in.   -->
- <inputUTCOffset unit="hr" value="0"/>
+ <inputUTCOffset unit="hr" value="-9 0 0 -9"/>
  <!-- 'inputDST' Indicates whether the input time values are daylight savings time.   -->
- <inputDST unit="bool" value="FALSE"/>
+ <inputDST unit="bool" value="TRUE TRUE TRUE TRUE"/>
  <!-- 'realLoadChannel' is the name or index of the total grid real load. If this is not set, then the load will be
      calculated as the difference between all input generating unit data channels and input controllable loads data
      channels. -->
-  <realLoadChannel unit="kW" value="load0P"/>
+  <realLoadChannel unit="kW" value=""/>
  
  <!-- 'flexibleYear' Indicates whether the year of the input data can be changec to align with other available data.
     For example, Load data may be available for one year and wind data for another. Making the year flexible on one or 
@@ -71,7 +71,7 @@
  <imaginaryLoadChannel unit="" value=""/>
  <!-- 'inputTimeStep' is the original timestep recorded in the raw timeseries data fed into the model.
      Default is 1 minute. -->
- <inputTimeStep unit="s" value="1"/>
+ <inputTimeStep unit="s" value="2 900 900 600"/>
  <!-- 'timeStep' is the desired timestep to be used in the simulation. The data will be resampled to this value.
      Default is 1 second. -->
  <timeStep unit="s" value="1"/>
@@ -107,7 +107,12 @@
     own dispatch, it is the path and filename of the dispatch class used to dispatch the generators.
     Otherwise, it is the name of the dispatch filename included in the software package. Options include: genDispatch0.
     The class name in the file must be 'genDispatch'. Default value is 'genDispatch0'-->
- <genDispatch value="eesDispatch0"/>
+ <genDispatch value="genDispatch0"/>
+ <!-- 'genSchedule' refers to the class that is used to schedule the generators.  If a user defines their
+    own schedule, it is the path and filename of the dispatch class used to schedule the generators.
+    Otherwise, it is the name of the schedule filename included in the software package. Options include: genSchedule0.
+    The class name in the file must be 'genSchedule'. Default value is 'genSchedule0'-->
+    <genSchedule value="genSchedule0"/>
  <!-- 'wtgDispatch' refers to the class that is used to dispatch the wind turbines.  If a user defines their
     own dispatch, it is the path and filename of the dispatch class used to dispatch the wind turbines.
     Otherwise, it is the name of the dispatch filename included in the software package. Options include: wtgDispatch0.

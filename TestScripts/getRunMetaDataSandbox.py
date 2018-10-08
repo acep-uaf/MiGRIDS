@@ -1,7 +1,8 @@
 
 from GBSAnalyzer.PerformanceAnalyzers.getRunMetaData import getRunMetaData
-
-projectSetDir = 'C:\\Users\jbvandermeer\Documents\ACEP\GBS\GBSTools_0\GBSProjects\StMary\OutputData\Set1000'
-runs = range(2)
+import os
+here = os.path.dirname(os.path.realpath(__file__))
+projectSetDir = os.path.join(here,"../GBSProjects/SampleProject1/OutputData/Set0")
+runs = range(6)
 getRunMetaData(projectSetDir,runs)
 

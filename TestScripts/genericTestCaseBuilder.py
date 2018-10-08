@@ -20,7 +20,7 @@ from GBSAnalyzer.DataWriters.writeNCFile import writeNCFile
 from GBSModel.Components.WindTurbine import WindTurbine
 
 # Turn generation of time-series on or off individually
-mkLoad = False
+mkLoad = True
 mkWind = True
 mkEES = False
 
@@ -32,7 +32,7 @@ timeSteps = np.asarray(list(range(offSet, duration + offSet))) # Series of time 
 
 #load0P - Makes generic load series and saves it to load0P.nc
 if mkLoad:
-    baseLoad = 200
+    baseLoad = 500
 
     load0P = baseLoad + 0.5* baseLoad * np.sin(2*np.pi*timeSteps/period) + \
         0.25*baseLoad*np.random.normal(0,0.1,duration)

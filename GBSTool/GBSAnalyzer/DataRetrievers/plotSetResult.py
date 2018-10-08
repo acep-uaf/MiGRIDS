@@ -20,12 +20,14 @@ def plotSetResult(plotRes,plotAttr, projectSetDir = '', otherAttr = [],otherAttr
     :param otherAttrVal: The values of the 'otherAttr' to plot. It should be given as a list of lists, corresponding to otherAttr.
     :param removeOtherAttr: a list of other attributes to remove from the legend. These are for attributes that only have one
     value for every other combination of values.
-    :param baseCaseRunDir: the run directory of the base case scenario.
+    :param baseSet: the set identifier of the base set. If left as '', then no base case is plotted.
+    :param baseRun: the run number of the base set. If left as '', then no base case is plotted.
     :param subtractFromBase:0  - do not subtract or add, but if base case is specified, place at the begining
 # 1 - subtract value from base -> decrease from base case
 # 2 - subtract base from value -> increase from base case
     :param plotAttrName: the desired x axis label
     :param otherAttrNames: a dict of the other attribute variable names that will go in the legend and the names desired to be used in the legend
+    :param saveName: the name to save the plots as. If left '', then a default naming convetion will be used.
     :return: Nothing
     '''
     if projectSetDir == '':

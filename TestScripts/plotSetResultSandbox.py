@@ -1,5 +1,6 @@
 
 from GBSTool.GBSAnalyzer.DataRetrievers.plotSetResult import plotSetResult
+import os
 
 plotResValues = {'Generator Import [GWh]':{'Generator Import kWh':'+',1000000:'/'},'Generator Charging [kWh]':{'Generator Charging kWh':'+',1000000:'/'},
                  'Generator Switching':'Generator Switching','Generator Loading':'Generator Loading','Diesel-off time [h]':'Diesel-off time h',
@@ -26,11 +27,12 @@ plotResName, plotRes = zip(*plotResValues.items())
 otherAttr = ['ees0.POutMaxPa.value']
 otherAttrNames = {'ees0.POutMaxPa.value':'GBS Rated Power (kW)'}
 otherAttrVal = [] #[[500,750,1000]]
-projecSetDir = 'C:\\Users\jbvandermeer\Documents\ACEP\GBS\GBSTools_0\GBSProjects\StMary\OutputData\Set19'
+here = os.path.dirname(os.path.realpath(__file__))
+projectSetDir = os.path.join(here,"../GBSProjects/SampleProject1/OutputData/Set0")
 baseSet =  ''#17
 baseRun =  ''#0
 for pR,pRN, sFB in zip(plotRes,plotResName,subtractFromBase):
-    plotSetResult(pR,plotAttr, projectSetDir = projecSetDir, otherAttr = otherAttr,otherAttrVal = otherAttrVal,
+    plotSetResult(pR,plotAttr, projectSetDir = projectSetDir, otherAttr = otherAttr,otherAttrVal = otherAttrVal,
                   baseSet = baseSet, baseRun = baseRun, subtractFromBase = sFB, removeSingleOtherAttr = True,
                   alwaysUseMarkers = True, plotResName= pRN, plotAttrName = plotAttrName,
                   otherAttrNames = otherAttrNames)

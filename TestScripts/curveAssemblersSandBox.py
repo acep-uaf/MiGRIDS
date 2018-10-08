@@ -1,6 +1,6 @@
 # Just a little test harness for the routines in this subpackage.
-from wtgPowerCurveAssembler import WindPowerCurve
-from genFuelCurveAssembler import GenFuelCurve
+from GBSAnalyzer.CurveAssemblers.wtgPowerCurveAssembler import WindPowerCurve
+from GBSAnalyzer.CurveAssemblers.genFuelCurveAssembler import GenFuelCurve
 import matplotlib.pyplot as plt
 from sys import getsizeof
 import numpy as np

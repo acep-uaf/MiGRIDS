@@ -113,12 +113,6 @@ class ElectricalEnergyStorage:
         # 'eesDispatchMinSoc' is the minimum SOC of the ESS in order to be considered as an active discharge option in
         # the diesel schedule. Units are in pu of full energy capacity.
         self.eesDispatchMinSoc = float(eesSoup.eesDispatchMinSoc.get('value'))
-        # 'eesPinAvail_1_time' is used to find the maximum power that the EES can charge for 'eesPinAvail_1_time'
-        # amount of time before being fully charged.  Units are in seconds. Default is 300 s (5 min).
-        self.eesPinAvail_1_time = float(eesSoup.eesPinAvail_1_time.get('value'))
-        # 'eesPoutAvail_1_time' is used to find the maximum power that the EES can discharge for 'eesPoutAvail_1_time'
-        # amount of time before going below the required SRC SOC.  Units are in seconds. Default is 300 s (5 min).
-        self.eesPoutAvail_1_time = float(eesSoup.eesPoutAvail_1_time.get('value'))
         # In order to use the consider the equivalent fuel efficiency of dishcarging the ESS to allow running a smaller
         # diesel generator, an equivalent fuel consumption of the ESS must be calculated in kg/kWh. This is done by calculating
         # how much diesel fuel went into charging the ESS to it's current level. Divide the number of kg by the state of
@@ -142,8 +136,6 @@ class ElectricalEnergyStorage:
         self.lossMapPstep = float(eesSoup.lossMapPstep.get('value'))
         # 'useLossMap' is a bool value that indicates whether or not use the lossMap in the simulation.
         self.useLossMap = eesSoup.useLossMap.get('value').lower() in ['true','1']
-        # used to increase the requirement to schedule the ess for SRC
-        self.proRateSrcSched = eesSoup.proRateSrcSched.get('value')
 
         if self.useLossMap:
             # handle the loss map interpolation
