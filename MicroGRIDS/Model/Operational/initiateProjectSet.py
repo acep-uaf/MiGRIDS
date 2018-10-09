@@ -20,10 +20,10 @@ def initiateSet(projectDir,setID):
     projectDirBase, projectName = os.path.split(projectDir)
     if projectDirBase == '':
         here = os.path.dirname(os.path.realpath(__file__))
-        projectDir = os.path.join(here,'..','..','MicroGRIDSProjects',projectName)
+        projectDir = os.path.join(here,'..','..','..','MicroGRIDSProjects',projectName)
     # cd to setup files location
     here = os.path.dirname(os.path.realpath(__file__))
-    setupPath = os.path.join(here, *['..', 'Model', 'Resources', 'Setup'])
+    setupPath = os.path.join(here, *['..','..', 'Model', 'Resources', 'Setup'])
     os.chdir(setupPath)
     infile_child = open('projectSetAttributes.xml', "r")  # open
     contents_child = infile_child.read()
@@ -31,9 +31,6 @@ def initiateSet(projectDir,setID):
     soup = BeautifulSoup(contents_child, 'xml')  # turn into soup
     soup.project.attrs['name'] = projectName
     soup.setNumber.attrs['value'] = setID
-    if projectDir == '':
-        here = os.path.dirname(os.path.realpath(__file__))
-        projectDir = os.path.join(here, '..', '..', 'MicroGRIDSProjects', projectName)
     setDir = os.path.join(projectDir,'OutputData','Set'+setID)
     if os.path.isdir(setDir):
         print('Set'+setID+' already exists in this project. Choose a different set ID.')

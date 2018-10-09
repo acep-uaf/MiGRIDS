@@ -1,7 +1,7 @@
 
-from MicroGRIDS.InputHandler.initiateProjectSet import initiateSet
+from MicroGRIDS.Model.Operational.initiateProjectSet import initiateSet
 import os
 here = os.path.dirname(os.path.realpath(__file__))
 projectDir = 'testProject'
-setID = '0'
+setID = '1'
 initiateSet(projectDir,setID)
