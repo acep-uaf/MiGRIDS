@@ -21,7 +21,7 @@ def buildComponentDescriptor(componentNames,saveDir):
 
     # cd to where component descriptors are located
     here = os.path.dirname(os.path.realpath(__file__))
-    componentPath = os.path.join(here, *['..','GBSModel','Resources','Components'])
+    componentPath = os.path.join(here, *['..','Model','Resources','Components'])
     os.chdir(componentPath)
     # get list of component prefixes that correspond to componentDescriptors
     varnames = []
