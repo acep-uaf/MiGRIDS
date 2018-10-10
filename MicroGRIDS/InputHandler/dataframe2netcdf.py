@@ -21,13 +21,10 @@ def dataframe2netcdf(df,components,saveLocation=''):
     # go to save directory
     here = os.getcwd()
     if saveLocation == '':
-        print('Choose directory where to save the netCDF file.')
-        import tkinter as tk
-        root = tk.Tk()
-        root.withdraw()
-        root.attributes('-topmost', 1)
-        saveLocation = filedialog.askdirectory()
+        print('savelocation not specified')
+        return
     os.chdir(saveLocation)
+        
     netCDFList = []
     def get(attr,default):
         if attr is None:
