@@ -19,7 +19,7 @@ from InputHandler.readSetupFile import readSetupFile
 import pickle
 
 #specify the correct path to your project setup file here
-fileName = os.path.join(os.getcwd(),*['..\\' 'GBSProjects','SampleProject','InputData','Setup','SampleProjectSetup.xml'])
+fileName = os.path.join(os.getcwd(),*['..\\' 'MicroGRIDSProjects','SampleProject','InputData','Setup','SampleProjectSetup.xml'])
 # get the setup Directory
 
 inputDictionary = readSetupFile(fileName)

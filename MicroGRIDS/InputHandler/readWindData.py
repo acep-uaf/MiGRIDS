@@ -26,8 +26,9 @@ def readWindData(inputDict):
     :return: [Dictionary],[pandas.DataFrame] a dictionary of files that were read and the resulting dataframe of values is returned
     '''
 
-    #DATETIME = 'Date & Time Stamp'
+    #DATETIME = 'Date_&_Time_Stamp'
     DATETIME = inputDict['dateColumnName']
+    
     def readAsHeader(file, header_dict, componentName):
         '''extracts the header information from a MET file.
         :param file [File] a MET file to be read.
@@ -71,6 +72,7 @@ def readWindData(inputDict):
            rowList.append(value_dict)
 
         filedf = pd.DataFrame(rowList)
+        
         return filedf
 
     #if a new channel speficication is encountered within the input files it gets incremented with an appended number
@@ -93,7 +95,7 @@ def readWindData(inputDict):
 
     #adds a new channel to the combined header dictionary if it doesn't exist yet
     def addChannel(channel, h, combinedHeader, oc):
-
+        
         combinedHeader[channel]={'Description':h[oc]['Description'],
                     'Height':h[oc]['Height'],
                     'Offset':h[oc]['Offset'],

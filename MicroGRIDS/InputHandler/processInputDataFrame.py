@@ -37,7 +37,7 @@ def processInputDataFrame(inputDict):
             df['DATE'] = df[inputDict['dateColumnName']].apply(lambda d: pd.to_datetime(d,format=convertDateTimeFormat(inputDict['dateColumnFormat']),errors='coerce') )
     
         # add time to date, if there is a time column. if not, timeColumnFormat should be ''
-        if inputDict['timeColumnName'] in df.columns:
+        if (inputDict['timeColumnName'] in df.columns) & (inputDict['timeColumnName'] != inputDict['dateColumnName']):
             df['DATE'] = df['DATE'] + df[inputDict['timeColumnName']].apply(pd.to_timedelta, errors='coerce')
             # remove rows that did not work
             df = df.drop(df.index[pd.isnull(df['DATE'])])

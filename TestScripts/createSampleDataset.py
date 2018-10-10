@@ -33,7 +33,7 @@ def fillData(startValue,adjusters):
     return adjusters   
      
 def createHighResLoad(d1,d2):
-    df =createLoad(d1,d2,'30 min')
+    df =createLoad(d1,d2,'10 min')
     df.columns = ['Villagekw']
     return df
     
@@ -79,7 +79,7 @@ def writeDataFrames(lod,lof):
     return
 
 def toProject(baseDir,folders):
-    folderList = [os.path.join(baseDir,*['InputData','TimeSeries', x]) for x in folders]
+    folderList = [os.path.join(baseDir,*['InputData','TimeSeriesData','RawData', x]) for x in folders]
     return folderList
 
 def makeHeader():
@@ -103,7 +103,7 @@ Time offset (hrs)	-9')
 
 Channel #	1
 Type	1
-Description	wind. m/s
+Description	NRG IceFreeIII m/s
 Details	
 Serial Number	SN:
 Height	 40   m
@@ -113,7 +113,7 @@ Units	m/s
 
 Channel #	2
 Type	1
-Description	ice m/s
+Description	NRG IceFreeIII m/s
 Details	
 Serial Number	SN:
 Height	 18   m
@@ -123,7 +123,7 @@ Units	m/s
 
 Channel #	3
 Type	1
-Description	wind. m/s
+Description	NRG IceFreeIII m/s
 Details	
 Serial Number	SN:
 Height	30   m
@@ -133,7 +133,7 @@ Units	m/s
 
 Channel #	4
 Type	1
-Description wind. m/s
+Description	NRG IceFreeIII m/s
 Details	
 Serial Number	SN:
 Height	21   m
@@ -170,7 +170,9 @@ def makeMETdf(d1):
                            max_:windMax})), how='right')
     
     return df
+
 def createMET(d1,d2):
+    import re
     header = makeHeader()
     months = pd.date_range(start=d1,end=d2,freq='MS')
     months = [d1.strftime("%Y-%m-%d %H:%M:%S")] + months.strftime("%Y-%m-%d %H:%M:%S").tolist() + [d2.strftime("%Y-%m-%d %H:%M:%S")]
@@ -178,7 +180,8 @@ def createMET(d1,d2):
     for i,d in enumerate(months):
         df = makeMETdf(pd.to_datetime(d))
         
-        text.append( header + "\n\n" + df.to_string(header=True,index = False))
+        text.append( header + "\n\n" + re.sub('  +', '\t',df.to_string(header=True,index = False)))
+       
     return text
     
 def writeMET(d,filename):
@@ -186,6 +189,7 @@ def writeMET(d,filename):
         #file.writelines(d)
         file.write(d)
     return
+
 def main():
     projectDir = os.path.join(os.getcwd(),*["..","MicroGRIDSProjects","SampleProject"])
     startD = pd.to_datetime('11/15/2007')
@@ -199,12 +203,12 @@ def main():
     writeDataFrames([dfh1,dfh2,dfh3,dfl,],
                     toProject(projectDir,['HighRes','HighRes','HighRes','LowRes']))
     met = createMET(startD,endD)
-    if not os.path.exists(os.path.join(projectDir,'InputData','TimeSeries','RawWind')):
-        os.makedirs(os.path.join(projectDir,'InputData','TimeSeries','RawWind'))
+    if not os.path.exists(os.path.join(projectDir,'InputData','TimeSeriesData','RawData','RawWind')):
+        os.makedirs(os.path.join(projectDir,'InputData','TimeSeriesData','RawData','RawWind'))
     
     for i,m in enumerate(met):
         
-        writeMET(m, os.path.join(projectDir,'InputData','TimeSeries','RawWind', 'met{0}.txt'.format(i)))
+        writeMET(m, os.path.join(projectDir,'InputData','TimeSeriesData','RawData','RawWind', 'met{0}.txt'.format(i)))
     
 
 if __name__ == '__main__':

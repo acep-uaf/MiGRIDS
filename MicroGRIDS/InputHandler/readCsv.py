@@ -29,7 +29,6 @@ def readCsv(inputDict):
     #------------------- load the file -----------------------------
     df = pd.read_csv(os.path.join(inputDict['fileLocation'],
                                   inputDict['fileName'])) # read as a data frame
-    
     # check and see if the df column names match the input specification.
     # TODO: throw a catch in here in case it does not find the headers
     gotHeader = False
@@ -37,7 +36,7 @@ def readCsv(inputDict):
     if inputDict['columnNames'][0] not in columnNamesFromCSV:
         # if the first row is not the header, look for it further down in the file
         for col in df.columns:
-            a = df[col]
+            a = df[col].astype(str)
             a = a.str.replace('\s+', '_')
             # get the matches for the column name
             idxMatch = a.index[a == inputDict['columnNames'][0]].tolist()
