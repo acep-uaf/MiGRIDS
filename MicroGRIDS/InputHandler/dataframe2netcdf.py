@@ -15,7 +15,6 @@ def dataframe2netcdf(df,components,saveLocation=''):
     # general imports
     from netCDF4 import Dataset
     import numpy as np
-    from tkinter import filedialog
     import os
 
     # go to save directory
