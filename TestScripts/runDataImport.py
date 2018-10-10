@@ -63,6 +63,5 @@ for c in listOfComponents:
     d[c.column_name] = c.toDictionary()
 
 # now convert to a netcdf
-# save ncfile in folder `ModelInputData' in the path ../GBSProjects/[VillageName]/InputData/TimeSeriesData/Processed'''
-dataframe2netcdf(df_fixed_interval.fixed, d)
+dataframe2netcdf(df_fixed_interval.fixed[0], d,os.path.join(inputDictionary['setupDir'],*['..','TimeSeriesData','ProcessedData'] ))
 
