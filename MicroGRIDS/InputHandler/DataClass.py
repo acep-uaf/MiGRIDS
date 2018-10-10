@@ -1,6 +1,7 @@
 # DataClass is object with raw_data, fixed_data,baddata dictionary, and system characteristics.
 
-from GBSInputHandler.isInline import *
+from MicroGRIDS.InputHandler.isInline import *
+
 from matplotlib.backends.backend_pdf import PdfPages
 import matplotlib as plt
 import pickle

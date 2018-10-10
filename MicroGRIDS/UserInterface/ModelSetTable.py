@@ -1,6 +1,6 @@
 from PyQt5  import QtWidgets, QtSql, QtCore
-from GBSUserInterface.Delegates import TextDelegate, ComboDelegate
-from GBSUserInterface.ProjectSQLiteHandler import ProjectSQLiteHandler
+from UserInterface.Delegates import TextDelegate, ComboDelegate
+from UserInterface.ProjectSQLiteHandler import ProjectSQLiteHandler
 #subclass of QTableView for displaying set information
 class SetTableView(QtWidgets.QTableView):
     def __init__(self, *args, **kwargs):

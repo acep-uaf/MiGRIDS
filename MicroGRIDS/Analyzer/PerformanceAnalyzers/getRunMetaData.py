@@ -16,8 +16,8 @@ import pickle
 here = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(os.path.join(here, '../../'))
 sys.path.append(here)
-from GBSAnalyzer.DataRetrievers.readNCFile import readNCFile
-from GBSAnalyzer.DataRetrievers.readXmlTag import readXmlTag
+from Analyzer.DataRetrievers.readNCFile import readNCFile
+from Analyzer.DataRetrievers.readXmlTag import readXmlTag
 
 
 def getRunMetaData(projectSetDir,runs):

@@ -12,15 +12,15 @@ import numpy as np
 import pandas as pd
 from bs4 import BeautifulSoup as bs
 
-from GBSAnalyzer.DataRetrievers.getBasecase import getBasecase
-from GBSAnalyzer.DataRetrievers.getDataSubsets import getDataSubsets
-from GBSAnalyzer.DataRetrievers.readNCFile import readNCFile
-from GBSAnalyzer.PerformanceAnalyzers.getFuelUse import getFuelUse
-from GBSAnalyzer.PerformanceAnalyzers.getPrimaryREContribution import getPrimaryREContribution
-from GBSModel.Operational.generateRuns import generateRuns
-from GBSModel.Operational.runSimulation import runSimulation
-from GBSOptimizer.FitnessFunctions.getFitness import getFitness
-from GBSOptimizer.OptimizationBoundaryCalculators.getOptimizationBoundaries import getOptimizationBoundaries
+from Analyzer.DataRetrievers.getBasecase import getBasecase
+from Analyzer.DataRetrievers.getDataSubsets import getDataSubsets
+from Analyzer.DataRetrievers.readNCFile import readNCFile
+from Analyzer.PerformanceAnalyzers.getFuelUse import getFuelUse
+from Analyzer.PerformanceAnalyzers.getPrimaryREContribution import getPrimaryREContribution
+from Model.Operational.generateRuns import generateRuns
+from Model.Operational.runSimulation import runSimulation
+from Optimizer.FitnessFunctions.getFitness import getFitness
+from Optimizer.OptimizationBoundaryCalculators.getOptimizationBoundaries import getOptimizationBoundaries
 
 
 # DEV imports

@@ -1,16 +1,16 @@
-from GBSUserInterface.ProjectSQLiteHandler import ProjectSQLiteHandler
+from UserInterface.ProjectSQLiteHandler import ProjectSQLiteHandler
 import GBSUserInterface.ModelComponentTable as T
 import GBSUserInterface.ModelEnvironmentTable as E
 import GBSUserInterface.ModelFileInfoTable as F
 import re
 import os
 import pytz
-from GBSUserInterface.Delegates import ClickableLineEdit
-from GBSUserInterface.gridLayoutSetup import setupGrid
-from GBSController.UIToHandler import UIToHandler
-from GBSUserInterface.makeButtonBlock import makeButtonBlock
-from GBSUserInterface.TableHandler import TableHandler
-from GBSUserInterface.ModelSetupInformation import SetupTag
+from UserInterface.Delegates import ClickableLineEdit
+from UserInterface.gridLayoutSetup import setupGrid
+from Controller.UIToHandler import UIToHandler
+from UserInterface.makeButtonBlock import makeButtonBlock
+from UserInterface.TableHandler import TableHandler
+from UserInterface.ModelSetupInformation import SetupTag
 
 from PyQt5 import QtWidgets,QtCore
 # The file block is a group of widgets for entering file specific inputs

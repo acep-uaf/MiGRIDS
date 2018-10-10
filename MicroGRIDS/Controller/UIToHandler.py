@@ -6,14 +6,14 @@ import pickle
 import pandas as pd
 from PyQt5 import QtWidgets
 from bs4 import BeautifulSoup
-from GBSAnalyzer.DataRetrievers.readXmlTag import readXmlTag
-from GBSInputHandler.buildProjectSetup import buildProjectSetup
-from GBSInputHandler.fillProjectData import fillProjectData
-from GBSInputHandler.makeSoup import makeComponentSoup
-from GBSInputHandler.writeXmlTag import writeXmlTag
-from GBSInputHandler.mergeInputs import mergeInputs
-from GBSUserInterface.ProjectSQLiteHandler import ProjectSQLiteHandler
-from GBSUserInterface.getFilePaths import getFilePath
+from Analyzer.DataRetrievers.readXmlTag import readXmlTag
+from InputHandler.buildProjectSetup import buildProjectSetup
+from InputHandler.fillProjectData import fillProjectData
+from InputHandler.makeSoup import makeComponentSoup
+from InputHandler.writeXmlTag import writeXmlTag
+from InputHandler.mergeInputs import mergeInputs
+from UserInterface.ProjectSQLiteHandler import ProjectSQLiteHandler
+from UserInterface.getFilePaths import getFilePath
 
 
 

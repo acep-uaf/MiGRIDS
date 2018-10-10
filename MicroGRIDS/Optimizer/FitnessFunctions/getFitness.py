@@ -8,8 +8,8 @@ import os.path
 import pandas as pd
 from bs4 import BeautifulSoup as bs
 
-from GBSAnalyzer.PerformanceAnalyzers.getFuelUse import getFuelUse
-from GBSAnalyzer.PerformanceAnalyzers.getPrimaryREContribution import getPrimaryREContribution
+from Analyzer.PerformanceAnalyzers.getFuelUse import getFuelUse
+from Analyzer.PerformanceAnalyzers.getPrimaryREContribution import getPrimaryREContribution
 
 
 def getMinFuelUtilizationFitness(rootProjectPath, inputDataFrame, otherInformation):

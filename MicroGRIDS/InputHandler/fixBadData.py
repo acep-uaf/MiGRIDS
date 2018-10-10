@@ -17,9 +17,9 @@ import re
 import pandas as pd
 
 
-from GBSInputHandler.DataClass import DataClass
-from GBSInputHandler.isInline import isInline
-from GBSInputHandler.badDictAdd import badDictAdd
+from InputHandler.DataClass import DataClass
+from InputHandler.isInline import isInline
+from InputHandler.badDictAdd import badDictAdd
 
 
 

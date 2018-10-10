@@ -6,7 +6,7 @@
 import numpy as np
 import pandas as pd
 
-from GBSAnalyzer.CurveAssemblers.genFuelCurveAssembler import GenFuelCurve
+from Analyzer.CurveAssemblers.genFuelCurveAssembler import GenFuelCurve
 
 def getFuelUse(genAllP, fuelCurveDataPoints, interpolationMethod = 'linear'):
     '''

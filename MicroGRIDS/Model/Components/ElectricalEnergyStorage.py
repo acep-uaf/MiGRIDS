@@ -8,10 +8,10 @@ import sys
 from bs4 import BeautifulSoup as Soup
 
 sys.path.append('../')
-from GBSAnalyzer.CurveAssemblers.esLossMapAssembler import esLossMap
-from GBSAnalyzer.DataRetrievers.readXmlTag import readXmlTag
+from Analyzer.CurveAssemblers.esLossMapAssembler import esLossMap
+from Analyzer.DataRetrievers.readXmlTag import readXmlTag
 import numpy as np
-from GBSModel.Operational.getIntListIndex import getIntListIndex
+from Model.Operational.getIntListIndex import getIntListIndex
 
 class ElectricalEnergyStorage:
     '''

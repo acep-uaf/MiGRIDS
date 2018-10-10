@@ -8,7 +8,7 @@
 # Import the functions this serves as interface for
 import pandas as pd
 
-from GBSOptimizer.OptimizationBoundaryCalculators.calcSRCMethodBoundaries import calcSRCMethodBoundaries
+from Optimizer.OptimizationBoundaryCalculators.calcSRCMethodBoundaries import calcSRCMethodBoundaries
 
 
 def getOptimizationBoundaries(boundaryMethod, time, firmLoadP, varLoadP, firmGenP, varGenP, otherConstraints):

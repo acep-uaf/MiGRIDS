@@ -7,7 +7,7 @@ Created on Tue Mar 13 08:58:02 2018
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 import re
-from GBSUserInterface.Delegates import ClickableLineEdit
+from UserInterface.Delegates import ClickableLineEdit
 
 #useds locations and values specified in a dictionary to create a grid layout
 #dictionary should contain atleast 'headers' and 'rowNames' keys

@@ -1,6 +1,6 @@
 from PyQt5 import QtCore, QtWidgets, QtSql
-from GBSInputHandler.Component import Component
-from GBSUserInterface.ProjectSQLiteHandler import ProjectSQLiteHandler
+from InputHandler.Component import Component
+from UserInterface.ProjectSQLiteHandler import ProjectSQLiteHandler
 import os
 #class for combo boxes that are not derived from database relationships
 class ComboDelegate(QtWidgets.QItemDelegate):

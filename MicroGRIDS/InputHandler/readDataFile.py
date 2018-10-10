@@ -16,10 +16,10 @@ def readDataFile(inputDict):
     import os
     import importlib.util
     import numpy as np
-    from GBSInputHandler.readAllAvecTimeSeries import readAllAvecTimeSeries
-    from GBSInputHandler.readWindData import readWindData
-    from GBSAnalyzer.DataRetrievers.readXmlTag import readXmlTag
-    from GBSInputHandler.Component import Component
+    from InputHandler.readAllAvecTimeSeries import readAllAvecTimeSeries
+    from InputHandler.readWindData import readWindData
+    from Analyzer.DataRetrievers.readXmlTag import readXmlTag
+    from InputHandler.Component import Component
 
     
     ### convert inputs to list, if not already

@@ -1,6 +1,6 @@
-from GBSAnalyzer.DataRetrievers.getComponentTypeData import getComponentTypeData
-from GBSAnalyzer.DataRetrievers.getDataChannels import getDataChannels
-from GBSAnalyzer.PerformanceAnalyzers.getGenConfigChanges import getGenConfigChanges
+from Analyzer.DataRetrievers.getComponentTypeData import getComponentTypeData
+from Analyzer.DataRetrievers.getDataChannels import getDataChannels
+from Analyzer.PerformanceAnalyzers.getGenConfigChanges import getGenConfigChanges
 
 genAllP = getDataChannels('../../GBSProjects/Chevak/','InputData/TimeSeriesData/ProcessedData/',['gen1P', 'gen2P', 'gen3P'])
 genAllP['time'] = genAllP['time']/1000000000

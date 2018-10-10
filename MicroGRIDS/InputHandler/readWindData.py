@@ -17,7 +17,7 @@ import sqlite3 as lite
 import numpy as np
 import os
 from netCDF4 import Dataset
-from GBSInputHandler.processInputDataFrame import processInputDataFrame
+from InputHandler.processInputDataFrame import processInputDataFrame
 
 #String, String -> dataframe
 def readWindData(inputDict):

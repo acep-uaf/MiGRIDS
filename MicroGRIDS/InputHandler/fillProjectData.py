@@ -22,8 +22,8 @@ def fillProjectData(projectDir = '',setupInfo = None):
     sys.path.append(here)
     import tkinter as tk
     from tkinter import filedialog
-    from GBSInputHandler.fillProjectDataFromCSV import fillProjectDataFromCSV
-    from GBSInputHandler.fillProjectDataFromUI  import fillProjectDataFromUI
+    from InputHandler.fillProjectDataFromCSV import fillProjectDataFromCSV
+    from InputHandler.fillProjectDataFromUI  import fillProjectDataFromUI
 
     # get the project directory. This is all that should be needed, since folder structure and filenames should be
     # standardized

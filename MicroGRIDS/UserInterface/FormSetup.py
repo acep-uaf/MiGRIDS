@@ -2,21 +2,21 @@
 from PyQt5 import QtCore, QtWidgets, QtGui
 import os
 
-from GBSUserInterface.ModelSetupInformation import ModelSetupInformation
-from GBSInputHandler.Component import Component
-from GBSController.UIToHandler import UIToHandler
-from GBSUserInterface.makeButtonBlock import makeButtonBlock
-from GBSUserInterface.ResultsSetup import  ResultsSetup
-from GBSUserInterface.FormModelRuns import SetsTableBlock
-from GBSUserInterface.Pages import Pages
-from GBSUserInterface.Delegates import ClickableLineEdit
-from GBSUserInterface.FileBlock import FileBlock
-from GBSUserInterface.ProjectSQLiteHandler import ProjectSQLiteHandler
-from GBSUserInterface.ModelSetupInformation import SetupTag
-from GBSUserInterface.switchProject import switchProject
-from GBSUserInterface.getFilePaths import getFilePath
+from UserInterface.ModelSetupInformation import ModelSetupInformation
+from InputHandler.Component import Component
+from Controller.UIToHandler import UIToHandler
+from UserInterface.makeButtonBlock import makeButtonBlock
+from UserInterface.ResultsSetup import  ResultsSetup
+from UserInterface.FormModelRuns import SetsTableBlock
+from UserInterface.Pages import Pages
+from UserInterface.Delegates import ClickableLineEdit
+from UserInterface.FileBlock import FileBlock
+from UserInterface.ProjectSQLiteHandler import ProjectSQLiteHandler
+from UserInterface.ModelSetupInformation import SetupTag
+from UserInterface.switchProject import switchProject
+from UserInterface.getFilePaths import getFilePath
 import os
-from GBSUserInterface.replaceDefaultDatabase import replaceDefaultDatabase
+from UserInterface.replaceDefaultDatabase import replaceDefaultDatabase
 
 class FormSetup(QtWidgets.QWidget):
     global model

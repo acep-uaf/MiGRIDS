@@ -1,4 +1,4 @@
-from GBSController.UIToHandler import UIToHandler
+
 # Component class consisting of component name, units,offset, scale, datatype, column name, original field name and attribute
 class Component:
     """A class with access to the generic characteristics of a component."""

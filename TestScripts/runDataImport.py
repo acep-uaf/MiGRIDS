@@ -10,12 +10,12 @@
 # get input data to run the functions to import data into the project
 
 import os
-from GBSInputHandler.fixBadData import fixBadData
-from GBSInputHandler.fixDataInterval import fixDataInterval
-from GBSInputHandler.dataframe2netcdf import dataframe2netcdf
-from GBSInputHandler.mergeInputs import mergeInputs
-from GBSController.UIToHandler import UIToHandler
-from GBSInputHandler.readSetupFile import readSetupFile
+from InputHandler.fixBadData import fixBadData
+from InputHandler.fixDataInterval import fixDataInterval
+from InputHandler.dataframe2netcdf import dataframe2netcdf
+from InputHandler.mergeInputs import mergeInputs
+from Controller.UIToHandler import UIToHandler
+from InputHandler.readSetupFile import readSetupFile
 import pickle
 
 #specify the correct path to your project setup file here

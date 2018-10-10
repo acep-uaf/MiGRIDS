@@ -1,6 +1,6 @@
-from GBSInputHandler.readAvecCsv import readAvecCsv
+from InputHandler.readAvecCsv import readAvecCsv
 
-def readAllAvecTimeSeries(inputDict):
+def readAllTimeSeries(inputDict):
     '''
     Cycles through a list of files in the AVEC format and imports them into a single dataframe.
     :param inputDict:

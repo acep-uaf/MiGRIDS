@@ -5,8 +5,8 @@ Created on Sat Oct  6 17:53:34 2018
 @author: tcmorgan2
 """
 import os
-from GBSInputHandler.getUnits import getUnits
-from GBSAnalyzer.DataRetrievers.readXmlTag import readXmlTag
+from InputHandler.getUnits import getUnits
+from Analyzer.DataRetrievers.readXmlTag import readXmlTag
 
 def readSetupFile(fileName):
     ''' Reads a setup.xml file and creates a dictionary of attributes used during the data import process.

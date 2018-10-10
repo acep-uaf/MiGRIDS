@@ -11,9 +11,9 @@ def fillProjectDataFromCSV(projectDir):
     import sys
     import os
     import pandas as pd
-    from GBSInputHandler.writeXmlTag import writeXmlTag
-    from GBSInputHandler.buildAllComponentDescriptor import buildComponentDescriptor
-    from GBSInputHandler.buildProjectSetup import buildProjectSetup
+    from InputHandler.writeXmlTag import writeXmlTag
+    from InputHandler.buildAllComponentDescriptor import buildComponentDescriptor
+    from InputHandler.buildProjectSetup import buildProjectSetup
 
     here = os.path.dirname(os.path.realpath(__file__))
     sys.path.append(here)

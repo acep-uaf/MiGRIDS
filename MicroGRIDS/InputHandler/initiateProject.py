@@ -12,8 +12,8 @@ def initiateProject(projectDir,componentNames):
     :param componentNames: [String] the names of components (space delimited)
     :return:
     '''
-    from MicroGRIDS.InputHandler.buildAllComponentDescriptor import buildComponentDescriptor
-    from MicroGRIDS.InputHandler.copyProjectSetupFiles import copyProjectSetupFiles
+    from InputHandler.buildAllComponentDescriptor import buildComponentDescriptor
+    from InputHandler.copyProjectSetupFiles import copyProjectSetupFiles
     # split into path and name
     projectDirBase, projectName = os.path.split(projectDir)
     if projectDirBase == '':

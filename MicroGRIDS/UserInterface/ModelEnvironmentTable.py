@@ -1,6 +1,6 @@
 from PyQt5 import QtCore, QtGui, QtWidgets, QtSql
-from GBSUserInterface.ProjectSQLiteHandler import ProjectSQLiteHandler
-from GBSUserInterface.Delegates import *
+from UserInterface.ProjectSQLiteHandler import ProjectSQLiteHandler
+from UserInterface.Delegates import *
 #subclass of QTableView for displaying component information
 class EnvironmentTableView(QtWidgets.QTableView):
     def __init__(self, *args, **kwargs):
