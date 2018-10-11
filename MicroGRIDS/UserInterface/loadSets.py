@@ -1,6 +1,6 @@
-from GBSUserInterface.ProjectSQLiteHandler import ProjectSQLiteHandler
-from GBSController.UIToHandler import UIToHandler
-from GBSUserInterface.makeAttributeXML import integerToTimeIndex
+from UserInterface.ProjectSQLiteHandler import ProjectSQLiteHandler
+from Controller.UIToHandler import UIToHandler
+from UserInterface.makeAttributeXML import integerToTimeIndex
 def updateSetsSql(set, setupModel):
     uihandler = UIToHandler()
     xmlfile =  setupModel.getSetAttributeXML(set)

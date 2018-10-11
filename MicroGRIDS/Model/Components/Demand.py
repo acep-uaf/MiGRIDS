@@ -8,9 +8,9 @@ import numpy as np
 import pandas as pd
 from scipy.interpolate import interp1d
 from bs4 import BeautifulSoup as Soup
-from GBSAnalyzer.DataRetrievers.readNCFile import readNCFile
+from Analyzer.DataRetrievers.readNCFile import readNCFile
 # imports
-from GBSModel.Operational.getSeriesIndices import getSeriesIndices
+from Model.Operational.getSeriesIndices import getSeriesIndices
 
 
 class Demand:

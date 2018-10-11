@@ -10,16 +10,16 @@
 # get input data to run the functions to import data into the project
 
 import os
-from GBSInputHandler.fixBadData import fixBadData
-from GBSInputHandler.fixDataInterval import fixDataInterval
-from GBSInputHandler.dataframe2netcdf import dataframe2netcdf
-from GBSInputHandler.mergeInputs import mergeInputs
-from GBSController.UIToHandler import UIToHandler
-from GBSInputHandler.readSetupFile import readSetupFile
+from MicroGRIDS.InputHandler.fixBadData import fixBadData
+from MicroGRIDS.InputHandler.fixDataInterval import fixDataInterval
+from MicroGRIDS.InputHandler.dataframe2netcdf import dataframe2netcdf
+from MicroGRIDS.InputHandler.mergeInputs import mergeInputs
+from MicroGRIDS.Controller.UIToHandler import UIToHandler
+from MicroGRIDS.InputHandler.readSetupFile import readSetupFile
 import pickle
 
 #specify the correct path to your project setup file here
-fileName = os.path.join(os.getcwd(),*['..\\' 'GBSProjects','SampleProject','InputData','Setup','SampleProjectSetup.xml'])
+fileName = os.path.join(os.getcwd(),*['..','MicroGRIDSProjects','SampleProject','InputData','Setup','SampleProjectSetup.xml'])
 # get the setup Directory
 
 inputDictionary = readSetupFile(fileName)
@@ -63,6 +63,5 @@ for c in listOfComponents:
     d[c.column_name] = c.toDictionary()
 
 # now convert to a netcdf
-# save ncfile in folder `ModelInputData' in the path ../GBSProjects/[VillageName]/InputData/TimeSeriesData/Processed'''
-dataframe2netcdf(df_fixed_interval.fixed, d)
+dataframe2netcdf(df_fixed_interval.fixed[0], d,os.path.join(inputDictionary['setupDir'],*['..','TimeSeriesData','ProcessedData'] ))
 

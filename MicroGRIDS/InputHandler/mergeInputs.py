@@ -6,7 +6,7 @@ Created on Wed Jun  6 16:59:08 2018
 """
 
 import numpy as np
-from GBSInputHandler.readDataFile import readDataFile
+from MicroGRIDS.InputHandler.readDataFile import readDataFile
 import pandas as pd
 
 

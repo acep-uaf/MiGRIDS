@@ -9,8 +9,8 @@ import numpy as np
 from GBSModel.Components.Generator import Generator
 
 sys.path.append('../')
-from GBSAnalyzer.CurveAssemblers.genFuelCurveAssembler import GenFuelCurve
-from GBSModel.Operational.loadControlModule import loadControlModule
+from Analyzer.CurveAssemblers.genFuelCurveAssembler import GenFuelCurve
+from Model.Operational.loadControlModule import loadControlModule
 
 
 class Powerhouse:

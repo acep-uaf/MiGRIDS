@@ -9,8 +9,8 @@ def makeComponentSoup(component, saveDir):
     :return: BeautifulSoup
     '''
     import os
-    from GBSInputHandler.createComponentDescriptor import createComponentDescriptor
-    from GBSUserInterface.readComponentXML import readComponentXML
+    from InputHandler.createComponentDescriptor import createComponentDescriptor
+    from UserInterface.readComponentXML import readComponentXML
 
 
     file = os.path.join(saveDir, component + 'Descriptor.xml')

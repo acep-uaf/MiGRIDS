@@ -1,5 +1,5 @@
 
-from GBSUserInterface.Delegates import *
+from UserInterface.Delegates import *
 #subclass of QTableView for displaying inputFile information
 class FileInfoTableView(QtWidgets.QTableView):
     def __init__(self, *args, **kwargs):

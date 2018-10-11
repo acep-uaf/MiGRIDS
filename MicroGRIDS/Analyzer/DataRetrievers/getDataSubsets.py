@@ -7,7 +7,7 @@ import warnings
 
 import numpy as np
 import pandas as pd
-from GBSAnalyzer.DataRetrievers.getDataSubsetsRELoadOneWeek import getDataSubsetsRELoadOneWeek
+from Analyzer.DataRetrievers.getDataSubsetsRELoadOneWeek import getDataSubsetsRELoadOneWeek
 
 
 def getDataSubsets(dataframe, method, otherInputs):

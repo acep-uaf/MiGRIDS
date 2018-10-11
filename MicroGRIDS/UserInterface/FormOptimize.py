@@ -1,9 +1,9 @@
 from PyQt5 import QtWidgets, QtCore
 from bs4 import BeautifulSoup
 import os
-from GBSUserInterface.gridFromXML import gridFromXML
-from GBSUserInterface.makeButtonBlock import makeButtonBlock
-from GBSUserInterface.ProjectSQLiteHandler import ProjectSQLiteHandler
+from UserInterface.gridFromXML import gridFromXML
+from UserInterface.makeButtonBlock import makeButtonBlock
+from UserInterface.ProjectSQLiteHandler import ProjectSQLiteHandler
 
 class FormOptimize(QtWidgets.QWidget):
     def __init__(self, parent):

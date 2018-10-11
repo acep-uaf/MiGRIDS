@@ -1,10 +1,10 @@
 #MainForm is the parent for for all sections of the User Interface
 #it consists of a navigation tree and pages
 from PyQt5 import QtWidgets, QtCore, QtGui,QtSql
-from GBSUserInterface.ConsoleDisplay import ConsoleDisplay
+from UserInterface.ConsoleDisplay import ConsoleDisplay
 
-from GBSUserInterface.FormSetup import FormSetup
-from GBSUserInterface.switchProject import saveProject
+from UserInterface.FormSetup import FormSetup
+from UserInterface.switchProject import saveProject
 
 class MainForm(QtWidgets.QMainWindow):
 

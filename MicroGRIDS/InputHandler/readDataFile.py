@@ -16,10 +16,10 @@ def readDataFile(inputDict):
     import os
     import importlib.util
     import numpy as np
-    from GBSInputHandler.readAllAvecTimeSeries import readAllAvecTimeSeries
-    from GBSInputHandler.readWindData import readWindData
-    from GBSAnalyzer.DataRetrievers.readXmlTag import readXmlTag
-    from GBSInputHandler.Component import Component
+    from MicroGRIDS.InputHandler.readAllTimeSeries import readAllTimeSeries
+    from MicroGRIDS.InputHandler.readWindData import readWindData
+    from MicroGRIDS.Analyzer.DataRetrievers.readXmlTag import readXmlTag
+    from MicroGRIDS.InputHandler.Component import Component
 
     
     ### convert inputs to list, if not already
@@ -47,11 +47,11 @@ def readDataFile(inputDict):
     # depending on input specification, different procedure
     if inputDict['fileType'].lower() =='csv':
         
-        df = readAllAvecTimeSeries(inputDict)
+        df = readAllTimeSeries(inputDict)
     elif inputDict['fileType'].lower() == 'met':
         
         fileDict, df = readWindData(inputDict)
-    
+
     # convert units
     if np.all(inputDict['componentUnits'] != None):
         # initiate lists
@@ -62,12 +62,12 @@ def readDataFile(inputDict):
        
                 # cd to unit conventions file
                 dir_path = os.path.dirname(os.path.realpath(__file__))                
-                unitConventionDir = os.path.join(dir_path, *['..','GBSAnalyzer','UnitConverters'])
+                unitConventionDir = os.path.join(dir_path, *['..','Analyzer','UnitConverters'])
                 # get the default unit for the data type
                 units = readXmlTag('internalUnitDefault.xml', ['unitDefaults', inputDict['componentAttributes'][i]], 'units', unitConventionDir)[0]
                 # if the units don't match, convert
                 if units.lower() != inputDict['componentUnits'][i].lower():
-                    unitConvertDir = os.path.join( dir_path,*['..','GBSAnalyzer','UnitConverters','unitConverters.py'])
+                    unitConvertDir = os.path.join( dir_path,*['..','Analyzer','UnitConverters','unitConverters.py'])
                     funcName = inputDict['componentUnits'][i].lower() + '2' + units.lower()
                     # load the conversion
                     spec = importlib.util.spec_from_file_location(funcName, unitConvertDir)

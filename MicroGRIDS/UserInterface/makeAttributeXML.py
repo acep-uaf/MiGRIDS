@@ -4,7 +4,7 @@ import pandas as pd
 #uses a set name and data model of component attribute changes to generate set#attribute.xml based on template
 #string, Table -> Beautifulsoup
 def makeAttributeXML(currentSet,compmodel):
-    from GBSUserInterface.ProjectSQLiteHandler import ProjectSQLiteHandler
+    from UserInterface.ProjectSQLiteHandler import ProjectSQLiteHandler
     from PyQt5 import QtWidgets
     soup = readTemplateAttributeXML()
 

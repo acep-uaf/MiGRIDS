@@ -1,5 +1,5 @@
 from PyQt5 import QtWidgets
-from GBSUserInterface.FileBlock import FileBlock
+from UserInterface.FileBlock import FileBlock
 
 #each page contains information for a single file
 #calls the specific page type during initiation

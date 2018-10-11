@@ -1,12 +1,12 @@
 #Form for display model run parameters
 from PyQt5 import QtWidgets, QtCore, QtGui
-from GBSUserInterface.makeButtonBlock import makeButtonBlock
-from GBSUserInterface.TableHandler import TableHandler
-from GBSUserInterface.ModelSetTable import SetTableModel, SetTableView
-from GBSUserInterface.ModelRunTable import RunTableModel, RunTableView
-from GBSUserInterface.ProjectSQLiteHandler import ProjectSQLiteHandler
-from GBSController.UIToHandler import UIToHandler
-from GBSUserInterface.Pages import Pages
+from UserInterface.makeButtonBlock import makeButtonBlock
+from UserInterface.TableHandler import TableHandler
+from UserInterface.ModelSetTable import SetTableModel, SetTableView
+from UserInterface.ModelRunTable import RunTableModel, RunTableView
+from UserInterface.ProjectSQLiteHandler import ProjectSQLiteHandler
+from Controller.UIToHandler import UIToHandler
+from UserInterface.Pages import Pages
 import datetime
 import os
 
@@ -191,7 +191,7 @@ class SetsTableBlock(QtWidgets.QGroupBox):
 
     #->QtWidgets.QLineEdit
     def componentSelector(self,**kwargs):
-        from GBSUserInterface.Delegates import ClickableLineEdit
+        from UserInterface.Delegates import ClickableLineEdit
         #if components are not provided use the default list
         if kwargs.get("components"):
             components = kwargs.get("components")
@@ -236,7 +236,7 @@ class SetsTableBlock(QtWidgets.QGroupBox):
         return
     #update the component drop down in the set table to include the selected or default components
     def updateComponentDelegate(self,components):
-        from GBSUserInterface.Delegates import ComboDelegate, ComponentFormOpenerDelegate
+        from UserInterface.Delegates import ComboDelegate, ComponentFormOpenerDelegate
         # find the component drop down delegate and reset its list to the selected components
         tv = self.findChild(QtWidgets.QWidget, 'sets')
 
@@ -249,8 +249,8 @@ class SetsTableBlock(QtWidgets.QGroupBox):
 
     @QtCore.pyqtSlot()
     def componentCellClicked(self):
-        from GBSUserInterface.DialogComponentList import ComponentSetListForm
-        from GBSUserInterface.ProjectSQLiteHandler import ProjectSQLiteHandler
+        from UserInterface.DialogComponentList import ComponentSetListForm
+        from UserInterface.ProjectSQLiteHandler import ProjectSQLiteHandler
 
         import pandas as pd
         handler = ProjectSQLiteHandler('project_manager')

@@ -20,7 +20,7 @@ import numpy as np
 import pandas as pd
 from bs4 import BeautifulSoup as bs
 
-from GBSController.GBSExceptions.TimeStampVectorError import TimeStampVectorError
+from Controller.Exceptions.TimeStampVectorError import TimeStampVectorError
 
 
 def getTotalGrossLoad(projectPath, projectName):

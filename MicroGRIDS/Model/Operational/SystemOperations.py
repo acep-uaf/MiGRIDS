@@ -7,13 +7,13 @@ import os
 import pickle
 import numpy as np
 # from ThermalSystem import ThermalSystem
-from GBSModel.Components.Demand import Demand
+from Model.Components.Demand import Demand
 # from SolarFarm import Solarfarm
-from GBSModel.Components.ElectricalEnergyStorageSystem import ElectricalEnergyStorageSystem
-from GBSModel.Components.ThermalEnergyStorageSystem import ThermalEnergyStorageSystem
-from GBSModel.Components.Powerhouse import Powerhouse
-from GBSModel.Components.Windfarm import Windfarm
-from GBSModel.Operational.loadControlModule import loadControlModule
+from Model.Components.ElectricalEnergyStorageSystem import ElectricalEnergyStorageSystem
+from Model.Components.ThermalEnergyStorageSystem import ThermalEnergyStorageSystem
+from Model.Components.Powerhouse import Powerhouse
+from Model.Components.Windfarm import Windfarm
+from Model.Operational.loadControlModule import loadControlModule
 import sys
 
 # add controls and components directories to path

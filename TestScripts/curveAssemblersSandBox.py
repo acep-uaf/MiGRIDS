@@ -1,6 +1,6 @@
 # Just a little test harness for the routines in this subpackage.
-from GBSAnalyzer.CurveAssemblers.wtgPowerCurveAssembler import WindPowerCurve
-from GBSAnalyzer.CurveAssemblers.genFuelCurveAssembler import GenFuelCurve
+from MicroGRIDS.Analyzer.CurveAssemblers.wtgPowerCurveAssembler import WindPowerCurve
+from MicroGRIDS.Analyzer.CurveAssemblers.genFuelCurveAssembler import GenFuelCurve
 import matplotlib.pyplot as plt
 from sys import getsizeof
 import numpy as np

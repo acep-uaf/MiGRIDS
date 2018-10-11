@@ -4,8 +4,8 @@
 # License: MIT License (see LICENSE file of this package for more information)
 
 import sys
-from GBSModel.Components.ElectricalEnergyStorage import ElectricalEnergyStorage
-from GBSModel.Operational.loadControlModule import loadControlModule
+from Model.Components.ElectricalEnergyStorage import ElectricalEnergyStorage
+from Model.Operational.loadControlModule import loadControlModule
 
 class ElectricalEnergyStorageSystem:
 

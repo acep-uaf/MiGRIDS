@@ -16,13 +16,13 @@ from tkinter import filedialog
 
 import pandas as pd
 
-from GBSModel.Operational.SystemOperations import SystemOperations
+from Model.Operational.SystemOperations import SystemOperations
 
 here = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(os.path.join(here, '../'))
 sys.path.append(here)
-from GBSAnalyzer.DataRetrievers.readXmlTag import readXmlTag
-from GBSAnalyzer.DataWriters.writeNCFile import writeNCFile
+from Analyzer.DataRetrievers.readXmlTag import readXmlTag
+from Analyzer.DataWriters.writeNCFile import writeNCFile
 
 
 def runSimulation(projectSetDir = ''):

@@ -1,5 +1,5 @@
 
-from GBSUserInterface.Delegates import *
+from UserInterface.Delegates import *
 
 
 #QTableView for displaying component information

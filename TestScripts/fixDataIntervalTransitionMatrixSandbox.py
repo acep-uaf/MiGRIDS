@@ -1,8 +1,8 @@
 
-from fixDataIntervalTransitionMatrix import fixDataIntervalTransitionMatrix
-from fixDataInterval import fixDataInterval
-from GBSAnalyzer.PerformanceAnalyzers.rainfallCounting import rainflow
-from fixBadData import DataClass
+from MicroGRIDS.InputHandler.fixDataIntervalTransitionMatrix import fixDataIntervalTransitionMatrix
+from MicroGRIDS.InputHandler.fixDataInterval import fixDataInterval
+from MicroGRIDS.Analyzer.PerformanceAnalyzers.rainfallCounting import rainflow
+from MicroGRIDS.InputHandler.fixBadData import DataClass
 import pandas as pd
 import random
 import numpy as np

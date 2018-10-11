@@ -16,8 +16,8 @@ dynamics with the diesel fleet, etc.
 """
 
 import numpy as np
-from GBSAnalyzer.DataWriters.writeNCFile import writeNCFile
-from GBSModel.Components.WindTurbine import WindTurbine
+from MicroGRIDS.Analyzer.DataWriters.writeNCFile import writeNCFile
+from MicroGRIDS.Model.Components.WindTurbine import WindTurbine
 
 # Turn generation of time-series on or off individually
 mkLoad = True

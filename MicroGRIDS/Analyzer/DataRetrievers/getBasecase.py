@@ -11,8 +11,8 @@ from distutils.util import strtobool
 import pandas as pd
 from bs4 import BeautifulSoup as soup
 
-from GBSAnalyzer.DataRetrievers.getDataChannels import getDataChannels
-from GBSAnalyzer.DataRetrievers.readNCFile import readNCFile
+from Analyzer.DataRetrievers.getDataChannels import getDataChannels
+from Analyzer.DataRetrievers.readNCFile import readNCFile
 
 
 def getBasecase(projectName, rootProjectPath):
@@ -20,7 +20,7 @@ def getBasecase(projectName, rootProjectPath):
     Retrieve base case data and meta data required for initial estimate of search space boundaries and data
     sparsing.
     FUTUREFEATURE: Note that this does its own load calculation, which may be redundant or differ from load calculations
-        done in the GBSInputHandler. This should be revisited in the future.
+        done in the InputHandler. This should be revisited in the future.
     :return time: [Series] time vector
     :return firmLoadP: [Series] firm load vector
     :return varLoadP: [Series] variable (switchable, manageable, dispatchable) load vector

@@ -9,7 +9,7 @@ import os
 here = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(os.path.join(here, '../'))
 from bs4 import BeautifulSoup as Soup
-from GBSAnalyzer.CurveAssemblers.genFuelCurveAssembler import GenFuelCurve
+from Analyzer.CurveAssemblers.genFuelCurveAssembler import GenFuelCurve
 
 
 class Generator:

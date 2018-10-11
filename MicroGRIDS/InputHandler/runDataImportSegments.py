@@ -13,16 +13,13 @@ import os
 here = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(os.path.join(here,".."))
 
-from tkinter import filedialog
-import tkinter as tk
-from GBSAnalyzer.DataRetrievers.readXmlTag import readXmlTag
-from GBSInputHandler.getUnits import getUnits
-#from GBSInputHandler.fixBadData import fixBadData
-from GBSInputHandler.fixDataInterval import fixDataInterval
-from GBSInputHandler.dataframe2netcdf import dataframe2netcdf
-from GBSInputHandler.mergeInputs import mergeInputs
+from MicroGRIDS.Analyzer.DataRetrievers.readXmlTag import readXmlTag
+from MicroGRIDS.InputHandler.getUnits import getUnits
+#from InputHandler.fixBadData import fixBadData
+from MicroGRIDS.InputHandler.fixDataInterval import fixDataInterval
+from MicroGRIDS.InputHandler.dataframe2netcdf import dataframe2netcdf
 import pandas as pd
-from GBSInputHandler.DataClass import DataClass
+from MicroGRIDS.InputHandler.DataClass import DataClass
 import pickle
 import cProfile
 import bisect
