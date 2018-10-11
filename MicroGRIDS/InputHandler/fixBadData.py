@@ -17,9 +17,9 @@ import re
 import pandas as pd
 
 
-from InputHandler.DataClass import DataClass
-from InputHandler.isInline import isInline
-from InputHandler.badDictAdd import badDictAdd
+from MicroGRIDS.InputHandler.DataClass import DataClass
+from MicroGRIDS.InputHandler.isInline import isInline
+from MicroGRIDS.InputHandler.badDictAdd import badDictAdd
 
 
 

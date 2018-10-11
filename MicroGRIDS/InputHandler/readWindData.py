@@ -17,7 +17,7 @@ import sqlite3 as lite
 import numpy as np
 import os
 from netCDF4 import Dataset
-from InputHandler.processInputDataFrame import processInputDataFrame
+from MicroGRIDS.InputHandler.processInputDataFrame import processInputDataFrame
 
 #String, String -> dataframe
 def readWindData(inputDict):
@@ -177,7 +177,7 @@ def readWindData(inputDict):
             with open(os.path.join(root, f), 'r',errors='ignore') as file:
                 #read the header information of each file
                 if (file.name)[-3:] == 'txt':
-                    print(file.name)
+                    print(os.path.basename(file.name))
                     data = pd.DataFrame()
                     headerDict = {}
 

@@ -16,10 +16,10 @@ def readDataFile(inputDict):
     import os
     import importlib.util
     import numpy as np
-    from InputHandler.readAllTimeSeries import readAllTimeSeries
-    from InputHandler.readWindData import readWindData
-    from Analyzer.DataRetrievers.readXmlTag import readXmlTag
-    from InputHandler.Component import Component
+    from MicroGRIDS.InputHandler.readAllTimeSeries import readAllTimeSeries
+    from MicroGRIDS.InputHandler.readWindData import readWindData
+    from MicroGRIDS.Analyzer.DataRetrievers.readXmlTag import readXmlTag
+    from MicroGRIDS.InputHandler.Component import Component
 
     
     ### convert inputs to list, if not already
@@ -51,8 +51,7 @@ def readDataFile(inputDict):
     elif inputDict['fileType'].lower() == 'met':
         
         fileDict, df = readWindData(inputDict)
-    print('dataframe')
-    print(df.head())
+
     # convert units
     if np.all(inputDict['componentUnits'] != None):
         # initiate lists

@@ -6,14 +6,14 @@ import pickle
 import pandas as pd
 from PyQt5 import QtWidgets
 from bs4 import BeautifulSoup
-from Analyzer.DataRetrievers.readXmlTag import readXmlTag
-from InputHandler.buildProjectSetup import buildProjectSetup
-from InputHandler.fillProjectData import fillProjectData
-from InputHandler.makeSoup import makeComponentSoup
-from InputHandler.writeXmlTag import writeXmlTag
-from InputHandler.mergeInputs import mergeInputs
-from UserInterface.ProjectSQLiteHandler import ProjectSQLiteHandler
-from UserInterface.getFilePaths import getFilePath
+from MicroGRIDS.Analyzer.DataRetrievers.readXmlTag import readXmlTag
+from MicroGRIDS.InputHandler.buildProjectSetup import buildProjectSetup
+from MicroGRIDS.InputHandler.fillProjectData import fillProjectData
+from MicroGRIDS.InputHandler.makeSoup import makeComponentSoup
+from MicroGRIDS.InputHandler.writeXmlTag import writeXmlTag
+from MicroGRIDS.InputHandler.mergeInputs import mergeInputs
+from MicroGRIDS.UserInterface.ProjectSQLiteHandler import ProjectSQLiteHandler
+from MicroGRIDS.UserInterface.getFilePaths import getFilePath
 
 
 

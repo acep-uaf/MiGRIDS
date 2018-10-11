@@ -13,13 +13,13 @@ import os
 here = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(os.path.join(here,".."))
 
-from Analyzer.DataRetrievers.readXmlTag import readXmlTag
-from InputHandler.getUnits import getUnits
+from MicroGRIDS.Analyzer.DataRetrievers.readXmlTag import readXmlTag
+from MicroGRIDS.InputHandler.getUnits import getUnits
 #from InputHandler.fixBadData import fixBadData
-from InputHandler.fixDataInterval import fixDataInterval
-from InputHandler.dataframe2netcdf import dataframe2netcdf
+from MicroGRIDS.InputHandler.fixDataInterval import fixDataInterval
+from MicroGRIDS.InputHandler.dataframe2netcdf import dataframe2netcdf
 import pandas as pd
-from InputHandler.DataClass import DataClass
+from MicroGRIDS.InputHandler.DataClass import DataClass
 import pickle
 import cProfile
 import bisect

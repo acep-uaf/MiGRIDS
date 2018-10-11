@@ -1,4 +1,4 @@
-from InputHandler.readCsv import readCsv
+from MicroGRIDS.InputHandler.readCsv import readCsv
 
 def readAllTimeSeries(inputDict):
     '''

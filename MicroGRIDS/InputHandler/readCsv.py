@@ -16,7 +16,7 @@ def readCsv(inputDict):
     import os
     import pandas as pd
     
-    from InputHandler.processInputDataFrame import processInputDataFrame
+    from MicroGRIDS.InputHandler.processInputDataFrame import processInputDataFrame
 
     # process input variables
     # convert numpy arrays to lists
