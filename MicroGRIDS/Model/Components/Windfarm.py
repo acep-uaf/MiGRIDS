@@ -5,10 +5,8 @@
 
 import sys
 import numpy as np
-from GBSModel.Components.WindTurbine import WindTurbine
-
-sys.path.append('../')
-from GBSModel.Operational.loadControlModule import loadControlModule
+from MicroGRIDS.Model.Components.WindTurbine import WindTurbine
+from MicroGRIDS.Model.Operational.loadControlModule import loadControlModule
 
 
 

@@ -6,7 +6,7 @@
 import numpy as np
 import pandas as pd
 
-from Analyzer.CurveAssemblers.genFuelCurveAssembler import GenFuelCurve
+from MicroGRIDS.Analyzer.CurveAssemblers.genFuelCurveAssembler import GenFuelCurve
 
 def getFuelUse(genAllP, fuelCurveDataPoints, interpolationMethod = 'linear'):
     '''

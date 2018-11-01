@@ -7,13 +7,13 @@ import os
 import pickle
 import numpy as np
 # from ThermalSystem import ThermalSystem
-from Model.Components.Demand import Demand
+from MicroGRIDS.Model.Components.Demand import Demand
 # from SolarFarm import Solarfarm
-from Model.Components.ElectricalEnergyStorageSystem import ElectricalEnergyStorageSystem
-from Model.Components.ThermalEnergyStorageSystem import ThermalEnergyStorageSystem
-from Model.Components.Powerhouse import Powerhouse
-from Model.Components.Windfarm import Windfarm
-from Model.Operational.loadControlModule import loadControlModule
+from MicroGRIDS.Model.Components.ElectricalEnergyStorageSystem import ElectricalEnergyStorageSystem
+from MicroGRIDS.Model.Components.ThermalEnergyStorageSystem import ThermalEnergyStorageSystem
+from MicroGRIDS.Model.Components.Powerhouse import Powerhouse
+from MicroGRIDS.Model.Components.Windfarm import Windfarm
+from MicroGRIDS.Model.Operational.loadControlModule import loadControlModule
 import sys
 
 # add controls and components directories to path
@@ -244,6 +244,9 @@ class SystemOperations:
         # Dump genPAvail
         self.dumpVariable(self.genPAvail, 'genPAvail', snippetIdx)
 
+        # Dump genFuelCons
+        self.dumpVariable(self.genFuelCons, 'genFuelCons', snippetIdx)
+
         # Dump eessSrc
         self.dumpVariable(self.eessSrc, 'eessSrc', snippetIdx)
 
@@ -348,7 +351,8 @@ class SystemOperations:
         self.powerhouseP = [None] * varLength  
         self.powerhousePch = [None] * varLength  
         self.genP = [[None] * len(self.PH.generators)] * varLength
-        self.genPAvail = [None] * varLength  
+        self.genPAvail = [None] * varLength
+        self.genFuelCons = [[None] * len(self.PH.generators)] * varLength
         self.eessSrc = [[None] * len(self.EESS.electricalEnergyStorageUnits)] * varLength
         self.eessSoc = [[None] * len(self.EESS.electricalEnergyStorageUnits)] * varLength
         self.wfPAvail = [None] * varLength  
@@ -450,6 +454,7 @@ class SystemOperations:
         self.powerhousePch[self.idx] = phPch
         self.genP[self.idx] = self.PH.genP[:]  # .append(self.PH.genP[:])
         self.genPAvail[self.idx] = sumPHgenPAvail  # sum(self.PH.genPAvail)
+        self.genFuelCons[self.idx] = self.PH.genFuelCons[:]
         self.eessSrc[self.idx] = self.EESS.eesSRC[:]  # .append(self.EESS.eesSRC[:])
         self.eessSoc[self.idx] = self.EESS.eesSOC[:]  # .append(self.EESS.eesSOC[:])
         self.onlineCombinationID[self.idx] = self.PH.onlineCombinationID

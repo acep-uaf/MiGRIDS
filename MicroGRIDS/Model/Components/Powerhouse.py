@@ -6,11 +6,9 @@
 import itertools
 import sys
 import numpy as np
-from GBSModel.Components.Generator import Generator
-
-sys.path.append('../')
-from Analyzer.CurveAssemblers.genFuelCurveAssembler import GenFuelCurve
-from Model.Operational.loadControlModule import loadControlModule
+from MicroGRIDS.Model.Components.Generator import Generator
+from MicroGRIDS.Analyzer.CurveAssemblers.genFuelCurveAssembler import GenFuelCurve
+from MicroGRIDS.Model.Operational.loadControlModule import loadControlModule
 
 
 class Powerhouse:
@@ -61,7 +59,8 @@ class Powerhouse:
         self.genMolAvail = []
         # the minimum efficient power output based on MEL
         self.genMelAvail = []
-
+        # the fuel consumption
+        self.genFuelCons = []
 
 
         ## initiate generator dispatch and its inputs.
@@ -84,6 +83,7 @@ class Powerhouse:
             self.genQAvail += [self.generators[idx].genQAvail]
             self.genMolAvail += [self.generators[idx].genMolAvail]
             self.genMelAvail += [self.generators[idx].genMelAvail]
+            self.genFuelCons += [self.generators[idx].genFuelCons]
             self.outOfNormalBounds.append(self.generators[idx].outOfNormalBounds)
             self.outOfBounds.append(self.generators[idx].outOfBounds)
             self.outOfEfficientBounds.append(self.generators[idx].outOfEfficientBounds)
@@ -234,6 +234,8 @@ class Powerhouse:
             self.genQAvail[idx] = self.generators[idx].genQAvail
             self.genMolAvail[idx] = self.generators[idx].genMolAvail
             self.genMelAvail[idx] = self.generators[idx].genMelAvail
+            # get the fuel consumption
+            self.genFuelCons[idx] = self.generators[idx].genFuelCons
             # get the spinning reserve being supplied by the generators
             #self.genSRC[idx] = self.generators[idx].genPAvail - self.generators[idx].genP
 

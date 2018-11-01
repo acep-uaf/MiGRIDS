@@ -16,8 +16,9 @@ import pickle
 here = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(os.path.join(here, '../../'))
 sys.path.append(here)
-from Analyzer.DataRetrievers.readNCFile import readNCFile
-from Analyzer.DataRetrievers.readXmlTag import readXmlTag
+from MicroGRIDS.Analyzer.DataRetrievers.readNCFile import readNCFile
+from MicroGRIDS.Analyzer.DataRetrievers.readXmlTag import readXmlTag
+from MicroGRIDS.Analyzer.PerformanceAnalyzers.getRunFuelUse import getRunFuelUse
 
 
 def getRunMetaData(projectSetDir,runs):
@@ -42,6 +43,13 @@ def getRunMetaData(projectSetDir,runs):
 
     genOverLoading = []
     eessOverLoading = []
+
+    # check which runs to analyze
+    if runs == 'all':
+        os.chdir(projectSetDir)
+        runDirs = glob.glob('Run*/')
+        runs = [x[3:-1] for x in runDirs]
+
     for runNum in runs:
         # get run dir
         projectRunDir = os.path.join(projectSetDir,'Run'+str(runNum))
@@ -55,6 +63,19 @@ def getRunMetaData(projectSetDir,runs):
         genPchStats, genPch, ts = loadResults('powerhousePchSet' + str(setNum) + 'Run' + str(runNum) + '.nc')
         # get generator power available stats
         genPAvailStats, genPAvail, tsGenPAvail = loadResults('genPAvailSet'+str(setNum)+'Run' + str(runNum) + '.nc')
+        # check to see if fuel consumption has been calculated
+        genFuelConsFileNames = glob.glob('gen*FuelConsSet*Run*.nc')
+        # if the fuel cons has not been calculated, calculate
+        if len(genFuelConsFileNames) == 0:
+            getRunFuelUse(projectSetDir, [runNum])
+            genFuelConsFileNames = glob.glob('gen*FuelConsSet*Run*.nc')
+       # iterate through all generators and sum their fuel consumption.
+        genFuelCons = 0
+        for genFuelConsFileName in genFuelConsFileNames:
+            genFuelConsStats0, genFuelCons0, ts = loadResults(genFuelConsFileName)
+            # genFuelCons
+            genFuelCons = genFuelCons + genFuelConsStats0[4]
+
 
         # calculate the average loading while online
         idxOnline = [idx for idx, x in enumerate(genPAvail) if x >0] # the indices of when online
@@ -177,7 +198,7 @@ def getRunMetaData(projectSetDir,runs):
         '''
 
         # add row for this run
-        df.loc[runNum] = [genPTot,genPch,genSw,genLoadingMean,genCapacityMean,None,genTimeOff,genTimeRunTot,genRunTimeRunTotkWh,genOverLoadingTime,genOverLoadingkWh,wtgPImportTot,wtgPspillTot,wtgPchTot,eessPdisTot,eessPchTot,eessSRCTot,eessOverLoadingTime,eessOverLoadingkWh,tessPTot]
+        df.loc[runNum] = [genPTot,genPch,genSw,genLoadingMean,genCapacityMean,genFuelCons,genTimeOff,genTimeRunTot,genRunTimeRunTotkWh,genOverLoadingTime,genOverLoadingkWh,wtgPImportTot,wtgPspillTot,wtgPchTot,eessPdisTot,eessPchTot,eessSRCTot,eessOverLoadingTime,eessOverLoadingkWh,tessPTot]
 
     dfResult = pd.concat([dfAttr, df], axis=1, join='inner')
 

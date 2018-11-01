@@ -8,9 +8,9 @@ import numpy as np
 import pandas as pd
 from scipy.interpolate import interp1d
 from bs4 import BeautifulSoup as Soup
-from Analyzer.DataRetrievers.readNCFile import readNCFile
+from MicroGRIDS.Analyzer.DataRetrievers.readNCFile import readNCFile
 # imports
-from Model.Operational.getSeriesIndices import getSeriesIndices
+from MicroGRIDS.Model.Operational.getSeriesIndices import getSeriesIndices
 
 
 class Demand:

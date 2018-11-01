@@ -4,8 +4,8 @@
 # License: MIT License (see LICENSE file of this package for more information)
 
 import sys
-from Model.Components.ElectricalEnergyStorage import ElectricalEnergyStorage
-from Model.Operational.loadControlModule import loadControlModule
+from MicroGRIDS.Model.Components.ElectricalEnergyStorage import ElectricalEnergyStorage
+from MicroGRIDS.Model.Operational.loadControlModule import loadControlModule
 
 class ElectricalEnergyStorageSystem:
 

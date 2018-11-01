@@ -8,8 +8,8 @@ import os
 import sys
 here = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(os.path.join(here, '../'))
-from Analyzer.DataRetrievers.readXmlTag import readXmlTag
-from InputHandler.writeXmlTag import writeXmlTag
+from MicroGRIDS.Analyzer.DataRetrievers.readXmlTag import readXmlTag
+from MicroGRIDS.InputHandler.writeXmlTag import writeXmlTag
 import pandas as pd
 import itertools
 import sqlite3

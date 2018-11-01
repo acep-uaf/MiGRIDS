@@ -16,13 +16,13 @@ from tkinter import filedialog
 
 import pandas as pd
 
-from Model.Operational.SystemOperations import SystemOperations
+from MicroGRIDS.Model.Operational.SystemOperations import SystemOperations
 
 here = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(os.path.join(here, '../'))
 sys.path.append(here)
-from Analyzer.DataRetrievers.readXmlTag import readXmlTag
-from Analyzer.DataWriters.writeNCFile import writeNCFile
+from MicroGRIDS.Analyzer.DataRetrievers.readXmlTag import readXmlTag
+from MicroGRIDS.Analyzer.DataWriters.writeNCFile import writeNCFile
 
 
 def runSimulation(projectSetDir = ''):
@@ -327,10 +327,19 @@ def runSimulation(projectSetDir = ''):
         # power each generators
         genP = SO.stitchVariable('genP')
         for idx, genP in enumerate(zip(*genP)):  # for each generator in the powerhouse
-            writeNCFile(SO.DM.realTime, genP, 1, 0, 's',
+            writeNCFile(SO.DM.realTime, genP, 1, 0, 'kW',
                         'gen' + str(SO.PH.genIDS[idx]) + 'PSet' + str(setNum) + 'Run' + str(
                             runNum) + '.nc')
         genP = None
+
+        # fuel consumption for each generator
+        genFuelCons = SO.stitchVariable('genFuelCons')
+        for idx, genFuelCons in enumerate(zip(*genFuelCons)):  # for each generator in the powerhouse
+            writeNCFile(SO.DM.realTime, genFuelCons, 1, 0, 'kg/s',
+                        'gen' + str(SO.PH.genIDS[idx]) + 'FuelConsSet' + str(setNum) + 'Run' + str(
+                            runNum) + '.nc')
+        genFuelCons = None
+
 
         # start times for each generators
         genStartTime = SO.stitchVariable('genStartTime')

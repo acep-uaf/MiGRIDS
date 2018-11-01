@@ -9,7 +9,7 @@ import os
 here = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(os.path.join(here, '../'))
 from bs4 import BeautifulSoup as Soup
-from Analyzer.CurveAssemblers.genFuelCurveAssembler import GenFuelCurve
+from MicroGRIDS.Analyzer.CurveAssemblers.genFuelCurveAssembler import GenFuelCurve
 
 
 class Generator:
@@ -104,6 +104,7 @@ class Generator:
         self.genID = genID  # internal id used in Powerhouse for tracking generator objects. *type int*
         self.genP = 0  # Current real power level [kW]
         self.genQ = 0  # Current reactive power level [kvar]
+        self.genFuelCons = 0 # the fuel consumption rate in kg/s
         self.genState = genState  # Generator operating state [dimensionless, index]. See docs for key.
         self.timeStep = timeStep  # the time step used in the simulation in seconds
         # initiate operating condition flags and timers
@@ -211,6 +212,9 @@ class Generator:
             self.genMolAvail = self.genMol  # the lowest loading it can run at
             self.genMelAvail = self.genMel
 
+            ########## calculate fuel consumption #########
+            self.genFuelCons = self.getFuelCons(self.genP)
+
         elif self.genState == 1: # if running but offline (ie starting up)
             # update timers
             self.genRunTimeAct = 0  # if not running online, reset to zero
@@ -231,6 +235,9 @@ class Generator:
                 self.outOfBounds = False
                 self.outOfEfficientBounds = False
 
+            ########## calculate fuel consumption #########
+            self.genFuelCons = self.getFuelCons(self.genP)
+
         else: # if not running and offline
             # update timers
             self.genRunTimeAct = 0 # if not running online, reset to zero
@@ -240,6 +247,7 @@ class Generator:
             self.genQAvail = 0
             self.genMolAvail = 0  # the lowest loading it can run at
             self.genMelAvail = 0
+            self.genFuelCons = 0
 
             ### Check if out of bounds operation, then flag outOfNormalBounds ###
             if self.genP > 1: # greater than 1 to account for out of bounds operation
@@ -268,5 +276,14 @@ class Generator:
             self.genQAvail = 0
             self.genMolAvail = 0  # the lowest loading it can run at
             self.genMelAvail = 0
+
+    def getFuelCons(self,P):
+        Pint = int(P) # convert to int for faster searching
+        # if power is greater than power curve rated, limit to highest fuel curve power
+        if Pint > len(self.genFuelCurve)-1:
+            Pint = len(self.genFuelCurve)-1
+        # the fuel curve has a fuel consumption for every power level in kW. So the kW power level is the index
+        fuelCons = self.genFuelCurve[Pint][1]
+        return fuelCons
 
 
