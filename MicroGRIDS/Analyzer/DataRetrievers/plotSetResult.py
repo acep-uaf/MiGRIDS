@@ -14,7 +14,13 @@ def plotSetResult(plotRes,plotAttr, projectSetDir = '', otherAttr = [],otherAttr
                   plotAttrName = '', otherAttrNames = [], saveName = ''):
     '''
     plot a single result for a set of simulations
-    :param plotRes: the database column header of the variable to plot.
+    :param plotRes: the database column header of the variable to plot, or a dict identifying column headers and number with variable names and an equation to evaluate them.
+    In the equation, the variable names must be surrounded by '#'.
+    For example: {'EESS Equivalent Cycles':{'Energy Storage Discharge kWh':'x', 'ees0.PInMaxPa.value':'y', 'ees0.ratedDuration.value':'z',
+                                          'eqn':'#x#/(#y#*#z#/3600)'}}
+    It can also be a dict in the form: {'Generator Import [GWh]':{'Generator Import kWh':'+',1000000:'/'}), where instead
+    of identifying a variable for each column and nuber,an operand is identified. They will be solved in the order they
+    are listed. This is for simpler calculations.
     :param plotAttr: The simulation attribute to be plotted against. This is the column header in the database as well as the tag and attribute from the component or setup xml file.
     :param otherAttr: The other component or setup attributes to have fixed values in the plot. If not specified, all values for the attribute will be plotted as multiple lines.
     :param otherAttrVal: The values of the 'otherAttr' to plot. It should be given as a list of lists, corresponding to otherAttr.
@@ -103,6 +109,8 @@ def plotSetResult(plotRes,plotAttr, projectSetDir = '', otherAttr = [],otherAttr
 
     # remove values from otherAttr not to be plotted, only if values to be plotted have been specified
     if otherAttrVal != []:
+        otherAttrValUse = otherAttrVal
+        includeAttrValInFileName = True # include attribute values in the saved figure name
         for idx, attr in enumerate(otherAttr):  # for set of values to plot for this attribute
             values = otherAttrVal[idx]
             # convert to numeric, if not already
@@ -119,12 +127,14 @@ def plotSetResult(plotRes,plotAttr, projectSetDir = '', otherAttr = [],otherAttr
             dfAttr = dfAttr.drop(dropIdx)
             dfRes = dfRes.drop(dropIdx)
     else:
+        includeAttrValInFileName = False  # include attribute values in the saved figure name
+        otherAttrValUse = []
         for idx, attr in enumerate(otherAttr):
             try: # try to convert to intergers
                 # make unique with set
-                otherAttrVal.append(list(set([int(x) for x in dfAttr[attr]])))
+                otherAttrValUse.append(list(set([int(x) for x in dfAttr[attr]])))
             except:
-                otherAttrVal.append(list(set([float(x) for x in dfAttr[attr]])))
+                otherAttrValUse.append(list(set([float(x) for x in dfAttr[attr]])))
 
     # get the names of all results columns
     columns = list(dfAttr.columns.values)
@@ -191,9 +201,9 @@ def plotSetResult(plotRes,plotAttr, projectSetDir = '', otherAttr = [],otherAttr
                     # get marker indices that wrap around when they reach the end of the list of markers
                     indMarker0 = []
                     for idxM in range(len(uniqueValues)):
-                        indMarker0.append(indMarker + (idxM % len(markers)))
+                        indMarker0.append(indMarker + (idxM % (len(markers)-indMarker)))
                     legendMarkers.append(markers[indMarker0])
-                    indMarker = indMarker + 1 % len(markers)
+                    indMarker = indMarker + 1 % (len(markers)-indMarker)
                     # get line indices that wrap around when they reach the end of the list of lineStyles
                     indLineStyle0 = []
                     for idxL in range(len(uniqueValues)):
@@ -294,7 +304,7 @@ def plotSetResult(plotRes,plotAttr, projectSetDir = '', otherAttr = [],otherAttr
     for idx, attr in enumerate(otherAttr):
         # convert values to a string
         oavText = ''
-        for idx0, oav in enumerate(otherAttrVal[idx]):
+        for idx0, oav in enumerate(otherAttrValUse[idx]):
             if idx0 != 0:
                 oavText = oavText + '_'
             oavText = oavText + str(oav).replace('.','_') # replace periods with underscores.
@@ -305,19 +315,25 @@ def plotSetResult(plotRes,plotAttr, projectSetDir = '', otherAttr = [],otherAttr
         os.makedirs('figs')
     os.chdir('figs')
     if saveName == '':
+        savePlotResName = plotResName.replace('/','_') # replace / char which may be used in the label but not save name
+        # only indicate the values plotted in the name if not plotting all values
+        if includeAttrValInFileName:
+            nameBase = savePlotResName + ' vs ' + plotAttr + ' for ' + otherAttrText
+        else:
+            nameBase = savePlotResName + ' vs ' + plotAttr
         if baseSet != '' and baseRun != '': # if base case was used, different file name
             if subtractFromBase == 1:
-                plt.savefig('Reduction in ' + plotResName + ' vs ' + plotAttr + ' for ' + otherAttrText + '.png')
-                plt.savefig('Reduction in ' + plotResName + ' vs ' + plotAttr + ' for ' + otherAttrText + '.pdf')
+                plt.savefig('Reduction in ' + nameBase + '.png')
+                plt.savefig('Reduction in ' + nameBase + '.pdf')
             elif subtractFromBase == 2:
-                plt.savefig('Increase in ' + plotResName + ' vs ' + plotAttr + ' for ' + otherAttrText + '.png')
-                plt.savefig('Increase in ' + plotResName + ' vs ' + plotAttr + ' for ' + otherAttrText + '.pdf')
+                plt.savefig('Increase in ' + nameBase + '.png')
+                plt.savefig('Increase in ' + nameBase + '.pdf')
             elif subtractFromBase == 0:
-                plt.savefig(plotResName + ' vs ' + plotAttr + ' for ' + otherAttrText + '.png')
-                plt.savefig(plotResName + ' vs ' + plotAttr + ' for ' + otherAttrText + '.pdf')
+                plt.savefig(nameBase + '.png')
+                plt.savefig(nameBase + '.pdf')
         else:
-            plt.savefig(plotResName + ' vs ' + plotAttr + ' for ' + otherAttrText + '.png')
-            plt.savefig(plotResName + ' vs ' + plotAttr + ' for ' + otherAttrText + '.pdf')
+            plt.savefig(nameBase + '.png')
+            plt.savefig(nameBase + '.pdf')
     else:
         plt.savefig(saveName)
 
@@ -326,17 +342,24 @@ def plotSetResult(plotRes,plotAttr, projectSetDir = '', otherAttr = [],otherAttr
 def getPlotRes(plotRes,df):
     if isinstance(plotRes, dict):
         if 'eqn' in plotRes.keys():
+            '''
             # put spaces around each character in equation string to single out variables
             eqn = ' '
             for char in plotRes['eqn']:
-                if char.isdigit(): # do not split up numbers
+                if char.isdigit() or char=='.': # do not split up numbers
                     eqn = eqn + char
                 else:
-                    eqn  = eqn + ' ' + char + ' '
-
+                    eqn = eqn + char
+                    #eqn  = eqn + ' ' + char + ' '
+            '''
+            eqn = plotRes['eqn']
             for pR, op in plotRes.items():
                 if pR != 'eqn':
-                    eqn = eqn.replace(' ' + op + ' ', 'df[\''+pR+'\'].astype(float)')
+                    if isinstance(pR, (float, int)):
+                        eqn = eqn.replace('#' + op + '#', str(pR))
+                    else:
+                        eqn = eqn.replace( '#' + op + '#' , 'df[\'' + pR + '\'].astype(float)')
+                        #eqn = eqn.replace(' ' + op + ' ', 'df[\''+pR+'\'].astype(float)')
             try:
                 y = eval(eqn)
             except:

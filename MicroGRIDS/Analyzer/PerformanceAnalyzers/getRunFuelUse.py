@@ -28,7 +28,7 @@ def getRunFuelUse(projectSetDir,runs='all'):
     if runs == 'all':
         os.chdir(projectSetDir)
         runDirs = glob.glob('Run*/')
-        runs = [x[3:] for x in runDirs]
+        runs = [int(x[3:-1]) for x in runDirs]
 
     # iterate through each run
     for runNum in runs:
@@ -74,7 +74,13 @@ def getRunFuelUse(projectSetDir,runs='all'):
         for genName in genNames:
             os.chdir(outputDataDir)
             # convert back from kg to kg/s
-            writeNCFile(np.array(genAllP.time), np.array(genAllFuelUsed[genName])/genAllP['time'].diff(), 1, 0, 'kg/s',
+            genFuelCons = np.array(genAllFuelUsed[genName]/genAllP['time'].diff())
+            # set all instances where offline and not warming up to zero
+            genRunTime = readNCFile(genName + 'RunTimeSet' + setID + 'Run' + str(runNum) + '.nc')
+            genStartTime = readNCFile(genName + 'StartTimeSet' + setID + 'Run' + str(runNum) + '.nc')
+            idx0 = (genRunTime.value[:] == 0) &  (genStartTime.value[:] == 0)
+            genFuelCons[idx0] = 0
+            writeNCFile(np.array(genAllP.time), genFuelCons, 1, 0, 'kg/s',
                     genName + 'FuelConsSet' + setID + 'Run' + str(runNum) + '.nc')
         """
         # save results in the sql database and the csv file

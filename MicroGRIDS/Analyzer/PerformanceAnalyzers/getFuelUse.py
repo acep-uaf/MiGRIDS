@@ -35,6 +35,7 @@ def getFuelUse(genAllP, fuelCurveDataPoints, interpolationMethod = 'linear'):
 
     # Get time steps, since the fuel curve is only providing mass flow. Total mass requires multiplication by time.
     dt = genAllP['time'].diff()
+    dt[0] = dt[1] # replace nan with next value
     fleetSum = np.zeros(np.shape(dt))
 
     for gen in genList:

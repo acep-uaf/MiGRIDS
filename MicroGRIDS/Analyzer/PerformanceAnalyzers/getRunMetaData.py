@@ -48,7 +48,7 @@ def getRunMetaData(projectSetDir,runs):
     if runs == 'all':
         os.chdir(projectSetDir)
         runDirs = glob.glob('Run*/')
-        runs = [x[3:-1] for x in runDirs]
+        runs = [int(x[3:-1]) for x in runDirs]
 
     for runNum in runs:
         # get run dir
@@ -245,12 +245,12 @@ def loadResults(fileName, location = '', returnTimeSeries = False):
         os.chdir(location)
     var = readNCFile(fileName)
     val = np.array(var.value)*var.scale + var.offset
-    timeStep = np.mean(np.diff(var.time)) # mean timestep in seconds
-    valMean = np.mean(val)
-    valSTD = np.std(val)
-    valMax = np.max(val)
-    valMin = np.min(val)
-    valInt = sum(val)*timeStep # the integral over seconds. If the value is in kW, this is kWs.
+    timeStep = np.nanmean(np.diff(var.time)) # mean timestep in seconds
+    valMean = np.nanmean(val)
+    valSTD = np.nanstd(val)
+    valMax = np.nanmax(val)
+    valMin = np.nanmin(val)
+    valInt = np.nansum(val)*timeStep # the integral over seconds. If the value is in kW, this is kWs.
 
     if returnTimeSeries is False:
         return [valMean, valSTD, valMax, valMin, valInt], val, timeStep
