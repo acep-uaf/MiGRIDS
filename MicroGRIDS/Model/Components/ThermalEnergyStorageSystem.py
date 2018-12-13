@@ -4,8 +4,8 @@
 # License: MIT License (see LICENSE file of this package for more information)
 
 #imports
-from GBSModel.Components.ThermalEnergyStorage import ThermalEnergyStorage
-from GBSModel.Operational.loadControlModule import loadControlModule
+from MicroGRIDS.Model.Components.ThermalEnergyStorage import ThermalEnergyStorage
+from MicroGRIDS.Model.Operational.loadControlModule import loadControlModule
 
 class ThermalEnergyStorageSystem:
     def __init__(self, tesIDS, tesT, tesStates, timeStep, tesDescriptor, tesDispatchFile, tesDispatchInputsFile):

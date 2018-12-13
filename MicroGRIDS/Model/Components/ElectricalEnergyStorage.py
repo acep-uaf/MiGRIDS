@@ -8,10 +8,10 @@ import sys
 from bs4 import BeautifulSoup as Soup
 
 sys.path.append('../')
-from Analyzer.CurveAssemblers.esLossMapAssembler import esLossMap
-from Analyzer.DataRetrievers.readXmlTag import readXmlTag
+from MicroGRIDS.Analyzer.CurveAssemblers.esLossMapAssembler import esLossMap
+from MicroGRIDS.Analyzer.DataRetrievers.readXmlTag import readXmlTag
 import numpy as np
-from Model.Operational.getIntListIndex import getIntListIndex
+from MicroGRIDS.Model.Operational.getIntListIndex import getIntListIndex
 
 class ElectricalEnergyStorage:
     '''

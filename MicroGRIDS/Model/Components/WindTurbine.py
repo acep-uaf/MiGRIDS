@@ -11,15 +11,15 @@ from bs4 import BeautifulSoup as Soup
 
 here = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(os.path.join(here, '../'))
-from GBSAnalyzer.CurveAssemblers.wtgPowerCurveAssembler import WindPowerCurve
+from MicroGRIDS.Analyzer.CurveAssemblers.wtgPowerCurveAssembler import WindPowerCurve
 from bisect import bisect_left
-from GBSAnalyzer.DataRetrievers.readNCFile import readNCFile
-from GBSModel.Operational.getIntListIndex import  getIntDictKey
-from GBSModel.Operational.getSeriesIndices import getSeriesIndices
+from MicroGRIDS.Analyzer.DataRetrievers.readNCFile import readNCFile
+from MicroGRIDS.Model.Operational.getIntListIndex import  getIntDictKey
+from MicroGRIDS.Model.Operational.getSeriesIndices import getSeriesIndices
 import numpy as np
 from scipy.interpolate import interp1d
 from distutils.util import strtobool
-from GBSAnalyzer.DataWriters.writeNCFile import writeNCFile
+from MicroGRIDS.Analyzer.DataWriters.writeNCFile import writeNCFile
 import pandas as pd
 
 class WindTurbine:

@@ -9,8 +9,8 @@
 <reDistpatchName name = 'getMinsSRC0'>
     <!-- 'minSRCToSwitchRatio' is the ratio of the SRC required to switch over the SRC required to stay at the current
     diesel generating option. Having a value greater than 1 creates a hysterisis to reduce diesel switching.
-    Default is 1.1. -->
-    <minSRCToSwitchRatio value = '1.1'/>
+    Default is 1. -->
+    <minSRCToSwitchRatio value = '1'/>
 
 </reDistpatchName>
 <!-- EOF -->
