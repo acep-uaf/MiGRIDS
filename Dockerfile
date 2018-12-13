@@ -6,6 +6,9 @@
 
 FROM continuumio/anaconda3
 
+RUN conda install -y -c anaconda netcdf4
+RUN apt-get install netcdf4 hdf5
+
 VOLUME /microgrids
 WORKDIR /microgrids
 
