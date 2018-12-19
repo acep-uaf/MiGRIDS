@@ -336,7 +336,7 @@ def plotSetResult(plotRes,plotAttr, projectSetDir = '', otherAttr = [],otherAttr
             plt.savefig(nameBase + '.pdf')
     else:
         plt.savefig(saveName)
-
+    plt.close()
 
 # return the results to be plotted. If it is a list, add together. Otherwise, simply return the result.
 def getPlotRes(plotRes,df):
@@ -355,10 +355,10 @@ def getPlotRes(plotRes,df):
             eqn = plotRes['eqn']
             for pR, op in plotRes.items():
                 if pR != 'eqn':
-                    if isinstance(pR, (float, int)):
-                        eqn = eqn.replace('#' + op + '#', str(pR))
+                    if isinstance(op, (float, int)):
+                        eqn = eqn.replace('#' + pR + '#', str(op))
                     else:
-                        eqn = eqn.replace( '#' + op + '#' , 'df[\'' + pR + '\'].astype(float)')
+                        eqn = eqn.replace( '#' + pR + '#' , 'df[\'' + op + '\'].astype(float)')
                         #eqn = eqn.replace(' ' + op + ' ', 'df[\''+pR+'\'].astype(float)')
             try:
                 y = eval(eqn)

@@ -26,4 +26,4 @@ class reDispatch:
         # between available wind power and wind power imported to the grid.
         self.wfPch = min(sum(SO.EESS.eesPinAvail), wfPAvail - self.wfPimport)
         # dispatch the wind turbines
-        SO.WF.wtgDispatch(self.wfPimport + self.wfPch, 0, SO.masterIdx)
+        SO.WF.runWtgDispatch(self.wfPimport + self.wfPch, 0, SO.masterIdx)

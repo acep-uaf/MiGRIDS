@@ -15,7 +15,7 @@ plotResValues = {'Generator Import [GWh]':{'Generator Import kWh':'+',1000000:'/
                  'Total Generator Output [GWh]':{'Generator Import kWh':'+', 'Generator Charging kWh':'+',1000000:'/'},
                  'Total Wind Output [GWh]':{'Thermal Energy Storage Throughput kWh':'+', 'Wind Power Import kWh':'+', 'Wind Power Charging kWh':'+',1000000:'/'},
                  'Total Wind Output (Electrical Loads) [GWh]':{'Wind Power Import kWh':'+', 'Wind Power Charging kWh':'+',1000000:'/'},
-                 'GBS Equivalent Cycles':{'Energy Storage Discharge kWh':'x', 'ees0.PInMaxPa.value':'y', 'ees0.ratedDuration.value':'z',
+                 'GBS Equivalent Cycles':{'x':'Energy Storage Discharge kWh', 'y': 'ees0.PInMaxPa.value', 'z': 'ees0.ratedDuration.value',
                                           'eqn':'#x#/(#y#*#z#/3600)'},'Mean Individual Online Generator Capacity [kW]':{'Generator Cumulative Capacity Run Time kWh':'+','Generator Cumulative Run time h':'/'},
                  }
 
@@ -32,9 +32,9 @@ otherAttr = ['ees0.ratedDuration.value']
 otherAttrNames = {'ees0.ratedDuration.value':'GBS Rated Duration (s)'}
 otherAttrVal = [] #[[500,750,1000]]
 here = os.path.dirname(os.path.realpath(__file__))
-projectSetDir = os.path.join(here,"../GBSProjects/StMary/OutputData/Set16f")
-baseSet =  17
-baseRun =  0
+projectSetDir = os.path.join(here,"../GBSProjects/Igiugig/OutputData/Set2")
+baseSet =  '1'
+baseRun =  1
 for pR,pRN, sFB in zip(plotRes,plotResName,subtractFromBase):
     plotSetResult(pR,plotAttr, projectSetDir = projectSetDir, otherAttr = otherAttr,otherAttrVal = otherAttrVal,
                   baseSet = baseSet, baseRun = baseRun, subtractFromBase = sFB, removeSingleOtherAttr = True,
