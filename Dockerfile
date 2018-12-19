@@ -11,12 +11,11 @@ MAINTAINER Dayne Broderson <dayne@alaska.edu>
 RUN apt-get update \
   && apt-get upgrade -y 
 
-#RUN apt-get install -y python
-#
-#RUN conda install -y -c anaconda netcdf4
-#
-#VOLUME /microgrids
-#WORKDIR /microgrids
-#
-#ENV PYTHONPATH="$PYTHONPATH:/microgrids/"
-#CMD [ "/bin/bash" ]
+RUN apt-get install -y python3-h5netcdf python3-netcdf4 python3-pandas 
+
+VOLUME /microgrids
+WORKDIR /microgrids
+ENV PYTHONPATH="$PYTHONPATH:/microgrids/"
+# PYTHONPATH should be GBSTools top level
+
+CMD [ "/bin/bash" ]
