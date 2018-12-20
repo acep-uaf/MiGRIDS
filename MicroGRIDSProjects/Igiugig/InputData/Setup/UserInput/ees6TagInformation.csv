@@ -1,8 +1,0 @@
-Tag1,Tag2,Tag3,Tag4,Tag5,Attribute,Value
-lossMap,pPu,,,,value,-1 -1 -1 0 0 1 1 1
-,ePu,,,,value,0 0.5 1 0 1 0 0.5 1
-,loss,,,,value,0.05 0.125 0.2 0.01 0.01 0.2 0.125 0.05
-,tempAmb,,,,value,298 298 298 298 298 298 298 298
-energyCapacity,,,,,value,6000
-useLossMap,,,,,value,FALSE
-eesDispatchTime,,,,,value,10800
