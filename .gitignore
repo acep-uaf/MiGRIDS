@@ -1,4 +1,7 @@
 *.pyc
 *.pyo
 *.DS_Store
-*._MACOSX
+*__MACOSX*
+.idea
+*.nc
+
