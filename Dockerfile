@@ -11,7 +11,9 @@ MAINTAINER Dayne Broderson <dayne@alaska.edu>
 RUN apt-get update \
   && apt-get upgrade -y 
 
-RUN apt-get install -y python3-h5netcdf python3-netcdf4 python3-pandas 
+RUN apt-get install -y python3-h5netcdf \
+    python3-netcdf4 python3-pandas \
+    python3-distutils
 
 VOLUME /microgrids
 WORKDIR /microgrids
