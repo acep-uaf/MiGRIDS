@@ -1,5 +1,5 @@
-# MiGRIDS Tool 
-Welcome to the **MiGRIDS** tool!  MiGRIDS stands for **Mi**cro **G**rid **R**enewable **I**ntegration **D**ispatch and **S**izing. 
+# MiGRIDS 
+Welcome to **MiGRIDS**!  MiGRIDS stands for **Mi**cro **G**rid **R**enewable **I**ntegration **D**ispatch and **S**izing. 
 
 MiGRIDS is a software that models microgrid power systems with different controls and components. For example, if you had data from a village, you could model that village with another wind turbine, with a battery etc. You could also try out different control schemes to see which one worked best.
  
