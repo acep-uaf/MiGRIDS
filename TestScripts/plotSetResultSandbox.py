@@ -1,5 +1,5 @@
 
-from MicroGRIDS.Analyzer.DataRetrievers.plotSetResult import plotSetResult
+from MiGRIDS.Analyzer.DataRetrievers.plotSetResult import plotSetResult
 import os
 L_gal = 3.78541
 kg_L = 0.875
@@ -32,7 +32,7 @@ otherAttr = ['ees0.ratedDuration.value']
 otherAttrNames = {'ees0.ratedDuration.value':'EESS Rated Duration (s)'}
 otherAttrVal = [] #[[500,750,1000]]
 here = os.path.dirname(os.path.realpath(__file__))
-projectSetDir = os.path.join(here,"../MicroGRIDSProjects/SampleProject1/OutputData/Set0")
+projectSetDir = os.path.join(here,"../MiGRIDSProjects/SampleProject1/OutputData/Set0")
 baseSet =  '1'
 baseRun =  1
 for pR,pRN, sFB in zip(plotRes,plotResName,subtractFromBase):

@@ -1,5 +1,5 @@
 
-from MicroGRIDS.InputHandler.initiateProject import initiateProject
+from MiGRIDS.InputHandler.initiateProject import initiateProject
 import os
 here = os.path.dirname(os.path.realpath(__file__))
 projectName = 'testProject'

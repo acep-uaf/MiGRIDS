@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Project: GBS Tool -->
+<!-- Author: Jeremy VanderMeer, jbvandermeer@alaska.edu-->
+<!-- Date: July 19, 2018 -->
+<!-- License: MIT License (see LICENSE file of this package for more information -->
+<!-- This file describes the inputs for the class 'reDispatch0'. -->
+<!-- Root tag is 'reDistpatchName' -->
+<reDistpatchName name="getMinsSRC0">
+ <!-- 'minSRCToSwitchRatio' is the ratio of the SRC required to switch over the SRC required to stay at the current
+    diesel generating option. Having a value greater than 1 creates a hysterisis to reduce diesel switching.
+    Default is 1.1. -->
+ <minSRCToSwitchRatio value="1"/>
+</reDistpatchName>
+<!-- EOF -->

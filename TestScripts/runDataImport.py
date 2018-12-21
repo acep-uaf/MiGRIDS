@@ -10,16 +10,16 @@
 # get input data to run the functions to import data into the project
 
 import os
-from MicroGRIDS.InputHandler.fixBadData import fixBadData
-from MicroGRIDS.InputHandler.fixDataInterval import fixDataInterval
-from MicroGRIDS.InputHandler.dataframe2netcdf import dataframe2netcdf
-from MicroGRIDS.InputHandler.mergeInputs import mergeInputs
-from MicroGRIDS.Controller.UIToHandler import UIToHandler
-from MicroGRIDS.InputHandler.readSetupFile import readSetupFile
+from MiGRIDS.InputHandler.fixBadData import fixBadData
+from MiGRIDS.InputHandler.fixDataInterval import fixDataInterval
+from MiGRIDS.InputHandler.dataframe2netcdf import dataframe2netcdf
+from MiGRIDS.InputHandler.mergeInputs import mergeInputs
+from MiGRIDS.Controller.UIToHandler import UIToHandler
+from MiGRIDS.InputHandler.readSetupFile import readSetupFile
 import pickle
 
 #specify the correct path to your project setup file here
-fileName = os.path.join(os.getcwd(),*['..','MicroGRIDSProjects','SampleProject','InputData','Setup','SampleProjectSetup.xml'])
+fileName = os.path.join(os.getcwd(),*['..','MiGRIDSProjects','SampleProject','InputData','Setup','SampleProjectSetup.xml'])
 # get the setup Directory
 
 inputDictionary = readSetupFile(fileName)
