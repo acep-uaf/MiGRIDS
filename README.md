@@ -21,7 +21,7 @@ description of the software packages and project tutorials.
 
 MiGRIDS was developed by research team at the University of Alaska Fairbanks [Alaska Center for
 Energy and Power (ACEP)](https://acep.uaf.edu). MiGRIDS was originally developed
-as a set of tools under the name Grid Bridging System (GBS) by [Marc Mueeler-Stoffles](https://github.com/mmuellerstoffels).  
+as a set of tools under the name Grid Bridging System (GBS) by Jeremy VanderMeer and [Marc Mueeler-Stoffles](https://github.com/mmuellerstoffels).  
 The GBSTool was then expanded and updated into the MiGRIDS package.
 
 ## License
@@ -30,9 +30,9 @@ See the [LICENSE](LICENSE.md) file for license rights and limitations (MIT).
 
 ## Authors & Contributors
 
-- Marc Mueller-Stoffles - [@mmuellerstoffles](https://github.com/mmullerstoffles)
-  - Original Developer 
-- Jason Vandermeer - [@jbvandermeer](https://github.com/jbvandermeer) - Lead
+- Jeremy Vandermeer - [@jbvandermeer](https://github.com/jbvandermeer) - Lead
   Developer at ACEP
+- Marc Mueller-Stoffles - [@mmuellerstoffles](https://github.com/mmullerstoffles)
+  - Original Co-Developer 
 - Tawna Morgan - [@tawnamorgan](https://github.com/tawnamorgan)
 - Dayne Broderson - [@dayne](https://github.com/dayne)
