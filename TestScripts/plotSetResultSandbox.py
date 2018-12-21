@@ -32,9 +32,9 @@ otherAttr = ['ees0.ratedDuration.value']
 otherAttrNames = {'ees0.ratedDuration.value':'EESS Rated Duration (s)'}
 otherAttrVal = [] #[[500,750,1000]]
 here = os.path.dirname(os.path.realpath(__file__))
-projectSetDir = os.path.join(here,"../MiGRIDSProjects/SampleProject1/OutputData/Set0")
-baseSet =  '1'
-baseRun =  1
+projectSetDir = os.path.join(here,"../MiGRIDSProjects/testProject/OutputData/Set0")
+baseSet =  ''
+baseRun =  ''
 for pR,pRN, sFB in zip(plotRes,plotResName,subtractFromBase):
     plotSetResult(pR,plotAttr, projectSetDir = projectSetDir, otherAttr = otherAttr,otherAttrVal = otherAttrVal,
                   baseSet = baseSet, baseRun = baseRun, subtractFromBase = sFB, removeSingleOtherAttr = True,
