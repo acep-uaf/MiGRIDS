@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Project: GBS Tool -->
+<!-- Author: Jeremy VanderMeer, jbvandermeer@alaska.edu -->
+<!-- Date: February 27, 2018 -->
+<!-- License: MIT License (see LICENSE file of this package for more information -->
+<!-- This file lists the components that are used in a simulation run.  -->
+<!-- Root tag is 'component' -->
+<project name="project name">
+ <!-- Declaration of inheritance. This has no parents.   -->
+ <childOf>
+  self
+ </childOf>
+ <!-- 'runNumber' is the simulation run number for this project.  -->
+ <runNumber value="0"/>
+ <!-- 'components' is a list of the components used in the simulation.  -->
+ <components value=""/>
+</project>
+<!-- EOF -->

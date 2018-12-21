@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Project: GBS Tool -->
+<!-- Author: Jeremy VanderMeer, jbvandermeer@alaska.edu-->
+<!-- Date: October 1, 2018 -->
+<!-- License: MIT License (see LICENSE file of this package for more information -->
+<!-- This file describes the inputs for the class 'genSchedule0'. -->
+<!-- Root tag is 'genScheduleName' -->
+<genScheduleName name="genSchedule0">
+ <!-- 'minimizeFuel' is a bool that indicates whether the generator schedule will try to minimize fuel or maximize
+     renewble energy contribution ( by minimizing the online generator MOL). Default is False. -->
+ <minimizeFuel value="False"/>
+</genScheduleName>
+<!-- EOF -->

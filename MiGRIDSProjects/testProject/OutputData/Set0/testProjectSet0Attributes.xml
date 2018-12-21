@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Project: GBS Tool -->
+<!-- Author: Jeremy VanderMeer, jbvandermeer@alaska.edu -->
+<!-- Date: March 12, 2018 -->
+<!-- License: MIT License (see LICENSE file of this package for more information -->
+
+<!-- This file lists the components that are used in a simulation run.  -->
+
+<!-- Root tag is 'component' -->
+<project name = 'SampleProject1'>
+    <!-- Declaration of inheritance. This has no parents.   -->
+    <childOf>self</childOf>
+
+    <!-- 'setNumber' is the number of the set of simulations that this information refers to. -->
+    <setNumber value="0" />
+
+    <compAttributeValues>
+        <!-- 'compAttributeValues' describes the values of each component that have been varied from the base case . -->
+        <!-- 'compName' is the component name, eg 'ees0'.  -->
+        <!-- 'compTag' is the tag to change. For example 'PinMaxPa' If more than one level of tags is required enter as
+        a string seperated by periods '.'. For example 'lossMap.pPu' .  -->
+        <!-- 'compAttr' is the attribute to change. For example 'value'.  -->
+        <!-- 'compValue' value to place in the attribute. If a list is needs to be placed, enter as a string of values,
+        seperated by commas and no spaces .  -->
+        <compName value = "ees0 ees0 ees0"/>
+        <compTag value = "PInMaxPa POutMaxPa ratedDuration"/>
+        <compAttr value = "value value value"/>
+        <compValue value = "20,30,40 ees0.PInMaxPa.value 300,1800"/>
+    </compAttributeValues>
+
+    <setupAttributeValues>
+        <!-- 'setupAttributeValues' describes the values of each component that have been varied from the base case . -->
+        <!-- 'setupTag' is the tag to change. For example 'componentNames' If more than one level of tags is required enter as
+        a string seperated by periods '.'.   -->
+        <!-- 'setupAttr' is the attribute to change. For example 'value'.  -->
+        <!-- 'setupValue' value to place in the attribute. If a list is needs to be placed, enter as a string of values,
+        seperated by commas and no spaces .  -->
+        <setupTag value = "componentNames runTimeSteps timeStep"/>
+        <setupAttr value = "value value value value value value"/>
+        <setupValue value = "ees0,wtg0,gen0,gen1,load0,tes0 all 10"/>
+    </setupAttributeValues>
+	
+	<predictLoadInputAttributeValues>
+        <!-- 'predictLoadInputAttributeValues' describes the predictLoad inputs that have been varied from
+        the base case . -->
+        <!-- 'predictLoadInputTag' is the tag to change. If more than one level of tags is required enter as
+        a string seperated by periods '.'.   -->
+        <!-- 'predictLoadInputAttr' is the attribute to change. For example 'value'.  -->
+        <!-- 'predictLoadInputValue' value to place in the attribute. If a list is needs to be placed, enter as a string of values,
+        seperated by commas and no spaces .  -->
+        <predictLoadInputTag value = ""/>
+        <predictLoadInputAttr value = ""/>
+        <predictLoadInputValue value = ""/>
+    </predictLoadInputAttributeValues>
+
+    <predictWindInputAttributeValues>
+        <!-- 'predictWindInputAttributeValues' describes the predictLoad inputs that have been varied from
+        the base case . -->
+        <!-- 'predictWindInputTag' is the tag to change. If more than one level of tags is required enter as
+        a string seperated by periods '.'.   -->
+        <!-- 'predictWindInputAttr' is the attribute to change. For example 'value'.  -->
+        <!-- 'predictWindInputValue' value to place in the attribute. If a list is needs to be placed, enter as a string of values,
+        seperated by commas and no spaces .  -->
+        <predictWindInputTag value = ""/>
+        <predictWindInputAttr value = ""/>
+        <predictWindInputValue value = ""/>
+    </predictWindInputAttributeValues>
+	
+	<reDispatchInputAttributeValues>
+        <!-- 'reDispatchInputAttributeValues' describes the renewable energy dispatch inputs that have been varied from
+        the base case . -->
+        <!-- 'reDispatchInputTag' is the tag to change. If more than one level of tags is required enter as
+        a string seperated by periods '.'.   -->
+        <!-- 'reDispatchInputAttr' is the attribute to change. For example 'value'.  -->
+        <!-- 'reDispatchInputValue' value to place in the attribute. If a list is needs to be placed, enter as a string of values,
+        seperated by commas and no spaces .  -->
+        <reDispatchInputTag value = ""/>
+        <reDispatchInputAttr value = ""/>
+        <reDispatchInputValue value = ""/>
+    </reDispatchInputAttributeValues>
+
+	<getMinSrcInputAttributeValues>
+        <!-- 'getMinSRCInputAttributeValues' describes the getMinSRC inputs that have been varied from
+        the base case . -->
+        <!-- 'getMinSRCInputTag' is the tag to change. If more than one level of tags is required enter as
+        a string seperated by periods '.'.   -->
+        <!-- 'getMinSRCInputAttr' is the attribute to change. For example 'value'.  -->
+        <!-- 'getMinSRCInputValue' value to place in the attribute. If a list is needs to be placed, enter as a string of values,
+        seperated by commas and no spaces .  -->
+        <getMinSrcInputTag value = "minSRCToSwitchRatio"/>
+        <getMinSrcInputAttr value = "value"/>
+        <getMinSrcInputValue value = "1"/>
+    </getMinSrcInputAttributeValues>
+	
+	<genDispatchInputAttributeValues>
+        <!-- 'genDispatchInputAttributeValues' describes the genDispatch inputs that have been varied from
+        the base case . -->
+        <!-- 'genDispatchInputTag' is the tag to change. If more than one level of tags is required enter as
+        a string seperated by periods '.'.   -->
+        <!-- 'genDispatchInputAttr' is the attribute to change. For example 'value'.  -->
+        <!-- 'genDispatchInputValue' value to place in the attribute. If a list is needs to be placed, enter as a string of values,
+        seperated by commas and no spaces .  -->
+        <genDispatchInputTag value = ""/>
+        <genDispatchInputAttr value = ""/>
+        <genDispatchInputValue value = ""/>
+    </genDispatchInputAttributeValues>
+
+    <genScheduleInputAttributeValues>
+        <!-- 'genScheduleInputAttributeValues' describes the getMinSRC inputs that have been varied from
+        the base case . -->
+        <!-- 'genScheduleInputTag' is the tag to change. If more than one level of tags is required enter as
+        a string seperated by periods '.'.   -->
+        <!-- 'genScheduleInputAttr' is the attribute to change. For example 'value'.  -->
+        <!-- 'genScheduleInputValue' value to place in the attribute. If a list is needs to be placed, enter as a string of values,
+        seperated by commas and no spaces .  -->
+        <genScheduleInputTag value = ""/>
+        <genScheduleInputAttr value = ""/>
+        <genScheduleInputValue value = ""/>
+    </genScheduleInputAttributeValues>
+	
+	<wtgDispatchInputAttributeValues>
+        <!-- 'wtgDispatchInputAttributeValues' describes the wtgDispatch inputs that have been varied from
+        the base case . -->
+        <!-- 'wtgDispatchInputTag' is the tag to change. If more than one level of tags is required enter as
+        a string seperated by periods '.'.   -->
+        <!-- 'wtgDispatchInputAttr' is the attribute to change. For example 'value'.  -->
+        <!-- 'wtgDispatchInputValue' value to place in the attribute. If a list is needs to be placed, enter as a string of values,
+        seperated by commas and no spaces .  -->
+        <wtgDispatchInputTag value = ""/>
+        <wtgDispatchInputAttr value = ""/>
+        <wtgDispatchInputValue value = ""/>
+    </wtgDispatchInputAttributeValues>
+
+    <tesDispatchInputAttributeValues>
+        <!-- 'tesDispatchInputAttributeValues' describes the tesDispatch inputs that have been varied from
+        the base case . -->
+        <!-- 'tesDispatchInputTag' is the tag to change. If more than one level of tags is required enter as
+        a string seperated by periods '.'.   -->
+        <!-- 'tesDispatchInputAttr' is the attribute to change. For example 'value'.  -->
+        <!-- 'tesDispatchInputValue' value to place in the attribute. If a list is needs to be placed, enter as a string of values,
+        seperated by commas and no spaces .  -->
+        <tesDispatchInputTag value = ""/>
+        <tesDispatchInputAttr value = ""/>
+        <tesDispatchInputValue value = ""/>
+    </tesDispatchInputAttributeValues>
+	
+	<eesDispatchInputAttributeValues>
+        <!-- 'eesDispatchInputAttributeValues' describes the eesDispatch inputs that have been varied from
+        the base case . -->
+        <!-- 'eesDispatchInputTag' is the tag to change. If more than one level of tags is required enter as
+        a string seperated by periods '.'.   -->
+        <!-- 'eesDispatchInputAttr' is the attribute to change. For example 'value'.  -->
+        <!-- 'eesDispatchInputValue' value to place in the attribute. If a list is needs to be placed, enter as a string of values,
+        seperated by commas and no spaces .  -->
+        <eesDispatchInputTag value = ""/>
+        <eesDispatchInputAttr value = ""/>
+        <eesDispatchInputValue value = ""/>
+    </eesDispatchInputAttributeValues>
+	
+</project>
+<!-- EOF -->
