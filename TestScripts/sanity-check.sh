@@ -70,10 +70,62 @@ function plotSetResultSandbox()
 
 }
 
-
-
 cd "$(dirname "$0")/.."
 export PYTHONPATH=$PYTHONPATH:${PWD}
+
+expected_dirs=(
+  MiGRIDSProjects/testProject/OutputData/Set0/Run0/
+  MiGRIDSProjects/testProject/OutputData/Set0/Run1/
+  MiGRIDSProjects/testProject/OutputData/Set0/Run2/
+  MiGRIDSProjects/testProject/OutputData/Set0/Run3/
+  MiGRIDSProjects/testProject/OutputData/Set0/Setup/
+  MiGRIDSProjects/testProject/OutputData/Set0/figs/
+)  
+
+expected_files=(
+  MiGRIDSProjects/testProject/OutputData/Set0/eessOverLoadingPdf.pkl
+  MiGRIDSProjects/testProject/OutputData/Set0/genOverLoadingPdf.pkl
+  MiGRIDSProjects/testProject/OutputData/Set0/set0ComponentAttributes.db
+  MiGRIDSProjects/testProject/OutputData/Set0/set0Results.db
+  MiGRIDSProjects/testProject/OutputData/Set0/Set0Results.csv
+)
+
+
+if [ "$1" == "--force-clean" ]; then
+  FORCE_CLEAN=true
+fi
+
+need_clean='false'
+echo "checking to make sure we have a clean environment for running test"
+for d in ${expected_dirs[@]}; do 
+  if [ -d $d ]; then
+    if [[ $FORCE_CLEAN ]]; then
+      echo "Removing (due to --force-clean): $d"
+      rm -rf $d
+    else
+      echo "Warning: Found directory $d"
+      need_clean='true'
+    fi
+  fi
+done
+
+for f in ${expected_files[@]}; do
+  if [ -f $f ]; then
+    if [[ $FORCE_CLEAN ]]; then
+      echo "Removing (due to --force-clean): $f"
+      rm $f
+    else
+      echo "Warning: Found file $f" 
+      need_clean='true'
+    fi
+  fi
+done
+
+if [ "$need_clean" == "true" ]; then
+  echo "Error: Not running sanity check because previous run data exists"
+  echo "Use the --force-clean option to force removal of these files"
+  exit 1
+fi
 
 
 generateRunsSandbox
@@ -81,3 +133,30 @@ runSimulationSandbox
 getRunMetaDataSandbox
 plotSetResultSandbox
 
+echo 
+echo "----------------------------"
+echo "Sanbox scripts completed"
+echo 
+echo "Checking to make sure we generated expected output"
+success='false'
+for d in ${expected_dirs[@]}; do 
+  if [ ! -d $d ]; then
+    echo "Found expected output directory $d"
+    success='true'
+  fi
+done
+
+for f in ${expected_files[@]}; do
+  if [ -f $f ]; then
+    echo "Found expected output file $f" 
+    success='true'
+  fi
+done
+
+if [ "$success" == "true" ]; then
+  echo "sanity check run generated all the expected results"
+  echo "browse them in MiGRIDSProjects/testProject/OutputData/"
+else
+  echo "MiGRIDS sanity check failed"
+  exit 1
+fi
