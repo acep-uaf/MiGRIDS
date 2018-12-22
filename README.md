@@ -19,7 +19,7 @@ description of the software packages and project tutorials.
 
 ## MiGRIDS history
 
-MiGRIDS was developed by research team at the University of Alaska Fairbanks [Alaska Center for
+MiGRIDS was developed by a research team at the University of Alaska Fairbanks [Alaska Center for
 Energy and Power (ACEP)](https://acep.uaf.edu). MiGRIDS was originally developed
 as a set of tools under the name Grid Bridging System Tool (GBSTool) by Jeremy VanderMeer and [Marc Mueller-Stoffles](https://github.com/mmuellerstoffels). The GBSTool was then expanded and updated into the MiGRIDS package.
 
