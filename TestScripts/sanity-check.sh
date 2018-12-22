@@ -138,18 +138,22 @@ echo "----------------------------"
 echo "Sanbox scripts completed"
 echo 
 echo "Checking to make sure we generated expected output"
-success='false'
+success='true'
 for d in ${expected_dirs[@]}; do 
-  if [ ! -d $d ]; then
-    echo "Found expected output directory $d"
-    success='true'
+  if [ -d $d ]; then
+    echo "Found expected output directory: $d"
+  else
+    echo "Error: Failed to find expected output directory: $d"
+    success='false'
   fi
 done
 
 for f in ${expected_files[@]}; do
   if [ -f $f ]; then
     echo "Found expected output file $f" 
-    success='true'
+  else
+    echo "Error: Failed to find expected output file: $f"
+    success='false'
   fi
 done
 
