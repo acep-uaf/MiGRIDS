@@ -6,6 +6,8 @@ import tkinter as tk
 from tkinter import filedialog
 import pandas as pd
 import itertools
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import numbers
 
