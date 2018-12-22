@@ -67,6 +67,8 @@ def generateRuns(projectSetDir):
             generateFiles = 1
         else:
             generateFiles = 0
+    else:
+        generateFiles = 1
     if generateFiles == 1:
         if os.path.exists(os.path.join(projectSetDir,'Setup')):
             rmtree(os.path.join(projectSetDir,'Setup'))
