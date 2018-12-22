@@ -14,6 +14,7 @@ import pandas as pd
 import itertools
 import sqlite3
 from shutil import copyfile
+from shutil import rmtree
 
 def generateRuns(projectSetDir):
     here = os.getcwd()
@@ -60,7 +61,17 @@ def generateRuns(projectSetDir):
     # copy the setup xml file to this simulation set directory and make the specified changes
     # if Setup dir does not exist, create
     setupFile = os.path.join(projectSetDir, 'Setup', projectName + 'Set' + str(setNum) + 'Setup.xml')
-    if not os.path.exists(os.path.join(projectSetDir,'Setup')):
+    if os.path.exists(os.path.join(projectSetDir,'Setup')):
+        inpt = input("This simulation set already has runs generated, overwrite? y/n")
+        if inpt.lower() == 'y':
+            generateFiles = 1
+        else:
+            generateFiles = 0
+    else:
+        generateFiles = 1
+    if generateFiles == 1:
+        if os.path.exists(os.path.join(projectSetDir,'Setup')):
+            rmtree(os.path.join(projectSetDir,'Setup'))
         os.mkdir(os.path.join(projectSetDir,'Setup'))
         # copy setup file
         copyfile(os.path.join(projectDir,'InputData','Setup',projectName+'Setup.xml'), setupFile)
@@ -167,7 +178,7 @@ def generateRuns(projectSetDir):
     conn = sqlite3.connect('set' + str(setNum) + 'ComponentAttributes.db')  # create sql database
 
     try:
-        df.to_sql('compAttributes', conn, if_exists="fail", index=False)  # write to table compAttributes in db
+        df.to_sql('compAttributes', conn, if_exists="replace", index=False)  # write to table compAttributes in db
     except sqlite3.Error as er:
         print(er)
         print('You need to delete the existing set ComponentAttributes.db before creating a new components attribute table')

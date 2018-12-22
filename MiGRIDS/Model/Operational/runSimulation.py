@@ -396,7 +396,7 @@ def runSimulation(projectSetDir = ''):
                         'wtg' + str(SO.WF.wtgIDS[idx]) + 'FutureWind' + str(setNum) + 'Run' + str(runNum) + '.nc')
         futureWindList = None
 
-        print('File write operation elapsed time: ' + str(time.time() - start_file_write))
+        #print('File write operation elapsed time: ' + str(time.time() - start_file_write))
 
         # set the value in the 'finished' for this run to 1 to indicate it is finished.
         conn = sqlite3.connect(
