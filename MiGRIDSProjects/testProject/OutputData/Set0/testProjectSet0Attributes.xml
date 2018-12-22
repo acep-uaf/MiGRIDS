@@ -25,7 +25,7 @@
         <compName value = "ees0 ees0 ees0"/>
         <compTag value = "PInMaxPa POutMaxPa ratedDuration"/>
         <compAttr value = "value value value"/>
-        <compValue value = "20,30,40 ees0.PInMaxPa.value 300,1800"/>
+        <compValue value = "30,40 ees0.PInMaxPa.value 1800"/>
     </compAttributeValues>
 
     <setupAttributeValues>
