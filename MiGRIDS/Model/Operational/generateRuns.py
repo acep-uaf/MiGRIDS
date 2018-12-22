@@ -60,7 +60,13 @@ def generateRuns(projectSetDir):
     # copy the setup xml file to this simulation set directory and make the specified changes
     # if Setup dir does not exist, create
     setupFile = os.path.join(projectSetDir, 'Setup', projectName + 'Set' + str(setNum) + 'Setup.xml')
-    if not os.path.exists(os.path.join(projectSetDir,'Setup')):
+    if os.path.exists(os.path.join(projectSetDir,'Setup')):
+        inpt = input("This simulation set already has runs generated, overwrite? y/n")
+        if inpt.lower() == 'y':
+            generateFiles = 1
+        else:
+            generateFiles = 0
+    if generateFiles == 1:
         os.mkdir(os.path.join(projectSetDir,'Setup'))
         # copy setup file
         copyfile(os.path.join(projectDir,'InputData','Setup',projectName+'Setup.xml'), setupFile)
