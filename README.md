@@ -30,7 +30,7 @@ See the [LICENSE](LICENSE.md) file for license rights and limitations (MIT).
 ## Authors & Contributors
 
 - Jeremy Vandermeer - [@jbvandermeer](https://github.com/jbvandermeer) 
- - Lead Developer at ACEP
+  - Lead Developer at ACEP
 - Marc Mueller-Stoffles - [@mmuellerstoffles](https://github.com/mmullerstoffles)
   - Original Co-Developer 
 - Tawna Morgan - [@tawnamorgan](https://github.com/tawnamorgan)
