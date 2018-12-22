@@ -91,7 +91,7 @@ class WindTurbine:
 
         :return:
         """
-        print(wtgDescriptor)
+        #print(wtgDescriptor)
 
         # read xml file
         wtgDescriptorFile = open(wtgDescriptor, "r")
