@@ -14,6 +14,7 @@ import pandas as pd
 import itertools
 import sqlite3
 from shutil import copyfile
+from shutil import rmtree
 
 def generateRuns(projectSetDir):
     here = os.getcwd()
@@ -67,6 +68,8 @@ def generateRuns(projectSetDir):
         else:
             generateFiles = 0
     if generateFiles == 1:
+        if os.path.exists(os.path.join(projectSetDir,'Setup')):
+            rmtree(os.path.join(projectSetDir,'Setup'))
         os.mkdir(os.path.join(projectSetDir,'Setup'))
         # copy setup file
         copyfile(os.path.join(projectDir,'InputData','Setup',projectName+'Setup.xml'), setupFile)
@@ -173,7 +176,7 @@ def generateRuns(projectSetDir):
     conn = sqlite3.connect('set' + str(setNum) + 'ComponentAttributes.db')  # create sql database
 
     try:
-        df.to_sql('compAttributes', conn, if_exists="fail", index=False)  # write to table compAttributes in db
+        df.to_sql('compAttributes', conn, if_exists="replace", index=False)  # write to table compAttributes in db
     except sqlite3.Error as er:
         print(er)
         print('You need to delete the existing set ComponentAttributes.db before creating a new components attribute table')
