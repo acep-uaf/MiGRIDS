@@ -13,8 +13,8 @@ The [MiGRIDS/wiki](https://github.com/acep-uaf/MiGRIDS/wiki) is the primary
 location for documentation of the model, installation instructions, and
 description of the software packages and project tutorials.
 
-* [MiGRIDS Install Instructions](/acep-uaf/MiGRIDS/wiki/MiGRIDS-Installation)
-* [MiGRIDS Documentation](/acep-uaf/MiGRIDS/wiki/MiGRIDS-Tool-Home)
+* [MiGRIDS Install Instructions](https://github.com/acep-uaf/MiGRIDS/wiki/MiGRIDS-Installation) 
+* [MiGRIDS Documentation](https://github.com/acep-uaf/MiGRIDS/wiki/MiGRIDS-Tool-Home)
 
 
 ## MiGRIDS history
