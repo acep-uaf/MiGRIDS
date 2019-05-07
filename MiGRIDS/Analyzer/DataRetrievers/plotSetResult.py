@@ -173,7 +173,7 @@ def plotSetResult(plotRes,plotAttr, projectSetDir = '', otherAttr = [],otherAttr
 
             uniqueValues = np.unique(dfAttr[otherCol])  # unique values of this column
             # do not add other legend entries if they only have one value and the setting says so.
-            if not(removeSingleOtherAttr and len(uniqueValues) == 1):
+            if not(removeSingleOtherAttr and len(uniqueValues) == 1 and not(otherCol in otherAttrNames.keys())):
                 if otherCol in otherAttrNames.keys():
                     legendNames.append(otherAttrNames[otherCol])
                 else:
