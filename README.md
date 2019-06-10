@@ -1,7 +1,7 @@
 # MiGRIDS 
 Welcome to **MiGRIDS**!  MiGRIDS stands for **Mi**cro **G**rid **R**enewable **I**ntegration **D**ispatch and **S**izing. 
 
-MiGRIDS is a software that models islanded microgrid power systems with different controls and components. For example, using load and resource data from an microgrid, you could model it with additional wind turbines, battery etc. You could also try out different dispatch schemes to see which one worked best.
+MiGRIDS is a software that models islanded microgrid power systems with different controls and components. For example, using load and resource data from a microgrid, you could model it with additional wind turbines, battery etc. You could also try out different dispatch schemes to see which one worked best.
  
 MiGRIDS is designed to help optimize the size and dispatch of grid components in a microgrid. While a grid connect feature is expected to be added in the future, islanded operation is the focus. Note that this is a basic implementation and more features and functionality (such as a GUI) are coming!
 
